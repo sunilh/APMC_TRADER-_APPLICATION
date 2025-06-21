@@ -1,0 +1,84 @@
+APMC Trader Application
+
+1. Multi-Tenant Architecture :  
+	A.Database: POSTGRELSQL
+ Single DATABASE, each tenant has a separate schema
+2.NEW Tenant Onboarding: 
+	A.Via UI (OPTIONALLY TAKE LOGO , APMC CODE , MOBILE NUMBER, CREATE ADMIN LOGIN ACCESS AND PAASWORD SOME OTHER INFORMATION )
+	B. Onboarding triggers: Schema creation,Admin user creation (username/password)
+2. Authentication & Access Control
+Login: Username + Password
+Forgot Password: Reset via email or admin UI
+EACH TENANT ADMIN CAN CREATE : STATFF USER TO MAINTAIN WORK CUNCURRENTLY AS MANY AS BUT WE CAN HANDLE IT HOW MANY USER CAN CREATE USER BASED ON THERE SUBSCRIPTION 
+EXAMPLE : TENANT 1 : BASIC HE CAN CREATE 1-2 USER 
+	      TENANT 2 : GOLD : HE CAN CREATE UP TO 10 USER 
+	     TENANT 3 : DIAMOND : HE CAN CREATE MORE THAN 10 
+THIS SETTING DONE BY SUPER ADMIN WHILE CREATIBG TANANT ONBOEDING
+Audit Logs:
+Login, logout, failures (with timestamps, tenant/user IDs)
+3. Logging & Monitoring
+Logs:
+Auth logs (login/logout/failures)
+CRUD audit logs (old/new data, who, when)
+Errors & stack traces with tenant context
+Usage logs (views/actions) for analytics
+Alerts: On errors, failed logins, or anomalies
+4. Multi-Language & Voice Input
+Languages: Kannada, Hindi, English (using i18n)
+Voice Input: Web Speech API for numeric fields (weights, rates, phone)
+Validation:
+Mobile ≤ 10 digits
+Proper formats and ranges
+5. Farmer Management
+Farmer CRUD:
+Fields: Name, Mobile, PLACE , NAME AS IN BANK ,Bank Name, BANK ACCOUNT NUBER,IFSC
+UI: List + search + edit/create
+Lot Management
+🎯 Lot List View
+Lot No.	Farmer Name	Mobile	Place	No. of Bags	Vehicle Rent	Advance	Variety/Grade	Unload Hamali	Actions
+LOT0001	Raju Patil	9876543210	Bijapur	10	₹1500	₹500	Arabica A	₹200	[Create Bag Details] [Print]
+LOT0002	Meena Devi	9123456780	Vijayapura	15	₹2000	₹800	Robusta B	₹300	[Create Bag Details] [Print]
+
+NOTE  : UNLOAD HAMALI SET IN ADMIN SETTING PAGE ADMIN CAN SET GST : SGST , CGST, AND CESS IN PERCENTAGE AND UNLOAD HAMLI ALSO DEFINE THEY SHOULD COME FROM SETTING PAGE NAD CALCULATTE AUTOMATICALLY 
+Features:
+Create new lot
+Print APMC format (see section 7)
+Click Create Bag Details → go to Bag Entry
+7. APMC Print Format (PDF)
+Place: _______   Trader Name: _______   Date: _______   Trader Code: _______
+Table:
+Lot No.	Farmer Name	                  Place	                     No. of Bags
+LOT0001	Raju Patil	Bijapur	                        10
+LOT0002	Meena Devi	Vijayapura	        15
+
+                                                                  Total No. of Bags: ____
+
+
+8. Bag Entry Screen (after clicking Create Bag Details)
+Auto-filled from previous screen:
+Lot No.
+Farmer Name
+Mobile
+Place
+Total No. of Bags (editable)
+Form Header
+Lot Price: <Input>
+Buyer: <Dropdown> (select or create inline)
+Total Bags: <Input> (editable)
+Bag Grid (auto-save each entry)
+Bag #	Weight (kg)	Grade	Notes
+1	50.2	A	
+2	51.5	B	
+...	...	...	
+Auto-Save on each input change (PUT request per row)
+Supports 500+ bags
+Voice input supported for weight field
+Scrollable table
+“Save All” button for safety/manual commit
+Optional total weight footer
+Optional text area for notes
+
+APPLICATION SHOULD WORK IN BOTH DESKTOP AND MOBILE UI SHOULD BE ATTRACTIVE AND MODERN WITH ALL SCROLLING POPUPS ARE NOT DEALY UI EXPIRIENCE SHOULD FEEL EXTRORDINARY
+
+
+
