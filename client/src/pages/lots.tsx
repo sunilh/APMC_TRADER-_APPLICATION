@@ -11,6 +11,7 @@ import { Plus, Search, Edit, Printer, Package } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { generateAPMCPDF, formatDateForAPMC } from "@/lib/pdf-generator";
 
 interface Lot {
   id: number;
@@ -51,10 +52,22 @@ export default function Lots() {
   });
 
   const printMutation = useMutation({
-    mutationFn: async (lotId: number) => {
-      // Here you would implement PDF generation
-      // For now, just show a toast
-      return lotId;
+    mutationFn: async (lot: Lot) => {
+      const apmcData = {
+        place: lot.farmer.place,
+        traderName: "APMC Trader", // This should come from settings or user data
+        traderCode: "TRADER001", // This should come from settings
+        date: formatDateForAPMC(new Date()),
+        lots: [{
+          lotNumber: lot.lotNumber,
+          farmerName: lot.farmer.name,
+          place: lot.farmer.place,
+          numberOfBags: lot.numberOfBags
+        }]
+      };
+      
+      await generateAPMCPDF(apmcData);
+      return lot;
     },
     onSuccess: () => {
       toast({
@@ -62,10 +75,17 @@ export default function Lots() {
         description: "APMC format generated successfully",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const handlePrint = (lot: Lot) => {
-    printMutation.mutate(lot.id);
+    printMutation.mutate(lot);
   };
 
   const getStatusColor = (status: string) => {

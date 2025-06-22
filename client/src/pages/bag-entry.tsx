@@ -39,6 +39,29 @@ export default function BagEntry() {
   const { toast } = useToast();
   const lotId = parseInt(params.id as string);
 
+  // Redirect if invalid lot ID
+  if (isNaN(lotId)) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900">Invalid Lot ID</h3>
+              <p className="text-gray-500 mt-2">The lot ID is missing or invalid.</p>
+              <Button 
+                onClick={() => setLocation("/lots")}
+                className="mt-4"
+              >
+                Back to Lots
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const [lotPrice, setLotPrice] = useState("");
   const [selectedBuyer, setSelectedBuyer] = useState("");
   const [totalBags, setTotalBags] = useState(0);
@@ -54,6 +77,7 @@ export default function BagEntry() {
       if (!response.ok) throw new Error("Failed to fetch lot");
       return response.json();
     },
+    enabled: !isNaN(lotId),
   });
 
   const { data: buyers } = useQuery<Buyer[]>({
@@ -67,6 +91,7 @@ export default function BagEntry() {
       if (!response.ok) throw new Error("Failed to fetch bags");
       return response.json();
     },
+    enabled: !isNaN(lotId),
   });
 
   const createBagMutation = useMutation({
