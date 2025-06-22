@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Settings, Users, Receipt, Globe } from "lucide-react";
+import { Settings as SettingsIcon, Users, Receipt, Globe } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -134,7 +134,7 @@ export default function Settings() {
               <span>Language & Voice</span>
             </TabsTrigger>
             <TabsTrigger value="general" className="flex items-center space-x-2">
-              <Settings className="h-4 w-4" />
+              <SettingsIcon className="h-4 w-4" />
               <span>General</span>
             </TabsTrigger>
           </TabsList>
