@@ -377,17 +377,12 @@ export default function BagEntry() {
                       <SelectValue placeholder="Select buyer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Select a buyer</SelectItem>
-                      {buyers?.map((buyer) => (
+                      <SelectItem value="placeholder">Select a buyer</SelectItem>
+                      {Array.isArray(buyers) && buyers.map((buyer) => (
                         <SelectItem key={buyer.id} value={buyer.id.toString()}>
                           {buyer.name}
                         </SelectItem>
                       ))}
-                      {(!buyers || buyers.length === 0) && (
-                        <SelectItem value="no-buyers" disabled>
-                          No buyers available
-                        </SelectItem>
-                      )}
                     </SelectContent>
                   </Select>
                   <Button
@@ -503,14 +498,14 @@ export default function BagEntry() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Select
-                              value={bag.grade || ""}
-                              onValueChange={(value) => handleBagUpdate(bag.bagNumber, 'grade', value)}
+                              value={bag.grade || "none"}
+                              onValueChange={(value) => handleBagUpdate(bag.bagNumber, 'grade', value === "none" ? "" : value)}
                             >
                               <SelectTrigger className="w-20 text-sm">
                                 <SelectValue placeholder="-" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">-</SelectItem>
+                                <SelectItem value="none">-</SelectItem>
                                 <SelectItem value="A">A</SelectItem>
                                 <SelectItem value="B">B</SelectItem>
                                 <SelectItem value="C">C</SelectItem>
