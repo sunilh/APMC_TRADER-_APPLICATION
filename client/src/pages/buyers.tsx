@@ -40,7 +40,14 @@ export default function Buyers() {
       mobile: "",
       address: "",
     },
-    mode: "onChange", // Enable real-time validation
+    mode: "onChange",
+  });
+
+  // Debug form state
+  console.log("Form state:", {
+    isValid: form.formState.isValid,
+    errors: form.formState.errors,
+    values: form.getValues(),
   });
 
   const createBuyerMutation = useMutation({
@@ -164,7 +171,14 @@ export default function Buyers() {
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form 
+                    onSubmit={(e) => {
+                      console.log("Form onSubmit triggered");
+                      e.preventDefault();
+                      form.handleSubmit(onSubmit)(e);
+                    }} 
+                    className="space-y-4"
+                  >
                     <FormField
                       control={form.control}
                       name="name"
@@ -232,6 +246,7 @@ export default function Buyers() {
                       <Button
                         type="submit"
                         disabled={createBuyerMutation.isPending || updateBuyerMutation.isPending}
+                        onClick={() => console.log("Submit button clicked")}
                       >
                         {editingBuyer ? "Update" : "Create"}
                       </Button>

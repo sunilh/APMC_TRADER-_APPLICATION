@@ -209,6 +209,11 @@ export const insertBuyerSchema = createInsertSchema(buyers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  name: z.string().min(1, "Company name is required"),
+  contactPerson: z.string().optional(),
+  mobile: z.string().optional(), 
+  address: z.string().optional(),
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
