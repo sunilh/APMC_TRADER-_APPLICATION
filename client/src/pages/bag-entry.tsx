@@ -305,6 +305,10 @@ export default function BagEntry() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Debug marker */}
+        <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
+          ✓ Bag Entry Main UI Rendering - Lot: {lot.lotNumber}
+        </div>
         <div className="mb-6">
           <Button 
             variant="ghost" 
