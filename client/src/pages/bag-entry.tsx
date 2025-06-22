@@ -74,17 +74,14 @@ export default function BagEntry() {
   const { data: lot, isLoading: lotLoading } = useQuery<LotWithDetails>({
     queryKey: ["/api/lots", lotId],
     queryFn: async () => {
-      console.log("Fetching lot data for ID:", lotId);
       const response = await fetch(`/api/lots/${lotId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch lot");
-      const data = await response.json();
-      console.log("Lot data received:", data);
-      return data;
+      return response.json();
     },
     enabled: !isNaN(lotId),
   });
 
-  console.log("BagEntry render state:", { lotId, lot, lotLoading });
+
 
   const { data: buyers } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
@@ -269,19 +266,17 @@ export default function BagEntry() {
   };
 
   if (lotLoading) {
-    console.log("Showing loading state");
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">Loading lot data... (ID: {lotId})</div>
+          <div className="text-center">Loading lot data...</div>
         </div>
       </div>
     );
   }
 
   if (!lot) {
-    console.log("No lot data found, showing error state");
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -289,7 +284,7 @@ export default function BagEntry() {
           <Card>
             <CardContent className="p-8 text-center">
               <h3 className="text-lg font-medium text-gray-900">Lot Not Found</h3>
-              <p className="text-gray-500 mt-2">The requested lot could not be found. (ID: {lotId})</p>
+              <p className="text-gray-500 mt-2">The requested lot could not be found.</p>
               <Button 
                 onClick={() => setLocation("/lots")}
                 className="mt-4"
@@ -304,8 +299,6 @@ export default function BagEntry() {
   }
 
   const summary = calculateSummary();
-  
-  console.log("Rendering main bag entry UI with lot:", lot?.lotNumber);
 
   return (
     <div className="min-h-screen bg-gray-50">
