@@ -12,7 +12,7 @@ import AuthPage from "@/pages/auth-page";
 import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntry from "@/pages/bag-entry";
-import BagEntrySimple from "@/pages/bag-entry-simple";
+
 import Settings from "@/pages/settings";
 
 function Router() {
@@ -21,7 +21,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
-      <ProtectedRoute path="/lots/:id/bags" component={BagEntrySimple} />
+      <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
       <ProtectedRoute path="/settings" component={Settings} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
