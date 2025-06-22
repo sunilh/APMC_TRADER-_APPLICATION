@@ -37,6 +37,7 @@ export default function BagEntry() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
   const lotId = parseInt(params.id as string);
 
   // Redirect if invalid lot ID
