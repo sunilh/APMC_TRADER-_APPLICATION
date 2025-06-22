@@ -41,6 +41,8 @@ export default function BagEntry() {
   const lotId = parseInt(params.id as string);
   
   console.log("BagEntry - lotId:", lotId, "params:", params);
+  console.log("BagEntry - lot data:", lot);
+  console.log("BagEntry - lotLoading:", lotLoading);
 
   // Redirect if invalid lot ID
   if (isNaN(lotId)) {
