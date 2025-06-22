@@ -19,6 +19,7 @@ export function Navigation() {
     { name: t('nav.dashboard'), href: '/', icon: Home },
     { name: t('nav.farmers'), href: '/farmers', icon: Users },
     { name: t('nav.lots'), href: '/lots', icon: Package },
+    { name: 'Buyers', href: '/buyers', icon: Users },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 

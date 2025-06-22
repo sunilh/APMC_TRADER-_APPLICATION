@@ -52,6 +52,7 @@ export interface IStorage {
   getBuyersByTenant(tenantId: number): Promise<Buyer[]>;
   createBuyer(buyer: InsertBuyer): Promise<Buyer>;
   updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer>;
+  deleteBuyer(id: number, tenantId: number): Promise<void>;
 
   // Audit logging
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
@@ -246,6 +247,26 @@ export class DatabaseStorage implements IStorage {
   async createBuyer(buyer: InsertBuyer): Promise<Buyer> {
     const [newBuyer] = await db.insert(buyers).values(buyer).returning();
     return newBuyer;
+  }
+
+  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer> {
+    const [updated] = await db
+      .update(buyers)
+      .set({ ...buyer, updatedAt: new Date() })
+      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Buyer not found");
+    }
+    
+    return updated;
+  }
+
+  async deleteBuyer(id: number, tenantId: number): Promise<void> {
+    await db
+      .delete(buyers)
+      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)));
   }
 
   async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer> {

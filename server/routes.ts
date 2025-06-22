@@ -284,6 +284,35 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const buyerId = parseInt(req.params.id);
+      const validatedData = insertBuyerSchema.partial().parse(req.body);
+      
+      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId);
+      await createAuditLog(req, 'update', 'buyer', buyerId, null, buyer);
+      
+      res.json(buyer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update buyer" });
+    }
+  });
+
+  app.delete("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const buyerId = parseInt(req.params.id);
+      await storage.deleteBuyer(buyerId, req.user.tenantId);
+      await createAuditLog(req, 'delete', 'buyer', buyerId, null, null);
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete buyer" });
+    }
+  });
+
   // Tenant management (super admin only)
   app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
     try {
