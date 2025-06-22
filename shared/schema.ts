@@ -60,6 +60,7 @@ export const buyers = pgTable("buyers", {
   address: text("address"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Lots table

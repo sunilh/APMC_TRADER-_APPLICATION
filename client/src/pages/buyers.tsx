@@ -36,8 +36,9 @@ export default function Buyers() {
     resolver: zodResolver(insertBuyerSchema),
     defaultValues: {
       name: "",
+      contactPerson: "",
       mobile: "",
-      place: "",
+      address: "",
     },
   });
 
@@ -102,8 +103,9 @@ export default function Buyers() {
     setEditingBuyer(buyer);
     form.reset({
       name: buyer.name,
+      contactPerson: buyer.contactPerson || "",
       mobile: buyer.mobile || "",
-      place: buyer.place || "",
+      address: buyer.address || "",
     });
     setIsDialogOpen(true);
   };
@@ -123,7 +125,8 @@ export default function Buyers() {
   const filteredBuyers = buyers.filter(buyer =>
     buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (buyer.mobile && buyer.mobile.includes(searchTerm)) ||
-    (buyer.place && buyer.place.toLowerCase().includes(searchTerm.toLowerCase()))
+    (buyer.address && buyer.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (buyer.contactPerson && buyer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -153,9 +156,22 @@ export default function Buyers() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Name *</FormLabel>
+                          <FormLabel>Company/Business Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter buyer name" {...field} />
+                            <Input placeholder="Enter company or business name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="contactPerson"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact Person</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter contact person name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -176,12 +192,12 @@ export default function Buyers() {
                     />
                     <FormField
                       control={form.control}
-                      name="place"
+                      name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Place</FormLabel>
+                          <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter place" {...field} />
+                            <Input placeholder="Enter address" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -216,7 +232,7 @@ export default function Buyers() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search buyers by name, mobile, or place..."
+                placeholder="Search buyers by company, contact person, mobile, or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -243,9 +259,10 @@ export default function Buyers() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Company/Business</TableHead>
+                    <TableHead>Contact Person</TableHead>
                     <TableHead>Mobile</TableHead>
-                    <TableHead>Place</TableHead>
+                    <TableHead>Address</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -253,8 +270,9 @@ export default function Buyers() {
                   {filteredBuyers.map((buyer) => (
                     <TableRow key={buyer.id}>
                       <TableCell className="font-medium">{buyer.name}</TableCell>
+                      <TableCell>{buyer.contactPerson || "-"}</TableCell>
                       <TableCell>{buyer.mobile || "-"}</TableCell>
-                      <TableCell>{buyer.place || "-"}</TableCell>
+                      <TableCell>{buyer.address || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button
