@@ -207,6 +207,7 @@ export const insertBagSchema = createInsertSchema(bags).omit({
 export const insertBuyerSchema = createInsertSchema(buyers).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({

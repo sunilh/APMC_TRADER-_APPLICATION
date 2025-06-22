@@ -267,20 +267,28 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
+      console.log("Creating buyer - request body:", req.body);
+      console.log("User tenant ID:", req.user.tenantId);
+      
       const validatedData = insertBuyerSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
       });
       
+      console.log("Validated buyer data:", validatedData);
+      
       const buyer = await storage.createBuyer(validatedData);
+      console.log("Created buyer:", buyer);
+      
       await createAuditLog(req, 'create', 'buyer', buyer.id, null, buyer);
       
       res.status(201).json(buyer);
     } catch (error) {
+      console.error("Buyer creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create buyer" });
+      res.status(500).json({ message: "Failed to create buyer", error: error.message });
     }
   });
 

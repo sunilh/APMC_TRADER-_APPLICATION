@@ -43,7 +43,10 @@ export default function Buyers() {
 
   const createBuyerMutation = useMutation({
     mutationFn: async (data: InsertBuyer) => {
-      await apiRequest("POST", "/api/buyers", data);
+      console.log("Creating buyer with data:", data);
+      const result = await apiRequest("POST", "/api/buyers", data);
+      console.log("Buyer creation result:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
@@ -52,6 +55,7 @@ export default function Buyers() {
       form.reset();
     },
     onError: (error: Error) => {
+      console.error("Buyer creation error:", error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
