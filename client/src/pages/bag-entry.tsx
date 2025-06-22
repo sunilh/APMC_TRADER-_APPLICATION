@@ -172,6 +172,9 @@ export default function BagEntry() {
     }
   }, [existingBags]);
 
+  const [currentBag, setCurrentBag] = useState<number>(1);
+  const [saveTimeouts, setSaveTimeouts] = useState<Map<number, NodeJS.Timeout>>(new Map());
+
   const handleBagUpdate = async (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
       bag.bagNumber === bagNumber 
@@ -179,14 +182,29 @@ export default function BagEntry() {
         : bag
     ));
 
-    // Auto-save after a short delay
-    setTimeout(() => {
-      const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
-      if (bagToUpdate) {
-        const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
-        
+    // Clear existing timeout for this bag
+    const timeouts = saveTimeouts;
+    if (timeouts.has(bagNumber)) {
+      clearTimeout(timeouts.get(bagNumber)!);
+    }
+
+    // Set new timeout for auto-save
+    const timeout = setTimeout(() => {
+      saveBagData(bagNumber);
+    }, 2000); // 2 second delay
+
+    timeouts.set(bagNumber, timeout);
+    setSaveTimeouts(new Map(timeouts));
+  };
+
+  const saveBagData = async (bagNumber: number) => {
+    const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
+    if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.grade || bagToUpdate.notes)) {
+      const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
+      
+      try {
         if (existingBag) {
-          updateBagMutation.mutate({
+          await updateBagMutation.mutateAsync({
             bagId: existingBag.id,
             bag: {
               weight: bagToUpdate.weight?.toString(),
@@ -195,7 +213,7 @@ export default function BagEntry() {
             }
           });
         } else {
-          createBagMutation.mutate({
+          await createBagMutation.mutateAsync({
             bagNumber,
             weight: bagToUpdate.weight,
             grade: bagToUpdate.grade,
@@ -208,8 +226,19 @@ export default function BagEntry() {
             ? { ...bag, status: 'saved' }
             : bag
         ));
+      } catch (error) {
+        console.error(`Failed to save bag ${bagNumber}:`, error);
       }
-    }, 1000);
+    }
+  };
+
+  // Auto-save when moving to next bag
+  const handleBagFocus = (bagNumber: number) => {
+    if (currentBag !== bagNumber && currentBag > 0) {
+      // Save the previous bag when moving to next
+      saveBagData(currentBag);
+    }
+    setCurrentBag(bagNumber);
   };
 
   const handleVoiceInput = (bagNumber: number, value: string) => {
@@ -219,35 +248,27 @@ export default function BagEntry() {
     }
   };
 
-  const handleSaveAll = () => {
-    bagData.forEach(bag => {
-      if (bag.status === 'pending') {
-        const existingBag = existingBags?.find(eb => eb.bagNumber === bag.bagNumber);
-        
-        if (existingBag) {
-          updateBagMutation.mutate({
-            bagId: existingBag.id,
-            bag: {
-              weight: bag.weight?.toString(),
-              grade: bag.grade,
-              notes: bag.notes,
-            }
-          });
-        } else {
-          createBagMutation.mutate({
-            bagNumber: bag.bagNumber,
-            weight: bag.weight,
-            grade: bag.grade,
-            notes: bag.notes,
-          });
-        }
+  const handleSaveAll = async () => {
+    try {
+      const pendingBags = bagData.filter(bag => 
+        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
+      );
+      
+      for (const bag of pendingBags) {
+        await saveBagData(bag.bagNumber);
       }
-    });
-    
-    toast({
-      title: "Success",
-      description: "All bag entries saved successfully",
-    });
+      
+      toast({
+        title: "Success",
+        description: `All ${pendingBags.length} pending bag entries saved successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save some bag entries",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCreateBuyer = () => {
@@ -543,6 +564,7 @@ export default function BagEntry() {
                               type="text"
                               value={bag.notes || ""}
                               onChange={(e) => handleBagUpdate(bag.bagNumber, 'notes', e.target.value)}
+                              onFocus={() => handleBagFocus(bag.bagNumber)}
                               className="w-32 text-sm"
                               placeholder="Optional notes"
                             />
