@@ -40,16 +40,23 @@ export default function Buyers() {
       mobile: "",
       address: "",
     },
+    mode: "onChange", // Enable real-time validation
   });
 
   const createBuyerMutation = useMutation({
     mutationFn: async (data: InsertBuyer) => {
       console.log("Creating buyer with data:", data);
-      const result = await apiRequest("POST", "/api/buyers", data);
-      console.log("Buyer creation result:", result);
-      return result;
+      try {
+        const result = await apiRequest("POST", "/api/buyers", data);
+        console.log("Buyer creation result:", result);
+        return result;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log("Buyer creation successful, invalidating queries");
       queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
       toast({ title: "Success", description: "Buyer created successfully" });
       setIsDialogOpen(false);
@@ -57,7 +64,11 @@ export default function Buyers() {
     },
     onError: (error: Error) => {
       console.error("Buyer creation error:", error);
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: `Failed to create buyer: ${error.message}`, 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -92,6 +103,9 @@ export default function Buyers() {
   });
 
   const onSubmit = (data: InsertBuyer) => {
+    console.log("Form submission data:", data);
+    console.log("Form validation errors:", form.formState.errors);
+    
     if (editingBuyer) {
       updateBuyerMutation.mutate(data);
     } else {
