@@ -39,6 +39,8 @@ export default function BagEntry() {
   const { toast } = useToast();
   
   const lotId = parseInt(params.id as string);
+  
+  console.log("BagEntry - lotId:", lotId, "params:", params);
 
   // Redirect if invalid lot ID
   if (isNaN(lotId)) {
@@ -263,12 +265,34 @@ export default function BagEntry() {
     };
   };
 
-  if (lotLoading || !lot) {
+  if (lotLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">Loading lot data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!lot) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900">Lot Not Found</h3>
+              <p className="text-gray-500 mt-2">The requested lot could not be found.</p>
+              <Button 
+                onClick={() => setLocation("/lots")}
+                className="mt-4"
+              >
+                Back to Lots
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
