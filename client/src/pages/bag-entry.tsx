@@ -152,7 +152,7 @@ export default function BagEntry() {
     }
   }, [lot, bagData.length]);
 
-  // Merge existing bag data
+  // Immediately load existing bag data when available
   useEffect(() => {
     if (existingBags && bagData.length) {
       const updatedBagData = bagData.map(bag => {
@@ -169,33 +169,52 @@ export default function BagEntry() {
         return bag;
       });
       setBagData(updatedBagData);
+      console.log("Loaded existing bag data immediately:", updatedBagData);
     }
-  }, [existingBags]);
+  }, [existingBags, bagData.length]);
 
-  const [currentBag, setCurrentBag] = useState<number>(1);
-  const [saveTimeouts, setSaveTimeouts] = useState<Map<number, NodeJS.Timeout>>(new Map());
+  // Force refresh of lot data when component mounts
+  useEffect(() => {
+    if (!isNaN(lotId)) {
+      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId, "bags"] });
+    }
+  }, [lotId]);
 
-  const handleBagUpdate = async (bagNumber: number, field: string, value: any) => {
+  const [lastActivity, setLastActivity] = useState<number>(Date.now());
+  const [idleTimeout, setIdleTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
       bag.bagNumber === bagNumber 
         ? { ...bag, [field]: value, status: 'pending' }
         : bag
     ));
+    
+    // Update last activity time
+    setLastActivity(Date.now());
+  };
 
-    // Clear existing timeout for this bag
-    const timeouts = saveTimeouts;
-    if (timeouts.has(bagNumber)) {
-      clearTimeout(timeouts.get(bagNumber)!);
+  // Idle timeout management
+  useEffect(() => {
+    const checkIdle = () => {
+      const now = Date.now();
+      if (now - lastActivity >= 60000) { // 1 minute
+        handleSaveAll();
+      }
+    };
+
+    if (idleTimeout) {
+      clearTimeout(idleTimeout);
     }
 
-    // Set new timeout for auto-save
-    const timeout = setTimeout(() => {
-      saveBagData(bagNumber);
-    }, 2000); // 2 second delay
+    const timeout = setTimeout(checkIdle, 60000); // Check every minute
+    setIdleTimeout(timeout);
 
-    timeouts.set(bagNumber, timeout);
-    setSaveTimeouts(new Map(timeouts));
-  };
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [lastActivity]);
 
   const saveBagData = async (bagNumber: number) => {
     const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
@@ -230,15 +249,6 @@ export default function BagEntry() {
         console.error(`Failed to save bag ${bagNumber}:`, error);
       }
     }
-  };
-
-  // Auto-save when moving to next bag
-  const handleBagFocus = (bagNumber: number) => {
-    if (currentBag !== bagNumber && currentBag > 0) {
-      // Save the previous bag when moving to next
-      saveBagData(currentBag);
-    }
-    setCurrentBag(bagNumber);
   };
 
   const handleVoiceInput = (bagNumber: number, value: string) => {
@@ -489,11 +499,11 @@ export default function BagEntry() {
                 <h3 className="text-lg font-semibold text-gray-900">Bag Details</h3>
                 <div className="flex items-center space-x-4">
                   <div className="text-sm text-gray-600">
-                    Auto-save: <span className="text-success"><Check className="inline h-4 w-4 mr-1" />Enabled</span>
+                    Idle save: <span className="text-blue-600">1 minute</span>
                   </div>
-                  <Button onClick={handleSaveAll} className="bg-secondary hover:bg-secondary/90">
+                  <Button onClick={handleSaveAll} className="bg-primary hover:bg-primary/90">
                     <Save className="h-4 w-4 mr-2" />
-                    Save All
+                    Save All Now
                   </Button>
                 </div>
               </div>
@@ -585,7 +595,7 @@ export default function BagEntry() {
                               ) : (
                                 <>
                                   <Clock className="h-3 w-3 mr-1" />
-                                  Pending
+                                  Modified
                                 </>
                               )}
                             </Badge>
