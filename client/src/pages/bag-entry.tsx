@@ -328,7 +328,7 @@ export default function BagEntry() {
         {/* Lot Information Header */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div>
                 <Label className="text-sm font-medium text-gray-500">Lot Number</Label>
                 <p className="text-lg font-semibold text-gray-900">{lot.lotNumber}</p>
@@ -345,7 +345,33 @@ export default function BagEntry() {
                 <Label className="text-sm font-medium text-gray-500">Place</Label>
                 <p className="text-lg font-semibold text-gray-900">{lot.farmer.place}</p>
               </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Total Bags</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Buyer</Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.buyer ? lot.buyer.name : "Not assigned"}
+                </p>
+              </div>
             </div>
+            {lot.buyer && (
+              <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Buyer Contact</Label>
+                  <p className="text-sm text-gray-900">{lot.buyer.contactPerson || "N/A"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Buyer Mobile</Label>
+                  <p className="text-sm text-gray-900">{lot.buyer.mobile || "N/A"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Buyer Address</Label>
+                  <p className="text-sm text-gray-900">{lot.buyer.address || "N/A"}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
