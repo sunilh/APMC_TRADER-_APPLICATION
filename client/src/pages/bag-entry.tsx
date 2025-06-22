@@ -281,6 +281,28 @@ export default function BagEntry() {
     }
   };
 
+  const updateLotMutation = useMutation({
+    mutationFn: async (data: { lotPrice?: string; buyerId?: number }) => {
+      return await apiRequest("PUT", `/api/lots/${lotId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId] });
+      toast({ title: "Success", description: "Lot information updated successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateLotInfo = () => {
+    const data: { lotPrice?: string; buyerId?: number } = {};
+    if (lotPrice) data.lotPrice = lotPrice;
+    if (selectedBuyer && selectedBuyer !== "placeholder") {
+      data.buyerId = parseInt(selectedBuyer);
+    }
+    updateLotMutation.mutate(data);
+  };
+
   const handleCreateBuyer = () => {
     if (newBuyerName.trim()) {
       createBuyerMutation.mutate({ name: newBuyerName.trim() });
@@ -381,6 +403,12 @@ export default function BagEntry() {
                 <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
               </div>
               <div>
+                <Label className="text-sm font-medium text-gray-500">Lot Price</Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.lotPrice ? `₹${parseFloat(lot.lotPrice).toFixed(2)}` : "Not set"}
+                </p>
+              </div>
+              <div>
                 <Label className="text-sm font-medium text-gray-500">Buyer</Label>
                 <p className="text-lg font-semibold text-gray-900">
                   {lot.buyer ? lot.buyer.name : "Not assigned"}
@@ -409,89 +437,90 @@ export default function BagEntry() {
         {/* Bag Entry Form */}
         <Card>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="space-y-2">
-                <Label htmlFor="lot-price">Lot Price *</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-                  <Input
-                    id="lot-price"
-                    type="number"
-                    step="0.01"
-                    value={lotPrice}
-                    onChange={(e) => setLotPrice(e.target.value)}
-                    className="pl-8"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="buyer">Buyer *</Label>
-                <div className="flex space-x-2">
-                  <Select value={selectedBuyer} onValueChange={setSelectedBuyer}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select buyer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="placeholder">Select a buyer</SelectItem>
-                      {Array.isArray(buyers) && buyers.map((buyer) => (
-                        <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                          {buyer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowInlineBuyerForm(true)}
-                    className="px-3"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {showInlineBuyerForm && (
-                  <div className="flex space-x-2 mt-2">
-                    <Input
-                      placeholder="New buyer name"
-                      value={newBuyerName}
-                      onChange={(e) => setNewBuyerName(e.target.value)}
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleCreateBuyer}
-                      disabled={createBuyerMutation.isPending}
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setShowInlineBuyerForm(false);
-                        setNewBuyerName("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
+            {(!lot.lotPrice || !lot.buyer) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <h3 className="font-medium text-yellow-800 mb-3">Complete Lot Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="lot-price">Lot Price *</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                      <Input
+                        id="lot-price"
+                        type="number"
+                        step="0.01"
+                        value={lotPrice}
+                        onChange={(e) => setLotPrice(e.target.value)}
+                        className="pl-8"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="total-bags">Total Bags *</Label>
-                <Input
-                  id="total-bags"
-                  type="number"
-                  min="1"
-                  value={totalBags}
-                  onChange={(e) => setTotalBags(parseInt(e.target.value) || 0)}
-                />
+                  <div className="space-y-2">
+                    <Label htmlFor="buyer">Buyer *</Label>
+                    <div className="flex space-x-2">
+                      <Select value={selectedBuyer} onValueChange={setSelectedBuyer}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select buyer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="placeholder">Select a buyer</SelectItem>
+                          {Array.isArray(buyers) && buyers.map((buyer) => (
+                            <SelectItem key={buyer.id} value={buyer.id.toString()}>
+                              {buyer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowInlineBuyerForm(true)}
+                        className="px-3"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {showInlineBuyerForm && (
+                      <div className="flex space-x-2 mt-2">
+                        <Input
+                          placeholder="New buyer name"
+                          value={newBuyerName}
+                          onChange={(e) => setNewBuyerName(e.target.value)}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleCreateBuyer}
+                          disabled={createBuyerMutation.isPending}
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setShowInlineBuyerForm(false);
+                            setNewBuyerName("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => updateLotInfo()} 
+                  className="mt-4"
+                  disabled={!lotPrice || !selectedBuyer || selectedBuyer === "placeholder"}
+                >
+                  Update Lot Information
+                </Button>
               </div>
-            </div>
+            )}
 
             {/* Bag Grid */}
             <div className="mb-6">
