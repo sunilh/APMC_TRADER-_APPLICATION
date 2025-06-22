@@ -12,6 +12,7 @@ import AuthPage from "@/pages/auth-page";
 import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntry from "@/pages/bag-entry";
+import BagEntryDebug from "@/pages/bag-entry-debug";
 
 import Settings from "@/pages/settings";
 
@@ -21,7 +22,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
-      <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
+      <ProtectedRoute path="/lots/:id/bags" component={BagEntryDebug} />
       <ProtectedRoute path="/settings" component={Settings} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
