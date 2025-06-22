@@ -83,8 +83,13 @@ export default function BagEntry() {
 
 
 
-  const { data: buyers } = useQuery<Buyer[]>({
+  const { data: buyers = [] } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
+    queryFn: async () => {
+      const response = await fetch("/api/buyers", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch buyers");
+      return response.json();
+    },
   });
 
   const { data: existingBags } = useQuery<Bag[]>({
@@ -305,10 +310,7 @@ export default function BagEntry() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Debug marker */}
-        <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
-          ✓ Bag Entry Main UI Rendering - Lot: {lot.lotNumber}
-        </div>
+
         <div className="mb-6">
           <Button 
             variant="ghost" 
@@ -375,11 +377,17 @@ export default function BagEntry() {
                       <SelectValue placeholder="Select buyer" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">Select a buyer</SelectItem>
                       {buyers?.map((buyer) => (
                         <SelectItem key={buyer.id} value={buyer.id.toString()}>
                           {buyer.name}
                         </SelectItem>
                       ))}
+                      {(!buyers || buyers.length === 0) && (
+                        <SelectItem value="no-buyers" disabled>
+                          No buyers available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <Button
