@@ -25,13 +25,22 @@ function requireTenant(req: any, res: any, next: any) {
 
 async function getTenantDB(req: any): Promise<TenantDB> {
   try {
+    if (!req.user?.tenantId) {
+      throw new Error("No tenant ID in user session");
+    }
+    
     const tenant = await storage.getTenant(req.user.tenantId);
     if (!tenant) {
-      throw new Error("Tenant not found");
+      throw new Error(`Tenant not found for ID: ${req.user.tenantId}`);
     }
+    
+    if (!tenant.schemaName) {
+      throw new Error(`No schema name for tenant: ${req.user.tenantId}`);
+    }
+    
     return new TenantDB(tenant.schemaName);
   } catch (error) {
-    console.error('Error getting tenant DB:', error);
+    console.error('Error getting tenant DB:', error, 'User:', req.user);
     throw error;
   }
 }

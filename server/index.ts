@@ -36,9 +36,11 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
+async function startServer() {
   try {
+    console.log('Starting server initialization...');
     const server = await registerRoutes(app);
+    console.log('Routes registered successfully');
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
@@ -47,43 +49,55 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
+    // Setup vite in development
     if (app.get("env") === "development") {
+      console.log('Setting up Vite...');
       await setupVite(app, server);
+      console.log('Vite setup complete');
     } else {
       serveStatic(app);
     }
 
-    // ALWAYS serve the app on port 5000
-    // this serves both the API and the client.
-    // It is the only port that is not firewalled.
     const port = 5000;
-    server.listen(port, "0.0.0.0", () => {
-      log(`serving on port ${port}`);
-    });
-
-    // Keep the process alive
-    process.on('SIGINT', () => {
-      console.log('Received SIGINT, shutting down gracefully');
-      server.close(() => {
-        process.exit(0);
+    return new Promise<void>((resolve, reject) => {
+      const serverInstance = server.listen(port, "0.0.0.0", () => {
+        log(`serving on port ${port}`);
+        console.log('Server started successfully');
+        resolve();
       });
-    });
 
-    process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
-    });
+      serverInstance.on('error', (error) => {
+        console.error('Server listen error:', error);
+        reject(error);
+      });
 
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      // Graceful shutdown
+      process.on('SIGINT', () => {
+        console.log('Received SIGINT, shutting down gracefully');
+        serverInstance.close(() => {
+          process.exit(0);
+        });
+      });
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    throw error;
   }
-})().catch(error => {
-  console.error('Unhandled error:', error);
+}
+
+// Error handlers
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Start the server
+startServer().catch(error => {
+  console.error('Server startup failed:', error);
   process.exit(1);
 });

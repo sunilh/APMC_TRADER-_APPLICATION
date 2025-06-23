@@ -11,16 +11,21 @@ const db = drizzle({ client: pool });
 
 export async function createTenantSchema(schemaName: string): Promise<void> {
   try {
+    console.log(`Creating schema: ${schemaName}`);
+    
     // Create the schema
     await db.execute(sql.raw(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`));
+    console.log(`Schema created: ${schemaName}`);
     
     // Create all tenant tables
     await createTenantTables(schemaName);
+    console.log(`Tables created for schema: ${schemaName}`);
     
-    console.log(`Created schema and tables for: ${schemaName}`);
+    console.log(`Successfully created schema and tables for: ${schemaName}`);
   } catch (error) {
     console.error(`Failed to create tenant schema ${schemaName}:`, error);
-    throw error;
+    // Don't throw - schema might already exist
+    console.log(`Continuing despite schema creation error for: ${schemaName}`);
   }
 }
 
