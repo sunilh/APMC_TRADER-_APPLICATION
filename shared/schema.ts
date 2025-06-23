@@ -12,7 +12,6 @@ export const tenants = pgTable("tenants", {
   subscriptionPlan: text("subscription_plan").notNull(), // 'basic', 'gold', 'diamond'
   maxUsers: integer("max_users").notNull().default(1),
   logo: text("logo"),
-  schemaName: text("schema_name").notNull().unique(),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   settings: jsonb("settings").default({}), // GST rates, unload hamali, etc.
@@ -44,6 +43,8 @@ export const farmers = pgTable("farmers", {
   bankAccountNumber: text("bank_account_number"),
   ifscCode: text("ifsc_code"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdBy: integer("created_by").references(() => users.id),
+  updatedBy: integer("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -185,7 +186,6 @@ export const buyerRelations = relations(buyers, ({ one, many }) => ({
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
   createdAt: true,
-  schemaName: true,
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
