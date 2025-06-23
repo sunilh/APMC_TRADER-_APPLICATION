@@ -321,6 +321,42 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Super admin setup route (only works if no super admin exists)
+  app.post("/api/setup-super-admin", async (req, res) => {
+    try {
+      // Check if super admin already exists
+      const existingSuperAdmin = await db.select().from(users).where(eq(users.role, 'super_admin')).limit(1);
+      
+      if (existingSuperAdmin.length > 0) {
+        return res.status(400).json({ message: "Super admin already exists" });
+      }
+
+      const validatedData = insertUserSchema.parse({
+        ...req.body,
+        role: 'super_admin',
+        tenantId: null, // Super admin doesn't belong to any tenant
+      });
+
+      const user = await storage.createUser(validatedData);
+      res.status(201).json({ id: user.id, username: user.username, role: user.role });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create super admin" });
+    }
+  });
+
+  // Check if super admin exists
+  app.get("/api/super-admin-exists", async (req, res) => {
+    try {
+      const existingSuperAdmin = await db.select().from(users).where(eq(users.role, 'super_admin')).limit(1);
+      res.json({ exists: existingSuperAdmin.length > 0 });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check super admin status" });
+    }
+  });
+
   // Tenant management (super admin only)
   app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
     try {
