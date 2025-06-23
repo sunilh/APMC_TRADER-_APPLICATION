@@ -85,7 +85,7 @@ export function registerRoutes(app: Express): Server {
         tenantId: req.user.tenantId,
       });
       
-      const farmer = await storage.createFarmer(validatedData);
+      const farmer = await storage.createFarmer(validatedData, req.user.id);
       await createAuditLog(req, 'create', 'farmer', farmer.id, null, farmer);
       
       res.status(201).json(farmer);
@@ -107,7 +107,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       const validatedData = insertFarmerSchema.partial().parse(req.body);
-      const farmer = await storage.updateFarmer(id, validatedData, req.user.tenantId);
+      const farmer = await storage.updateFarmer(id, validatedData, req.user.tenantId, req.user.id);
       
       await createAuditLog(req, 'update', 'farmer', farmer.id, oldFarmer, farmer);
       
@@ -173,7 +173,7 @@ export function registerRoutes(app: Express): Server {
         tenantId: req.user.tenantId,
       });
       
-      const lot = await storage.createLot(validatedData);
+      const lot = await storage.createLot(validatedData, req.user.id);
       await createAuditLog(req, 'create', 'lot', lot.id, null, lot);
       
       res.status(201).json(lot);
@@ -195,7 +195,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       const validatedData = insertLotSchema.partial().parse(req.body);
-      const lot = await storage.updateLot(id, validatedData, req.user.tenantId);
+      const lot = await storage.updateLot(id, validatedData, req.user.tenantId, req.user.id);
       
       await createAuditLog(req, 'update', 'lot', lot.id, oldLot, lot);
       
@@ -226,7 +226,7 @@ export function registerRoutes(app: Express): Server {
         tenantId: req.user.tenantId,
       });
       
-      const bag = await storage.createBag(validatedData);
+      const bag = await storage.createBag(validatedData, req.user.id);
       await createAuditLog(req, 'create', 'bag', bag.id, null, bag);
       
       res.status(201).json(bag);
@@ -243,7 +243,7 @@ export function registerRoutes(app: Express): Server {
       const id = parseInt(req.params.id);
       const validatedData = insertBagSchema.partial().parse(req.body);
       
-      const bag = await storage.updateBag(id, validatedData, req.user.tenantId);
+      const bag = await storage.updateBag(id, validatedData, req.user.tenantId, req.user.id);
       await createAuditLog(req, 'update', 'bag', bag.id, null, bag);
       
       res.json(bag);
@@ -297,7 +297,7 @@ export function registerRoutes(app: Express): Server {
       const buyerId = parseInt(req.params.id);
       const validatedData = insertBuyerSchema.partial().parse(req.body);
       
-      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId);
+      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId, req.user.id);
       await createAuditLog(req, 'update', 'buyer', buyerId, null, buyer);
       
       res.json(buyer);

@@ -31,27 +31,27 @@ export interface IStorage {
   // Farmer management
   getFarmer(id: number, tenantId: number): Promise<Farmer | undefined>;
   getFarmersByTenant(tenantId: number, search?: string): Promise<Farmer[]>;
-  createFarmer(farmer: InsertFarmer): Promise<Farmer>;
-  updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number): Promise<Farmer>;
+  createFarmer(farmer: InsertFarmer, userId?: number): Promise<Farmer>;
+  updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number, userId?: number): Promise<Farmer>;
   deleteFarmer(id: number, tenantId: number): Promise<void>;
 
   // Lot management
   getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined>;
   getLotsByTenant(tenantId: number, search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
-  createLot(lot: InsertLot): Promise<Lot>;
-  updateLot(id: number, lot: Partial<InsertLot>, tenantId: number): Promise<Lot>;
+  createLot(lot: InsertLot, userId?: number): Promise<Lot>;
+  updateLot(id: number, lot: Partial<InsertLot>, tenantId: number, userId?: number): Promise<Lot>;
   deleteLot(id: number, tenantId: number): Promise<void>;
 
   // Bag management
   getBagsByLot(lotId: number, tenantId: number): Promise<Bag[]>;
-  createBag(bag: InsertBag): Promise<Bag>;
-  updateBag(id: number, bag: Partial<InsertBag>, tenantId: number): Promise<Bag>;
+  createBag(bag: InsertBag, userId?: number): Promise<Bag>;
+  updateBag(id: number, bag: Partial<InsertBag>, tenantId: number, userId?: number): Promise<Bag>;
   deleteBag(id: number, tenantId: number): Promise<void>;
 
   // Buyer management
   getBuyersByTenant(tenantId: number): Promise<Buyer[]>;
-  createBuyer(buyer: InsertBuyer): Promise<Buyer>;
-  updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer>;
+  createBuyer(buyer: InsertBuyer, userId?: number): Promise<Buyer>;
+  updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number, userId?: number): Promise<Buyer>;
   deleteBuyer(id: number, tenantId: number): Promise<void>;
 
   // Audit logging
@@ -144,14 +144,19 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(farmers.createdAt));
   }
 
-  async createFarmer(farmer: InsertFarmer): Promise<Farmer> {
-    const [newFarmer] = await db.insert(farmers).values(farmer).returning();
+  async createFarmer(farmer: InsertFarmer, userId?: number): Promise<Farmer> {
+    const farmerData = {
+      ...farmer,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    const [newFarmer] = await db.insert(farmers).values(farmerData).returning();
     return newFarmer;
   }
 
-  async updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number): Promise<Farmer> {
+  async updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number, userId?: number): Promise<Farmer> {
     const [updatedFarmer] = await db.update(farmers)
-      .set({ ...farmer, updatedAt: new Date() })
+      .set({ ...farmer, updatedBy: userId, updatedAt: new Date() })
       .where(and(eq(farmers.id, id), eq(farmers.tenantId, tenantId)))
       .returning();
     return updatedFarmer;
@@ -200,14 +205,19 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createLot(lot: InsertLot): Promise<Lot> {
-    const [newLot] = await db.insert(lots).values(lot).returning();
+  async createLot(lot: InsertLot, userId?: number): Promise<Lot> {
+    const lotData = {
+      ...lot,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    const [newLot] = await db.insert(lots).values(lotData).returning();
     return newLot;
   }
 
-  async updateLot(id: number, lot: Partial<InsertLot>, tenantId: number): Promise<Lot> {
+  async updateLot(id: number, lot: Partial<InsertLot>, tenantId: number, userId?: number): Promise<Lot> {
     const [updatedLot] = await db.update(lots)
-      .set({ ...lot, updatedAt: new Date() })
+      .set({ ...lot, updatedBy: userId, updatedAt: new Date() })
       .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)))
       .returning();
     return updatedLot;
@@ -223,14 +233,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(bags.bagNumber);
   }
 
-  async createBag(bag: InsertBag): Promise<Bag> {
-    const [newBag] = await db.insert(bags).values(bag).returning();
+  async createBag(bag: InsertBag, userId?: number): Promise<Bag> {
+    const bagData = {
+      ...bag,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    const [newBag] = await db.insert(bags).values(bagData).returning();
     return newBag;
   }
 
-  async updateBag(id: number, bag: Partial<InsertBag>, tenantId: number): Promise<Bag> {
+  async updateBag(id: number, bag: Partial<InsertBag>, tenantId: number, userId?: number): Promise<Bag> {
     const [updatedBag] = await db.update(bags)
-      .set({ ...bag, updatedAt: new Date() })
+      .set({ ...bag, updatedBy: userId, updatedAt: new Date() })
       .where(and(eq(bags.id, id), eq(bags.tenantId, tenantId)))
       .returning();
     return updatedBag;
@@ -244,15 +259,20 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(buyers).where(eq(buyers.tenantId, tenantId));
   }
 
-  async createBuyer(buyer: InsertBuyer): Promise<Buyer> {
-    const [newBuyer] = await db.insert(buyers).values(buyer).returning();
+  async createBuyer(buyer: InsertBuyer, userId?: number): Promise<Buyer> {
+    const buyerData = {
+      ...buyer,
+      createdBy: userId,
+      updatedBy: userId,
+    };
+    const [newBuyer] = await db.insert(buyers).values(buyerData).returning();
     return newBuyer;
   }
 
-  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer> {
+  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number, userId?: number): Promise<Buyer> {
     const [updated] = await db
       .update(buyers)
-      .set({ ...buyer, updatedAt: new Date() })
+      .set({ ...buyer, updatedBy: userId, updatedAt: new Date() })
       .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
       .returning();
     

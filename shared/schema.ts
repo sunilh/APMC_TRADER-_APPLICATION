@@ -59,6 +59,8 @@ export const buyers = pgTable("buyers", {
   mobile: text("mobile"),
   address: text("address"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdBy: integer("created_by").references(() => users.id),
+  updatedBy: integer("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -77,6 +79,8 @@ export const lots = pgTable("lots", {
   buyerId: integer("buyer_id").references(() => buyers.id),
   status: text("status").notNull().default("active"), // 'active', 'completed', 'cancelled'
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdBy: integer("created_by").references(() => users.id),
+  updatedBy: integer("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -93,6 +97,8 @@ export const bags = pgTable("bags", {
   grade: text("grade"),
   notes: text("notes"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdBy: integer("created_by").references(() => users.id),
+  updatedBy: integer("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -191,18 +197,24 @@ export const insertFarmerSchema = createInsertSchema(farmers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const insertLotSchema = createInsertSchema(lots).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 });
 
 export const insertBagSchema = createInsertSchema(bags).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 }).extend({
   weight: z.string().optional(),
   grade: z.string().optional(),
@@ -213,6 +225,8 @@ export const insertBuyerSchema = createInsertSchema(buyers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,
+  updatedBy: true,
 }).extend({
   name: z.string().min(1, "Company name is required"),
   contactPerson: z.string().optional(),
