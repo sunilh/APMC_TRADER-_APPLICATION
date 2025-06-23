@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { createTenantSchema } from "./schema-manager";
+import { TenantStorage } from "./tenant-storage";
 import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -17,6 +19,14 @@ function requireTenant(req: any, res: any, next: any) {
     return res.status(403).json({ message: "Tenant access required" });
   }
   next();
+}
+
+async function getTenantStorage(req: any): Promise<TenantStorage> {
+  const tenant = await storage.getTenant(req.user.tenantId);
+  if (!tenant) {
+    throw new Error("Tenant not found");
+  }
+  return new TenantStorage(tenant.schemaName);
 }
 
 function requireSuperAdmin(req: any, res: any, next: any) {
@@ -373,6 +383,9 @@ export function registerRoutes(app: Express): Server {
       });
       
       const tenant = await storage.createTenant(validatedTenantData);
+      
+      // Create separate schema for this tenant
+      await createTenantSchema(tenant.schemaName);
       
       // Create admin user for the tenant
       const adminUserData = {
