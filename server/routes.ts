@@ -122,16 +122,24 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const oldFarmer = await storage.getFarmer(id, req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const oldFarmer = await tenantDB.getFarmer(id);
       
       if (!oldFarmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
 
       const validatedData = insertFarmerSchema.partial().parse(req.body);
-      const farmer = await storage.updateFarmer(id, validatedData, req.user.tenantId, req.user.id);
+      const farmer = await tenantDB.updateFarmer(id, validatedData, req.user.id);
       
-      await createAuditLog(req, 'update', 'farmer', farmer.id, oldFarmer, farmer);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'update',
+        entityType: 'farmer',
+        entityId: farmer.id,
+        oldData: oldFarmer,
+        newData: farmer
+      });
       
       res.json(farmer);
     } catch (error) {
@@ -145,14 +153,22 @@ export function registerRoutes(app: Express): Server {
   app.delete("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const farmer = await storage.getFarmer(id, req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const farmer = await tenantDB.getFarmer(id);
       
       if (!farmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
 
-      await storage.deleteFarmer(id, req.user.tenantId);
-      await createAuditLog(req, 'delete', 'farmer', id, farmer, null);
+      await tenantDB.deleteFarmer(id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'delete',
+        entityType: 'farmer',
+        entityId: id,
+        oldData: farmer,
+        newData: null
+      });
       
       res.status(204).send();
     } catch (error) {
@@ -174,7 +190,8 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
     try {
-      const lot = await storage.getLot(parseInt(req.params.id), req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const lot = await tenantDB.getLot(parseInt(req.params.id));
       if (!lot) {
         return res.status(404).json({ message: "Lot not found" });
       }
@@ -186,18 +203,26 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
+      const tenantDB = await getTenantDB(req);
+      
       // Generate lot number
-      const existingLots = await storage.getLotsByTenant(req.user.tenantId);
+      const existingLots = await tenantDB.getLots();
       const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, '0')}`;
 
       const validatedData = insertLotSchema.parse({
         ...req.body,
         lotNumber,
-        tenantId: req.user.tenantId,
       });
       
-      const lot = await storage.createLot(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'lot', lot.id, null, lot);
+      const lot = await tenantDB.createLot(validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'create',
+        entityType: 'lot',
+        entityId: lot.id,
+        oldData: null,
+        newData: lot
+      });
       
       res.status(201).json(lot);
     } catch (error) {
@@ -211,16 +236,24 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const oldLot = await storage.getLot(id, req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const oldLot = await tenantDB.getLot(id);
       
       if (!oldLot) {
         return res.status(404).json({ message: "Lot not found" });
       }
 
       const validatedData = insertLotSchema.partial().parse(req.body);
-      const lot = await storage.updateLot(id, validatedData, req.user.tenantId, req.user.id);
+      const lot = await tenantDB.updateLot(id, validatedData, req.user.id);
       
-      await createAuditLog(req, 'update', 'lot', lot.id, oldLot, lot);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'update',
+        entityType: 'lot',
+        entityId: lot.id,
+        oldData: oldLot,
+        newData: lot
+      });
       
       res.json(lot);
     } catch (error) {
@@ -307,28 +340,25 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
-      console.log("Creating buyer - request body:", req.body);
-      console.log("User tenant ID:", req.user.tenantId);
+      const validatedData = insertBuyerSchema.parse(req.body);
       
-      const validatedData = insertBuyerSchema.parse({
-        ...req.body,
-        tenantId: req.user.tenantId,
+      const tenantDB = await getTenantDB(req);
+      const buyer = await tenantDB.createBuyer(validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'create',
+        entityType: 'buyer',
+        entityId: buyer.id,
+        oldData: null,
+        newData: buyer
       });
-      
-      console.log("Validated buyer data:", validatedData);
-      
-      const buyer = await storage.createBuyer(validatedData);
-      console.log("Created buyer:", buyer);
-      
-      await createAuditLog(req, 'create', 'buyer', buyer.id, null, buyer);
       
       res.status(201).json(buyer);
     } catch (error) {
-      console.error("Buyer creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create buyer", error: error.message });
+      res.status(500).json({ message: "Failed to create buyer" });
     }
   });
 
@@ -337,8 +367,16 @@ export function registerRoutes(app: Express): Server {
       const buyerId = parseInt(req.params.id);
       const validatedData = insertBuyerSchema.partial().parse(req.body);
       
-      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId, req.user.id);
-      await createAuditLog(req, 'update', 'buyer', buyerId, null, buyer);
+      const tenantDB = await getTenantDB(req);
+      const buyer = await tenantDB.updateBuyer(buyerId, validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'update',
+        entityType: 'buyer',
+        entityId: buyerId,
+        oldData: null,
+        newData: buyer
+      });
       
       res.json(buyer);
     } catch (error) {
@@ -352,8 +390,16 @@ export function registerRoutes(app: Express): Server {
   app.delete("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const buyerId = parseInt(req.params.id);
-      await storage.deleteBuyer(buyerId, req.user.tenantId);
-      await createAuditLog(req, 'delete', 'buyer', buyerId, null, null);
+      const tenantDB = await getTenantDB(req);
+      await tenantDB.deleteBuyer(buyerId);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'delete',
+        entityType: 'buyer',
+        entityId: buyerId,
+        oldData: null,
+        newData: null
+      });
       
       res.status(204).send();
     } catch (error) {
