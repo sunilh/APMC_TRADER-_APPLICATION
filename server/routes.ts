@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { createTenantSchema, TenantDB } from "./tenant-db";
 import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema, insertUserSchema } from "@shared/schema";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
@@ -20,6 +21,14 @@ function requireTenant(req: any, res: any, next: any) {
     return res.status(403).json({ message: "Tenant access required" });
   }
   next();
+}
+
+async function getTenantDB(req: any): Promise<TenantDB> {
+  const tenant = await storage.getTenant(req.user.tenantId);
+  if (!tenant) {
+    throw new Error("Tenant not found");
+  }
+  return new TenantDB(tenant.schemaName);
 }
 
 
@@ -53,7 +62,8 @@ export function registerRoutes(app: Express): Server {
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, requireTenant, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats(req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const stats = await tenantDB.getDashboardStats();
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
@@ -64,7 +74,8 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmers", requireAuth, requireTenant, async (req, res) => {
     try {
       const { search } = req.query;
-      const farmers = await storage.getFarmersByTenant(req.user.tenantId, search as string);
+      const tenantDB = await getTenantDB(req);
+      const farmers = await tenantDB.getFarmers(search as string);
       res.json(farmers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch farmers" });
@@ -73,7 +84,8 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
-      const farmer = await storage.getFarmer(parseInt(req.params.id), req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const farmer = await tenantDB.getFarmer(parseInt(req.params.id));
       if (!farmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
@@ -85,13 +97,18 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/farmers", requireAuth, requireTenant, async (req, res) => {
     try {
-      const validatedData = insertFarmerSchema.parse({
-        ...req.body,
-        tenantId: req.user.tenantId,
-      });
+      const validatedData = insertFarmerSchema.parse(req.body);
+      const tenantDB = await getTenantDB(req);
       
-      const farmer = await storage.createFarmer(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'farmer', farmer.id, null, farmer);
+      const farmer = await tenantDB.createFarmer(validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'create',
+        entityType: 'farmer',
+        entityId: farmer.id,
+        oldData: null,
+        newData: farmer
+      });
       
       res.status(201).json(farmer);
     } catch (error) {
@@ -147,7 +164,8 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
       const { search } = req.query;
-      const lots = await storage.getLotsByTenant(req.user.tenantId, search as string);
+      const tenantDB = await getTenantDB(req);
+      const lots = await tenantDB.getLots(search as string);
       res.json(lots);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch lots" });
@@ -216,7 +234,8 @@ export function registerRoutes(app: Express): Server {
   // Bag routes
   app.get("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
     try {
-      const bags = await storage.getBagsByLot(parseInt(req.params.lotId), req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const bags = await tenantDB.getBagsByLot(parseInt(req.params.lotId));
       res.json(bags);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch bags" });
@@ -228,11 +247,18 @@ export function registerRoutes(app: Express): Server {
       const validatedData = insertBagSchema.parse({
         ...req.body,
         lotId: parseInt(req.params.lotId),
-        tenantId: req.user.tenantId,
       });
       
-      const bag = await storage.createBag(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'bag', bag.id, null, bag);
+      const tenantDB = await getTenantDB(req);
+      const bag = await tenantDB.createBag(validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'create',
+        entityType: 'bag',
+        entityId: bag.id,
+        oldData: null,
+        newData: bag
+      });
       
       res.status(201).json(bag);
     } catch (error) {
@@ -248,8 +274,16 @@ export function registerRoutes(app: Express): Server {
       const id = parseInt(req.params.id);
       const validatedData = insertBagSchema.partial().parse(req.body);
       
-      const bag = await storage.updateBag(id, validatedData, req.user.tenantId, req.user.id);
-      await createAuditLog(req, 'update', 'bag', bag.id, null, bag);
+      const tenantDB = await getTenantDB(req);
+      const bag = await tenantDB.updateBag(id, validatedData, req.user.id);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action: 'update',
+        entityType: 'bag',
+        entityId: bag.id,
+        oldData: null,
+        newData: bag
+      });
       
       res.json(bag);
     } catch (error) {
@@ -263,7 +297,8 @@ export function registerRoutes(app: Express): Server {
   // Buyer routes
   app.get("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
-      const buyers = await storage.getBuyersByTenant(req.user.tenantId);
+      const tenantDB = await getTenantDB(req);
+      const buyers = await tenantDB.getBuyers();
       res.json(buyers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch buyers" });
@@ -379,6 +414,8 @@ export function registerRoutes(app: Express): Server {
       
       const tenant = await storage.createTenant(validatedTenantData);
       
+      // Create separate schema for this tenant
+      await createTenantSchema(tenant.schemaName);
 
       // Create admin user for the tenant
       const adminUserData = {
