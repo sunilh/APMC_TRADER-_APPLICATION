@@ -2,11 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { createTenantSchema, TenantDB } from "./tenant-db";
-import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema, insertUserSchema } from "@shared/schema";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import { db } from "./db";
+import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema } from "@shared/schema";
 import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
@@ -23,30 +19,6 @@ function requireTenant(req: any, res: any, next: any) {
   next();
 }
 
-async function getTenantDB(req: any): Promise<TenantDB> {
-  try {
-    if (!req.user?.tenantId) {
-      throw new Error("No tenant ID in user session");
-    }
-    
-    const tenant = await storage.getTenant(req.user.tenantId);
-    if (!tenant) {
-      throw new Error(`Tenant not found for ID: ${req.user.tenantId}`);
-    }
-    
-    if (!tenant.schemaName) {
-      throw new Error(`No schema name for tenant: ${req.user.tenantId}`);
-    }
-    
-    return new TenantDB(tenant.schemaName);
-  } catch (error) {
-    console.error('Error getting tenant DB:', error, 'User:', req.user);
-    throw error;
-  }
-}
-
-
-
 function requireSuperAdmin(req: any, res: any, next: any) {
   if (req.user?.role !== 'super_admin') {
     return res.status(403).json({ message: "Super admin access required" });
@@ -56,19 +28,17 @@ function requireSuperAdmin(req: any, res: any, next: any) {
 
 async function createAuditLog(req: any, action: string, entityType?: string, entityId?: number, oldData?: any, newData?: any) {
   if (req.user) {
-    try {
-      const tenantDB = await getTenantDB(req);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action,
-        entityType,
-        entityId,
-        oldData,
-        newData,
-      });
-    } catch (error) {
-      console.error('Failed to create audit log:', error);
-    }
+    await storage.createAuditLog({
+      userId: req.user.id,
+      tenantId: req.user.tenantId,
+      action,
+      entityType,
+      entityId,
+      oldData,
+      newData,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+    });
   }
 }
 
@@ -78,8 +48,7 @@ export function registerRoutes(app: Express): Server {
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      const stats = await tenantDB.getDashboardStats();
+      const stats = await storage.getDashboardStats(req.user.tenantId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
@@ -90,8 +59,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmers", requireAuth, requireTenant, async (req, res) => {
     try {
       const { search } = req.query;
-      const tenantDB = await getTenantDB(req);
-      const farmers = await tenantDB.getFarmers(search as string);
+      const farmers = await storage.getFarmersByTenant(req.user.tenantId, search as string);
       res.json(farmers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch farmers" });
@@ -100,8 +68,7 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      const farmer = await tenantDB.getFarmer(parseInt(req.params.id));
+      const farmer = await storage.getFarmer(parseInt(req.params.id), req.user.tenantId);
       if (!farmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
@@ -113,18 +80,13 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/farmers", requireAuth, requireTenant, async (req, res) => {
     try {
-      const validatedData = insertFarmerSchema.parse(req.body);
-      const tenantDB = await getTenantDB(req);
-      
-      const farmer = await tenantDB.createFarmer(validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'create',
-        entityType: 'farmer',
-        entityId: farmer.id,
-        oldData: null,
-        newData: farmer
+      const validatedData = insertFarmerSchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
       });
+      
+      const farmer = await storage.createFarmer(validatedData, req.user.id);
+      await createAuditLog(req, 'create', 'farmer', farmer.id, null, farmer);
       
       res.status(201).json(farmer);
     } catch (error) {
@@ -138,24 +100,16 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const tenantDB = await getTenantDB(req);
-      const oldFarmer = await tenantDB.getFarmer(id);
+      const oldFarmer = await storage.getFarmer(id, req.user.tenantId);
       
       if (!oldFarmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
 
       const validatedData = insertFarmerSchema.partial().parse(req.body);
-      const farmer = await tenantDB.updateFarmer(id, validatedData, req.user.id);
+      const farmer = await storage.updateFarmer(id, validatedData, req.user.tenantId, req.user.id);
       
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'update',
-        entityType: 'farmer',
-        entityId: farmer.id,
-        oldData: oldFarmer,
-        newData: farmer
-      });
+      await createAuditLog(req, 'update', 'farmer', farmer.id, oldFarmer, farmer);
       
       res.json(farmer);
     } catch (error) {
@@ -169,22 +123,14 @@ export function registerRoutes(app: Express): Server {
   app.delete("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const tenantDB = await getTenantDB(req);
-      const farmer = await tenantDB.getFarmer(id);
+      const farmer = await storage.getFarmer(id, req.user.tenantId);
       
       if (!farmer) {
         return res.status(404).json({ message: "Farmer not found" });
       }
 
-      await tenantDB.deleteFarmer(id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'delete',
-        entityType: 'farmer',
-        entityId: id,
-        oldData: farmer,
-        newData: null
-      });
+      await storage.deleteFarmer(id, req.user.tenantId);
+      await createAuditLog(req, 'delete', 'farmer', id, farmer, null);
       
       res.status(204).send();
     } catch (error) {
@@ -196,8 +142,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
       const { search } = req.query;
-      const tenantDB = await getTenantDB(req);
-      const lots = await tenantDB.getLots(search as string);
+      const lots = await storage.getLotsByTenant(req.user.tenantId, search as string);
       res.json(lots);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch lots" });
@@ -206,8 +151,7 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      const lot = await tenantDB.getLot(parseInt(req.params.id));
+      const lot = await storage.getLot(parseInt(req.params.id), req.user.tenantId);
       if (!lot) {
         return res.status(404).json({ message: "Lot not found" });
       }
@@ -219,26 +163,18 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      
       // Generate lot number
-      const existingLots = await tenantDB.getLots();
+      const existingLots = await storage.getLotsByTenant(req.user.tenantId);
       const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, '0')}`;
 
       const validatedData = insertLotSchema.parse({
         ...req.body,
         lotNumber,
+        tenantId: req.user.tenantId,
       });
       
-      const lot = await tenantDB.createLot(validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'create',
-        entityType: 'lot',
-        entityId: lot.id,
-        oldData: null,
-        newData: lot
-      });
+      const lot = await storage.createLot(validatedData, req.user.id);
+      await createAuditLog(req, 'create', 'lot', lot.id, null, lot);
       
       res.status(201).json(lot);
     } catch (error) {
@@ -252,24 +188,16 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const tenantDB = await getTenantDB(req);
-      const oldLot = await tenantDB.getLot(id);
+      const oldLot = await storage.getLot(id, req.user.tenantId);
       
       if (!oldLot) {
         return res.status(404).json({ message: "Lot not found" });
       }
 
       const validatedData = insertLotSchema.partial().parse(req.body);
-      const lot = await tenantDB.updateLot(id, validatedData, req.user.id);
+      const lot = await storage.updateLot(id, validatedData, req.user.tenantId, req.user.id);
       
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'update',
-        entityType: 'lot',
-        entityId: lot.id,
-        oldData: oldLot,
-        newData: lot
-      });
+      await createAuditLog(req, 'update', 'lot', lot.id, oldLot, lot);
       
       res.json(lot);
     } catch (error) {
@@ -283,8 +211,7 @@ export function registerRoutes(app: Express): Server {
   // Bag routes
   app.get("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      const bags = await tenantDB.getBagsByLot(parseInt(req.params.lotId));
+      const bags = await storage.getBagsByLot(parseInt(req.params.lotId), req.user.tenantId);
       res.json(bags);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch bags" });
@@ -296,18 +223,11 @@ export function registerRoutes(app: Express): Server {
       const validatedData = insertBagSchema.parse({
         ...req.body,
         lotId: parseInt(req.params.lotId),
+        tenantId: req.user.tenantId,
       });
       
-      const tenantDB = await getTenantDB(req);
-      const bag = await tenantDB.createBag(validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'create',
-        entityType: 'bag',
-        entityId: bag.id,
-        oldData: null,
-        newData: bag
-      });
+      const bag = await storage.createBag(validatedData, req.user.id);
+      await createAuditLog(req, 'create', 'bag', bag.id, null, bag);
       
       res.status(201).json(bag);
     } catch (error) {
@@ -323,16 +243,8 @@ export function registerRoutes(app: Express): Server {
       const id = parseInt(req.params.id);
       const validatedData = insertBagSchema.partial().parse(req.body);
       
-      const tenantDB = await getTenantDB(req);
-      const bag = await tenantDB.updateBag(id, validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'update',
-        entityType: 'bag',
-        entityId: bag.id,
-        oldData: null,
-        newData: bag
-      });
+      const bag = await storage.updateBag(id, validatedData, req.user.tenantId, req.user.id);
+      await createAuditLog(req, 'update', 'bag', bag.id, null, bag);
       
       res.json(bag);
     } catch (error) {
@@ -346,8 +258,7 @@ export function registerRoutes(app: Express): Server {
   // Buyer routes
   app.get("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
-      const tenantDB = await getTenantDB(req);
-      const buyers = await tenantDB.getBuyers();
+      const buyers = await storage.getBuyersByTenant(req.user.tenantId);
       res.json(buyers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch buyers" });
@@ -356,25 +267,28 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
-      const validatedData = insertBuyerSchema.parse(req.body);
+      console.log("Creating buyer - request body:", req.body);
+      console.log("User tenant ID:", req.user.tenantId);
       
-      const tenantDB = await getTenantDB(req);
-      const buyer = await tenantDB.createBuyer(validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'create',
-        entityType: 'buyer',
-        entityId: buyer.id,
-        oldData: null,
-        newData: buyer
+      const validatedData = insertBuyerSchema.parse({
+        ...req.body,
+        tenantId: req.user.tenantId,
       });
+      
+      console.log("Validated buyer data:", validatedData);
+      
+      const buyer = await storage.createBuyer(validatedData);
+      console.log("Created buyer:", buyer);
+      
+      await createAuditLog(req, 'create', 'buyer', buyer.id, null, buyer);
       
       res.status(201).json(buyer);
     } catch (error) {
+      console.error("Buyer creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to create buyer" });
+      res.status(500).json({ message: "Failed to create buyer", error: error.message });
     }
   });
 
@@ -383,16 +297,8 @@ export function registerRoutes(app: Express): Server {
       const buyerId = parseInt(req.params.id);
       const validatedData = insertBuyerSchema.partial().parse(req.body);
       
-      const tenantDB = await getTenantDB(req);
-      const buyer = await tenantDB.updateBuyer(buyerId, validatedData, req.user.id);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'update',
-        entityType: 'buyer',
-        entityId: buyerId,
-        oldData: null,
-        newData: buyer
-      });
+      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId, req.user.id);
+      await createAuditLog(req, 'update', 'buyer', buyerId, null, buyer);
       
       res.json(buyer);
     } catch (error) {
@@ -406,16 +312,8 @@ export function registerRoutes(app: Express): Server {
   app.delete("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
     try {
       const buyerId = parseInt(req.params.id);
-      const tenantDB = await getTenantDB(req);
-      await tenantDB.deleteBuyer(buyerId);
-      await tenantDB.createAuditLog({
-        userId: req.user.id,
-        action: 'delete',
-        entityType: 'buyer',
-        entityId: buyerId,
-        oldData: null,
-        newData: null
-      });
+      await storage.deleteBuyer(buyerId, req.user.tenantId);
+      await createAuditLog(req, 'delete', 'buyer', buyerId, null, null);
       
       res.status(204).send();
     } catch (error) {
@@ -476,15 +374,6 @@ export function registerRoutes(app: Express): Server {
       
       const tenant = await storage.createTenant(validatedTenantData);
       
-      // Create separate schema for this tenant
-      try {
-        await createTenantSchema(tenant.schemaName);
-        console.log(`Successfully created schema: ${tenant.schemaName}`);
-      } catch (error) {
-        console.error(`Failed to create schema ${tenant.schemaName}:`, error);
-        // Continue anyway - schema might already exist
-      }
-
       // Create admin user for the tenant
       const adminUserData = {
         ...adminUser,
@@ -525,11 +414,5 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
-  
-  // Add error handling for the server
-  httpServer.on('error', (error) => {
-    console.error('HTTP Server error:', error);
-  });
-  
   return httpServer;
 }
