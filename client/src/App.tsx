@@ -18,25 +18,11 @@ import BuyersSimple from "@/pages/buyers-simple";
 import Settings from "@/pages/settings";
 
 function Router() {
-  const { user, isLoading } = useAuth();
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Switch>
+      <Route path="/auth" component={AuthPage} />
       <Route path="/super-admin-setup" component={SuperAdminSetup} />
       <Route path="/tenant-registration" component={TenantRegistration} />
-      <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
