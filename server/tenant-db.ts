@@ -1,6 +1,10 @@
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
+import ws from "ws";
+import { neonConfig } from '@neondatabase/serverless';
+
+neonConfig.webSocketConstructor = ws;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle({ client: pool });
@@ -115,8 +119,7 @@ export class TenantDB {
 
   constructor(schemaName: string) {
     this.schema = schemaName;
-    const tenantPool = new Pool({ connectionString: process.env.DATABASE_URL });
-    this.db = drizzle({ client: tenantPool });
+    this.db = db; // Use the shared connection
   }
 
   // Farmers
@@ -149,8 +152,8 @@ export class TenantDB {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `, [
-      farmer.name, farmer.nameAsInBank, farmer.mobile, farmer.place,
-      farmer.bankName, farmer.accountNumber, farmer.ifscCode, userId, userId
+      farmer.name, farmer.nameAsInBank || farmer.name, farmer.mobile, farmer.place,
+      farmer.bankName || null, farmer.accountNumber || null, farmer.ifscCode || null, userId, userId
     ]));
     return result.rows[0];
   }

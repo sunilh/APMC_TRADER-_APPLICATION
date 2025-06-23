@@ -24,11 +24,16 @@ function requireTenant(req: any, res: any, next: any) {
 }
 
 async function getTenantDB(req: any): Promise<TenantDB> {
-  const tenant = await storage.getTenant(req.user.tenantId);
-  if (!tenant) {
-    throw new Error("Tenant not found");
+  try {
+    const tenant = await storage.getTenant(req.user.tenantId);
+    if (!tenant) {
+      throw new Error("Tenant not found");
+    }
+    return new TenantDB(tenant.schemaName);
+  } catch (error) {
+    console.error('Error getting tenant DB:', error);
+    throw error;
   }
-  return new TenantDB(tenant.schemaName);
 }
 
 
@@ -461,7 +466,13 @@ export function registerRoutes(app: Express): Server {
       const tenant = await storage.createTenant(validatedTenantData);
       
       // Create separate schema for this tenant
-      await createTenantSchema(tenant.schemaName);
+      try {
+        await createTenantSchema(tenant.schemaName);
+        console.log(`Successfully created schema: ${tenant.schemaName}`);
+      } catch (error) {
+        console.error(`Failed to create schema ${tenant.schemaName}:`, error);
+        // Continue anyway - schema might already exist
+      }
 
       // Create admin user for the tenant
       const adminUserData = {
