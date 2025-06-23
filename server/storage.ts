@@ -115,7 +115,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTenant(tenant: InsertTenant): Promise<Tenant> {
-    const [newTenant] = await db.insert(tenants).values([tenant]).returning();
+    const tenantData = {
+      ...tenant,
+      schemaName: `tenant_${tenant.apmcCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+    };
+    const [newTenant] = await db.insert(tenants).values(tenantData).returning();
     return newTenant;
   }
 
@@ -155,8 +159,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number, userId?: number): Promise<Farmer> {
+    const updateData: any = { ...farmer, updatedAt: new Date() };
+    if (userId) updateData.updatedBy = userId;
+    
     const [updatedFarmer] = await db.update(farmers)
-      .set({ ...farmer, updatedBy: userId, updatedAt: new Date() })
+      .set(updateData)
       .where(and(eq(farmers.id, id), eq(farmers.tenantId, tenantId)))
       .returning();
     return updatedFarmer;
@@ -216,8 +223,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateLot(id: number, lot: Partial<InsertLot>, tenantId: number, userId?: number): Promise<Lot> {
+    const updateData: any = { ...lot, updatedAt: new Date() };
+    if (userId) updateData.updatedBy = userId;
+    
     const [updatedLot] = await db.update(lots)
-      .set({ ...lot, updatedBy: userId, updatedAt: new Date() })
+      .set(updateData)
       .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)))
       .returning();
     return updatedLot;
@@ -244,8 +254,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBag(id: number, bag: Partial<InsertBag>, tenantId: number, userId?: number): Promise<Bag> {
+    const updateData: any = { ...bag, updatedAt: new Date() };
+    if (userId) updateData.updatedBy = userId;
+    
     const [updatedBag] = await db.update(bags)
-      .set({ ...bag, updatedBy: userId, updatedAt: new Date() })
+      .set(updateData)
       .where(and(eq(bags.id, id), eq(bags.tenantId, tenantId)))
       .returning();
     return updatedBag;
@@ -270,9 +283,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number, userId?: number): Promise<Buyer> {
+    const updateData: any = { ...buyer, updatedAt: new Date() };
+    if (userId) updateData.updatedBy = userId;
+    
     const [updated] = await db
       .update(buyers)
-      .set({ ...buyer, updatedBy: userId, updatedAt: new Date() })
+      .set(updateData)
       .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
       .returning();
     
@@ -289,13 +305,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)));
   }
 
-  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer> {
-    const [updatedBuyer] = await db.update(buyers)
-      .set(buyer)
-      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
-      .returning();
-    return updatedBuyer;
-  }
+
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     const [newLog] = await db.insert(auditLogs).values(log).returning();

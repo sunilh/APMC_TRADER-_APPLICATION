@@ -197,24 +197,18 @@ export const insertFarmerSchema = createInsertSchema(farmers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
 });
 
 export const insertLotSchema = createInsertSchema(lots).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
 });
 
 export const insertBagSchema = createInsertSchema(bags).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
 }).extend({
   weight: z.string().optional(),
   grade: z.string().optional(),
@@ -225,8 +219,6 @@ export const insertBuyerSchema = createInsertSchema(buyers).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  createdBy: true,
-  updatedBy: true,
 }).extend({
   name: z.string().min(1, "Company name is required"),
   contactPerson: z.string().optional(),
