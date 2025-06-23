@@ -173,13 +173,22 @@ export default function BagEntry() {
     }
   }, [existingBags, bagData.length]);
 
-  // Force refresh of lot data when component mounts
+  // Force refresh of lot data when component mounts and show existing data immediately
   useEffect(() => {
     if (!isNaN(lotId)) {
       queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId] });
       queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId, "bags"] });
     }
   }, [lotId]);
+
+  // Initialize form values from existing lot data
+  useEffect(() => {
+    if (lot) {
+      if (lot.lotPrice) setLotPrice(lot.lotPrice);
+      if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
+      setTotalBags(lot.numberOfBags);
+    }
+  }, [lot]);
 
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [idleTimeout, setIdleTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -222,22 +231,20 @@ export default function BagEntry() {
       const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
       
       try {
+        const bagPayload = {
+          bagNumber,
+          weight: bagToUpdate.weight?.toString() || "",
+          grade: bagToUpdate.grade || "",
+          notes: bagToUpdate.notes || "",
+        };
+
         if (existingBag) {
           await updateBagMutation.mutateAsync({
             bagId: existingBag.id,
-            bag: {
-              weight: bagToUpdate.weight?.toString(),
-              grade: bagToUpdate.grade,
-              notes: bagToUpdate.notes,
-            }
+            bag: bagPayload
           });
         } else {
-          await createBagMutation.mutateAsync({
-            bagNumber,
-            weight: bagToUpdate.weight,
-            grade: bagToUpdate.grade,
-            notes: bagToUpdate.notes,
-          });
+          await createBagMutation.mutateAsync(bagPayload);
         }
 
         setBagData(prev => prev.map(bag => 
@@ -247,6 +254,11 @@ export default function BagEntry() {
         ));
       } catch (error) {
         console.error(`Failed to save bag ${bagNumber}:`, error);
+        toast({
+          title: "Error",
+          description: `Failed to save bag ${bagNumber}`,
+          variant: "destructive"
+        });
       }
     }
   };
@@ -406,6 +418,12 @@ export default function BagEntry() {
                 <Label className="text-xs sm:text-sm font-medium text-gray-500">Price</Label>
                 <p className="text-sm sm:text-lg font-semibold text-gray-900">
                   {lot.lotPrice ? `₹${parseFloat(lot.lotPrice).toFixed(0)}` : "Not set"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Buyer</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                  {lot.buyer ? lot.buyer.name : "Not assigned"}
                 </p>
               </div>
             </div>
