@@ -63,8 +63,27 @@ app.use((req, res, next) => {
     server.listen(port, "0.0.0.0", () => {
       log(`serving on port ${port}`);
     });
+
+    // Keep the process alive
+    process.on('SIGINT', () => {
+      console.log('Received SIGINT, shutting down gracefully');
+      server.close(() => {
+        process.exit(0);
+      });
+    });
+
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception:', error);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
-})();
+})().catch(error => {
+  console.error('Unhandled error:', error);
+  process.exit(1);
+});

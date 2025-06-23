@@ -397,14 +397,20 @@ export class TenantDB {
 
   // Audit logs
   async createAuditLog(log: any): Promise<any> {
-    const result = await this.db.execute(sql.raw(`
-      INSERT INTO "${this.schema}".audit_logs 
-      (user_id, action, entity_type, entity_id, old_data, new_data)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `, [log.userId, log.action, log.entityType, log.entityId, 
-        JSON.stringify(log.oldData), JSON.stringify(log.newData)]));
-    return result.rows[0];
+    try {
+      const result = await this.db.execute(sql.raw(`
+        INSERT INTO "${this.schema}".audit_logs 
+        (user_id, action, entity_type, entity_id, old_data, new_data)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `, [log.userId, log.action, log.entityType, log.entityId, 
+          log.oldData ? JSON.stringify(log.oldData) : null, 
+          log.newData ? JSON.stringify(log.newData) : null]));
+      return result.rows[0];
+    } catch (error) {
+      console.error('Audit log creation error:', error);
+      throw error;
+    }
   }
 
   // Dashboard stats

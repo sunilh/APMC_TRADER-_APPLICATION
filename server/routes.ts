@@ -47,17 +47,19 @@ function requireSuperAdmin(req: any, res: any, next: any) {
 
 async function createAuditLog(req: any, action: string, entityType?: string, entityId?: number, oldData?: any, newData?: any) {
   if (req.user) {
-    await storage.createAuditLog({
-      userId: req.user.id,
-      tenantId: req.user.tenantId,
-      action,
-      entityType,
-      entityId,
-      oldData,
-      newData,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-    });
+    try {
+      const tenantDB = await getTenantDB(req);
+      await tenantDB.createAuditLog({
+        userId: req.user.id,
+        action,
+        entityType,
+        entityId,
+        oldData,
+        newData,
+      });
+    } catch (error) {
+      console.error('Failed to create audit log:', error);
+    }
   }
 }
 
@@ -514,5 +516,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
+  
+  // Add error handling for the server
+  httpServer.on('error', (error) => {
+    console.error('HTTP Server error:', error);
+  });
+  
   return httpServer;
 }
