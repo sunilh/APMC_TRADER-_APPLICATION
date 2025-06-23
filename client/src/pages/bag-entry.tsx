@@ -362,7 +362,7 @@ export default function BagEntry() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
 
         <div className="mb-6">
           <Button 
@@ -373,7 +373,7 @@ export default function BagEntry() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Lots
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
             Bag Entry - {lot.lotNumber}
           </h1>
         </div>
@@ -381,37 +381,31 @@ export default function BagEntry() {
         {/* Lot Information Header */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
               <div>
-                <Label className="text-sm font-medium text-gray-500">Lot Number</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.lotNumber}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Lot Number</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.lotNumber}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Farmer Name</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.name}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Farmer</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{lot.farmer.name}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Mobile</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.mobile}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Mobile</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.farmer.mobile}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Place</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.place}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Place</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{lot.farmer.place}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Total Bags</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Bags</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Lot Price</Label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {lot.lotPrice ? `₹${parseFloat(lot.lotPrice).toFixed(2)}` : "Not set"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-500">Buyer</Label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {lot.buyer ? lot.buyer.name : "Not assigned"}
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Price</Label>
+                <p className="text-sm sm:text-lg font-semibold text-gray-900">
+                  {lot.lotPrice ? `₹${parseFloat(lot.lotPrice).toFixed(0)}` : "Not set"}
                 </p>
               </div>
             </div>
@@ -524,13 +518,13 @@ export default function BagEntry() {
 
             {/* Bag Grid */}
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Bag Details</h3>
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Bag Details</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     Idle save: <span className="text-blue-600">1 minute</span>
                   </div>
-                  <Button onClick={handleSaveAll} className="bg-primary hover:bg-primary/90">
+                  <Button onClick={handleSaveAll} className="bg-primary hover:bg-primary/90 text-sm">
                     <Save className="h-4 w-4 mr-2" />
                     Save All Now
                   </Button>
@@ -542,19 +536,19 @@ export default function BagEntry() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Bag #
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Weight (kg)
+                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Weight
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Grade
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                           Notes
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
                       </tr>
@@ -562,18 +556,30 @@ export default function BagEntry() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {bagData.map((bag) => (
                         <tr key={bag.bagNumber} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                             {bag.bagNumber}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
+                          <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-1 sm:space-x-2">
                               <Input
                                 type="number"
                                 step="0.1"
                                 min="0"
                                 value={bag.weight || ""}
                                 onChange={(e) => handleBagUpdate(bag.bagNumber, 'weight', parseFloat(e.target.value) || undefined)}
-                                className="w-24 text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === 'Tab') {
+                                    const nextBag = bagData.find(b => b.bagNumber === bag.bagNumber + 1);
+                                    if (nextBag) {
+                                      setTimeout(() => {
+                                        const nextInput = document.querySelector(`#weight-${nextBag.bagNumber}`) as HTMLInputElement;
+                                        if (nextInput) nextInput.focus();
+                                      }, 100);
+                                    }
+                                  }
+                                }}
+                                id={`weight-${bag.bagNumber}`}
+                                className="w-20 sm:w-24 text-sm"
                                 placeholder="0.0"
                               />
                               <VoiceInput
