@@ -190,40 +190,13 @@ export default function BagEntry() {
     }
   }, [lot]);
 
-  const [lastActivity, setLastActivity] = useState<number>(Date.now());
-  const [idleTimeout, setIdleTimeout] = useState<NodeJS.Timeout | null>(null);
-
   const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
       bag.bagNumber === bagNumber 
         ? { ...bag, [field]: value, status: 'pending' }
         : bag
     ));
-    
-    // Update last activity time
-    setLastActivity(Date.now());
   };
-
-  // Idle timeout management
-  useEffect(() => {
-    const checkIdle = () => {
-      const now = Date.now();
-      if (now - lastActivity >= 60000) { // 1 minute
-        handleSaveAll();
-      }
-    };
-
-    if (idleTimeout) {
-      clearTimeout(idleTimeout);
-    }
-
-    const timeout = setTimeout(checkIdle, 60000); // Check every minute
-    setIdleTimeout(timeout);
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [lastActivity]);
 
   const saveBagData = async (bagNumber: number) => {
     const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
@@ -539,12 +512,9 @@ export default function BagEntry() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900">Bag Details</h3>
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                  <div className="text-xs sm:text-sm text-gray-600">
-                    Idle save: <span className="text-blue-600">1 minute</span>
-                  </div>
                   <Button onClick={handleSaveAll} className="bg-primary hover:bg-primary/90 text-sm">
                     <Save className="h-4 w-4 mr-2" />
-                    Save All Now
+                    Save All
                   </Button>
                 </div>
               </div>
@@ -586,7 +556,8 @@ export default function BagEntry() {
                                 value={bag.weight || ""}
                                 onChange={(e) => handleBagUpdate(bag.bagNumber, 'weight', parseFloat(e.target.value) || undefined)}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === 'Tab') {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
                                     const nextBag = bagData.find(b => b.bagNumber === bag.bagNumber + 1);
                                     if (nextBag) {
                                       setTimeout(() => {
@@ -648,7 +619,7 @@ export default function BagEntry() {
                               ) : (
                                 <>
                                   <Clock className="h-3 w-3 mr-1" />
-                                  Modified
+                                  Unsaved
                                 </>
                               )}
                             </Badge>
