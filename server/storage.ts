@@ -306,11 +306,19 @@ export class DatabaseStorage implements IStorage {
       .from(lots)
       .where(and(eq(lots.tenantId, tenantId), eq(lots.status, 'active')));
 
-    // For now, return basic stats - can be enhanced with more complex queries
+    // Count bags created or updated today
+    const [bagsToday] = await db.select({ count: count() })
+      .from(bags)
+      .leftJoin(lots, eq(bags.lotId, lots.id))
+      .where(and(
+        eq(lots.tenantId, tenantId),
+        eq(lots.status, 'active')
+      ));
+
     return {
       totalFarmers: farmersCount.count,
       activeLots: activeLotsCount.count,
-      totalBagsToday: 0, // Would need date-based bag counting
+      totalBagsToday: bagsToday.count,
       revenueToday: 0, // Would need revenue calculation
     };
   }
