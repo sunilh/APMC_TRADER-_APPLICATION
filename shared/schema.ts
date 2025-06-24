@@ -203,6 +203,8 @@ export const insertBagSchema = createInsertSchema(bags).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  weight: z.string().optional().transform((val) => val === "" ? null : val),
 });
 
 export const insertBuyerSchema = createInsertSchema(buyers).omit({

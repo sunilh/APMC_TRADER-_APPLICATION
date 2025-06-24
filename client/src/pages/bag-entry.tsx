@@ -71,7 +71,7 @@ export default function BagEntry() {
 
   // Mutations
   const createBagMutation = useMutation({
-    mutationFn: async (bag: { bagNumber: number; weight?: number; grade?: string; notes?: string }) => {
+    mutationFn: async (bag: { bagNumber: number; weight?: string; grade?: string; notes?: string }) => {
       console.log('Creating bag with data:', bag);
       return await apiRequest("POST", `/api/lots/${lotId}/bags`, bag);
     },
@@ -234,7 +234,7 @@ export default function BagEntry() {
           } else {
             createBagMutation.mutate({
               bagNumber,
-              weight: bagToUpdate.weight,
+              weight: bagToUpdate.weight?.toString(),
               grade: bagToUpdate.grade,
               notes: bagToUpdate.notes,
             });
