@@ -328,8 +328,11 @@ export class DatabaseStorage implements IStorage {
     .where(and(eq(bags.lotId, lotId), eq(bags.tenantId, tenantId)));
 
     const stats = bagStats[0];
+    console.log(`Auto-completion check for lot ${lotId}: totalBags=${stats?.totalBags}, weighedBags=${stats?.weighedBags}, lotPrice=${lot.lotPrice}`);
+    
     if (stats && stats.totalBags > 0 && stats.weighedBags === stats.totalBags) {
       // All bags are weighed and lot has price - auto-complete
+      console.log(`Auto-completing lot ${lotId}`);
       await db.update(lots)
         .set({ status: 'completed', updatedAt: new Date() })
         .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)));

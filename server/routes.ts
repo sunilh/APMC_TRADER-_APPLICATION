@@ -239,6 +239,7 @@ export function registerRoutes(app: Express): Server {
       
       res.json(lot);
     } catch (error) {
+      console.error("Lot update error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
@@ -258,6 +259,14 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
     try {
+      // Check for duplicate bag numbers first
+      const existingBag = await storage.getBagsByLot(parseInt(req.params.lotId), req.user.tenantId);
+      const bagNumber = req.body.bagNumber;
+      
+      if (existingBag.some(bag => bag.bagNumber === bagNumber)) {
+        return res.status(400).json({ message: "Bag number already exists for this lot" });
+      }
+      
       const validatedData = insertBagSchema.parse({
         ...req.body,
         lotId: parseInt(req.params.lotId),
@@ -269,6 +278,7 @@ export function registerRoutes(app: Express): Server {
       
       res.status(201).json(bag);
     } catch (error) {
+      console.error("Bag creation error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
