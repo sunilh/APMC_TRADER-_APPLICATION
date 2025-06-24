@@ -1,53 +1,63 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CheckCircle, Shield } from "lucide-react";
 
 const superAdminSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required"),
 });
 
 type SuperAdminForm = z.infer<typeof superAdminSchema>;
 
 export default function SuperAdminSetup() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isCreated, setIsCreated] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
 
   const form = useForm<SuperAdminForm>({
     resolver: zodResolver(superAdminSchema),
     defaultValues: {
-      username: "",
-      password: "",
       name: "",
       email: "",
+      username: "",
+      password: "",
     },
   });
 
-  const createSuperAdminMutation = useMutation({
+  const setupMutation = useMutation({
     mutationFn: async (data: SuperAdminForm) => {
-      const res = await apiRequest("POST", "/api/setup-super-admin", data);
-      return await res.json();
+      const response = await apiRequest("/api/setup-super-admin", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return response;
     },
     onSuccess: () => {
-      setIsCreated(true);
+      setIsComplete(true);
       toast({
-        title: "Super Admin Created",
-        description: "You can now create tenants and manage the system.",
+        title: "Super admin created successfully",
+        description: "You can now login with your credentials",
       });
+      setTimeout(() => {
+        setLocation("/auth");
+      }, 3000);
     },
     onError: (error: Error) => {
       toast({
-        title: "Setup Failed",
+        title: "Setup failed",
         description: error.message,
         variant: "destructive",
       });
@@ -55,104 +65,111 @@ export default function SuperAdminSetup() {
   });
 
   const onSubmit = (data: SuperAdminForm) => {
-    createSuperAdminMutation.mutate(data);
+    setupMutation.mutate(data);
   };
 
-  if (isCreated) {
+  if (isComplete) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-green-600">Setup Complete</CardTitle>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">Setup Complete</CardTitle>
+            <CardDescription>
+              Super admin account created successfully. Redirecting to login...
+            </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <p className="mb-4">Super admin account has been created successfully.</p>
-            <Button onClick={() => window.location.href = "/"}>
-              Go to Login
-            </Button>
-          </CardContent>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center">Super Admin Setup</CardTitle>
-          <p className="text-sm text-gray-600 text-center">
-            Create the first super admin account to manage tenants
-          </p>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Shield className="w-12 h-12 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">Create Super Admin</CardTitle>
+          <CardDescription>
+            Set up the first admin account for your APMC system
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                {...form.register("name")}
-                placeholder="Enter full name"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter your full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.name && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.name.message}
-                </p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                {...form.register("email")}
-                placeholder="Enter email address"
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Enter your email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                {...form.register("username")}
-                placeholder="Enter username"
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Choose a username" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.username && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.username.message}
-                </p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...form.register("password")}
-                placeholder="Enter password"
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Choose a strong password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={createSuperAdminMutation.isPending}
-            >
-              {createSuperAdminMutation.isPending ? "Creating..." : "Create Super Admin"}
-            </Button>
-          </form>
+              {setupMutation.error && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {setupMutation.error.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button type="submit" className="w-full" disabled={setupMutation.isPending}>
+                {setupMutation.isPending ? "Creating..." : "Create Super Admin"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

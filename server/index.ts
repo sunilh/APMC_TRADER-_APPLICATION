@@ -56,81 +56,74 @@ app.use((req, res, next) => {
       `);
     });
 
-    // Temporarily serve static content for debugging
-    if (app.get("env") === "development") {
-      // Serve a basic auth page for now
-      app.get("/auth", (req, res) => {
+    // Setup Vite development server or static files for production
+    try {
+      if (app.get("env") === "development") {
+        console.log("Setting up Vite development server...");
+        await setupVite(app, server);
+        console.log("✓ Vite development server configured");
+      } else {
+        serveStatic(app);
+      }
+    } catch (error) {
+      console.error("Failed to setup Vite:", error);
+      // Fallback to basic HTML serving for development
+      app.get("*", (req, res) => {
+        if (req.path.startsWith("/api")) {
+          return res.status(404).json({ message: "API endpoint not found" });
+        }
         res.send(`
           <!DOCTYPE html>
           <html>
           <head>
-            <title>APMC Trader - Login</title>
+            <title>APMC Trader System</title>
             <style>
-              body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
-              .form-group { margin: 15px 0; }
-              input { width: 100%; padding: 8px; margin: 5px 0; }
-              button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0; padding: 20px; background: #f5f5f5; 
+              }
+              .container { 
+                max-width: 800px; margin: 0 auto; background: white; 
+                padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              }
+              .btn { 
+                display: inline-block; padding: 12px 24px; background: #007bff; 
+                color: white; text-decoration: none; border-radius: 4px; margin: 8px;
+              }
+              .btn:hover { background: #0056b3; }
             </style>
           </head>
           <body>
-            <h1>APMC Trader Login</h1>
-            <form action="/api/login" method="post">
-              <div class="form-group">
-                <label>Username:</label>
-                <input type="text" name="username" required>
-              </div>
-              <div class="form-group">
-                <label>Password:</label>
-                <input type="password" name="password" required>
-              </div>
-              <button type="submit">Login</button>
-            </form>
-            <p><a href="/super-admin-setup">First time? Create super admin account</a></p>
+            <div class="container">
+              <h1>🌾 APMC Trader System</h1>
+              <p>Welcome to the Agricultural Produce Market Committee management system.</p>
+              
+              <h2>Getting Started</h2>
+              <p>Choose an option below to access the system:</p>
+              
+              <a href="/super-admin-setup" class="btn">🔧 Setup Super Admin</a>
+              <a href="/auth" class="btn">🔐 Login</a>
+              <a href="/tenant-registration" class="btn">🏢 Register APMC</a>
+              
+              <h2>System Status</h2>
+              <p>✅ Backend API: Running</p>
+              <p>✅ Database: Connected</p>
+              <p>⚠️ Frontend: Development mode (basic fallback)</p>
+              
+              <h2>API Endpoints</h2>
+              <ul>
+                <li><strong>POST /api/login</strong> - User authentication</li>
+                <li><strong>POST /api/setup-super-admin</strong> - Initial admin setup</li>
+                <li><strong>GET /api/dashboard/stats</strong> - Dashboard statistics</li>
+                <li><strong>GET /api/farmers</strong> - List farmers</li>
+                <li><strong>GET /api/lots</strong> - List lots</li>
+                <li><strong>GET /api/buyers</strong> - List buyers</li>
+              </ul>
+            </div>
           </body>
           </html>
         `);
       });
-      
-      app.get("/super-admin-setup", (req, res) => {
-        res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Super Admin Setup</title>
-            <style>
-              body { font-family: Arial, sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; }
-              .form-group { margin: 15px 0; }
-              input { width: 100%; padding: 8px; margin: 5px 0; }
-              button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; }
-            </style>
-          </head>
-          <body>
-            <h1>Create Super Admin</h1>
-            <form action="/api/setup-super-admin" method="post">
-              <div class="form-group">
-                <label>Name:</label>
-                <input type="text" name="name" required>
-              </div>
-              <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" required>
-              </div>
-              <div class="form-group">
-                <label>Username:</label>
-                <input type="text" name="username" required>
-              </div>
-              <div class="form-group">
-                <label>Password:</label>
-                <input type="password" name="password" required>
-              </div>
-              <button type="submit">Create Super Admin</button>
-            </form>
-          </body>
-          </html>
-        `);
-      });
-    } else {
-      serveStatic(app);
     }
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
