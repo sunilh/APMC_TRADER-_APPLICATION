@@ -14,7 +14,7 @@ async function startServer() {
 
     // Add simple root route for Replit health check
     app.get('/', (_req: Request, res: Response) => {
-      res.send('🟢 Server is running.');
+      res.send("🟢 Replit health check passed.");
     });
 
     // Setup routes
@@ -41,12 +41,11 @@ async function startServer() {
 
     // Start the server with proper event handling
     console.log("PORT from Replit env:", process.env.PORT);
-    // Set PORT if not provided by Replit environment
-    if (!process.env.PORT) {
-      process.env.PORT = '5000';
-      console.log("Setting PORT to 5000 for Replit");
-    }
-    const port = Number(process.env.PORT);
+    console.log("REPL_ID:", process.env.REPL_ID);
+    console.log("REPLIT_DOMAINS:", process.env.REPLIT_DOMAINS);
+    
+    // Replit sets PORT automatically, but fallback to 5000 if not set
+    const port = Number(process.env.PORT) || 5000;
     console.log(`Attempting to bind to port ${port}...`);
     
     return new Promise<void>((resolve, reject) => {
