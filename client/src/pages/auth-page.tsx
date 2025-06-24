@@ -32,12 +32,6 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("login");
 
-  // Redirect if already authenticated
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -57,6 +51,12 @@ export default function AuthPage() {
       role: "staff",
     },
   });
+
+  // Redirect if already authenticated - moved after all hooks
+  if (user) {
+    setLocation("/");
+    return null;
+  }
 
   const onLoginSubmit = (data: LoginForm) => {
     loginMutation.mutate(data);
