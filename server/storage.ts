@@ -162,6 +162,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined> {
+    console.log(`getLot called with id: ${id}, tenantId: ${tenantId}`);
+    
     const [result] = await db.select({
       lot: lots,
       farmer: farmers,
@@ -172,7 +174,17 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(buyers, eq(lots.buyerId, buyers.id))
     .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)));
 
-    if (!result || !result.farmer) return undefined;
+    console.log('getLot result:', JSON.stringify(result, null, 2));
+
+    if (!result) {
+      console.log('No result found');
+      return undefined;
+    }
+    
+    if (!result.farmer) {
+      console.log('No farmer found in result');
+      return undefined;
+    }
 
     return {
       ...result.lot,
