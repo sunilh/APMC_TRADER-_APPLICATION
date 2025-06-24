@@ -18,19 +18,11 @@ export default function BuyersSimple() {
 
   const { data: buyers = [], isLoading } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
-    queryFn: async () => {
-      const response = await fetch("/api/buyers", { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch buyers");
-      return response.json();
-    },
   });
 
   const createBuyerMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Creating buyer:", data);
-      const result = await apiRequest("POST", "/api/buyers", data);
-      console.log("Creation result:", result);
-      return result;
+      return await apiRequest("POST", "/api/buyers", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
@@ -41,14 +33,12 @@ export default function BuyersSimple() {
       setAddress("");
     },
     onError: (error: Error) => {
-      console.error("Creation error:", error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted");
     
     const buyerData = {
       name,
@@ -57,7 +47,6 @@ export default function BuyersSimple() {
       address,
     };
     
-    console.log("Submitting data:", buyerData);
     createBuyerMutation.mutate(buyerData);
   };
 
