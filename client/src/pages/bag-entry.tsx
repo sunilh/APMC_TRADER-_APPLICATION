@@ -467,14 +467,6 @@ export default function BagEntry() {
                   {bagData.filter(b => b.status === 'saved').length} of {bagData.length} bags saved
                 </div>
                 <Button
-                  onClick={handleAddExtraBag}
-                  variant="outline"
-                  className="mr-2"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Extra Bag
-                </Button>
-                <Button
                   onClick={handleSaveAll}
                   disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.grade || b.notes)).length === 0}
                   className="bg-blue-600 hover:bg-blue-700"
@@ -576,6 +568,26 @@ export default function BagEntry() {
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* Bottom Action Buttons */}
+            <div className="flex justify-between items-center mt-6 pt-4 border-t">
+              <Button
+                onClick={handleAddExtraBag}
+                variant="outline"
+                className="bg-green-50 hover:bg-green-100 border-green-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Extra Bag
+              </Button>
+              
+              <Button
+                onClick={handleSaveAll}
+                disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.grade || b.notes)).length === 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {saveAllMutation.isPending ? 'Saving...' : 'Save All'}
+              </Button>
             </div>
           </CardContent>
         </Card>
