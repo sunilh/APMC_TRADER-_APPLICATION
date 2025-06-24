@@ -102,8 +102,9 @@ This is a full-stack APMC (Agricultural Produce Market Committee) management sys
 
 ## Recent Changes
 - June 24, 2025: Successfully rolled back from complex multi-tenant schema to simplified shared tables approach
-- June 24, 2025: Rewrote Vite integration to fix workflow system compatibility
-- June 24, 2025: Implemented React-based frontend served directly from Express server
+- June 24, 2025: Restored original Vite integration for proper frontend development
+- June 24, 2025: Fixed Express server startup with proper event handling for workflow system
+- June 24, 2025: Added root route for Replit health check and proper PORT environment variable handling
 - June 24, 2025: Removed tenant isolation complexity that was causing startup failures
 - June 24, 2025: Application now successfully serves login page and API endpoints
 
