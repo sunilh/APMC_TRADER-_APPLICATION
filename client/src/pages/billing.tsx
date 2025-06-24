@@ -155,10 +155,10 @@ export default function Billing() {
                             <TableHead>Grade</TableHead>
                             <TableHead>Bags</TableHead>
                             <TableHead>Weight (kg)</TableHead>
-                            <TableHead>Price (₹)</TableHead>
-                            <TableHead>Vehicle Rent</TableHead>
-                            <TableHead>Advance</TableHead>
-                            <TableHead>Hamali</TableHead>
+                            <TableHead>Weight (Qt)</TableHead>
+                            <TableHead>Price/Qt (₹)</TableHead>
+                            <TableHead>Amount (₹)</TableHead>
+                            <TableHead>Deductions (₹)</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -168,10 +168,10 @@ export default function Billing() {
                               <TableCell>{lot.grade || '-'}</TableCell>
                               <TableCell>{lot.weighedBags}/{lot.numberOfBags}</TableCell>
                               <TableCell>{lot.totalWeight.toFixed(1)}</TableCell>
+                              <TableCell>{lot.totalWeightQuintals.toFixed(2)}</TableCell>
                               <TableCell>₹{lot.lotPrice.toFixed(2)}</TableCell>
-                              <TableCell>₹{lot.vehicleRent?.toFixed(2) || '0.00'}</TableCell>
-                              <TableCell>₹{lot.advance?.toFixed(2) || '0.00'}</TableCell>
-                              <TableCell>₹{lot.unloadHamali?.toFixed(2) || '0.00'}</TableCell>
+                              <TableCell className="font-medium">₹{(lot.totalWeightQuintals * lot.lotPrice).toFixed(2)}</TableCell>
+                              <TableCell>₹{(lot.vehicleRent + lot.advance + lot.unloadHamali).toFixed(2)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -192,6 +192,7 @@ export default function Billing() {
                     <div className="text-center">
                       <p className="text-sm text-gray-600">Total Weight</p>
                       <p className="text-xl font-bold">{bill.summary.totalWeight.toFixed(1)} kg</p>
+                      <p className="text-xs text-gray-500">({bill.summary.totalWeightQuintals.toFixed(2)} Qt)</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm text-gray-600">Gross Amount</p>
@@ -222,6 +223,7 @@ export default function Billing() {
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
                 <CardTitle className="text-blue-900">Daily Summary</CardTitle>
+                <p className="text-sm text-blue-600">Note: Lot prices are per quintal (100kg), amounts calculated accordingly</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
@@ -239,6 +241,9 @@ export default function Billing() {
                     <p className="text-sm text-blue-600">Total Weight</p>
                     <p className="text-2xl font-bold text-blue-800">
                       {dailyBills.reduce((sum, bill) => sum + bill.summary.totalWeight, 0).toFixed(1)} kg
+                    </p>
+                    <p className="text-sm text-blue-600">
+                      ({dailyBills.reduce((sum, bill) => sum + bill.summary.totalWeightQuintals, 0).toFixed(2)} Qt)
                     </p>
                   </div>
                   <div>

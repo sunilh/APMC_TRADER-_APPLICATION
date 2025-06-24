@@ -13,6 +13,7 @@ export interface FarmerDayBill {
     numberOfBags: number;
     weighedBags: number;
     totalWeight: number;
+    totalWeightQuintals: number;
     vehicleRent?: number;
     advance?: number;
     unloadHamali?: number;
@@ -23,6 +24,7 @@ export interface FarmerDayBill {
     totalBags: number;
     totalWeighedBags: number;
     totalWeight: number;
+    totalWeightQuintals: number;
     grossAmount: number;
     totalDeductions: number;
     netAmount: number;
@@ -92,12 +94,14 @@ export async function generateFarmerDayBill(
     
     // Only include lots that have both weight entries and lot price
     if (totalWeight > 0 && weighedBags > 0 && lot.lotPrice && parseFloat(lot.lotPrice) > 0) {
+      const totalWeightQuintals = totalWeight / 100; // Convert kg to quintals
       lotsWithWeights.push({
         lotNumber: lot.lotNumber,
         lotPrice: parseFloat(lot.lotPrice),
         numberOfBags: lot.numberOfBags,
         weighedBags: weighedBags,
         totalWeight: totalWeight,
+        totalWeightQuintals: totalWeightQuintals,
         vehicleRent: parseFloat(lot.vehicleRent || '0'),
         advance: parseFloat(lot.advance || '0'),
         unloadHamali: parseFloat(lot.unloadHamali || '0'),
@@ -113,15 +117,17 @@ export async function generateFarmerDayBill(
       totalBags: acc.totalBags + lot.numberOfBags,
       totalWeighedBags: acc.totalWeighedBags + lot.weighedBags,
       totalWeight: acc.totalWeight + lot.totalWeight,
-      grossAmount: acc.grossAmount + lot.lotPrice,
+      totalWeightQuintals: acc.totalWeightQuintals + lot.totalWeightQuintals,
+      grossAmount: acc.grossAmount + (lot.totalWeightQuintals * lot.lotPrice),
       totalDeductions: acc.totalDeductions + lot.vehicleRent + lot.advance + lot.unloadHamali,
-      netAmount: acc.netAmount + (lot.lotPrice - lot.vehicleRent - lot.advance - lot.unloadHamali),
+      netAmount: acc.netAmount + ((lot.totalWeightQuintals * lot.lotPrice) - lot.vehicleRent - lot.advance - lot.unloadHamali),
     }),
     {
       totalLots: 0,
       totalBags: 0,
       totalWeighedBags: 0,
       totalWeight: 0,
+      totalWeightQuintals: 0,
       grossAmount: 0,
       totalDeductions: 0,
       netAmount: 0,
