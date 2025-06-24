@@ -212,6 +212,12 @@ export class DatabaseStorage implements IStorage {
       .set({ ...lot, updatedAt: new Date() })
       .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)))
       .returning();
+    
+    // Check if lot should be auto-completed after price update
+    if (lot.lotPrice) {
+      await this.checkAndCompleteLot(id, tenantId);
+    }
+    
     return updatedLot;
   }
 
@@ -227,6 +233,12 @@ export class DatabaseStorage implements IStorage {
 
   async createBag(bag: InsertBag): Promise<Bag> {
     const [newBag] = await db.insert(bags).values(bag).returning();
+    
+    // Check if lot should be auto-completed after bag creation with weight
+    if (bag.weight) {
+      await this.checkAndCompleteLot(newBag.lotId, bag.tenantId);
+    }
+    
     return newBag;
   }
 
@@ -235,6 +247,12 @@ export class DatabaseStorage implements IStorage {
       .set({ ...bag, updatedAt: new Date() })
       .where(and(eq(bags.id, id), eq(bags.tenantId, tenantId)))
       .returning();
+    
+    // Check if lot should be auto-completed after bag weight update
+    if (bag.weight) {
+      await this.checkAndCompleteLot(updatedBag.lotId, tenantId);
+    }
+    
     return updatedBag;
   }
 
@@ -289,6 +307,33 @@ export class DatabaseStorage implements IStorage {
       .where(eq(auditLogs.tenantId, tenantId))
       .orderBy(desc(auditLogs.timestamp))
       .limit(limit);
+  }
+
+  async checkAndCompleteLot(lotId: number, tenantId: number): Promise<void> {
+    // Get lot details
+    const [lot] = await db.select()
+      .from(lots)
+      .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)));
+    
+    if (!lot || lot.status === 'completed' || !lot.lotPrice || parseFloat(lot.lotPrice) <= 0) {
+      return;
+    }
+
+    // Check if all bags have weights
+    const bagStats = await db.select({
+      totalBags: sql<number>`COUNT(*)`,
+      weighedBags: sql<number>`COUNT(CASE WHEN ${bags.weight} IS NOT NULL AND ${bags.weight} > 0 THEN 1 END)`
+    })
+    .from(bags)
+    .where(and(eq(bags.lotId, lotId), eq(bags.tenantId, tenantId)));
+
+    const stats = bagStats[0];
+    if (stats && stats.totalBags > 0 && stats.weighedBags === stats.totalBags) {
+      // All bags are weighed and lot has price - auto-complete
+      await db.update(lots)
+        .set({ status: 'completed', updatedAt: new Date() })
+        .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)));
+    }
   }
 
   async getDashboardStats(tenantId: number): Promise<{
