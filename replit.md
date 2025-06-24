@@ -105,6 +105,11 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Successfully implemented partial bag entry with auto-save functionality
   - Moved grade field from individual bags to lot level for better agricultural workflow
   - Weight values (including decimals like 36.5) now save and display correctly
+- June 24, 2025: Implemented multi-lot billing system
+  - Added comprehensive billing module for farmer-day aggregation
+  - Supports multiple lots per farmer with consolidated bill generation
+  - Includes all deductions: vehicle rent, advance, unload hamali
+  - API endpoints for single farmer bills and daily billing reports
 
 # User Preferences
 

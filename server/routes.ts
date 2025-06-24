@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { generateFarmerDayBill, getFarmerDayBills } from "./billing";
 import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -52,6 +53,43 @@ export function registerRoutes(app: Express): Server {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Billing routes
+  app.get("/api/billing/farmer/:farmerId/:date", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const date = new Date(req.params.date);
+      
+      if (isNaN(farmerId) || isNaN(date.getTime())) {
+        return res.status(400).json({ message: "Invalid farmer ID or date" });
+      }
+
+      const bill = await generateFarmerDayBill(farmerId, date, req.user.tenantId);
+      
+      if (!bill) {
+        return res.status(404).json({ message: "No completed lots found for farmer on this date" });
+      }
+
+      res.json(bill);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate farmer bill" });
+    }
+  });
+
+  app.get("/api/billing/daily/:date", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const date = new Date(req.params.date);
+      
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({ message: "Invalid date" });
+      }
+
+      const bills = await getFarmerDayBills(date, req.user.tenantId);
+      res.json(bills);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch daily bills" });
     }
   });
 
