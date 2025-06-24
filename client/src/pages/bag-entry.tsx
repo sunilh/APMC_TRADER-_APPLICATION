@@ -612,6 +612,43 @@ export default function BagEntry() {
               ))}
             </div>
             
+            {/* Summary Statistics */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <Label className="text-sm font-medium text-blue-600">Total Bags</Label>
+                  <p className="text-2xl font-bold text-blue-800">
+                    {bagData.length}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-blue-600">Bags with Weight</Label>
+                  <p className="text-2xl font-bold text-blue-800">
+                    {bagData.filter(bag => bag.weight && bag.weight > 0).length}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-blue-600">Total Weight</Label>
+                  <p className="text-2xl font-bold text-blue-800">
+                    {bagData
+                      .filter(bag => bag.weight && bag.weight > 0)
+                      .reduce((sum, bag) => sum + (bag.weight || 0), 0)
+                      .toFixed(1)} kg
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-blue-600">Average Weight</Label>
+                  <p className="text-2xl font-bold text-blue-800">
+                    {(() => {
+                      const bagsWithWeight = bagData.filter(bag => bag.weight && bag.weight > 0);
+                      const totalWeight = bagsWithWeight.reduce((sum, bag) => sum + (bag.weight || 0), 0);
+                      return bagsWithWeight.length > 0 ? (totalWeight / bagsWithWeight.length).toFixed(1) : '0.0';
+                    })()} kg
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             {/* Bottom Action Buttons */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <div className="flex space-x-3">
