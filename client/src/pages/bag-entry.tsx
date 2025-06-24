@@ -52,7 +52,7 @@ export default function BagEntry() {
 
   // Queries - always called at top level
   const { data: lot, isLoading: lotLoading, error: lotError } = useQuery<LotWithDetails>({
-    queryKey: ["/api/lots", lotId],
+    queryKey: [`/api/lots/${lotId}`],
     enabled: !isNaN(lotId),
   });
 
