@@ -220,18 +220,26 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
     try {
+      console.log('Bag creation - request body:', req.body);
+      
       const validatedData = insertBagSchema.parse({
         ...req.body,
         lotId: parseInt(req.params.lotId),
         tenantId: req.user.tenantId,
       });
       
+      console.log('Bag creation - validated data:', validatedData);
+      
       const bag = await storage.createBag(validatedData);
+      console.log('Bag creation - created bag:', bag);
+      
       await createAuditLog(req, 'create', 'bag', bag.id, null, bag);
       
       res.status(201).json(bag);
     } catch (error) {
+      console.log('Bag creation error:', error);
       if (error instanceof z.ZodError) {
+        console.log('Validation errors:', error.errors);
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create bag" });
@@ -240,15 +248,21 @@ export function registerRoutes(app: Express): Server {
 
   app.put("/api/bags/:id", requireAuth, requireTenant, async (req, res) => {
     try {
+      console.log('Bag update - request body:', req.body);
       const id = parseInt(req.params.id);
       const validatedData = insertBagSchema.partial().parse(req.body);
+      console.log('Bag update - validated data:', validatedData);
       
       const bag = await storage.updateBag(id, validatedData, req.user.tenantId);
+      console.log('Bag update - updated bag:', bag);
+      
       await createAuditLog(req, 'update', 'bag', bag.id, null, bag);
       
       res.json(bag);
     } catch (error) {
+      console.log('Bag update error:', error);
       if (error instanceof z.ZodError) {
+        console.log('Update validation errors:', error.errors);
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update bag" });
