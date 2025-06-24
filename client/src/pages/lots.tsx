@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Edit, Printer, Package } from "lucide-react";
+import { Plus, Search, Edit, Printer, Package, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -84,8 +84,34 @@ export default function Lots() {
     },
   });
 
+  const completeLotMutation = useMutation({
+    mutationFn: async (lotId: number) => {
+      return await apiRequest("PUT", `/api/lots/${lotId}`, {
+        status: "completed"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/lots"] });
+      toast({
+        title: "Success",
+        description: "Lot marked as completed and ready for billing",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handlePrint = (lot: Lot) => {
     printMutation.mutate(lot);
+  };
+
+  const handleCompleteLot = (lotId: number) => {
+    completeLotMutation.mutate(lotId);
   };
 
   const getStatusColor = (status: string) => {
@@ -225,6 +251,18 @@ export default function Lots() {
                               Bag Entry
                             </Button>
                           </Link>
+                          {lot.status === 'active' && lot.lotPrice && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-green-600 hover:text-green-700"
+                              onClick={() => handleCompleteLot(lot.id)}
+                              disabled={completeLotMutation.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Complete
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 
