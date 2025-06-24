@@ -36,11 +36,11 @@ interface Lot {
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const { data: stats = { totalFarmers: 0, activeLots: 0, totalBagsToday: 0, revenueToday: 0 }, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: lots, isLoading: lotsLoading } = useQuery<Lot[]>({
+  const { data: lots = [], isLoading: lotsLoading } = useQuery<Lot[]>({
     queryKey: ["/api/lots"],
   });
 
