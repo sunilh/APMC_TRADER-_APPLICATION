@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Lot, Bag, Buyer } from "@shared/schema";
@@ -63,8 +63,7 @@ export default function BagEntry() {
     enabled: !isNaN(lotId),
   });
 
-  // Debug logging
-  console.log('Debug - lotId:', lotId, 'existingBags:', existingBags, 'bagData.length:', bagData.length);
+
 
   const { data: buyers = [] } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
@@ -114,6 +113,47 @@ export default function BagEntry() {
     },
   });
 
+  const saveAllMutation = useMutation({
+    mutationFn: async () => {
+      const pendingBags = bagData.filter(bag => 
+        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
+      );
+      
+      const savePromises = pendingBags.map(bag =>
+        apiRequest("POST", `/api/lots/${lotId}/bags`, {
+          bagNumber: bag.bagNumber,
+          weight: bag.weight,
+          grade: bag.grade,
+          notes: bag.notes,
+        })
+      );
+      
+      return await Promise.all(savePromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
+      // Update local state to mark all as saved
+      setBagData(prev => prev.map(bag => 
+        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
+          ? { ...bag, status: 'saved' as const }
+          : bag
+      ));
+      
+      toast({ 
+        title: "Success", 
+        description: "All bags saved successfully" 
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Initialize bag data when lot loads
   useEffect(() => {
     if (lot && lot.numberOfBags) {
@@ -128,7 +168,6 @@ export default function BagEntry() {
 
       // If we have existing bags data, merge it immediately
       if (existingBags && existingBags.length > 0) {
-        console.log("Merging existing bags with initial structure:", existingBags);
         const mergedBags = initialBags.map(bag => {
           const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
           if (existingBag) {
@@ -143,10 +182,8 @@ export default function BagEntry() {
           return bag;
         });
         setBagData(mergedBags);
-        console.log("Set merged bag data:", mergedBags);
       } else {
         setBagData(initialBags);
-        console.log("Set initial bag data:", initialBags);
       }
     }
   }, [lot, existingBags]);
@@ -210,6 +247,24 @@ export default function BagEntry() {
     setSelectedBuyer(buyerId);
     if (buyerId && lot) {
       updateLotMutation.mutate({ buyerId: parseInt(buyerId) });
+    }
+  };
+
+  const handleSaveAll = () => {
+    saveAllMutation.mutate();
+  };
+
+  const handleAddExtraBag = () => {
+    const nextBagNumber = Math.max(...bagData.map(b => b.bagNumber)) + 1;
+    setBagData(prev => [...prev, {
+      bagNumber: nextBagNumber,
+      status: 'pending' as const,
+    }]);
+  };
+
+  const handleRemoveBag = (bagNumber: number) => {
+    if (bagData.length > 1) {
+      setBagData(prev => prev.filter(bag => bag.bagNumber !== bagNumber));
     }
   };
 
@@ -407,8 +462,25 @@ export default function BagEntry() {
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">Bag Entry</h3>
-              <div className="text-sm text-gray-600">
-                {bagData.filter(b => b.status === 'saved').length} of {bagData.length} bags saved
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-600">
+                  {bagData.filter(b => b.status === 'saved').length} of {bagData.length} bags saved
+                </div>
+                <Button
+                  onClick={handleAddExtraBag}
+                  variant="outline"
+                  className="mr-2"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Extra Bag
+                </Button>
+                <Button
+                  onClick={handleSaveAll}
+                  disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.grade || b.notes)).length === 0}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {saveAllMutation.isPending ? 'Saving...' : 'Save All'}
+                </Button>
               </div>
             </div>
             
@@ -422,13 +494,25 @@ export default function BagEntry() {
                       Bag #{bag.bagNumber}
                       {bag.status === 'saved' && <span className="ml-2 text-green-600 text-sm">✓ Saved</span>}
                     </h4>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      bag.status === 'saved' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {bag.status === 'saved' ? 'Saved' : 'Pending'}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        bag.status === 'saved' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {bag.status === 'saved' ? 'Saved' : 'Pending'}
+                      </span>
+                      {bagData.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveBag(bag.bagNumber)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -438,10 +522,21 @@ export default function BagEntry() {
                         <Input
                           id={`weight-${bag.bagNumber}`}
                           type="number"
-                          step="0.01"
-                          placeholder="Enter weight"
+                          step="0.5"
+                          min="0"
+                          placeholder="Enter weight (e.g., 36.5)"
                           value={bag.weight || ""}
-                          onChange={(e) => handleBagUpdate(bag.bagNumber, 'weight', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '') {
+                              handleBagUpdate(bag.bagNumber, 'weight', undefined);
+                            } else {
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue)) {
+                                handleBagUpdate(bag.bagNumber, 'weight', numValue);
+                              }
+                            }
+                          }}
                           className={bag.status === 'saved' ? 'bg-green-50 border-green-200' : ''}
                         />
                         <VoiceInput
