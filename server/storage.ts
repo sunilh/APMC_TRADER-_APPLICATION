@@ -172,11 +172,11 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(buyers, eq(lots.buyerId, buyers.id))
     .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)));
 
-    if (!result) return undefined;
+    if (!result || !result.farmer) return undefined;
 
     return {
       ...result.lot,
-      farmer: result.farmer!,
+      farmer: result.farmer,
       buyer: result.buyer || undefined,
     };
   }
@@ -193,11 +193,13 @@ export class DatabaseStorage implements IStorage {
     .where(eq(lots.tenantId, tenantId))
     .orderBy(desc(lots.createdAt));
 
-    return results.map(result => ({
-      ...result.lot,
-      farmer: result.farmer!,
-      buyer: result.buyer || undefined,
-    }));
+    return results
+      .filter(result => result.farmer !== null)
+      .map(result => ({
+        ...result.lot,
+        farmer: result.farmer,
+        buyer: result.buyer || undefined,
+      }));
   }
 
   async createLot(lot: InsertLot): Promise<Lot> {

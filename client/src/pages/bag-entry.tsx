@@ -213,7 +213,7 @@ export default function BagEntry() {
     );
   }
 
-  if (!lot) {
+  if (!lot || !lot.farmer) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -221,7 +221,7 @@ export default function BagEntry() {
           <Card>
             <CardContent className="p-8 text-center">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Lot Not Found</h2>
-              <p className="text-gray-600 mb-4">The requested lot could not be found.</p>
+              <p className="text-gray-600 mb-4">The requested lot could not be found or is missing farmer information.</p>
               <Button onClick={() => setLocation("/lots")}>Back to Lots</Button>
             </CardContent>
           </Card>
