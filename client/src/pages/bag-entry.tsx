@@ -51,10 +51,13 @@ export default function BagEntry() {
   const [newBuyerName, setNewBuyerName] = useState("");
 
   // Queries - always called at top level
-  const { data: lot, isLoading: lotLoading } = useQuery<LotWithDetails>({
+  const { data: lot, isLoading: lotLoading, error: lotError } = useQuery<LotWithDetails>({
     queryKey: ["/api/lots", lotId],
     enabled: !isNaN(lotId),
   });
+
+  // Debug logging
+  console.log('Bag Entry Debug:', { lotId, isNaN: isNaN(lotId), lot, lotLoading, lotError });
 
   const { data: existingBags } = useQuery<Bag[]>({
     queryKey: ["/api/lots", lotId, "bags"],
