@@ -110,6 +110,11 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Supports multiple lots per farmer with consolidated bill generation
   - Includes all deductions: vehicle rent, advance, unload hamali
   - API endpoints for single farmer bills and daily billing reports
+- June 24, 2025: Fixed kg/quintal unit conversion in billing calculations
+  - Corrected billing to properly convert bag weights (kg) to quintals for price calculations
+  - Added quintal weight display column in billing interface
+  - Updated amount calculations to use quintals × price per quintal formula
+  - Added lot completion workflow with "Complete" button for billing inclusion
 
 # User Preferences
 
