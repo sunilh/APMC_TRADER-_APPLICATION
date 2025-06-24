@@ -13,6 +13,7 @@ import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntry from "@/pages/bag-entry";
 import BuyersSimple from "@/pages/buyers-simple";
+import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
       <ProtectedRoute path="/buyers" component={BuyersSimple} />
+      <ProtectedRoute path="/billing" component={Billing} />
       <ProtectedRoute path="/settings" component={Settings} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
