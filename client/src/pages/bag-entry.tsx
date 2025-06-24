@@ -59,9 +59,12 @@ export default function BagEntry() {
 
 
   const { data: existingBags } = useQuery<Bag[]>({
-    queryKey: ["/api/lots", lotId, "bags"],
+    queryKey: [`/api/lots/${lotId}/bags`],
     enabled: !isNaN(lotId),
   });
+
+  // Debug logging
+  console.log('Debug - lotId:', lotId, 'existingBags:', existingBags, 'bagData.length:', bagData.length);
 
   const { data: buyers = [] } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
@@ -113,39 +116,40 @@ export default function BagEntry() {
 
   // Initialize bag data when lot loads
   useEffect(() => {
-    if (lot && !bagData.length) {
+    if (lot && lot.numberOfBags) {
       if (lot.lotPrice) setLotPrice(lot.lotPrice);
       if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
       
+      // Create initial bag structure
       const initialBags = Array.from({ length: lot.numberOfBags }, (_, i) => ({
         bagNumber: i + 1,
         status: 'pending' as const,
       }));
-      setBagData(initialBags);
-    }
-  }, [lot, bagData.length]);
 
-  // Merge existing bag data when component loads
-  useEffect(() => {
-    if (existingBags && bagData.length && lot) {
-      console.log("Loading existing bags:", existingBags);
-      const updatedBagData = bagData.map(bag => {
-        const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
-        if (existingBag) {
-          return {
-            ...bag,
-            weight: existingBag.weight ? parseFloat(existingBag.weight) : undefined,
-            grade: existingBag.grade || undefined,
-            notes: existingBag.notes || undefined,
-            status: 'saved' as const,
-          };
-        }
-        return bag;
-      });
-      setBagData(updatedBagData);
-      console.log("Updated bag data with existing values:", updatedBagData);
+      // If we have existing bags data, merge it immediately
+      if (existingBags && existingBags.length > 0) {
+        console.log("Merging existing bags with initial structure:", existingBags);
+        const mergedBags = initialBags.map(bag => {
+          const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
+          if (existingBag) {
+            return {
+              ...bag,
+              weight: existingBag.weight ? parseFloat(existingBag.weight.toString()) : undefined,
+              grade: existingBag.grade || undefined,
+              notes: existingBag.notes || undefined,
+              status: 'saved' as const,
+            };
+          }
+          return bag;
+        });
+        setBagData(mergedBags);
+        console.log("Set merged bag data:", mergedBags);
+      } else {
+        setBagData(initialBags);
+        console.log("Set initial bag data:", initialBags);
+      }
     }
-  }, [existingBags, lot]);
+  }, [lot, existingBags]);
 
   const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
