@@ -56,8 +56,7 @@ export default function BagEntry() {
     enabled: !isNaN(lotId),
   });
 
-  // Debug logging
-  console.log('Bag Entry Debug:', { lotId, isNaN: isNaN(lotId), lot, lotLoading, lotError });
+
 
   const { data: existingBags } = useQuery<Bag[]>({
     queryKey: ["/api/lots", lotId, "bags"],
@@ -99,6 +98,16 @@ export default function BagEntry() {
       setShowInlineBuyerForm(false);
       setNewBuyerName("");
       toast({ title: "Success", description: "Buyer created successfully" });
+    },
+  });
+
+  const updateLotMutation = useMutation({
+    mutationFn: async (updates: { lotPrice?: string; buyerId?: number }) => {
+      return await apiRequest("PUT", `/api/lots/${lotId}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}`] });
+      toast({ title: "Success", description: "Lot updated successfully" });
     },
   });
 
@@ -184,6 +193,19 @@ export default function BagEntry() {
         name: newBuyerName.trim(),
         contactPerson: "",
       });
+    }
+  };
+
+  const handleLotPriceUpdate = () => {
+    if (lotPrice && lot) {
+      updateLotMutation.mutate({ lotPrice });
+    }
+  };
+
+  const handleBuyerUpdate = (buyerId: string) => {
+    setSelectedBuyer(buyerId);
+    if (buyerId && lot) {
+      updateLotMutation.mutate({ buyerId: parseInt(buyerId) });
     }
   };
 
@@ -294,14 +316,14 @@ export default function BagEntry() {
           </CardContent>
         </Card>
 
-        {/* Buyer Selection */}
+        {/* Buyer Selection and Lot Price */}
         <Card className="mb-6">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Select Buyer</Label>
                 <div className="flex space-x-2">
-                  <Select value={selectedBuyer} onValueChange={setSelectedBuyer}>
+                  <Select value={selectedBuyer} onValueChange={handleBuyerUpdate}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select buyer" />
                     </SelectTrigger>
@@ -350,6 +372,27 @@ export default function BagEntry() {
                     </Button>
                   </div>
                 )}
+              </div>
+              
+              <div>
+                <Label htmlFor="lot-price">Lot Price (₹)</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="lot-price"
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter lot price"
+                    value={lotPrice}
+                    onChange={(e) => setLotPrice(e.target.value)}
+                    onBlur={handleLotPriceUpdate}
+                  />
+                  <VoiceInput
+                    onResult={(text) => setLotPrice(text)}
+                    placeholder="Price"
+                    type="currency"
+                    className="w-10"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
