@@ -331,10 +331,12 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Super admin already exists" });
       }
 
+      const { hashPassword } = await import('./auth.js');
       const validatedData = insertUserSchema.parse({
         ...req.body,
         role: 'super_admin',
         tenantId: null, // Super admin doesn't belong to any tenant
+        password: await hashPassword(req.body.password),
       });
 
       const user = await storage.createUser(validatedData);

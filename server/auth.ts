@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   return await bcrypt.hash(password, 10);
 }
 
@@ -22,10 +22,14 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'fallback-dev-secret',
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    cookie: {
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    }
   };
 
   app.set("trust proxy", 1);
