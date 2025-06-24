@@ -22,7 +22,13 @@ interface LotWithDetails extends Lot {
     mobile: string;
     place: string;
   };
-  buyer?: Buyer;
+  buyer?: {
+    id: number;
+    name: string;
+    contactPerson?: string;
+    mobile?: string;
+    address?: string;
+  };
 }
 
 interface BagEntryData {
@@ -81,7 +87,10 @@ export default function BagEntry() {
     enabled: !isNaN(lotId),
   });
 
-
+  const { data: existingBags, isLoading: bagsLoading } = useQuery<Bag[]>({
+    queryKey: ["/api/lots", lotId, "bags"],
+    enabled: !!lotId,
+  });
 
   const { data: buyers = [] } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
@@ -92,15 +101,7 @@ export default function BagEntry() {
     },
   });
 
-  const { data: existingBags } = useQuery<Bag[]>({
-    queryKey: ["/api/lots", lotId, "bags"],
-    queryFn: async () => {
-      const response = await fetch(`/api/lots/${lotId}/bags`, { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch bags");
-      return response.json();
-    },
-    enabled: !isNaN(lotId),
-  });
+
 
   const createBagMutation = useMutation({
     mutationFn: async (bag: { bagNumber: number; weight?: number; grade?: string; notes?: string }) => {
@@ -152,9 +153,10 @@ export default function BagEntry() {
     }
   }, [lot, bagData.length]);
 
-  // Merge existing bag data
+  // Merge existing bag data when component loads
   useEffect(() => {
-    if (existingBags && bagData.length) {
+    if (existingBags && bagData.length && lot) {
+      console.log("Loading existing bags:", existingBags);
       const updatedBagData = bagData.map(bag => {
         const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
         if (existingBag) {
@@ -169,8 +171,9 @@ export default function BagEntry() {
         return bag;
       });
       setBagData(updatedBagData);
+      console.log("Updated bag data with existing values:", updatedBagData);
     }
-  }, [existingBags]);
+  }, [existingBags, lot]);
 
   const handleBagUpdate = async (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
