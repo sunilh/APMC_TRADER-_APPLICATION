@@ -31,7 +31,6 @@ interface LotWithDetails extends Lot {
 interface BagEntryData {
   bagNumber: number;
   weight?: number;
-  grade?: string;
   notes?: string;
   status: 'pending' | 'saved';
 }
@@ -46,6 +45,7 @@ export default function BagEntry() {
   // State
   const [lotPrice, setLotPrice] = useState("");
   const [selectedBuyer, setSelectedBuyer] = useState("");
+  const [lotGrade, setLotGrade] = useState("");
   const [bagData, setBagData] = useState<BagEntryData[]>([]);
   const [showInlineBuyerForm, setShowInlineBuyerForm] = useState(false);
   const [newBuyerName, setNewBuyerName] = useState("");
@@ -71,8 +71,7 @@ export default function BagEntry() {
 
   // Mutations
   const createBagMutation = useMutation({
-    mutationFn: async (bag: { bagNumber: number; weight?: string; grade?: string; notes?: string }) => {
-      console.log('Creating bag with data:', bag);
+    mutationFn: async (bag: { bagNumber: number; weight?: string; notes?: string }) => {
       return await apiRequest("POST", `/api/lots/${lotId}/bags`, bag);
     },
     onSuccess: (_, variables) => {
@@ -179,6 +178,7 @@ export default function BagEntry() {
     if (lot && lot.numberOfBags) {
       if (lot.lotPrice) setLotPrice(lot.lotPrice);
       if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
+      if (lot.grade) setLotGrade(lot.grade);
       
       // Create initial bag structure
       const initialBags = Array.from({ length: lot.numberOfBags }, (_, i) => ({
@@ -194,7 +194,6 @@ export default function BagEntry() {
             return {
               ...bag,
               weight: existingBag.weight ? parseFloat(existingBag.weight.toString()) : undefined,
-              grade: existingBag.grade || undefined,
               notes: existingBag.notes || undefined,
               status: 'saved' as const,
             };
@@ -219,7 +218,7 @@ export default function BagEntry() {
       // Auto-save after a short delay using the updated data
       setTimeout(() => {
         const bagToUpdate = updatedBags.find(b => b.bagNumber === bagNumber);
-        if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.grade || bagToUpdate.notes)) {
+        if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.notes)) {
           const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
           
           if (existingBag) {
@@ -227,7 +226,6 @@ export default function BagEntry() {
               bagId: existingBag.id,
               bag: {
                 weight: bagToUpdate.weight?.toString(),
-                grade: bagToUpdate.grade,
                 notes: bagToUpdate.notes,
               }
             });
@@ -235,7 +233,6 @@ export default function BagEntry() {
             createBagMutation.mutate({
               bagNumber,
               weight: bagToUpdate.weight?.toString(),
-              grade: bagToUpdate.grade,
               notes: bagToUpdate.notes,
             });
           }
@@ -257,14 +254,30 @@ export default function BagEntry() {
 
   const handleLotPriceUpdate = () => {
     if (lotPrice && lot) {
-      updateLotMutation.mutate({ lotPrice });
+      updateLotMutation.mutate({ 
+        lotPrice,
+        buyerId: selectedBuyer ? parseInt(selectedBuyer) : undefined,
+        grade: lotGrade || undefined,
+      });
     }
+  };
+
+  const handleLotGradeUpdate = (grade: string) => {
+    updateLotMutation.mutate({
+      lotPrice: lotPrice || undefined,
+      buyerId: selectedBuyer ? parseInt(selectedBuyer) : undefined,
+      grade: grade || undefined,
+    });
   };
 
   const handleBuyerUpdate = (buyerId: string) => {
     setSelectedBuyer(buyerId);
     if (buyerId && lot) {
-      updateLotMutation.mutate({ buyerId: parseInt(buyerId) });
+      updateLotMutation.mutate({ 
+        buyerId: parseInt(buyerId),
+        lotPrice: lotPrice || undefined,
+        grade: lotGrade || undefined,
+      });
     }
   };
 
@@ -471,6 +484,28 @@ export default function BagEntry() {
                   />
                 </div>
               </div>
+              
+              <div>
+                <Label htmlFor="grade">Grade</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="grade"
+                    placeholder="Enter grade (e.g., A, B, C)"
+                    value={lotGrade}
+                    onChange={(e) => setLotGrade(e.target.value)}
+                    onBlur={() => handleLotGradeUpdate(lotGrade)}
+                  />
+                  <VoiceInput
+                    onResult={(text) => {
+                      setLotGrade(text);
+                      handleLotGradeUpdate(text);
+                    }}
+                    placeholder="Grade"
+                    type="text"
+                    className="w-10"
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -525,7 +560,7 @@ export default function BagEntry() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor={`weight-${bag.bagNumber}`}>Weight (kg)</Label>
                       <div className="flex space-x-2">
@@ -560,17 +595,6 @@ export default function BagEntry() {
                           placeholder="Voice input"
                         />
                       </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor={`grade-${bag.bagNumber}`}>Grade</Label>
-                      <Input
-                        id={`grade-${bag.bagNumber}`}
-                        placeholder="Enter grade"
-                        value={bag.grade || ""}
-                        onChange={(e) => handleBagUpdate(bag.bagNumber, 'grade', e.target.value)}
-                        className={bag.status === 'saved' ? 'bg-green-50 border-green-200' : ''}
-                      />
                     </div>
                     
                     <div>

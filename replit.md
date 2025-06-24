@@ -99,7 +99,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
 
 # Changelog
 
-- June 24, 2025. Initial setup
+- June 24, 2025: Initial setup
+- June 24, 2025: Fixed decimal weight support and moved grade to lot level
+  - Resolved schema validation error where weight expected string but received number
+  - Successfully implemented partial bag entry with auto-save functionality
+  - Moved grade field from individual bags to lot level for better agricultural workflow
+  - Weight values (including decimals like 36.5) now save and display correctly
 
 # User Preferences
 
