@@ -32,7 +32,7 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("login");
 
-  // Redirect if already logged in
+  // Redirect if already authenticated
   if (user) {
     setLocation("/");
     return null;

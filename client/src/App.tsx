@@ -3,14 +3,12 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/use-auth";
 import { I18nProvider } from "@/lib/i18n";
 import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
-import SuperAdminSetup from "@/pages/super-admin-setup";
-import TenantRegistration from "@/pages/tenant-registration";
 import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntry from "@/pages/bag-entry";
@@ -20,15 +18,13 @@ import Settings from "@/pages/settings";
 function Router() {
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/super-admin-setup" component={SuperAdminSetup} />
-      <Route path="/tenant-registration" component={TenantRegistration} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
       <ProtectedRoute path="/buyers" component={BuyersSimple} />
       <ProtectedRoute path="/settings" component={Settings} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );

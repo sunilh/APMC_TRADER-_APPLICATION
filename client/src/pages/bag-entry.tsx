@@ -152,7 +152,7 @@ export default function BagEntry() {
     }
   }, [lot, bagData.length]);
 
-  // Immediately load existing bag data when available
+  // Merge existing bag data
   useEffect(() => {
     if (existingBags && bagData.length) {
       const updatedBagData = bagData.map(bag => {
@@ -169,55 +169,38 @@ export default function BagEntry() {
         return bag;
       });
       setBagData(updatedBagData);
-      console.log("Loaded existing bag data immediately:", updatedBagData);
     }
-  }, [existingBags, bagData.length]);
+  }, [existingBags]);
 
-  // Force refresh of lot data when component mounts and show existing data immediately
-  useEffect(() => {
-    if (!isNaN(lotId)) {
-      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId, "bags"] });
-    }
-  }, [lotId]);
-
-  // Initialize form values from existing lot data
-  useEffect(() => {
-    if (lot) {
-      if (lot.lotPrice) setLotPrice(lot.lotPrice);
-      if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
-      setTotalBags(lot.numberOfBags);
-    }
-  }, [lot]);
-
-  const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
+  const handleBagUpdate = async (bagNumber: number, field: string, value: any) => {
     setBagData(prev => prev.map(bag => 
       bag.bagNumber === bagNumber 
         ? { ...bag, [field]: value, status: 'pending' }
         : bag
     ));
-  };
 
-  const saveBagData = async (bagNumber: number) => {
-    const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
-    if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.grade || bagToUpdate.notes)) {
-      const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
-      
-      try {
-        const bagPayload = {
-          bagNumber,
-          weight: bagToUpdate.weight?.toString() || "",
-          grade: bagToUpdate.grade || "",
-          notes: bagToUpdate.notes || "",
-        };
-
+    // Auto-save after a short delay
+    setTimeout(() => {
+      const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
+      if (bagToUpdate) {
+        const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
+        
         if (existingBag) {
-          await updateBagMutation.mutateAsync({
+          updateBagMutation.mutate({
             bagId: existingBag.id,
-            bag: bagPayload
+            bag: {
+              weight: bagToUpdate.weight?.toString(),
+              grade: bagToUpdate.grade,
+              notes: bagToUpdate.notes,
+            }
           });
         } else {
-          await createBagMutation.mutateAsync(bagPayload);
+          createBagMutation.mutate({
+            bagNumber,
+            weight: bagToUpdate.weight,
+            grade: bagToUpdate.grade,
+            notes: bagToUpdate.notes,
+          });
         }
 
         setBagData(prev => prev.map(bag => 
@@ -225,15 +208,8 @@ export default function BagEntry() {
             ? { ...bag, status: 'saved' }
             : bag
         ));
-      } catch (error) {
-        console.error(`Failed to save bag ${bagNumber}:`, error);
-        toast({
-          title: "Error",
-          description: `Failed to save bag ${bagNumber}`,
-          variant: "destructive"
-        });
       }
-    }
+    }, 1000);
   };
 
   const handleVoiceInput = (bagNumber: number, value: string) => {
@@ -243,49 +219,35 @@ export default function BagEntry() {
     }
   };
 
-  const handleSaveAll = async () => {
-    try {
-      const pendingBags = bagData.filter(bag => 
-        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
-      );
-      
-      for (const bag of pendingBags) {
-        await saveBagData(bag.bagNumber);
+  const handleSaveAll = () => {
+    bagData.forEach(bag => {
+      if (bag.status === 'pending') {
+        const existingBag = existingBags?.find(eb => eb.bagNumber === bag.bagNumber);
+        
+        if (existingBag) {
+          updateBagMutation.mutate({
+            bagId: existingBag.id,
+            bag: {
+              weight: bag.weight?.toString(),
+              grade: bag.grade,
+              notes: bag.notes,
+            }
+          });
+        } else {
+          createBagMutation.mutate({
+            bagNumber: bag.bagNumber,
+            weight: bag.weight,
+            grade: bag.grade,
+            notes: bag.notes,
+          });
+        }
       }
-      
-      toast({
-        title: "Success",
-        description: `All ${pendingBags.length} pending bag entries saved successfully`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save some bag entries",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const updateLotMutation = useMutation({
-    mutationFn: async (data: { lotPrice?: string; buyerId?: number }) => {
-      return await apiRequest("PUT", `/api/lots/${lotId}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId] });
-      toast({ title: "Success", description: "Lot information updated successfully" });
-    },
-    onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const updateLotInfo = () => {
-    const data: { lotPrice?: string; buyerId?: number } = {};
-    if (lotPrice) data.lotPrice = lotPrice;
-    if (selectedBuyer && selectedBuyer !== "placeholder") {
-      data.buyerId = parseInt(selectedBuyer);
-    }
-    updateLotMutation.mutate(data);
+    });
+    
+    toast({
+      title: "Success",
+      description: "All bag entries saved successfully",
+    });
   };
 
   const handleCreateBuyer = () => {
@@ -347,7 +309,7 @@ export default function BagEntry() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <div className="mb-6">
           <Button 
@@ -358,7 +320,7 @@ export default function BagEntry() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Lots
           </Button>
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             Bag Entry - {lot.lotNumber}
           </h1>
         </div>
@@ -366,36 +328,30 @@ export default function BagEntry() {
         {/* Lot Information Header */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Lot Number</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.lotNumber}</p>
+                <Label className="text-sm font-medium text-gray-500">Lot Number</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.lotNumber}</p>
               </div>
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Farmer</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{lot.farmer.name}</p>
+                <Label className="text-sm font-medium text-gray-500">Farmer Name</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.farmer.name}</p>
               </div>
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Mobile</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.farmer.mobile}</p>
+                <Label className="text-sm font-medium text-gray-500">Mobile</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.farmer.mobile}</p>
               </div>
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Place</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{lot.farmer.place}</p>
+                <Label className="text-sm font-medium text-gray-500">Place</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.farmer.place}</p>
               </div>
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Bags</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
+                <Label className="text-sm font-medium text-gray-500">Total Bags</Label>
+                <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
               </div>
               <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Price</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900">
-                  {lot.lotPrice ? `₹${parseFloat(lot.lotPrice).toFixed(0)}` : "Not set"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Buyer</Label>
-                <p className="text-sm sm:text-lg font-semibold text-gray-900 truncate">
+                <Label className="text-sm font-medium text-gray-500">Buyer</Label>
+                <p className="text-lg font-semibold text-gray-900">
                   {lot.buyer ? lot.buyer.name : "Not assigned"}
                 </p>
               </div>
@@ -422,97 +378,99 @@ export default function BagEntry() {
         {/* Bag Entry Form */}
         <Card>
           <CardContent className="p-6">
-            {(!lot.lotPrice || !lot.buyer) && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <h3 className="font-medium text-yellow-800 mb-3">Complete Lot Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="lot-price">Lot Price *</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-                      <Input
-                        id="lot-price"
-                        type="number"
-                        step="0.01"
-                        value={lotPrice}
-                        onChange={(e) => setLotPrice(e.target.value)}
-                        className="pl-8"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="buyer">Buyer *</Label>
-                    <div className="flex space-x-2">
-                      <Select value={selectedBuyer} onValueChange={setSelectedBuyer}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select buyer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="placeholder">Select a buyer</SelectItem>
-                          {Array.isArray(buyers) && buyers.map((buyer) => (
-                            <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                              {buyer.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowInlineBuyerForm(true)}
-                        className="px-3"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    {showInlineBuyerForm && (
-                      <div className="flex space-x-2 mt-2">
-                        <Input
-                          placeholder="New buyer name"
-                          value={newBuyerName}
-                          onChange={(e) => setNewBuyerName(e.target.value)}
-                        />
-                        <Button
-                          size="sm"
-                          onClick={handleCreateBuyer}
-                          disabled={createBuyerMutation.isPending}
-                        >
-                          Add
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setShowInlineBuyerForm(false);
-                            setNewBuyerName("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="lot-price">Lot Price *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <Input
+                    id="lot-price"
+                    type="number"
+                    step="0.01"
+                    value={lotPrice}
+                    onChange={(e) => setLotPrice(e.target.value)}
+                    className="pl-8"
+                    placeholder="0.00"
+                  />
                 </div>
-                <Button 
-                  onClick={() => updateLotInfo()} 
-                  className="mt-4"
-                  disabled={!lotPrice || !selectedBuyer || selectedBuyer === "placeholder"}
-                >
-                  Update Lot Information
-                </Button>
               </div>
-            )}
+
+              <div className="space-y-2">
+                <Label htmlFor="buyer">Buyer *</Label>
+                <div className="flex space-x-2">
+                  <Select value={selectedBuyer} onValueChange={setSelectedBuyer}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select buyer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="placeholder">Select a buyer</SelectItem>
+                      {Array.isArray(buyers) && buyers.map((buyer) => (
+                        <SelectItem key={buyer.id} value={buyer.id.toString()}>
+                          {buyer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowInlineBuyerForm(true)}
+                    className="px-3"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {showInlineBuyerForm && (
+                  <div className="flex space-x-2 mt-2">
+                    <Input
+                      placeholder="New buyer name"
+                      value={newBuyerName}
+                      onChange={(e) => setNewBuyerName(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleCreateBuyer}
+                      disabled={createBuyerMutation.isPending}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowInlineBuyerForm(false);
+                        setNewBuyerName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="total-bags">Total Bags *</Label>
+                <Input
+                  id="total-bags"
+                  type="number"
+                  min="1"
+                  value={totalBags}
+                  onChange={(e) => setTotalBags(parseInt(e.target.value) || 0)}
+                />
+              </div>
+            </div>
 
             {/* Bag Grid */}
             <div className="mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Bag Details</h3>
-                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                  <Button onClick={handleSaveAll} className="bg-primary hover:bg-primary/90 text-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Bag Details</h3>
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-600">
+                    Auto-save: <span className="text-success"><Check className="inline h-4 w-4 mr-1" />Enabled</span>
+                  </div>
+                  <Button onClick={handleSaveAll} className="bg-secondary hover:bg-secondary/90">
                     <Save className="h-4 w-4 mr-2" />
                     Save All
                   </Button>
@@ -524,19 +482,19 @@ export default function BagEntry() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Bag #
                         </th>
-                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Weight
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Weight (kg)
                         </th>
-                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Grade
                         </th>
-                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Notes
                         </th>
-                        <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
                       </tr>
@@ -544,31 +502,18 @@ export default function BagEntry() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {bagData.map((bag) => (
                         <tr key={bag.bagNumber} className="hover:bg-gray-50">
-                          <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {bag.bagNumber}
                           </td>
-                          <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-1 sm:space-x-2">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
                               <Input
                                 type="number"
                                 step="0.1"
                                 min="0"
                                 value={bag.weight || ""}
                                 onChange={(e) => handleBagUpdate(bag.bagNumber, 'weight', parseFloat(e.target.value) || undefined)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const nextBag = bagData.find(b => b.bagNumber === bag.bagNumber + 1);
-                                    if (nextBag) {
-                                      setTimeout(() => {
-                                        const nextInput = document.querySelector(`#weight-${nextBag.bagNumber}`) as HTMLInputElement;
-                                        if (nextInput) nextInput.focus();
-                                      }, 100);
-                                    }
-                                  }
-                                }}
-                                id={`weight-${bag.bagNumber}`}
-                                className="w-20 sm:w-24 text-sm"
+                                className="w-24 text-sm"
                                 placeholder="0.0"
                               />
                               <VoiceInput
@@ -598,7 +543,6 @@ export default function BagEntry() {
                               type="text"
                               value={bag.notes || ""}
                               onChange={(e) => handleBagUpdate(bag.bagNumber, 'notes', e.target.value)}
-                              onFocus={() => handleBagFocus(bag.bagNumber)}
                               className="w-32 text-sm"
                               placeholder="Optional notes"
                             />
@@ -619,7 +563,7 @@ export default function BagEntry() {
                               ) : (
                                 <>
                                   <Clock className="h-3 w-3 mr-1" />
-                                  Unsaved
+                                  Pending
                                 </>
                               )}
                             </Badge>
