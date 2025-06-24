@@ -1,12 +1,11 @@
 import { 
-  users, farmers, lots, bags, buyers, tenants, auditLogs,
+  users, farmers, lots, bags, buyers, auditLogs,
   type User, type InsertUser, type Farmer, type InsertFarmer,
   type Lot, type InsertLot, type Bag, type InsertBag,
-  type Buyer, type InsertBuyer, type Tenant, type InsertTenant,
-  type AuditLog, type InsertAuditLog
+  type Buyer, type InsertBuyer, type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc, count, like, ilike } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -16,50 +15,43 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   // User management
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string, tenantId?: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getUsersByTenant(tenantId: number): Promise<User[]>;
+  getAllUsers(): Promise<User[]>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User>;
 
-  // Tenant management
-  getTenant(id: number): Promise<Tenant | undefined>;
-  getTenantByCode(apmcCode: string): Promise<Tenant | undefined>;
-  createTenant(tenant: InsertTenant): Promise<Tenant>;
-  getAllTenants(): Promise<Tenant[]>;
-  updateTenant(id: number, tenant: Partial<InsertTenant>): Promise<Tenant>;
-
   // Farmer management
-  getFarmer(id: number, tenantId: number): Promise<Farmer | undefined>;
-  getFarmersByTenant(tenantId: number, search?: string): Promise<Farmer[]>;
+  getFarmer(id: number): Promise<Farmer | undefined>;
+  getAllFarmers(search?: string): Promise<Farmer[]>;
   createFarmer(farmer: InsertFarmer, userId?: number): Promise<Farmer>;
-  updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number, userId?: number): Promise<Farmer>;
-  deleteFarmer(id: number, tenantId: number): Promise<void>;
+  updateFarmer(id: number, farmer: Partial<InsertFarmer>, userId?: number): Promise<Farmer>;
+  deleteFarmer(id: number): Promise<void>;
 
   // Lot management
-  getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined>;
-  getLotsByTenant(tenantId: number, search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
+  getLot(id: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined>;
+  getAllLots(search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
   createLot(lot: InsertLot, userId?: number): Promise<Lot>;
-  updateLot(id: number, lot: Partial<InsertLot>, tenantId: number, userId?: number): Promise<Lot>;
-  deleteLot(id: number, tenantId: number): Promise<void>;
+  updateLot(id: number, lot: Partial<InsertLot>, userId?: number): Promise<Lot>;
+  deleteLot(id: number): Promise<void>;
 
   // Bag management
-  getBagsByLot(lotId: number, tenantId: number): Promise<Bag[]>;
+  getBagsByLot(lotId: number): Promise<Bag[]>;
   createBag(bag: InsertBag, userId?: number): Promise<Bag>;
-  updateBag(id: number, bag: Partial<InsertBag>, tenantId: number, userId?: number): Promise<Bag>;
-  deleteBag(id: number, tenantId: number): Promise<void>;
+  updateBag(id: number, bag: Partial<InsertBag>, userId?: number): Promise<Bag>;
+  deleteBag(id: number): Promise<void>;
 
   // Buyer management
-  getBuyersByTenant(tenantId: number): Promise<Buyer[]>;
+  getAllBuyers(): Promise<Buyer[]>;
   createBuyer(buyer: InsertBuyer, userId?: number): Promise<Buyer>;
-  updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number, userId?: number): Promise<Buyer>;
-  deleteBuyer(id: number, tenantId: number): Promise<void>;
+  updateBuyer(id: number, buyer: Partial<InsertBuyer>, userId?: number): Promise<Buyer>;
+  deleteBuyer(id: number): Promise<void>;
 
   // Audit logging
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
-  getAuditLogs(tenantId: number, limit?: number): Promise<AuditLog[]>;
+  getAuditLogs(limit?: number): Promise<AuditLog[]>;
 
   // Dashboard stats
-  getDashboardStats(tenantId: number): Promise<{
+  getDashboardStats(): Promise<{
     totalFarmers: number;
     activeLots: number;
     totalBagsToday: number;
@@ -90,12 +82,8 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string, tenantId?: number): Promise<User | undefined> {
-    const conditions = tenantId 
-      ? and(eq(users.username, username), eq(users.tenantId, tenantId))
-      : eq(users.username, username);
-    
-    const [user] = await db.select().from(users).where(conditions);
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -104,231 +92,285 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  async getUsersByTenant(tenantId: number): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.tenantId, tenantId));
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
   async updateUser(id: number, user: Partial<InsertUser>): Promise<User> {
-    const [updatedUser] = await db.update(users).set(user).where(eq(users.id, id)).returning();
+    const [updatedUser] = await db.update(users)
+      .set({ ...user, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
     return updatedUser;
   }
 
-  async getTenant(id: number): Promise<Tenant | undefined> {
-    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
-    return tenant || undefined;
-  }
-
-  async getTenantByCode(apmcCode: string): Promise<Tenant | undefined> {
-    const [tenant] = await db.select().from(tenants).where(eq(tenants.apmcCode, apmcCode));
-    return tenant || undefined;
-  }
-
-  async createTenant(tenant: InsertTenant): Promise<Tenant> {
-    const tenantData = {
-      ...tenant,
-      schemaName: `tenant_${tenant.apmcCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
-    };
-    const [newTenant] = await db.insert(tenants).values(tenantData).returning();
-    return newTenant;
-  }
-
-  async getAllTenants(): Promise<Tenant[]> {
-    return await db.select().from(tenants).orderBy(desc(tenants.createdAt));
-  }
-
-  async updateTenant(id: number, tenant: Partial<InsertTenant>): Promise<Tenant> {
-    const [updatedTenant] = await db.update(tenants).set(tenant).where(eq(tenants.id, id)).returning();
-    return updatedTenant;
-  }
-
-  async getFarmer(id: number, tenantId: number): Promise<Farmer | undefined> {
-    const [farmer] = await db.select().from(farmers)
-      .where(and(eq(farmers.id, id), eq(farmers.tenantId, tenantId)));
+  async getFarmer(id: number): Promise<Farmer | undefined> {
+    const [farmer] = await db.select().from(farmers).where(eq(farmers.id, id));
     return farmer || undefined;
   }
 
-  async getFarmersByTenant(tenantId: number, search?: string): Promise<Farmer[]> {
-    let query = db.select().from(farmers).where(eq(farmers.tenantId, tenantId));
-    
+  async getAllFarmers(search?: string): Promise<Farmer[]> {
     if (search) {
-      // Add search functionality here if needed
+      return await db.select().from(farmers)
+        .where(
+          ilike(farmers.name, `%${search}%`)
+        )
+        .orderBy(desc(farmers.createdAt));
     }
-    
-    return await query.orderBy(desc(farmers.createdAt));
+    return await db.select().from(farmers).orderBy(desc(farmers.createdAt));
   }
 
   async createFarmer(farmer: InsertFarmer, userId?: number): Promise<Farmer> {
-    const farmerData = {
-      ...farmer,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    const [newFarmer] = await db.insert(farmers).values(farmerData).returning();
+    const [newFarmer] = await db.insert(farmers).values(farmer).returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'CREATE',
+        entityType: 'farmer',
+        entityId: newFarmer.id,
+        newData: newFarmer,
+      });
+    }
+    
     return newFarmer;
   }
 
-  async updateFarmer(id: number, farmer: Partial<InsertFarmer>, tenantId: number, userId?: number): Promise<Farmer> {
-    const updateData: any = { ...farmer, updatedAt: new Date() };
-    if (userId) updateData.updatedBy = userId;
+  async updateFarmer(id: number, farmer: Partial<InsertFarmer>, userId?: number): Promise<Farmer> {
+    const oldFarmer = await this.getFarmer(id);
     
     const [updatedFarmer] = await db.update(farmers)
-      .set(updateData)
-      .where(and(eq(farmers.id, id), eq(farmers.tenantId, tenantId)))
+      .set({ ...farmer, updatedAt: new Date() })
+      .where(eq(farmers.id, id))
       .returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'UPDATE',
+        entityType: 'farmer',
+        entityId: id,
+        oldData: oldFarmer,
+        newData: updatedFarmer,
+      });
+    }
+    
     return updatedFarmer;
   }
 
-  async deleteFarmer(id: number, tenantId: number): Promise<void> {
-    await db.delete(farmers).where(and(eq(farmers.id, id), eq(farmers.tenantId, tenantId)));
+  async deleteFarmer(id: number): Promise<void> {
+    await db.delete(farmers).where(eq(farmers.id, id));
   }
 
-  async getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined> {
+  async getLot(id: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined> {
     const [result] = await db.select({
-      lot: lots,
+      id: lots.id,
+      lotNumber: lots.lotNumber,
+      farmerId: lots.farmerId,
+      buyerId: lots.buyerId,
+      varietyGrade: lots.varietyGrade,
+      numberOfBags: lots.numberOfBags,
+      estimatedWeight: lots.estimatedWeight,
+      rate: lots.rate,
+      totalValue: lots.totalValue,
+      status: lots.status,
+      createdAt: lots.createdAt,
+      updatedAt: lots.updatedAt,
       farmer: farmers,
       buyer: buyers,
     })
     .from(lots)
     .leftJoin(farmers, eq(lots.farmerId, farmers.id))
     .leftJoin(buyers, eq(lots.buyerId, buyers.id))
-    .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)));
+    .where(eq(lots.id, id));
 
     if (!result) return undefined;
 
     return {
-      ...result.lot,
+      ...result,
       farmer: result.farmer!,
       buyer: result.buyer || undefined,
     };
   }
 
-  async getLotsByTenant(tenantId: number, search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]> {
-    const results = await db.select({
-      lot: lots,
+  async getAllLots(search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]> {
+    let query = db.select({
+      id: lots.id,
+      lotNumber: lots.lotNumber,
+      farmerId: lots.farmerId,
+      buyerId: lots.buyerId,
+      varietyGrade: lots.varietyGrade,
+      numberOfBags: lots.numberOfBags,
+      estimatedWeight: lots.estimatedWeight,
+      rate: lots.rate,
+      totalValue: lots.totalValue,
+      status: lots.status,
+      createdAt: lots.createdAt,
+      updatedAt: lots.updatedAt,
       farmer: farmers,
       buyer: buyers,
     })
     .from(lots)
     .leftJoin(farmers, eq(lots.farmerId, farmers.id))
-    .leftJoin(buyers, eq(lots.buyerId, buyers.id))
-    .where(eq(lots.tenantId, tenantId))
-    .orderBy(desc(lots.createdAt));
+    .leftJoin(buyers, eq(lots.buyerId, buyers.id));
+
+    if (search) {
+      query = query.where(
+        ilike(lots.lotNumber, `%${search}%`)
+      );
+    }
+
+    const results = await query.orderBy(desc(lots.createdAt));
 
     return results.map(result => ({
-      ...result.lot,
+      ...result,
       farmer: result.farmer!,
       buyer: result.buyer || undefined,
     }));
   }
 
   async createLot(lot: InsertLot, userId?: number): Promise<Lot> {
-    const lotData = {
-      ...lot,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    const [newLot] = await db.insert(lots).values(lotData).returning();
+    const [newLot] = await db.insert(lots).values(lot).returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'CREATE',
+        entityType: 'lot',
+        entityId: newLot.id,
+        newData: newLot,
+      });
+    }
+    
     return newLot;
   }
 
-  async updateLot(id: number, lot: Partial<InsertLot>, tenantId: number, userId?: number): Promise<Lot> {
-    const updateData: any = { ...lot, updatedAt: new Date() };
-    if (userId) updateData.updatedBy = userId;
+  async updateLot(id: number, lot: Partial<InsertLot>, userId?: number): Promise<Lot> {
+    const oldLot = await this.getLot(id);
     
     const [updatedLot] = await db.update(lots)
-      .set(updateData)
-      .where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)))
+      .set({ ...lot, updatedAt: new Date() })
+      .where(eq(lots.id, id))
       .returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'UPDATE',
+        entityType: 'lot',
+        entityId: id,
+        oldData: oldLot,
+        newData: updatedLot,
+      });
+    }
+    
     return updatedLot;
   }
 
-  async deleteLot(id: number, tenantId: number): Promise<void> {
-    await db.delete(lots).where(and(eq(lots.id, id), eq(lots.tenantId, tenantId)));
+  async deleteLot(id: number): Promise<void> {
+    await db.delete(lots).where(eq(lots.id, id));
   }
 
-  async getBagsByLot(lotId: number, tenantId: number): Promise<Bag[]> {
+  async getBagsByLot(lotId: number): Promise<Bag[]> {
     return await db.select().from(bags)
-      .where(and(eq(bags.lotId, lotId), eq(bags.tenantId, tenantId)))
+      .where(eq(bags.lotId, lotId))
       .orderBy(bags.bagNumber);
   }
 
   async createBag(bag: InsertBag, userId?: number): Promise<Bag> {
-    const bagData = {
-      ...bag,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    const [newBag] = await db.insert(bags).values(bagData).returning();
+    const [newBag] = await db.insert(bags).values(bag).returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'CREATE',
+        entityType: 'bag',
+        entityId: newBag.id,
+        newData: newBag,
+      });
+    }
+    
     return newBag;
   }
 
-  async updateBag(id: number, bag: Partial<InsertBag>, tenantId: number, userId?: number): Promise<Bag> {
-    const updateData: any = { ...bag, updatedAt: new Date() };
-    if (userId) updateData.updatedBy = userId;
-    
+  async updateBag(id: number, bag: Partial<InsertBag>, userId?: number): Promise<Bag> {
     const [updatedBag] = await db.update(bags)
-      .set(updateData)
-      .where(and(eq(bags.id, id), eq(bags.tenantId, tenantId)))
+      .set({ ...bag, updatedAt: new Date() })
+      .where(eq(bags.id, id))
       .returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'UPDATE',
+        entityType: 'bag',
+        entityId: id,
+        newData: updatedBag,
+      });
+    }
+    
     return updatedBag;
   }
 
-  async deleteBag(id: number, tenantId: number): Promise<void> {
-    await db.delete(bags).where(and(eq(bags.id, id), eq(bags.tenantId, tenantId)));
+  async deleteBag(id: number): Promise<void> {
+    await db.delete(bags).where(eq(bags.id, id));
   }
 
-  async getBuyersByTenant(tenantId: number): Promise<Buyer[]> {
-    return await db.select().from(buyers).where(eq(buyers.tenantId, tenantId));
+  async getAllBuyers(): Promise<Buyer[]> {
+    return await db.select().from(buyers).orderBy(desc(buyers.createdAt));
   }
 
   async createBuyer(buyer: InsertBuyer, userId?: number): Promise<Buyer> {
-    const buyerData = {
-      ...buyer,
-      createdBy: userId,
-      updatedBy: userId,
-    };
-    const [newBuyer] = await db.insert(buyers).values(buyerData).returning();
+    const [newBuyer] = await db.insert(buyers).values(buyer).returning();
+    
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'CREATE',
+        entityType: 'buyer',
+        entityId: newBuyer.id,
+        newData: newBuyer,
+      });
+    }
+    
     return newBuyer;
   }
 
-  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number, userId?: number): Promise<Buyer> {
-    const updateData: any = { ...buyer, updatedAt: new Date() };
-    if (userId) updateData.updatedBy = userId;
-    
-    const [updated] = await db
-      .update(buyers)
-      .set(updateData)
-      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
+  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, userId?: number): Promise<Buyer> {
+    const [updatedBuyer] = await db.update(buyers)
+      .set({ ...buyer, updatedAt: new Date() })
+      .where(eq(buyers.id, id))
       .returning();
     
-    if (!updated) {
-      throw new Error("Buyer not found");
+    if (userId) {
+      await this.createAuditLog({
+        userId,
+        action: 'UPDATE',
+        entityType: 'buyer',
+        entityId: id,
+        newData: updatedBuyer,
+      });
     }
     
-    return updated;
+    return updatedBuyer;
   }
 
-  async deleteBuyer(id: number, tenantId: number): Promise<void> {
-    await db
-      .delete(buyers)
-      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)));
+  async deleteBuyer(id: number): Promise<void> {
+    await db.delete(buyers).where(eq(buyers.id, id));
   }
-
-
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     const [newLog] = await db.insert(auditLogs).values(log).returning();
     return newLog;
   }
 
-  async getAuditLogs(tenantId: number, limit = 100): Promise<AuditLog[]> {
+  async getAuditLogs(limit = 100): Promise<AuditLog[]> {
     return await db.select().from(auditLogs)
-      .where(eq(auditLogs.tenantId, tenantId))
-      .orderBy(desc(auditLogs.timestamp))
+      .orderBy(desc(auditLogs.createdAt))
       .limit(limit);
   }
 
-  async getDashboardStats(tenantId: number): Promise<{
+  async getDashboardStats(): Promise<{
     totalFarmers: number;
     activeLots: number;
     totalBagsToday: number;
@@ -337,28 +379,15 @@ export class DatabaseStorage implements IStorage {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [farmersCount] = await db.select({ count: count() })
-      .from(farmers)
-      .where(eq(farmers.tenantId, tenantId));
-
-    const [activeLotsCount] = await db.select({ count: count() })
-      .from(lots)
-      .where(and(eq(lots.tenantId, tenantId), eq(lots.status, 'active')));
-
-    // Count bags created or updated today
-    const [bagsToday] = await db.select({ count: count() })
-      .from(bags)
-      .leftJoin(lots, eq(bags.lotId, lots.id))
-      .where(and(
-        eq(lots.tenantId, tenantId),
-        eq(lots.status, 'active')
-      ));
+    const [totalFarmersResult] = await db.select({ count: count() }).from(farmers);
+    const [activeLotsResult] = await db.select({ count: count() }).from(lots);
+    const [totalBagsResult] = await db.select({ count: count() }).from(bags);
 
     return {
-      totalFarmers: farmersCount.count,
-      activeLots: activeLotsCount.count,
-      totalBagsToday: bagsToday.count,
-      revenueToday: 0, // Would need revenue calculation
+      totalFarmers: totalFarmersResult.count,
+      activeLots: activeLotsResult.count,
+      totalBagsToday: totalBagsResult.count,
+      revenueToday: 0,
     };
   }
 }

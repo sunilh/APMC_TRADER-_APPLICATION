@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertTenantSchema } from "@shared/schema";
+import { insertFarmerSchema, insertLotSchema, insertBagSchema, insertBuyerSchema, insertUserSchema } from "@shared/schema";
+import { hashPassword } from "./auth";
 import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
@@ -12,16 +13,9 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-function requireTenant(req: any, res: any, next: any) {
-  if (!req.user?.tenantId) {
-    return res.status(403).json({ message: "Tenant access required" });
-  }
-  next();
-}
-
-function requireSuperAdmin(req: any, res: any, next: any) {
-  if (req.user?.role !== 'super_admin') {
-    return res.status(403).json({ message: "Super admin access required" });
+function requireAdmin(req: any, res: any, next: any) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: "Admin access required" });
   }
   next();
 }
@@ -30,7 +24,6 @@ async function createAuditLog(req: any, action: string, entityType?: string, ent
   if (req.user) {
     await storage.createAuditLog({
       userId: req.user.id,
-      tenantId: req.user.tenantId,
       action,
       entityType,
       entityId,
@@ -46,372 +39,333 @@ export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats(req.user.tenantId);
+      const stats = await storage.getDashboardStats();
       res.json(stats);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    } catch (error: any) {
+      console.error("Dashboard stats error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // Farmer routes
-  app.get("/api/farmers", requireAuth, requireTenant, async (req, res) => {
+  // Setup admin user (for initial setup)
+  app.post("/api/setup-admin", async (req, res) => {
     try {
-      const { search } = req.query;
-      const farmers = await storage.getFarmersByTenant(req.user.tenantId, search as string);
-      res.json(farmers);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch farmers" });
-    }
-  });
-
-  app.get("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
-    try {
-      const farmer = await storage.getFarmer(parseInt(req.params.id), req.user.tenantId);
-      if (!farmer) {
-        return res.status(404).json({ message: "Farmer not found" });
+      const { name, email, username, password } = req.body;
+      
+      // Check if any admin already exists
+      const users = await storage.getAllUsers();
+      const adminExists = users.some(user => user.role === 'admin');
+      
+      if (adminExists) {
+        return res.status(400).json({ message: "Admin already exists" });
       }
-      res.json(farmer);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch farmer" });
-    }
-  });
 
-  app.post("/api/farmers", requireAuth, requireTenant, async (req, res) => {
-    try {
-      const validatedData = insertFarmerSchema.parse({
-        ...req.body,
-        tenantId: req.user.tenantId,
+      const hashedPassword = await hashPassword(password);
+      const admin = await storage.createUser({
+        name,
+        email,
+        username,
+        password: hashedPassword,
+        role: 'admin',
+        isActive: true,
       });
-      
-      const farmer = await storage.createFarmer(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'farmer', farmer.id, null, farmer);
-      
-      res.status(201).json(farmer);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create farmer" });
+
+      res.json({ message: "Admin created successfully", user: { id: admin.id, username: admin.username, role: admin.role } });
+    } catch (error: any) {
+      console.error("Setup admin error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.put("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
+  // Login
+  app.post("/api/login", async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
-      const oldFarmer = await storage.getFarmer(id, req.user.tenantId);
-      
-      if (!oldFarmer) {
-        return res.status(404).json({ message: "Farmer not found" });
-      }
+      const passport = await import("passport");
+      passport.default.authenticate("local", (err: any, user: any) => {
+        if (err) {
+          return res.status(500).json({ message: "Authentication error" });
+        }
+        if (!user) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        req.logIn(user, (err: any) => {
+          if (err) {
+            return res.status(500).json({ message: "Login error" });
+          }
+          res.json({ 
+            user: { 
+              id: user.id, 
+              username: user.username, 
+              name: user.name, 
+              email: user.email, 
+              role: user.role 
+            } 
+          });
+        });
+      })(req, res, next);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 
-      const validatedData = insertFarmerSchema.partial().parse(req.body);
-      const farmer = await storage.updateFarmer(id, validatedData, req.user.tenantId, req.user.id);
-      
-      await createAuditLog(req, 'update', 'farmer', farmer.id, oldFarmer, farmer);
-      
+  // Logout
+  app.post("/api/logout", requireAuth, async (req, res) => {
+    try {
+      req.logout((err: any) => {
+        if (err) {
+          return res.status(500).json({ message: "Logout error" });
+        }
+        res.json({ message: "Logged out successfully" });
+      });
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get current user
+  app.get("/api/me", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role 
+        } 
+      });
+    } catch (error: any) {
+      console.error("Get user error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Farmers
+  app.get("/api/farmers", requireAuth, async (req, res) => {
+    try {
+      const search = req.query.search as string;
+      const farmers = await storage.getAllFarmers(search);
+      res.json(farmers);
+    } catch (error: any) {
+      console.error("Get farmers error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/farmers", requireAuth, async (req, res) => {
+    try {
+      const farmerData = insertFarmerSchema.parse(req.body);
+      const farmer = await storage.createFarmer(farmerData, req.user.id);
+      await createAuditLog(req, 'CREATE', 'farmer', farmer.id, null, farmer);
       res.json(farmer);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update farmer" });
+    } catch (error: any) {
+      console.error("Create farmer error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.delete("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/farmers/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const farmer = await storage.getFarmer(id, req.user.tenantId);
-      
-      if (!farmer) {
-        return res.status(404).json({ message: "Farmer not found" });
-      }
-
-      await storage.deleteFarmer(id, req.user.tenantId);
-      await createAuditLog(req, 'delete', 'farmer', id, farmer, null);
-      
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete farmer" });
+      const farmerData = insertFarmerSchema.partial().parse(req.body);
+      const farmer = await storage.updateFarmer(id, farmerData, req.user.id);
+      await createAuditLog(req, 'UPDATE', 'farmer', id, null, farmer);
+      res.json(farmer);
+    } catch (error: any) {
+      console.error("Update farmer error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // Lot routes
-  app.get("/api/lots", requireAuth, requireTenant, async (req, res) => {
+  app.delete("/api/farmers/:id", requireAuth, async (req, res) => {
     try {
-      const { search } = req.query;
-      const lots = await storage.getLotsByTenant(req.user.tenantId, search as string);
+      const id = parseInt(req.params.id);
+      await storage.deleteFarmer(id);
+      await createAuditLog(req, 'DELETE', 'farmer', id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete farmer error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Lots
+  app.get("/api/lots", requireAuth, async (req, res) => {
+    try {
+      const search = req.query.search as string;
+      const lots = await storage.getAllLots(search);
       res.json(lots);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch lots" });
+    } catch (error: any) {
+      console.error("Get lots error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.get("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
+  app.post("/api/lots", requireAuth, async (req, res) => {
     try {
-      const lot = await storage.getLot(parseInt(req.params.id), req.user.tenantId);
+      const lotData = insertLotSchema.parse(req.body);
+      const lot = await storage.createLot(lotData, req.user.id);
+      await createAuditLog(req, 'CREATE', 'lot', lot.id, null, lot);
+      res.json(lot);
+    } catch (error: any) {
+      console.error("Create lot error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/lots/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lot = await storage.getLot(id);
       if (!lot) {
         return res.status(404).json({ message: "Lot not found" });
       }
       res.json(lot);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch lot" });
+    } catch (error: any) {
+      console.error("Get lot error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
-    try {
-      // Generate lot number
-      const existingLots = await storage.getLotsByTenant(req.user.tenantId);
-      const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, '0')}`;
-
-      const validatedData = insertLotSchema.parse({
-        ...req.body,
-        lotNumber,
-        tenantId: req.user.tenantId,
-      });
-      
-      const lot = await storage.createLot(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'lot', lot.id, null, lot);
-      
-      res.status(201).json(lot);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create lot" });
-    }
-  });
-
-  app.put("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/lots/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const oldLot = await storage.getLot(id, req.user.tenantId);
-      
-      if (!oldLot) {
-        return res.status(404).json({ message: "Lot not found" });
-      }
-
-      const validatedData = insertLotSchema.partial().parse(req.body);
-      const lot = await storage.updateLot(id, validatedData, req.user.tenantId, req.user.id);
-      
-      await createAuditLog(req, 'update', 'lot', lot.id, oldLot, lot);
-      
+      const lotData = insertLotSchema.partial().parse(req.body);
+      const lot = await storage.updateLot(id, lotData, req.user.id);
+      await createAuditLog(req, 'UPDATE', 'lot', id, null, lot);
       res.json(lot);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update lot" });
+    } catch (error: any) {
+      console.error("Update lot error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // Bag routes
-  app.get("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
-    try {
-      const bags = await storage.getBagsByLot(parseInt(req.params.lotId), req.user.tenantId);
-      res.json(bags);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch bags" });
-    }
-  });
-
-  app.post("/api/lots/:lotId/bags", requireAuth, requireTenant, async (req, res) => {
-    try {
-      const validatedData = insertBagSchema.parse({
-        ...req.body,
-        lotId: parseInt(req.params.lotId),
-        tenantId: req.user.tenantId,
-      });
-      
-      const bag = await storage.createBag(validatedData, req.user.id);
-      await createAuditLog(req, 'create', 'bag', bag.id, null, bag);
-      
-      res.status(201).json(bag);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create bag" });
-    }
-  });
-
-  app.put("/api/bags/:id", requireAuth, requireTenant, async (req, res) => {
+  app.delete("/api/lots/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertBagSchema.partial().parse(req.body);
-      
-      const bag = await storage.updateBag(id, validatedData, req.user.tenantId, req.user.id);
-      await createAuditLog(req, 'update', 'bag', bag.id, null, bag);
-      
+      await storage.deleteLot(id);
+      await createAuditLog(req, 'DELETE', 'lot', id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete lot error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Bags
+  app.get("/api/lots/:lotId/bags", requireAuth, async (req, res) => {
+    try {
+      const lotId = parseInt(req.params.lotId);
+      const bags = await storage.getBagsByLot(lotId);
+      res.json(bags);
+    } catch (error: any) {
+      console.error("Get bags error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/bags", requireAuth, async (req, res) => {
+    try {
+      const bagData = insertBagSchema.parse(req.body);
+      const bag = await storage.createBag(bagData, req.user.id);
+      await createAuditLog(req, 'CREATE', 'bag', bag.id, null, bag);
       res.json(bag);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update bag" });
+    } catch (error: any) {
+      console.error("Create bag error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // Buyer routes
-  app.get("/api/buyers", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/bags/:id", requireAuth, async (req, res) => {
     try {
-      const buyers = await storage.getBuyersByTenant(req.user.tenantId);
+      const id = parseInt(req.params.id);
+      const bagData = insertBagSchema.partial().parse(req.body);
+      const bag = await storage.updateBag(id, bagData, req.user.id);
+      await createAuditLog(req, 'UPDATE', 'bag', id, null, bag);
+      res.json(bag);
+    } catch (error: any) {
+      console.error("Update bag error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/bags/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBag(id);
+      await createAuditLog(req, 'DELETE', 'bag', id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete bag error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Buyers
+  app.get("/api/buyers", requireAuth, async (req, res) => {
+    try {
+      const buyers = await storage.getAllBuyers();
       res.json(buyers);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch buyers" });
+    } catch (error: any) {
+      console.error("Get buyers error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
+  app.post("/api/buyers", requireAuth, async (req, res) => {
     try {
-      console.log("Creating buyer - request body:", req.body);
-      console.log("User tenant ID:", req.user.tenantId);
-      
-      const validatedData = insertBuyerSchema.parse({
-        ...req.body,
-        tenantId: req.user.tenantId,
-      });
-      
-      console.log("Validated buyer data:", validatedData);
-      
-      const buyer = await storage.createBuyer(validatedData);
-      console.log("Created buyer:", buyer);
-      
-      await createAuditLog(req, 'create', 'buyer', buyer.id, null, buyer);
-      
-      res.status(201).json(buyer);
-    } catch (error) {
-      console.error("Buyer creation error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create buyer", error: error.message });
-    }
-  });
-
-  app.put("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
-    try {
-      const buyerId = parseInt(req.params.id);
-      const validatedData = insertBuyerSchema.partial().parse(req.body);
-      
-      const buyer = await storage.updateBuyer(buyerId, validatedData, req.user.tenantId, req.user.id);
-      await createAuditLog(req, 'update', 'buyer', buyerId, null, buyer);
-      
+      const buyerData = insertBuyerSchema.parse(req.body);
+      const buyer = await storage.createBuyer(buyerData, req.user.id);
+      await createAuditLog(req, 'CREATE', 'buyer', buyer.id, null, buyer);
       res.json(buyer);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update buyer" });
+    } catch (error: any) {
+      console.error("Create buyer error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  app.delete("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/buyers/:id", requireAuth, async (req, res) => {
     try {
-      const buyerId = parseInt(req.params.id);
-      await storage.deleteBuyer(buyerId, req.user.tenantId);
-      await createAuditLog(req, 'delete', 'buyer', buyerId, null, null);
-      
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete buyer" });
+      const id = parseInt(req.params.id);
+      const buyerData = insertBuyerSchema.partial().parse(req.body);
+      const buyer = await storage.updateBuyer(id, buyerData, req.user.id);
+      await createAuditLog(req, 'UPDATE', 'buyer', id, null, buyer);
+      res.json(buyer);
+    } catch (error: any) {
+      console.error("Update buyer error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
-  // Super admin setup route (only works if no super admin exists)
-  app.post("/api/setup-super-admin", async (req, res) => {
+  app.delete("/api/buyers/:id", requireAuth, async (req, res) => {
     try {
-      // Check if super admin already exists
-      const existingSuperAdmin = await db.select().from(users).where(eq(users.role, 'super_admin')).limit(1);
-      
-      if (existingSuperAdmin.length > 0) {
-        return res.status(400).json({ message: "Super admin already exists" });
-      }
-
-      const { hashPassword } = await import('./auth.js');
-      const validatedData = insertUserSchema.parse({
-        ...req.body,
-        role: 'super_admin',
-        tenantId: null, // Super admin doesn't belong to any tenant
-        password: await hashPassword(req.body.password),
-      });
-
-      const user = await storage.createUser(validatedData);
-      res.status(201).json({ id: user.id, username: user.username, role: user.role });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create super admin" });
-    }
-  });
-
-  // Check if super admin exists
-  app.get("/api/super-admin-exists", async (req, res) => {
-    try {
-      const existingSuperAdmin = await db.select().from(users).where(eq(users.role, 'super_admin')).limit(1);
-      res.json({ exists: existingSuperAdmin.length > 0 });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to check super admin status" });
-    }
-  });
-
-  // Tenant management (super admin only)
-  app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
-    try {
-      const { adminUser, ...tenantData } = req.body;
-      
-      // Generate schema name
-      const schemaName = `tenant_${tenantData.apmcCode.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-      
-      const validatedTenantData = insertTenantSchema.parse({
-        ...tenantData,
-        schemaName,
-        maxUsers: tenantData.subscriptionPlan === 'basic' ? 2 : 
-                  tenantData.subscriptionPlan === 'gold' ? 10 : 50,
-      });
-      
-      const tenant = await storage.createTenant(validatedTenantData);
-      
-      // Create admin user for the tenant
-      const adminUserData = {
-        ...adminUser,
-        tenantId: tenant.id,
-        role: 'admin',
-      };
-      
-      await storage.createUser(adminUserData);
-      await createAuditLog(req, 'create', 'tenant', tenant.id, null, tenant);
-      
-      res.status(201).json(tenant);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create tenant" });
-    }
-  });
-
-  app.get("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
-    try {
-      const tenants = await storage.getAllTenants();
-      res.json(tenants);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch tenants" });
+      const id = parseInt(req.params.id);
+      await storage.deleteBuyer(id);
+      await createAuditLog(req, 'DELETE', 'buyer', id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Delete buyer error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 
   // Audit logs
-  app.get("/api/audit-logs", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/audit-logs", requireAuth, requireAdmin, async (req, res) => {
     try {
-      const { limit } = req.query;
-      const logs = await storage.getAuditLogs(req.user.tenantId, limit ? parseInt(limit as string) : undefined);
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getAuditLogs(limit);
       res.json(logs);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch audit logs" });
+    } catch (error: any) {
+      console.error("Get audit logs error:", error);
+      res.status(500).json({ message: error.message });
     }
   });
 

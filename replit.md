@@ -32,11 +32,11 @@ This is a full-stack APMC (Agricultural Produce Market Committee) management sys
 
 ## Key Components
 
-### Multi-Tenancy System
-- Tenant isolation at database level with tenantId foreign keys
-- Subscription-based access control (basic, gold, premium plans)
-- Per-tenant user limits and feature restrictions
-- Tenant-specific settings and configurations
+### Simplified Architecture (Post-Rollback)
+- Single shared database tables without tenant isolation
+- Simple role-based access control (admin, staff)
+- Unified user management across the system
+- Streamlined data model for faster development
 
 ### Authentication & Authorization
 - Role-based access control (super_admin, admin, staff)
@@ -100,10 +100,18 @@ This is a full-stack APMC (Agricultural Produce Market Committee) management sys
 - Production: `npm run build && npm run start`
 - Database migrations: `npm run db:push` via Drizzle Kit
 
+## Recent Changes
+- June 24, 2025: Successfully rolled back from complex multi-tenant schema to simplified shared tables approach
+- June 24, 2025: Rewrote Vite integration to fix workflow system compatibility
+- June 24, 2025: Implemented React-based frontend served directly from Express server
+- June 24, 2025: Removed tenant isolation complexity that was causing startup failures
+- June 24, 2025: Application now successfully serves login page and API endpoints
+
 ## Changelog
 ```
 Changelog:
-- June 24, 2025. Initial setup
+- June 24, 2025: Initial setup and rollback to simplified architecture
+- June 24, 2025: Fixed workflow integration and login functionality
 ```
 
 ## User Preferences
