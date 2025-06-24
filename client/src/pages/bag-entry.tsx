@@ -72,10 +72,19 @@ export default function BagEntry() {
   // Mutations
   const createBagMutation = useMutation({
     mutationFn: async (bag: { bagNumber: number; weight?: number; grade?: string; notes?: string }) => {
+      console.log('Creating bag with data:', bag);
       return await apiRequest("POST", `/api/lots/${lotId}/bags`, bag);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId, "bags"] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
+      // Update local state to mark as saved
+      setBagData(prev => prev.map(bag => 
+        bag.bagNumber === variables.bagNumber 
+          ? { ...bag, status: 'saved' as const }
+          : bag
+      ));
+      
       toast({ title: "Success", description: "Bag saved successfully" });
     },
   });
@@ -84,8 +93,19 @@ export default function BagEntry() {
     mutationFn: async ({ bagId, bag }: { bagId: number; bag: Partial<Bag> }) => {
       return await apiRequest("PUT", `/api/bags/${bagId}`, bag);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/lots", lotId, "bags"] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
+      // Find the bag number from existing bags and update status
+      const existingBag = existingBags?.find(eb => eb.id === variables.bagId);
+      if (existingBag) {
+        setBagData(prev => prev.map(bag => 
+          bag.bagNumber === existingBag.bagNumber 
+            ? { ...bag, status: 'saved' as const }
+            : bag
+        ));
+      }
+      
       toast({ title: "Success", description: "Bag updated successfully" });
     },
   });
@@ -189,43 +209,41 @@ export default function BagEntry() {
   }, [lot, existingBags]);
 
   const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
-    setBagData(prev => prev.map(bag => 
-      bag.bagNumber === bagNumber 
-        ? { ...bag, [field]: value, status: 'pending' as const }
-        : bag
-    ));
-
-    // Auto-save after a short delay
-    setTimeout(() => {
-      const bagToUpdate = bagData.find(b => b.bagNumber === bagNumber);
-      if (bagToUpdate) {
-        const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
-        
-        if (existingBag) {
-          updateBagMutation.mutate({
-            bagId: existingBag.id,
-            bag: {
-              weight: bagToUpdate.weight?.toString(),
+    setBagData(prev => {
+      const updatedBags = prev.map(bag => 
+        bag.bagNumber === bagNumber 
+          ? { ...bag, [field]: value, status: 'pending' as const }
+          : bag
+      );
+      
+      // Auto-save after a short delay using the updated data
+      setTimeout(() => {
+        const bagToUpdate = updatedBags.find(b => b.bagNumber === bagNumber);
+        if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.grade || bagToUpdate.notes)) {
+          const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
+          
+          if (existingBag) {
+            updateBagMutation.mutate({
+              bagId: existingBag.id,
+              bag: {
+                weight: bagToUpdate.weight?.toString(),
+                grade: bagToUpdate.grade,
+                notes: bagToUpdate.notes,
+              }
+            });
+          } else {
+            createBagMutation.mutate({
+              bagNumber,
+              weight: bagToUpdate.weight,
               grade: bagToUpdate.grade,
               notes: bagToUpdate.notes,
-            }
-          });
-        } else {
-          createBagMutation.mutate({
-            bagNumber,
-            weight: bagToUpdate.weight,
-            grade: bagToUpdate.grade,
-            notes: bagToUpdate.notes,
-          });
+            });
+          }
         }
-
-        setBagData(prev => prev.map(bag => 
-          bag.bagNumber === bagNumber 
-            ? { ...bag, status: 'saved' as const }
-            : bag
-        ));
-      }
-    }, 1000);
+      }, 1000);
+      
+      return updatedBags;
+    });
   };
 
   const handleCreateBuyer = () => {
