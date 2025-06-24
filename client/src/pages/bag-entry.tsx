@@ -614,18 +614,29 @@ export default function BagEntry() {
             
             {/* Bottom Action Buttons */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
-              <Button
-                onClick={handleAddExtraBag}
-                variant="outline"
-                className="bg-green-50 hover:bg-green-100 border-green-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Extra Bag
-              </Button>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleAddExtraBag}
+                  variant="outline"
+                  className="bg-green-50 hover:bg-green-100 border-green-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Extra Bag
+                </Button>
+                
+                <Button
+                  onClick={() => setLocation("/lots")}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Go to Lots
+                </Button>
+              </div>
               
               <Button
                 onClick={handleSaveAll}
-                disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.grade || b.notes)).length === 0}
+                disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.notes)).length === 0}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {saveAllMutation.isPending ? 'Saving...' : 'Save All'}
