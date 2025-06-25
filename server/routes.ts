@@ -59,6 +59,16 @@ async function createAuditLog(
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // ✅ Lot Print API (Dynamic Print)
+  app.get("/api/lots/print", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const lots = await storage.getLotsByTenant(req.user.tenantId);
+      res.json(lots);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch lots for print" });
+    }
+  });
+
   // Dashboard stats
   app.get(
     "/api/dashboard/stats",
@@ -68,7 +78,7 @@ export function registerRoutes(app: Express): Server {
       try {
         const stats = await storage.getDashboardStats(req.user.tenantId);
         res.json(stats);
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to fetch dashboard stats" });
       }
     },
@@ -101,7 +111,7 @@ export function registerRoutes(app: Express): Server {
         }
 
         res.json(bill);
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to generate farmer bill" });
       }
     },
@@ -121,7 +131,7 @@ export function registerRoutes(app: Express): Server {
 
         const bills = await getFarmerDayBills(date, req.user.tenantId);
         res.json(bills);
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to fetch daily bills" });
       }
     },
@@ -136,7 +146,7 @@ export function registerRoutes(app: Express): Server {
         search as string,
       );
       res.json(farmers);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch farmers" });
     }
   });
@@ -151,7 +161,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Farmer not found" });
       }
       res.json(farmer);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch farmer" });
     }
   });
@@ -230,7 +240,7 @@ export function registerRoutes(app: Express): Server {
         await createAuditLog(req, "delete", "farmer", id, farmer, null);
 
         res.status(204).send();
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to delete farmer" });
       }
     },
@@ -245,7 +255,7 @@ export function registerRoutes(app: Express): Server {
         search as string,
       );
       res.json(lots);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch lots" });
     }
   });
@@ -260,14 +270,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Lot not found" });
       }
       res.json(lot);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch lot" });
     }
   });
 
   app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
-      // Generate lot number
       const existingLots = await storage.getLotsByTenant(req.user.tenantId);
       const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, "0")}`;
 
@@ -329,7 +338,7 @@ export function registerRoutes(app: Express): Server {
           req.user.tenantId,
         );
         res.json(bags);
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to fetch bags" });
       }
     },
@@ -341,14 +350,13 @@ export function registerRoutes(app: Express): Server {
     requireTenant,
     async (req, res) => {
       try {
-        // Check for duplicate bag numbers first
-        const existingBag = await storage.getBagsByLot(
+        const existingBags = await storage.getBagsByLot(
           parseInt(req.params.lotId),
           req.user.tenantId,
         );
-        const bagNumber = req.body.bagNumber;
 
-        if (existingBag.some((bag) => bag.bagNumber === bagNumber)) {
+        const bagNumber = req.body.bagNumber;
+        if (existingBags.some((bag) => bag.bagNumber === bagNumber)) {
           return res
             .status(400)
             .json({ message: "Bag number already exists for this lot" });
@@ -400,31 +408,23 @@ export function registerRoutes(app: Express): Server {
     try {
       const buyers = await storage.getBuyersByTenant(req.user.tenantId);
       res.json(buyers);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch buyers" });
     }
   });
 
   app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
-      console.log("Creating buyer - request body:", req.body);
-      console.log("User tenant ID:", req.user.tenantId);
-
       const validatedData = insertBuyerSchema.parse({
         ...req.body,
         tenantId: req.user.tenantId,
       });
 
-      console.log("Validated buyer data:", validatedData);
-
       const buyer = await storage.createBuyer(validatedData);
-      console.log("Created buyer:", buyer);
-
       await createAuditLog(req, "create", "buyer", buyer.id, null, buyer);
 
       res.status(201).json(buyer);
     } catch (error) {
-      console.error("Buyer creation error:", error);
       if (error instanceof z.ZodError) {
         return res
           .status(400)
@@ -470,62 +470,11 @@ export function registerRoutes(app: Express): Server {
         await createAuditLog(req, "delete", "buyer", buyerId, null, null);
 
         res.status(204).send();
-      } catch (error) {
+      } catch {
         res.status(500).json({ message: "Failed to delete buyer" });
       }
     },
   );
-
-  // Tenant management (super admin only)
-  app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
-    try {
-      const { adminUser, ...tenantData } = req.body;
-
-      // Generate schema name
-      const schemaName = `tenant_${tenantData.apmcCode.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
-
-      const validatedTenantData = insertTenantSchema.parse({
-        ...tenantData,
-        schemaName,
-        maxUsers:
-          tenantData.subscriptionPlan === "basic"
-            ? 2
-            : tenantData.subscriptionPlan === "gold"
-              ? 10
-              : 50,
-      });
-
-      const tenant = await storage.createTenant(validatedTenantData);
-
-      // Create admin user for the tenant
-      const adminUserData = {
-        ...adminUser,
-        tenantId: tenant.id,
-        role: "admin",
-      };
-
-      await storage.createUser(adminUserData);
-      await createAuditLog(req, "create", "tenant", tenant.id, null, tenant);
-
-      res.status(201).json(tenant);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create tenant" });
-    }
-  });
-
-  app.get("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
-    try {
-      const tenants = await storage.getAllTenants();
-      res.json(tenants);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch tenants" });
-    }
-  });
 
   // Audit logs
   app.get("/api/audit-logs", requireAuth, requireTenant, async (req, res) => {
@@ -536,7 +485,7 @@ export function registerRoutes(app: Express): Server {
         limit ? parseInt(limit as string) : undefined,
       );
       res.json(logs);
-    } catch (error) {
+    } catch {
       res.status(500).json({ message: "Failed to fetch audit logs" });
     }
   });

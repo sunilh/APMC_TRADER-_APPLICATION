@@ -1,360 +1,166 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Navigation } from "@/components/navigation";
-import { LotForm } from "@/components/lot-form";
-import { Card } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus, Search, Package, CheckCircle, Printer } from "lucide-react";
-import { Link } from "wouter";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { generateAPMCPDF, formatDateForAPMC } from "@/lib/pdf-generator";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Lot {
   id: number;
   lotNumber: string;
-  farmerId: number;
-  numberOfBags: number;
-  vehicleRent: string;
-  advance: string;
-  varietyGrade: string;
-  unloadHamali: string;
-  lotPrice?: string;
+  farmerName: string;
+  cropName: string;
+  totalWeight: number;
+  totalBags: number;
   status: string;
-  farmer: {
-    name: string;
-    mobile: string;
-    place: string;
-  };
-  buyer?: {
-    name: string;
-  };
 }
 
-export default function Lots() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+const LotPage: React.FC = () => {
+  const [lots, setLots] = useState<Lot[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const { data: lots, isLoading } = useQuery<Lot[]>({
-    queryKey: ["/api/lots", searchTerm],
-    queryFn: async () => {
-      const url = searchTerm
-        ? `/api/lots?search=${encodeURIComponent(searchTerm)}`
-        : "/api/lots";
-      const response = await fetch(url, { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch lots");
-      return response.json();
-    },
-  });
-
-  const printMutation = useMutation({
-    mutationFn: async (lots: Lot[]) => {
-      const apmcData = {
-        place: lots.length > 0 ? lots[0].farmer.place : "",
-        traderName: "APMC Trader", // Replace with dynamic if needed
-        traderCode: "TRADER001", // Replace with dynamic if needed
-        date: formatDateForAPMC(new Date()),
-        lots: lots.map((lot) => ({
-          lotNumber: lot.lotNumber,
-          farmerName: lot.farmer.name,
-          place: lot.farmer.place,
-          numberOfBags: lot.numberOfBags,
-        })),
-      };
-
-      await generateAPMCPDF(apmcData);
-      return lots;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "APMC format PDF generated successfully",
+  const fetchLots = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/lots", {
+        params: { search },
       });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const completeLotMutation = useMutation({
-    mutationFn: async (lotId: number) => {
-      return await apiRequest("PUT", `/api/lots/${lotId}`, {
-        status: "completed",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/lots"] });
-      toast({
-        title: "Success",
-        description: "Lot marked as completed and ready for billing",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handlePrintAll = () => {
-    if (!lots || lots.length === 0) {
-      toast({
-        title: "No Lots Found",
-        description: "There are no lots to print.",
-        variant: "destructive",
-      });
-      return;
+      setLots(response.data);
+    } catch (error) {
+      console.error("Failed to fetch lots:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const sortedLots = [...lots].sort((a, b) => {
-      const numA = parseInt(a.lotNumber);
-      const numB = parseInt(b.lotNumber);
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return numA - numB;
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get("/api/lots/print");
+      const printData = response.data;
+
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        const htmlContent = `
+          <html>
+            <head>
+              <title>Lot Print</title>
+              <style>
+                body { font-family: Arial; padding: 20px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+              </style>
+            </head>
+            <body>
+              <h2>Lot Report</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lot Number</th>
+                    <th>Farmer Name</th>
+                    <th>Crop</th>
+                    <th>Total Bags</th>
+                    <th>Total Weight (Kg)</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${printData
+                    .map(
+                      (lot: Lot) => `
+                    <tr>
+                      <td>${lot.lotNumber}</td>
+                      <td>${lot.farmerName}</td>
+                      <td>${lot.cropName}</td>
+                      <td>${lot.totalBags}</td>
+                      <td>${lot.totalWeight}</td>
+                      <td>${lot.status}</td>
+                    </tr>
+                  `,
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </body>
+          </html>
+        `;
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        printWindow.print();
       }
-      return a.lotNumber.localeCompare(b.lotNumber);
-    });
-
-    printMutation.mutate(sortedLots);
-  };
-
-  const handleCompleteLot = (lotId: number) => {
-    completeLotMutation.mutate(lotId);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    } catch (error) {
+      console.error("Failed to print lots:", error);
     }
   };
+
+  useEffect(() => {
+    fetchLots();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Lot Management
-          </h1>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search lots by lot number, farmer name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full sm:w-80"
-              />
-            </div>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Lot
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Lot</DialogTitle>
-                </DialogHeader>
-                <LotForm onSuccess={() => setIsDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Lots Table */}
-        <Card className="bg-white shadow-sm border border-gray-200">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lot No.
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Farmer Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bags & Variety
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Financial Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      Loading lots...
-                    </td>
-                  </tr>
-                ) : lots && lots.length > 0 ? (
-                  lots.map((lot) => (
-                    <tr key={lot.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {lot.lotNumber}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">
-                            {lot.farmer.name}
-                          </div>
-                          <div className="text-gray-500">
-                            {lot.farmer.mobile}
-                          </div>
-                          <div className="text-gray-500">
-                            {lot.farmer.place}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">
-                            {lot.numberOfBags} bags
-                          </div>
-                          <div className="text-gray-500">
-                            {lot.varietyGrade}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">
-                          <div className="text-gray-900">
-                            Vehicle: ₹{lot.vehicleRent}
-                          </div>
-                          <div className="text-gray-500">
-                            Advance: ₹{lot.advance}
-                          </div>
-                          <div className="text-gray-500">
-                            Hamali: ₹{lot.unloadHamali}
-                          </div>
-                          {lot.lotPrice && (
-                            <div className="font-medium text-gray-900">
-                              Price: ₹{lot.lotPrice}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={getStatusColor(lot.status)}>
-                          {lot.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <Link href={`/lots/${lot.id}/bags`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-primary hover:text-primary/80"
-                            >
-                              <Package className="h-4 w-4 mr-1" />
-                              Bag Entry
-                            </Button>
-                          </Link>
-                          {lot.status === "active" && lot.lotPrice && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-green-600 hover:text-green-700"
-                              onClick={() => handleCompleteLot(lot.id)}
-                              disabled={completeLotMutation.isPending}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Complete
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Package className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">
-                            No lots found
-                          </h3>
-                          <p className="text-gray-500 mt-1">
-                            {searchTerm
-                              ? "Try adjusting your search terms"
-                              : "Get started by creating your first lot"}
-                          </p>
-                        </div>
-                        {!searchTerm && (
-                          <Button
-                            onClick={() => setIsDialogOpen(true)}
-                            className="bg-primary hover:bg-primary/90"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create First Lot
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        {/* Print All Button */}
-        <div className="flex justify-end mt-4">
-          <Button
-            onClick={handlePrintAll}
-            disabled={printMutation.isPending}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Print All Lots (PDF)
-          </Button>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-semibold">Lot Management</h1>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search lot..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") fetchLots();
+            }}
+          />
+          <Button onClick={fetchLots}>Search</Button>
+          <Button onClick={handlePrint}>Print</Button>
         </div>
       </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Lot Number</TableHead>
+                <TableHead>Farmer Name</TableHead>
+                <TableHead>Crop</TableHead>
+                <TableHead>Total Bags</TableHead>
+                <TableHead>Total Weight (Kg)</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lots.length > 0 ? (
+                lots.map((lot) => (
+                  <TableRow key={lot.id}>
+                    <TableCell>{lot.lotNumber}</TableCell>
+                    <TableCell>{lot.farmerName}</TableCell>
+                    <TableCell>{lot.cropName}</TableCell>
+                    <TableCell>{lot.totalBags}</TableCell>
+                    <TableCell>{lot.totalWeight}</TableCell>
+                    <TableCell>{lot.status}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    {loading ? "Loading..." : "No lots found"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default LotPage;

@@ -39,9 +39,9 @@ export default function BagEntry() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
+  
   const lotId = parseInt(params.id as string);
-
+  
   // State
   const [lotPrice, setLotPrice] = useState("");
   const [selectedBuyer, setSelectedBuyer] = useState("");
@@ -52,14 +52,14 @@ export default function BagEntry() {
 
   // Queries - always called at top level
   const { data: lot, isLoading: lotLoading, error: lotError } = useQuery<LotWithDetails>({
-    queryKey: [/api/lots/${lotId}],
+    queryKey: [`/api/lots/${lotId}`],
     enabled: !isNaN(lotId),
   });
 
 
 
   const { data: existingBags } = useQuery<Bag[]>({
-    queryKey: [/api/lots/${lotId}/bags],
+    queryKey: [`/api/lots/${lotId}/bags`],
     enabled: !isNaN(lotId),
   });
 
@@ -72,29 +72,29 @@ export default function BagEntry() {
   // Mutations
   const createBagMutation = useMutation({
     mutationFn: async (bag: { bagNumber: number; weight?: string; notes?: string }) => {
-      return await apiRequest("POST", /api/lots/${lotId}/bags, bag);
+      return await apiRequest("POST", `/api/lots/${lotId}/bags`, bag);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [/api/lots/${lotId}/bags] });
-
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
       // Update local state to mark as saved
       setBagData(prev => prev.map(bag => 
         bag.bagNumber === variables.bagNumber 
           ? { ...bag, status: 'saved' as const }
           : bag
       ));
-
+      
       toast({ title: "Success", description: "Bag saved successfully" });
     },
   });
 
   const updateBagMutation = useMutation({
     mutationFn: async ({ bagId, bag }: { bagId: number; bag: Partial<Bag> }) => {
-      return await apiRequest("PUT", /api/bags/${bagId}, bag);
+      return await apiRequest("PUT", `/api/bags/${bagId}`, bag);
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [/api/lots/${lotId}/bags] });
-
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
       // Find the bag number from existing bags and update status
       const existingBag = existingBags?.find(eb => eb.id === variables.bagId);
       if (existingBag) {
@@ -104,7 +104,7 @@ export default function BagEntry() {
             : bag
         ));
       }
-
+      
       toast({ title: "Success", description: "Bag updated successfully" });
     },
   });
@@ -124,10 +124,10 @@ export default function BagEntry() {
 
   const updateLotMutation = useMutation({
     mutationFn: async (updates: { lotPrice?: string; buyerId?: number }) => {
-      return await apiRequest("PUT", /api/lots/${lotId}, updates);
+      return await apiRequest("PUT", `/api/lots/${lotId}`, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [/api/lots/${lotId}] });
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}`] });
       toast({ title: "Success", description: "Lot updated successfully" });
     },
   });
@@ -137,28 +137,28 @@ export default function BagEntry() {
       const pendingBags = bagData.filter(bag => 
         bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
       );
-
+      
       const savePromises = pendingBags.map(bag =>
-        apiRequest("POST", /api/lots/${lotId}/bags, {
+        apiRequest("POST", `/api/lots/${lotId}/bags`, {
           bagNumber: bag.bagNumber,
           weight: bag.weight,
           grade: bag.grade,
           notes: bag.notes,
         })
       );
-
+      
       return await Promise.all(savePromises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [/api/lots/${lotId}/bags] });
-
+      queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
+      
       // Update local state to mark all as saved
       setBagData(prev => prev.map(bag => 
         bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
           ? { ...bag, status: 'saved' as const }
           : bag
       ));
-
+      
       toast({ 
         title: "Success", 
         description: "All bags saved successfully" 
@@ -179,7 +179,7 @@ export default function BagEntry() {
       if (lot.lotPrice) setLotPrice(lot.lotPrice);
       if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
       if (lot.grade) setLotGrade(lot.grade);
-
+      
       // Create initial bag structure
       const initialBags = Array.from({ length: lot.numberOfBags }, (_, i) => ({
         bagNumber: i + 1,
@@ -214,13 +214,13 @@ export default function BagEntry() {
           ? { ...bag, [field]: value, status: 'pending' as const }
           : bag
       );
-
+      
       // Auto-save after a short delay using the updated data
       setTimeout(() => {
         const bagToUpdate = updatedBags.find(b => b.bagNumber === bagNumber);
         if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.notes)) {
           const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
-
+          
           if (existingBag) {
             updateBagMutation.mutate({
               bagId: existingBag.id,
@@ -238,7 +238,7 @@ export default function BagEntry() {
           }
         }
       }, 1000);
-
+      
       return updatedBags;
     });
   };
@@ -348,7 +348,7 @@ export default function BagEntry() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <Button 
@@ -385,7 +385,7 @@ export default function BagEntry() {
                 <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
               </div>
             </div>
-
+            
             {/* Buyer Information */}
             {lot.buyer && (
               <div className="mt-4 pt-4 border-t">
@@ -435,7 +435,7 @@ export default function BagEntry() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-
+                
                 {showInlineBuyerForm && (
                   <div className="flex space-x-2 mt-2">
                     <Input
@@ -463,7 +463,7 @@ export default function BagEntry() {
                   </div>
                 )}
               </div>
-
+              
               <div>
                 <Label htmlFor="lot-price">Lot Price (₹)</Label>
                 <div className="flex space-x-2">
@@ -484,7 +484,7 @@ export default function BagEntry() {
                   />
                 </div>
               </div>
-
+              
               <div>
                 <Label htmlFor="grade">Grade</Label>
                 <div className="flex space-x-2">
@@ -528,23 +528,23 @@ export default function BagEntry() {
                 </Button>
               </div>
             </div>
-
+            
             <div className="space-y-6">
               {bagData.map((bag) => (
-                <div key={bag.bagNumber} className={border rounded-lg p-4 ${
+                <div key={bag.bagNumber} className={`border rounded-lg p-4 ${
                   bag.status === 'saved' ? 'border-green-200 bg-green-50' : 'border-gray-200'
-                }}>
+                }`}>
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-lg font-medium">
                       Bag #{bag.bagNumber}
                       {bag.status === 'saved' && <span className="ml-2 text-green-600 text-sm">✓ Saved</span>}
                     </h4>
                     <div className="flex items-center space-x-2">
-                      <span className={px-2 py-1 rounded text-xs font-medium ${
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
                         bag.status === 'saved' 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-yellow-100 text-yellow-800'
-                      }}>
+                      }`}>
                         {bag.status === 'saved' ? 'Saved' : 'Pending'}
                       </span>
                       {bagData.length > 1 && (
@@ -559,13 +559,13 @@ export default function BagEntry() {
                       )}
                     </div>
                   </div>
-
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor={weight-${bag.bagNumber}}>Weight (kg)</Label>
+                      <Label htmlFor={`weight-${bag.bagNumber}`}>Weight (kg)</Label>
                       <div className="flex space-x-2">
                         <Input
-                          id={weight-${bag.bagNumber}}
+                          id={`weight-${bag.bagNumber}`}
                           type="number"
                           step="0.5"
                           min="0"
@@ -596,11 +596,11 @@ export default function BagEntry() {
                         />
                       </div>
                     </div>
-
+                    
                     <div>
-                      <Label htmlFor={notes-${bag.bagNumber}}>Notes</Label>
+                      <Label htmlFor={`notes-${bag.bagNumber}`}>Notes</Label>
                       <Input
-                        id={notes-${bag.bagNumber}}
+                        id={`notes-${bag.bagNumber}`}
                         placeholder="Enter notes"
                         value={bag.notes || ""}
                         onChange={(e) => handleBagUpdate(bag.bagNumber, 'notes', e.target.value)}
@@ -611,7 +611,7 @@ export default function BagEntry() {
                 </div>
               ))}
             </div>
-
+            
             {/* Summary Statistics */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -648,7 +648,7 @@ export default function BagEntry() {
                 </div>
               </div>
             </div>
-
+            
             {/* Bottom Action Buttons */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <div className="flex space-x-3">
@@ -660,7 +660,7 @@ export default function BagEntry() {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Extra Bag
                 </Button>
-
+                
                 <Button
                   onClick={() => setLocation("/lots")}
                   variant="outline"
@@ -670,7 +670,7 @@ export default function BagEntry() {
                   Go to Lots
                 </Button>
               </div>
-
+              
               <Button
                 onClick={handleSaveAll}
                 disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.notes)).length === 0}
@@ -684,4 +684,4 @@ export default function BagEntry() {
       </div>
     </div>
   );
-} 
+}
