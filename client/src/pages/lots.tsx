@@ -63,6 +63,15 @@ export default function Lots() {
     },
   });
 
+  const { data: tenant } = useQuery({
+    queryKey: ["/api/tenant"],
+    queryFn: async () => {
+      const response = await fetch("/api/tenant", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch tenant info");
+      return response.json();
+    },
+  });
+
   const completeLotMutation = useMutation({
     mutationFn: async (lotId: number) => {
       return await apiRequest("PUT", `/api/lots/${lotId}`, {
@@ -90,7 +99,14 @@ export default function Lots() {
   };
 
   const handlePrintAllLots = async () => {
-    if (!lots) return;
+    if (!lots || !tenant) {
+      toast({
+        title: "Error",
+        description: "Unable to print - missing data",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const sortedLots = [...lots].sort((a, b) => {
       const lotA = parseInt(a.lotNumber.replace(/\D/g, ""), 10) || 0;
@@ -99,9 +115,10 @@ export default function Lots() {
     });
 
     const apmcData = {
-      place: sortedLots[0]?.farmer.place || "",
-      traderName: "APMC Trader",
-      traderCode: "TRADER001",
+      place: tenant.name, // Use tenant name as place
+      traderName: tenant.name,
+      traderCode: tenant.apmcCode,
+      traderAddress: tenant.mobileNumber, // Use mobile as address for now
       date: formatDateForAPMC(new Date()),
       lots: sortedLots.map((lot) => ({
         lotNumber: lot.lotNumber,

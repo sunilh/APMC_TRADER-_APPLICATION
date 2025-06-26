@@ -59,6 +59,19 @@ async function createAuditLog(
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Tenant info
+  app.get("/api/tenant", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      res.json(tenant);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tenant info" });
+    }
+  });
+
   // Dashboard stats
   app.get(
     "/api/dashboard/stats",

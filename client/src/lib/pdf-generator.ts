@@ -2,6 +2,7 @@ interface APMCPrintData {
   place: string;
   traderName: string;
   traderCode: string;
+  traderAddress: string;
   date: string;
   lots: Array<{
     lotNumber: string;
@@ -47,7 +48,7 @@ export async function generateAPMCPDF(data: APMCPrintData): Promise<void> {
   
   if (isMobile) {
     // For mobile devices, create a downloadable HTML file
-    generateDownloadableHTML(data, 'APMC_Lots_Report');
+    generateDownloadableHTML(data, 'Trader_Lots_Report');
     return;
   }
   
@@ -56,7 +57,7 @@ export async function generateAPMCPDF(data: APMCPrintData): Promise<void> {
   
   if (!printWindow) {
     // Fallback to download if popup blocked
-    generateDownloadableHTML(data, 'APMC_Lots_Report');
+    generateDownloadableHTML(data, 'Trader_Lots_Report');
     return;
   }
 
@@ -127,7 +128,7 @@ function generateDownloadableBagEntryHTML(data: BagEntryData, filename: string):
   URL.revokeObjectURL(url);
 }
 
-// Generate the mobile-friendly HTML content for APMC report
+// Generate the mobile-friendly HTML content for trader report
 function generateAPMCMobileHTML(data: APMCPrintData): string {
   return `
     <!DOCTYPE html>
@@ -135,7 +136,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>APMC Lots Report</title>
+      <title>Trader Lots Report</title>
       <style>
         * {
           margin: 0;
@@ -152,7 +153,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
           padding: 20px;
         }
         
-        .apmc-container {
+        .trader-container {
           max-width: 800px;
           margin: 0 auto;
           border: 2px solid #000;
@@ -226,7 +227,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         
         .signatures-section {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 40px;
           margin-top: 60px;
         }
@@ -275,7 +276,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         
         @media print {
           body { margin: 0; padding: 10px; }
-          .apmc-container { border: 2px solid #000; }
+          .trader-container { border: 2px solid #000; }
           .mobile-controls { display: none; }
         }
         
@@ -299,7 +300,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
             padding: 6px;
           }
           
-          .apmc-container {
+          .trader-container {
             padding: 15px;
           }
           
@@ -315,13 +316,23 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         <button class="mobile-btn secondary" onclick="window.print()">Save as PDF</button>
       </div>
       
-      <div class="apmc-container">
+      <div class="trader-container">
         <div class="header">
-          <h1>AGRICULTURAL PRODUCE MARKET COMMITTEE</h1>
-          <h2>${data.place.toUpperCase()} APMC</h2>
+          <h1>${data.traderName.toUpperCase()}</h1>
+          <h2>${data.traderAddress}</h2>
         </div>
         
         <div class="details-section">
+          <div>
+            <div class="detail-item">
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
+            </div>
+          </div>
           <div>
             <div class="detail-item">
               <strong>Place:</strong>
@@ -330,16 +341,6 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
             <div class="detail-item">
               <strong>Trader Name:</strong>
               <span class="underline">${data.traderName}</span>
-            </div>
-          </div>
-          <div>
-            <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
             </div>
           </div>
         </div>
@@ -378,10 +379,6 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
             <div class="signature-line"></div>
             <div>APMC Officer Signature</div>
           </div>
-          <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Date & Stamp</div>
-          </div>
         </div>
       </div>
     </body>
@@ -389,13 +386,13 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
   `;
 }
 
-// Generate popup HTML for desktop APMC report
+// Generate popup HTML for desktop trader report
 function generateAPMCPopupHTML(data: APMCPrintData): string {
   return `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>APMC Receipt - ${data.date}</title>
+      <title>Trader Receipt - ${data.date}</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -404,7 +401,7 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
           background: white;
         }
         
-        .apmc-container {
+        .trader-container {
           max-width: 800px;
           margin: 0 auto;
           border: 2px solid #000;
@@ -475,7 +472,7 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         
         .signatures-section {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 40px;
           margin-top: 60px;
         }
@@ -492,18 +489,28 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         
         @media print {
           body { margin: 0; padding: 10px; }
-          .apmc-container { border: 2px solid #000; }
+          .trader-container { border: 2px solid #000; }
         }
       </style>
     </head>
     <body>
-      <div class="apmc-container">
+      <div class="trader-container">
         <div class="header">
-          <h1>AGRICULTURAL PRODUCE MARKET COMMITTEE</h1>
-          <h2>${data.place.toUpperCase()} APMC</h2>
+          <h1>${data.traderName.toUpperCase()}</h1>
+          <h2>${data.traderAddress}</h2>
         </div>
         
         <div class="details-section">
+          <div>
+            <div class="detail-item">
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
+            </div>
+          </div>
           <div>
             <div class="detail-item">
               <strong>Place:</strong>
@@ -512,16 +519,6 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
             <div class="detail-item">
               <strong>Trader Name:</strong>
               <span class="underline">${data.traderName}</span>
-            </div>
-          </div>
-          <div>
-            <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
             </div>
           </div>
         </div>
@@ -552,10 +549,6 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         </table>
         
         <div class="signatures-section">
-          <div class="signature-box">
-            <div class="signature-line"></div>
-            <p>Farmer Signature</p>
-          </div>
           <div class="signature-box">
             <div class="signature-line"></div>
             <p>Trader Signature</p>

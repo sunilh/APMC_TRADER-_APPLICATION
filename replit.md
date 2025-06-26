@@ -115,6 +115,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added quintal weight display column in billing interface
   - Updated amount calculations to use quintals × price per quintal formula
   - Added lot completion workflow with "Complete" button for billing inclusion
+- June 26, 2025: Enhanced mobile printing functionality and customized trader receipts
+  - Fixed mobile device printing issues with downloadable HTML files
+  - Added mobile-friendly print controls with responsive layouts
+  - Customized print format to use actual trader/tenant information instead of generic APMC text
+  - Removed farmer signature from receipts as requested
+  - Print format now shows: Trader Code first, then Date, with trader name and address prominently displayed
+  - Maintained both desktop popup and mobile download functionality
 
 # User Preferences
 
