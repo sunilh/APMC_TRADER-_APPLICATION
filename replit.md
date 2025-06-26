@@ -215,6 +215,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced buyer information section with explicit label "BUYER DETAILS (CUSTOMER PURCHASING FROM TRADER)"
   - Clarified business model: Farmers sell to Traders/APMC operators, who then sell to Buyers/Customers
   - Bills now clearly distinguish trader as seller and buyer as customer in agricultural trading workflow
+- June 26, 2025: Fixed fundamental billing calculation structure for correct agricultural trading model
+  - Corrected buyer billing system to properly show charges ADDED to basic amount (not deducted)
+  - Updated billing calculation logic: Total Amount = Basic Amount + All Charges (hamali, packaging, GST, etc.)
+  - Distinguished farmer payments (with deductions) from buyer invoices (with added charges)
+  - Fixed both backend billing calculations and frontend display to reflect proper invoice format
+  - Buyer bills now correctly show charges as additions with + symbols, matching real agricultural trading practices
 
 # User Preferences
 

@@ -232,32 +232,35 @@ export interface BuyerDayBill {
     totalWeight: number;
     totalWeightQuintals: number;
     pricePerQuintal: number;
-    grossAmount: number;
-    deductions: {
+    basicAmount: number;
+    charges: {
       unloadHamali: number;
       packaging: number;
       weighingFee: number;
       apmcCommission: number;
-      sgst?: number;
-      cgst?: number;
-      cess?: number;
+      sgst: number;
+      cgst: number;
+      cess: number;
     };
-    netAmount: number;
+    totalAmount: number;
   }>;
   summary: {
     totalLots: number;
     totalBags: number;
     totalWeight: number;
     totalWeightQuintals: number;
-    grossAmount: number;
-    totalDeductions: number;
-    taxDetails: {
+    basicAmount: number;
+    totalCharges: number;
+    chargeBreakdown: {
+      unloadHamali: number;
+      packaging: number;
+      weighingFee: number;
+      apmcCommission: number;
       sgst: number;
       cgst: number;
       cess: number;
-      totalTax: number;
     };
-    netPayable: number;
+    totalPayable: number;
   };
 }
 
@@ -545,14 +548,14 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         const weighingFee = weighingFeeRate * numberOfBags;
         const apmcCommission = (grossAmount * apmcCommissionRate) / 100;
         
-        // Calculate GST on gross amount
-        const sgstAmount = (grossAmount * sgstRate) / 100;
-        const cgstAmount = (grossAmount * cgstRate) / 100;
-        const cessAmount = (grossAmount * cessRate) / 100;
-        const totalTax = sgstAmount + cgstAmount + cessAmount;
+        // Calculate charges to be added to basic amount
+        const basicAmount = grossAmount; // This is the base price for the produce
+        const sgstAmount = (basicAmount * sgstRate) / 100;
+        const cgstAmount = (basicAmount * cgstRate) / 100;
+        const cessAmount = (basicAmount * cessRate) / 100;
         
-        const totalDeductions = unloadHamali + packaging + weighingFee + apmcCommission;
-        const netAmount = grossAmount - totalDeductions + totalTax;
+        const totalCharges = unloadHamali + packaging + weighingFee + apmcCommission + sgstAmount + cgstAmount + cessAmount;
+        const totalAmount = basicAmount + totalCharges; // Adding charges to basic amount
 
         const buyerBill: BuyerDayBill = {
           buyerId: buyer.id,
@@ -570,8 +573,8 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeight: weightKg,
             totalWeightQuintals: weightQuintals,
             pricePerQuintal,
-            grossAmount,
-            deductions: {
+            basicAmount,
+            charges: {
               unloadHamali,
               packaging,
               weighingFee,
@@ -580,22 +583,25 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
               cgst: cgstAmount,
               cess: cessAmount,
             },
-            netAmount,
+            totalAmount,
           }],
           summary: {
             totalLots: 1,
             totalBags: numberOfBags,
             totalWeight: weightKg,
             totalWeightQuintals: weightQuintals,
-            grossAmount,
-            totalDeductions,
-            taxDetails: {
+            basicAmount,
+            totalCharges,
+            chargeBreakdown: {
+              unloadHamali,
+              packaging,
+              weighingFee,
+              apmcCommission,
               sgst: sgstAmount,
               cgst: cgstAmount,
               cess: cessAmount,
-              totalTax,
             },
-            netPayable: netAmount,
+            totalPayable: totalAmount,
           },
         };
         
@@ -632,8 +638,8 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeight: 500.0,
             totalWeightQuintals: 5.0,
             pricePerQuintal: 2500,
-            grossAmount: 12500,
-            deductions: {
+            basicAmount: 12500,
+            charges: {
               unloadHamali: unloadHamaliRate * 10,
               packaging: packagingRate * 10,
               weighingFee: weighingFeeRate * 10,
@@ -642,22 +648,25 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
               cgst: demoCgst,
               cess: demoCess,
             },
-            netAmount: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
+            totalAmount: 12500 + (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
           }],
           summary: {
             totalLots: 1,
             totalBags: 10,
             totalWeight: 500.0,
             totalWeightQuintals: 5.0,
-            grossAmount: 12500,
-            totalDeductions: (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100),
-            taxDetails: {
+            basicAmount: 12500,
+            totalCharges: (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
+            chargeBreakdown: {
+              unloadHamali: unloadHamaliRate * 10,
+              packaging: packagingRate * 10,
+              weighingFee: weighingFeeRate * 10,
+              apmcCommission: (12500 * apmcCommissionRate) / 100,
               sgst: demoSgst,
               cgst: demoCgst,
               cess: demoCess,
-              totalTax: demoTotalTax,
             },
-            netPayable: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
+            totalPayable: 12500 + (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
           },
         };
         

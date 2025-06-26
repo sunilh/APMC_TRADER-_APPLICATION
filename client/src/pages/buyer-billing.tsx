@@ -516,12 +516,13 @@ export default function BuyerBilling() {
                     <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.weight")} (Kg)</th>
                     <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.quintals")}</th>
                     <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.ratePerQuintal")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.grossAmount")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.unloadHamali")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.packaging")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.weighingFee")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.commission")}</th>
-                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">{t("billing.netAmount")}</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Basic Amount</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Hamali</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Packaging</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Weighing Fee</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Commission</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">GST + Cess</th>
+                    <th className="border border-gray-300 dark:border-gray-600 p-2 text-right">Total Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -535,12 +536,13 @@ export default function BuyerBilling() {
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{lot.totalWeight.toFixed(1)}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{lot.totalWeightQuintals.toFixed(2)}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.pricePerQuintal, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.grossAmount, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.deductions.unloadHamali, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.deductions.packaging, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.deductions.weighingFee, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.deductions.apmcCommission, language)}</td>
-                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right font-semibold">{formatCurrency(lot.netAmount, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(lot.basicAmount, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">+{formatCurrency(lot.charges.unloadHamali, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">+{formatCurrency(lot.charges.packaging, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">+{formatCurrency(lot.charges.weighingFee, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">+{formatCurrency(lot.charges.apmcCommission, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">+{formatCurrency(lot.charges.sgst + lot.charges.cgst + lot.charges.cess, language)}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2 text-right font-semibold">{formatCurrency(lot.totalAmount, language)}</td>
                     </tr>
                   ))}
                   <tr className="bg-gray-100 dark:bg-gray-700 font-bold">
@@ -551,12 +553,12 @@ export default function BuyerBilling() {
                     <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{buyerBill.summary.totalWeight.toFixed(1)}</td>
                     <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{buyerBill.summary.totalWeightQuintals.toFixed(2)}</td>
                     <td className="border border-gray-300 dark:border-gray-600 p-2"></td>
-                    <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(buyerBill.summary.grossAmount, language)}</td>
-                    <td className="border border-gray-300 dark:border-gray-600 p-2 text-right" colSpan={4}>
-                      {t("billing.totalDeductions")}: {formatCurrency(buyerBill.summary.totalDeductions, language)}
+                    <td className="border border-gray-300 dark:border-gray-600 p-2 text-right">{formatCurrency(buyerBill.summary.basicAmount, language)}</td>
+                    <td className="border border-gray-300 dark:border-gray-600 p-2 text-right" colSpan={5}>
+                      Total Charges: {formatCurrency(buyerBill.summary.totalCharges, language)}
                     </td>
                     <td className="border border-gray-300 dark:border-gray-600 p-2 text-right text-lg">
-                      {formatCurrency(buyerBill.summary.netPayable, language)}
+                      {formatCurrency(buyerBill.summary.totalPayable, language)}
                     </td>
                   </tr>
                 </tbody>
