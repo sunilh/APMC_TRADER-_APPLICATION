@@ -101,6 +101,20 @@ export const bags = pgTable("bags", {
   tenantIdx: index("bag_tenant_idx").on(table.tenantId),
 }));
 
+// Draft storage for bag entry cross-device syncing
+export const bagEntryDrafts = pgTable("bag_entry_drafts", {
+  id: serial("id").primaryKey(),
+  lotId: integer("lot_id").notNull().references(() => lots.id),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  draftData: jsonb("draft_data").notNull(), // Contains bag entries, prices, allocations
+  lastModified: timestamp("last_modified").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  lotUserIdx: uniqueIndex("draft_lot_user_idx").on(table.lotId, table.userId),
+  tenantIdx: index("draft_tenant_idx").on(table.tenantId),
+}));
+
 // Audit logs for tracking all operations
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),

@@ -760,6 +760,50 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Bag entry draft syncing endpoints for cross-device functionality
+  app.post('/api/bag-entry-draft/:lotId', requireAuth, requireTenant, 
+    async (req: any, res) => {
+      try {
+        const lotId = parseInt(req.params.lotId);
+        const { draftData } = req.body;
+        
+        await storage.saveBagEntryDraft(lotId, req.user.id, req.user.tenantId, draftData);
+        res.json({ message: "Draft saved successfully" });
+      } catch (error) {
+        console.error("Error saving draft:", error);
+        res.status(500).json({ message: "Failed to save draft" });
+      }
+    },
+  );
+
+  app.get('/api/bag-entry-draft/:lotId', requireAuth, requireTenant,
+    async (req: any, res) => {
+      try {
+        const lotId = parseInt(req.params.lotId);
+        
+        const draft = await storage.getBagEntryDraft(lotId, req.user.id, req.user.tenantId);
+        res.json({ draftData: draft });
+      } catch (error) {
+        console.error("Error fetching draft:", error);
+        res.status(500).json({ message: "Failed to fetch draft" });
+      }
+    },
+  );
+
+  app.delete('/api/bag-entry-draft/:lotId', requireAuth, requireTenant,
+    async (req: any, res) => {
+      try {
+        const lotId = parseInt(req.params.lotId);
+        
+        await storage.deleteBagEntryDraft(lotId, req.user.id, req.user.tenantId);
+        res.json({ message: "Draft deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting draft:", error);
+        res.status(500).json({ message: "Failed to delete draft" });
+      }
+    },
+  );
+
   const httpServer = createServer(app);
   return httpServer;
 }

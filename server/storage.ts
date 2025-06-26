@@ -1,5 +1,5 @@
 import { 
-  users, farmers, lots, bags, buyers, tenants, auditLogs,
+  users, farmers, lots, bags, buyers, tenants, auditLogs, bagEntryDrafts,
   type User, type InsertUser, type Farmer, type InsertFarmer,
   type Lot, type InsertLot, type Bag, type InsertBag,
   type Buyer, type InsertBuyer, type Tenant, type InsertTenant,
@@ -66,6 +66,11 @@ export interface IStorage {
     totalBagsToday: number;
     revenueToday: number;
   }>;
+
+  // Bag entry draft management for cross-device syncing
+  saveBagEntryDraft(lotId: number, userId: number, tenantId: number, draftData: any): Promise<void>;
+  getBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<any | null>;
+  deleteBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<void>;
 
   sessionStore: any;
 }
@@ -368,6 +373,46 @@ export class DatabaseStorage implements IStorage {
       totalBagsToday: 0, // Would need date-based bag counting
       revenueToday: 0, // Would need revenue calculation
     };
+  }
+
+  // Bag entry draft management for cross-device syncing
+  async saveBagEntryDraft(lotId: number, userId: number, tenantId: number, draftData: any): Promise<void> {
+    await db.insert(bagEntryDrafts)
+      .values({
+        lotId,
+        userId,
+        tenantId,
+        draftData,
+        lastModified: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [bagEntryDrafts.lotId, bagEntryDrafts.userId],
+        set: {
+          draftData,
+          lastModified: new Date(),
+        },
+      });
+  }
+
+  async getBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<any | null> {
+    const [draft] = await db.select()
+      .from(bagEntryDrafts)
+      .where(and(
+        eq(bagEntryDrafts.lotId, lotId),
+        eq(bagEntryDrafts.userId, userId),
+        eq(bagEntryDrafts.tenantId, tenantId)
+      ));
+    
+    return draft ? draft.draftData : null;
+  }
+
+  async deleteBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<void> {
+    await db.delete(bagEntryDrafts)
+      .where(and(
+        eq(bagEntryDrafts.lotId, lotId),
+        eq(bagEntryDrafts.userId, userId),
+        eq(bagEntryDrafts.tenantId, tenantId)
+      ));
   }
 }
 

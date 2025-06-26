@@ -50,15 +50,12 @@ interface BuyerAllocation {
   endBag: number;
 }
 
-const STORAGE_KEY_PREFIX = "bag_entry_";
-
 export default function BagEntryNew() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const lotId = parseInt(params.id as string);
-  const storageKey = `${STORAGE_KEY_PREFIX}${lotId}`;
 
   // State
   const [lotPrice, setLotPrice] = useState("");
@@ -89,6 +86,25 @@ export default function BagEntryNew() {
     queryKey: ["/api/buyers"],
   });
 
+  // Draft syncing queries and mutations for cross-device functionality
+  const { data: draftResponse } = useQuery({
+    queryKey: [`/api/bag-entry-draft/${lotId}`],
+    enabled: !isNaN(lotId),
+    retry: false,
+  });
+
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", `/api/bag-entry-draft/${lotId}`, { draftData: data });
+    },
+  });
+
+  const deleteDraftMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/bag-entry-draft/${lotId}`);
+    },
+  });
+
   // Save mutation
   const saveAllMutation = useMutation({
     mutationFn: async () => {
@@ -116,11 +132,11 @@ export default function BagEntryNew() {
       );
 
       await Promise.all(promises);
-      
-      // Clear local storage after successful save
-      localStorage.removeItem(storageKey);
     },
     onSuccess: () => {
+      // Delete draft after successful save
+      deleteDraftMutation.mutate();
+      
       toast({
         title: "Success",
         description: "All bags saved successfully",
@@ -193,31 +209,30 @@ export default function BagEntryNew() {
     setBuyerAllocations(allocations);
   }, [buyer1, buyer2, buyer3, buyer1Count, buyer2Count, lot, buyers]);
 
-  // Initialize bag entries when lot loads
+  // Initialize bag entries when lot loads or draft data is available
   useEffect(() => {
     if (!lot) return;
 
-    // Try to load from localStorage first
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
+    // Load from server draft if available
+    if (draftResponse?.draftData) {
       try {
-        const parsed = JSON.parse(saved);
-        setBagEntries(parsed.bagEntries || []);
-        setLotPrice(parsed.lotPrice || "");
-        setLotGrade(parsed.lotGrade || "");
-        setFinalNotes(parsed.finalNotes || "");
-        setBuyer1(parsed.buyer1 || "");
-        setBuyer2(parsed.buyer2 || "");
-        setBuyer3(parsed.buyer3 || "");
-        setBuyer1Count(parsed.buyer1Count || "");
-        setBuyer2Count(parsed.buyer2Count || "");
+        const draft = draftResponse.draftData;
+        setBagEntries(draft.bagEntries || []);
+        setLotPrice(draft.lotPrice || "");
+        setLotGrade(draft.lotGrade || "");
+        setFinalNotes(draft.finalNotes || "");
+        setBuyer1(draft.buyer1 || "");
+        setBuyer2(draft.buyer2 || "");
+        setBuyer3(draft.buyer3 || "");
+        setBuyer1Count(draft.buyer1Count || "");
+        setBuyer2Count(draft.buyer2Count || "");
         return;
       } catch (e) {
-        console.error("Failed to parse saved data:", e);
+        console.error("Failed to parse draft data:", e);
       }
     }
 
-    // Initialize with empty bag entries
+    // Initialize with empty bag entries if no draft
     const initialBags: BagEntry[] = [];
     for (let i = 1; i <= lot.numberOfBags; i++) {
       initialBags.push({
@@ -225,12 +240,10 @@ export default function BagEntryNew() {
       });
     }
     setBagEntries(initialBags);
-  }, [lot, storageKey]);
+  }, [lot, draftResponse]);
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    if (bagEntries.length === 0) return;
-
+  // Manual save to server for cross-device syncing
+  const handleManualSave = () => {
     const dataToSave = {
       bagEntries,
       lotPrice,
@@ -244,8 +257,22 @@ export default function BagEntryNew() {
       timestamp: Date.now(),
     };
 
-    localStorage.setItem(storageKey, JSON.stringify(dataToSave));
-  }, [bagEntries, lotPrice, lotGrade, finalNotes, buyer1, buyer2, buyer3, buyer1Count, buyer2Count, storageKey]);
+    saveDraftMutation.mutate(dataToSave, {
+      onSuccess: () => {
+        toast({
+          title: "Draft Saved",
+          description: "Your progress has been saved and will sync across devices",
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Save Failed",
+          description: "Could not save draft to server",
+          variant: "destructive",
+        });
+      },
+    });
+  };
 
   // Get buyer for specific bag number
   const getBuyerForBag = (bagNumber: number): BuyerAllocation | undefined => {
@@ -620,15 +647,27 @@ export default function BagEntryNew() {
                   <div className="text-sm font-medium">{totalWeight.toFixed(1)} kg</div>
                 </div>
                 
-                <Button
-                  onClick={() => saveAllMutation.mutate()}
-                  disabled={saveAllMutation.isPending || totalWeighedBags === 0}
-                  className="bg-green-600 hover:bg-green-700 px-8 py-6 text-lg font-semibold"
-                  size="lg"
-                >
-                  <Save className="h-5 w-5 mr-2" />
-                  {saveAllMutation.isPending ? "Saving..." : `Save All (${totalWeighedBags} bags)`}
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleManualSave}
+                    disabled={saveDraftMutation.isPending}
+                    variant="outline"
+                    className="px-6 py-3"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                  </Button>
+                  
+                  <Button
+                    onClick={() => saveAllMutation.mutate()}
+                    disabled={saveAllMutation.isPending || totalWeighedBags === 0}
+                    className="bg-green-600 hover:bg-green-700 px-8 py-6 text-lg font-semibold"
+                    size="lg"
+                  >
+                    <Save className="h-5 w-5 mr-2" />
+                    {saveAllMutation.isPending ? "Saving..." : `Save All (${totalWeighedBags} bags)`}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
