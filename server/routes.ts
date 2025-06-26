@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import { generateFarmerDayBill, getFarmerDayBills } from "./billing";
+import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills } from "./billing";
 import {
   insertFarmerSchema,
   insertLotSchema,
@@ -159,6 +159,61 @@ export function registerRoutes(app: Express): Server {
         res.json(bills);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch daily bills" });
+      }
+    },
+  );
+
+  // Buyer billing routes
+  app.get(
+    "/api/billing/buyer/:buyerId/:date",
+    requireAuth,
+    requireTenant,
+    async (req, res) => {
+      try {
+        const buyerId = parseInt(req.params.buyerId);
+        const date = new Date(req.params.date);
+
+        if (isNaN(buyerId) || isNaN(date.getTime())) {
+          return res.status(400).json({ message: "Invalid buyer ID or date" });
+        }
+
+        const bill = await generateBuyerDayBill(
+          buyerId,
+          date,
+          req.user.tenantId,
+        );
+
+        if (!bill) {
+          return res
+            .status(404)
+            .json({
+              message: "No completed lots found for buyer on this date",
+            });
+        }
+
+        res.json(bill);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to generate buyer bill" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/billing/buyers/daily/:date",
+    requireAuth,
+    requireTenant,
+    async (req, res) => {
+      try {
+        const date = new Date(req.params.date);
+
+        if (isNaN(date.getTime())) {
+          return res.status(400).json({ message: "Invalid date" });
+        }
+
+        const bills = await getBuyerDayBills(date, req.user.tenantId);
+        res.json(bills);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch buyer daily bills" });
       }
     },
   );

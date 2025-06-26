@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { lots, bags, farmers, tenants } from "@shared/schema";
+import { lots, bags, farmers, tenants, buyers } from "@shared/schema";
 import { eq, and, between, sql } from "drizzle-orm";
 
 export interface FarmerDayBill {
@@ -199,4 +199,207 @@ export async function getFarmerDayBills(date: Date, tenantId: number): Promise<F
   );
 
   return bills.filter((bill): bill is FarmerDayBill => bill !== null);
+}
+
+// Buyer Billing System
+export interface BuyerDayBill {
+  buyerId: number;
+  buyerName: string;
+  buyerContact: string;
+  buyerAddress: string;
+  date: string;
+  lots: Array<{
+    lotNumber: string;
+    farmerName: string;
+    variety: string;
+    grade: string;
+    numberOfBags: number;
+    totalWeight: number;
+    totalWeightQuintals: number;
+    pricePerQuintal: number;
+    grossAmount: number;
+    deductions: {
+      unloadHamali: number;
+      packaging: number;
+      weighingFee: number;
+      apmcCommission: number;
+    };
+    netAmount: number;
+  }>;
+  summary: {
+    totalLots: number;
+    totalBags: number;
+    totalWeight: number;
+    totalWeightQuintals: number;
+    grossAmount: number;
+    totalDeductions: number;
+    netPayable: number;
+  };
+}
+
+export async function generateBuyerDayBill(
+  buyerId: number,
+  date: Date,
+  tenantId: number
+): Promise<BuyerDayBill | null> {
+  
+  // Get date range for the day
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Get buyer details
+  const [buyer] = await db.select()
+    .from(buyers)
+    .where(and(eq(buyers.id, buyerId), eq(buyers.tenantId, tenantId)));
+
+  if (!buyer) {
+    return null;
+  }
+
+  // Get tenant settings for calculations
+  const [tenant] = await db.select()
+    .from(tenants)
+    .where(eq(tenants.id, tenantId));
+
+  const settings = tenant?.settings as any || {};
+  const gstSettings = settings.gstSettings || {};
+
+  // Default rates
+  const unloadHamaliRate = gstSettings.unloadHamali || 3;
+  const packagingRate = gstSettings.packaging || 2;
+  const weighingFeeRate = gstSettings.weighingFee || 1;
+  const apmcCommissionRate = gstSettings.apmcCommission || 2;
+
+  // Get completed lots purchased by this buyer on the specified date
+  const lotsData = await db.select({
+    lot: lots,
+    farmer: farmers,
+  })
+  .from(lots)
+  .innerJoin(farmers, eq(farmers.id, lots.farmerId))
+  .where(and(
+    eq(lots.tenantId, tenantId),
+    eq(lots.buyerId, buyerId),
+    between(lots.updatedAt, startOfDay, endOfDay),
+    eq(lots.status, 'completed'),
+    sql`${lots.lotPrice} IS NOT NULL AND ${lots.lotPrice} > 0`
+  ));
+
+  if (lotsData.length === 0) {
+    return null;
+  }
+
+  let totalLots = 0;
+  let totalBags = 0;
+  let totalWeight = 0;
+  let totalWeightQuintals = 0;
+  let grossAmount = 0;
+  let totalDeductions = 0;
+
+  const lotDetails = await Promise.all(
+    lotsData.map(async ({ lot, farmer }) => {
+      // Get all bags for this lot
+      const lotBags = await db.select()
+        .from(bags)
+        .where(and(
+          eq(bags.lotId, lot.id),
+          eq(bags.tenantId, tenantId),
+          sql`${bags.weight} IS NOT NULL AND ${bags.weight} > 0`
+        ));
+
+      const numberOfBags = lotBags.length;
+      const weightKg = lotBags.reduce((sum, bag) => sum + (Number(bag.weight) || 0), 0);
+      const weightQuintals = weightKg / 100;
+
+      // Calculate amounts
+      const lotGrossAmount = weightQuintals * (Number(lot.lotPrice) || 0);
+      const unloadHamali = unloadHamaliRate * numberOfBags;
+      const packaging = packagingRate * numberOfBags;
+      const weighingFee = weighingFeeRate * numberOfBags;
+      const apmcCommission = (lotGrossAmount * apmcCommissionRate) / 100;
+      
+      const lotDeductions = unloadHamali + packaging + weighingFee + apmcCommission;
+      const netAmount = lotGrossAmount - lotDeductions;
+
+      // Add to totals
+      totalLots++;
+      totalBags += numberOfBags;
+      totalWeight += weightKg;
+      totalWeightQuintals += weightQuintals;
+      grossAmount += lotGrossAmount;
+      totalDeductions += lotDeductions;
+
+      return {
+        lotNumber: lot.lotNumber,
+        farmerName: farmer.name,
+        variety: lot.varietyGrade || '',
+        grade: lot.grade || '',
+        numberOfBags,
+        totalWeight: weightKg,
+        totalWeightQuintals: weightQuintals,
+        pricePerQuintal: Number(lot.lotPrice) || 0,
+        grossAmount: lotGrossAmount,
+        deductions: {
+          unloadHamali,
+          packaging,
+          weighingFee,
+          apmcCommission,
+        },
+        netAmount,
+      };
+    })
+  );
+
+  return {
+    buyerId: buyer.id,
+    buyerName: buyer.name,
+    buyerContact: buyer.mobile || buyer.contactPerson || '',
+    buyerAddress: buyer.address || '',
+    date: date.toISOString().split('T')[0],
+    lots: lotDetails,
+    summary: {
+      totalLots,
+      totalBags,
+      totalWeight,
+      totalWeightQuintals,
+      grossAmount,
+      totalDeductions,
+      netPayable: grossAmount - totalDeductions,
+    },
+  };
+}
+
+export async function getBuyerDayBills(date: Date, tenantId: number): Promise<BuyerDayBill[]> {
+  // Get date range for the day
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Get all buyers who purchased completed lots with weights and prices on this date
+  const buyersWithLots = await db.selectDistinct({
+    buyerId: lots.buyerId,
+  })
+  .from(lots)
+  .innerJoin(bags, eq(bags.lotId, lots.id))
+  .where(and(
+    eq(lots.tenantId, tenantId),
+    between(lots.updatedAt, startOfDay, endOfDay),
+    eq(lots.status, 'completed'),
+    sql`${lots.buyerId} IS NOT NULL`,
+    sql`${lots.lotPrice} IS NOT NULL AND ${lots.lotPrice} > 0`,
+    sql`${bags.weight} IS NOT NULL AND ${bags.weight} > 0`
+  ));
+
+  const bills = await Promise.all(
+    buyersWithLots.map(({ buyerId }) => 
+      buyerId ? generateBuyerDayBill(buyerId, date, tenantId) : null
+    )
+  );
+
+  return bills.filter((bill): bill is BuyerDayBill => bill !== null);
 }
