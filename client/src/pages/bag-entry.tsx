@@ -37,8 +37,15 @@ interface LotWithDetails extends Lot {
 interface BagEntryData {
   bagNumber: number;
   weight?: number;
-  notes?: string;
+  buyerId?: number;
+  buyerName?: string;
   status: "pending" | "saved";
+}
+
+interface BuyerAllocation {
+  buyerId: number;
+  buyerName: string;
+  bagCount: number;
 }
 
 export default function BagEntry() {
@@ -50,11 +57,17 @@ export default function BagEntry() {
 
   // State
   const [lotPrice, setLotPrice] = useState("");
-  const [selectedBuyer, setSelectedBuyer] = useState("");
   const [lotGrade, setLotGrade] = useState("");
   const [bagData, setBagData] = useState<BagEntryData[]>([]);
-  const [showInlineBuyerForm, setShowInlineBuyerForm] = useState(false);
-  const [newBuyerName, setNewBuyerName] = useState("");
+  const [buyerAllocations, setBuyerAllocations] = useState<BuyerAllocation[]>([]);
+  const [finalNotes, setFinalNotes] = useState("");
+  
+  // Buyer allocation state
+  const [buyer1, setBuyer1] = useState("");
+  const [buyer2, setBuyer2] = useState("");
+  const [buyer3, setBuyer3] = useState("");
+  const [buyer1Count, setBuyer1Count] = useState("");
+  const [buyer2Count, setBuyer2Count] = useState("");
 
   // Queries - always called at top level
   const {

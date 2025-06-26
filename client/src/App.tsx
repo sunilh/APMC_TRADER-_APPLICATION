@@ -11,7 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import AuthPage from "@/pages/auth-page";
 import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
-import BagEntry from "@/pages/bag-entry";
+import BagEntryNew from "@/pages/bag-entry-new";
 import BuyersSimple from "@/pages/buyers-simple";
 import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
@@ -24,7 +24,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
-      <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
+      <ProtectedRoute path="/lots/:id/bags" component={BagEntryNew} />
       <ProtectedRoute path="/buyers" component={BuyersSimple} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/billing" component={Billing} />
