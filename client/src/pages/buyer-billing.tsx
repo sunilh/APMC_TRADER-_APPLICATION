@@ -38,32 +38,35 @@ interface BuyerBill {
     totalWeight: number;
     totalWeightQuintals: number;
     pricePerQuintal: number;
-    grossAmount: number;
-    deductions: {
+    basicAmount: number;
+    charges: {
       unloadHamali: number;
       packaging: number;
       weighingFee: number;
       apmcCommission: number;
-      sgst?: number;
-      cgst?: number;
-      cess?: number;
+      sgst: number;
+      cgst: number;
+      cess: number;
     };
-    netAmount: number;
+    totalAmount: number;
   }>;
   summary: {
     totalLots: number;
     totalBags: number;
     totalWeight: number;
     totalWeightQuintals: number;
-    grossAmount: number;
-    totalDeductions: number;
-    taxDetails: {
+    basicAmount: number;
+    totalCharges: number;
+    chargeBreakdown: {
+      unloadHamali: number;
+      packaging: number;
+      weighingFee: number;
+      apmcCommission: number;
       sgst: number;
       cgst: number;
       cess: number;
-      totalTax: number;
     };
-    netPayable: number;
+    totalPayable: number;
   };
 }
 
@@ -73,23 +76,18 @@ export default function BuyerBilling() {
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>("");
 
   // Fetch buyers
-  const { data: buyers = [] } = useQuery({
+  const { data: buyers = [] } = useQuery<any[]>({
     queryKey: ["/api/buyers"],
   });
 
   // Fetch daily buyer bills
-  const { data: dailyBills = [], isLoading: isLoadingDaily } = useQuery({
+  const { data: dailyBills = [], isLoading: isLoadingDaily } = useQuery<BuyerBill[]>({
     queryKey: ["/api/billing/buyers/daily", selectedDate],
     enabled: !!selectedDate,
   });
 
-  // Debug logging
-  console.log("Daily bills data:", dailyBills);
-  console.log("Is loading:", isLoadingDaily);
-  console.log("Selected buyer ID:", selectedBuyerId);
-
   // Fetch specific buyer bill
-  const { data: buyerBill, isLoading: isLoadingBuyer } = useQuery({
+  const { data: buyerBill, isLoading: isLoadingBuyer } = useQuery<BuyerBill>({
     queryKey: ["/api/billing/buyer", selectedBuyerId, selectedDate],
     enabled: !!selectedBuyerId && selectedBuyerId !== "all" && !!selectedDate,
   });
@@ -172,12 +170,12 @@ export default function BuyerBilling() {
                     <td class="text-right">${lot.totalWeight.toFixed(1)}</td>
                     <td class="text-right">${lot.totalWeightQuintals.toFixed(2)}</td>
                     <td class="text-right">${formatCurrency(lot.pricePerQuintal, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.grossAmount, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.deductions.unloadHamali, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.deductions.packaging, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.deductions.weighingFee, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.deductions.apmcCommission, language)}</td>
-                    <td class="text-right">${formatCurrency(lot.netAmount, language)}</td>
+                    <td class="text-right">${formatCurrency(lot.basicAmount, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.unloadHamali, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.packaging, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.weighingFee, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.apmcCommission, language)}</td>
+                    <td class="text-right">${formatCurrency(lot.totalAmount, language)}</td>
                   </tr>
                 `).join('')}
                 <tr class="total-row">
@@ -186,9 +184,9 @@ export default function BuyerBilling() {
                   <td class="text-right"><strong>${bill.summary.totalWeight.toFixed(1)}</strong></td>
                   <td class="text-right"><strong>${bill.summary.totalWeightQuintals.toFixed(2)}</strong></td>
                   <td></td>
-                  <td class="text-right"><strong>${formatCurrency(bill.summary.grossAmount, language)}</strong></td>
-                  <td colspan="4" class="text-right"><strong>Total Deductions: ${formatCurrency(bill.summary.totalDeductions, language)}</strong></td>
-                  <td class="text-right"><strong>${formatCurrency(bill.summary.netPayable, language)}</strong></td>
+                  <td class="text-right"><strong>${formatCurrency(bill.summary.basicAmount, language)}</strong></td>
+                  <td colspan="4" class="text-right"><strong>Total Charges: +${formatCurrency(bill.summary.totalCharges, language)}</strong></td>
+                  <td class="text-right"><strong>${formatCurrency(bill.summary.totalPayable, language)}</strong></td>
                 </tr>
               </tbody>
             </table>
@@ -274,12 +272,12 @@ export default function BuyerBilling() {
                   <td class="text-right">${lot.totalWeight.toFixed(1)}</td>
                   <td class="text-right">${lot.totalWeightQuintals.toFixed(2)}</td>
                   <td class="text-right">${formatCurrency(lot.pricePerQuintal, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.grossAmount, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.deductions.unloadHamali, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.deductions.packaging, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.deductions.weighingFee, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.deductions.apmcCommission, language)}</td>
-                  <td class="text-right">${formatCurrency(lot.netAmount, language)}</td>
+                  <td class="text-right">${formatCurrency(lot.basicAmount, language)}</td>
+                  <td class="text-right">+${formatCurrency(lot.charges.unloadHamali, language)}</td>
+                  <td class="text-right">+${formatCurrency(lot.charges.packaging, language)}</td>
+                  <td class="text-right">+${formatCurrency(lot.charges.weighingFee, language)}</td>
+                  <td class="text-right">+${formatCurrency(lot.charges.apmcCommission, language)}</td>
+                  <td class="text-right">${formatCurrency(lot.totalAmount, language)}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
@@ -288,9 +286,9 @@ export default function BuyerBilling() {
                 <td class="text-right"><strong>${bill.summary.totalWeight.toFixed(1)}</strong></td>
                 <td class="text-right"><strong>${bill.summary.totalWeightQuintals.toFixed(2)}</strong></td>
                 <td></td>
-                <td class="text-right"><strong>${formatCurrency(bill.summary.grossAmount, language)}</strong></td>
-                <td colspan="4" class="text-right"><strong>Total Deductions: ${formatCurrency(bill.summary.totalDeductions, language)}</strong></td>
-                <td class="text-right"><strong>${formatCurrency(bill.summary.netPayable, language)}</strong></td>
+                <td class="text-right"><strong>${formatCurrency(bill.summary.basicAmount, language)}</strong></td>
+                <td colspan="4" class="text-right"><strong>Total Charges: +${formatCurrency(bill.summary.totalCharges, language)}</strong></td>
+                <td class="text-right"><strong>${formatCurrency(bill.summary.totalPayable, language)}</strong></td>
               </tr>
             </tbody>
           </table>

@@ -348,8 +348,11 @@ export async function generateBuyerDayBill(
       const weighingFee = weighingFeeRate * numberOfBags;
       const apmcCommission = (lotGrossAmount * apmcCommissionRate) / 100;
       
-      const lotDeductions = unloadHamali + packaging + weighingFee + apmcCommission;
-      const netAmount = lotGrossAmount - lotDeductions;
+      const sgst = (lotGrossAmount * 9) / 100;
+      const cgst = (lotGrossAmount * 9) / 100;
+      const cess = (lotGrossAmount * 1) / 100;
+      const lotCharges = unloadHamali + packaging + weighingFee + apmcCommission + sgst + cgst + cess;
+      const totalAmount = lotGrossAmount + lotCharges;
 
       // Add to totals
       totalLots++;
@@ -357,7 +360,7 @@ export async function generateBuyerDayBill(
       totalWeight += weightKg;
       totalWeightQuintals += weightQuintals;
       grossAmount += lotGrossAmount;
-      totalDeductions += lotDeductions;
+      totalDeductions += lotCharges;
 
       return {
         lotNumber: lot.lotNumber,
@@ -368,23 +371,26 @@ export async function generateBuyerDayBill(
         totalWeight: weightKg,
         totalWeightQuintals: weightQuintals,
         pricePerQuintal: Number(lot.lotPrice) || 0,
-        grossAmount: lotGrossAmount,
-        deductions: {
+        basicAmount: lotGrossAmount,
+        charges: {
           unloadHamali,
           packaging,
           weighingFee,
           apmcCommission,
-          sgst: (lotGrossAmount * 9) / 100,
-          cgst: (lotGrossAmount * 9) / 100,
-          cess: (lotGrossAmount * 1) / 100,
+          sgst,
+          cgst,
+          cess,
         },
-        netAmount,
+        totalAmount,
       };
     })
   );
 
-  // Calculate total tax using existing rates
-  const totalTax = (grossAmount * (9 + 9 + 1)) / 100;
+  // Calculate total charge breakdown
+  const totalSgst = (grossAmount * 9) / 100;
+  const totalCgst = (grossAmount * 9) / 100;
+  const totalCess = (grossAmount * 1) / 100;
+  const totalTax = totalSgst + totalCgst + totalCess;
 
   const traderInfo = {
     name: tenant?.name || "Unknown Trader",
@@ -414,15 +420,18 @@ export async function generateBuyerDayBill(
       totalBags,
       totalWeight,
       totalWeightQuintals,
-      grossAmount,
-      totalDeductions,
-      taxDetails: {
-        sgst: (grossAmount * 9) / 100,
-        cgst: (grossAmount * 9) / 100,
-        cess: (grossAmount * 1) / 100,
-        totalTax,
+      basicAmount: grossAmount,
+      totalCharges: totalDeductions,
+      chargeBreakdown: {
+        unloadHamali: unloadHamaliRate * totalBags,
+        packaging: packagingRate * totalBags,
+        weighingFee: weighingFeeRate * totalBags,
+        apmcCommission: (grossAmount * apmcCommissionRate) / 100,
+        sgst: totalSgst,
+        cgst: totalCgst,
+        cess: totalCess,
       },
-      netPayable: grossAmount - totalDeductions + totalTax,
+      totalPayable: grossAmount + totalDeductions,
     },
   };
 }
