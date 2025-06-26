@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
+import { VoiceInput } from "@/components/voice-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Download, IndianRupee } from "lucide-react";
+import { Calendar, Download, IndianRupee, Calculator } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,11 +42,32 @@ export default function Billing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [manualDeductions, setManualDeductions] = useState<Record<number, number>>({});
 
   const { data: dailyBills, isLoading, error } = useQuery<FarmerDayBill[]>({
     queryKey: [`/api/billing/daily/${selectedDate}`],
     enabled: !!selectedDate,
   });
+
+  const updateManualDeduction = (farmerId: number, amount: string) => {
+    const numAmount = parseFloat(amount) || 0;
+    setManualDeductions(prev => ({
+      ...prev,
+      [farmerId]: numAmount
+    }));
+  };
+
+  const calculateAdjustedBill = (bill: FarmerDayBill) => {
+    const manualDeduction = manualDeductions[bill.farmerId] || 0;
+    return {
+      ...bill,
+      summary: {
+        ...bill.summary,
+        totalDeductions: bill.summary.totalDeductions + manualDeduction,
+        netAmount: bill.summary.netAmount - manualDeduction
+      }
+    };
+  };
 
   if (!user) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -123,8 +145,10 @@ export default function Billing() {
         {/* Bills Display */}
         {dailyBills && dailyBills.length > 0 && (
           <div className="space-y-6">
-            {dailyBills.map((bill) => (
-              <Card key={bill.farmerId} className="overflow-hidden">
+            {dailyBills.map((originalBill) => {
+              const bill = calculateAdjustedBill(originalBill);
+              return (
+                <Card key={bill.farmerId} className="overflow-hidden">
                 <CardHeader className="bg-blue-50 border-b">
                   <div className="flex justify-between items-start">
                     <div>
@@ -208,6 +232,30 @@ export default function Billing() {
                     </div>
                   </div>
 
+                  {/* Manual Deduction Input */}
+                  <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center space-x-4">
+                      <Calculator className="h-5 w-5 text-yellow-600" />
+                      <Label htmlFor={`manual-deduction-${bill.farmerId}`} className="font-medium text-yellow-800">
+                        Additional Deduction:
+                      </Label>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-yellow-800">₹</span>
+                        <VoiceInput
+                          type="currency"
+                          placeholder="0.00"
+                          onResult={(value) => updateManualDeduction(bill.farmerId, value)}
+                          className="w-32 text-center"
+                        />
+                      </div>
+                      {manualDeductions[bill.farmerId] > 0 && (
+                        <span className="text-sm text-yellow-600">
+                          (Additional ₹{manualDeductions[bill.farmerId].toFixed(2)} deducted)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Final Amount */}
                   <div className="mt-4 p-4 bg-green-50 rounded-lg border-2 border-green-200">
                     <div className="flex justify-between items-center">
@@ -217,7 +265,8 @@ export default function Billing() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
 
             {/* Overall Summary */}
             <Card className="bg-blue-50 border-blue-200">
