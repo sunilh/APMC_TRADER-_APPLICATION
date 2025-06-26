@@ -584,6 +584,58 @@ export default function BagEntryNew() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Summary and Actions - Fixed Bottom Section */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              {/* Split Preview Summary */}
+              <div>
+                {buyerAllocations.length > 0 ? (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h4 className="font-semibold text-sm mb-1">Bag Distribution:</h4>
+                    <div className="text-xs space-y-1">
+                      {buyerAllocations.map((allocation, index) => (
+                        <div key={index} className="flex justify-between">
+                          <span>Bags {allocation.startBag}-{allocation.endBag}:</span>
+                          <span className="font-medium">{allocation.buyerName} ({allocation.bagCount})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 p-3 rounded-lg">
+                    <p className="text-sm text-yellow-800">Configure buyer allocations above to see distribution</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress and Save Actions */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-600">
+                    {totalWeighedBags} / {lot.numberOfBags}
+                  </div>
+                  <div className="text-xs text-gray-600">Bags Weighed</div>
+                  <div className="text-sm font-medium">{totalWeight.toFixed(1)} kg</div>
+                </div>
+                
+                <Button
+                  onClick={() => saveAllMutation.mutate()}
+                  disabled={saveAllMutation.isPending || totalWeighedBags === 0}
+                  className="bg-green-600 hover:bg-green-700 px-8 py-6 text-lg font-semibold"
+                  size="lg"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  {saveAllMutation.isPending ? "Saving..." : `Save All (${totalWeighedBags} bags)`}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Add padding to prevent content from being hidden behind fixed bottom */}
+        <div className="h-32"></div>
       </div>
     </div>
   );
