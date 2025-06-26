@@ -101,7 +101,7 @@ export default function BagEntryNew() {
       // Update lot with price and grade
       if (lotPrice) {
         await apiRequest("PUT", `/api/lots/${lotId}`, {
-          lotPrice: parseFloat(lotPrice),
+          lotPrice: lotPrice, // Keep as string for schema validation
           grade: lotGrade,
         });
       }
