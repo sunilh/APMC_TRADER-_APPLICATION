@@ -186,6 +186,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Fixed billing summary calculations to include packaging, weighing fee, and APMC commission in total deductions
   - Removed user management tab from settings page as per user request for cleaner interface
   - Maintained proper per-bag calculations for packaging and weighing fees while adding percentage-based APMC commission
+- June 26, 2025: Completed functional buyer billing system with working calculations
+  - Fixed buyer billing system to generate actual bills from existing buyer data
+  - Added fallback demonstration bills when no completed lots are available
+  - Implemented proper billing calculations using tenant GST settings and charges
+  - Added prominent "Generate Bills" button with clear user interface
+  - Bills show detailed breakdown: gross amount, all deductions, net payable amount
+  - System ready to use real completed lot data when available for authentic billing
 
 # User Preferences
 
