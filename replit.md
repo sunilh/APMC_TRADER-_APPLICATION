@@ -122,6 +122,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Removed farmer signature from receipts as requested
   - Print format now shows: Trader Code first, then Date, with trader name and address prominently displayed
   - Maintained both desktop popup and mobile download functionality
+- June 26, 2025: Implemented comprehensive staff management and tenant onboarding system
+  - Created multi-tenant user management with role-based access control
+  - Added tenant onboarding system for super admins to create new APMC organizations
+  - Built staff management interface for tenant admins to manage their own users
+  - Implemented proper data isolation ensuring users only see their tenant's data
+  - Added navigation restrictions: super admins see "Create Tenant", tenant admins see "Staff"
+  - Created super admin account (username: superadmin, password: password) for system administration
 
 # User Preferences
 
