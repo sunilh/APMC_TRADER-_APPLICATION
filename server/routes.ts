@@ -669,7 +669,12 @@ export function registerRoutes(app: Express): Server {
         apmcCode: tenantData.apmcCode,
         place: tenantData.place,
         mobileNumber: tenantData.mobileNumber,
+        gstNumber: tenantData.gstNumber || null,
         address: tenantData.address || "",
+        bankName: tenantData.bankName || null,
+        bankAccountNumber: tenantData.bankAccountNumber || null,
+        ifscCode: tenantData.ifscCode || null,
+        accountHolderName: tenantData.accountHolderName || null,
         subscriptionPlan: tenantData.subscriptionPlan || "basic",
         settings: {}
       });

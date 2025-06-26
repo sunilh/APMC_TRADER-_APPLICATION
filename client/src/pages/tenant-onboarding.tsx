@@ -21,7 +21,13 @@ const tenantOnboardingSchema = z.object({
   apmcCode: z.string().min(1, "APMC code is required"),
   place: z.string().min(1, "Place is required"),
   mobileNumber: z.string().min(10, "Valid mobile number is required"),
+  gstNumber: z.string().optional(),
   address: z.string().optional(),
+  // Bank details for receiving payments from buyers
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  ifscCode: z.string().optional(),
+  accountHolderName: z.string().optional(),
   subscriptionPlan: z.enum(["basic", "gold", "diamond"]),
   
   // Admin user details
@@ -48,7 +54,12 @@ export default function TenantOnboarding() {
       apmcCode: "",
       place: "",
       mobileNumber: "",
+      gstNumber: "",
       address: "",
+      bankName: "",
+      bankAccountNumber: "",
+      ifscCode: "",
+      accountHolderName: "",
       subscriptionPlan: "basic",
       adminUsername: "",
       adminPassword: "",
@@ -69,7 +80,12 @@ export default function TenantOnboarding() {
             apmcCode: data.apmcCode,
             place: data.place,
             mobileNumber: data.mobileNumber,
+            gstNumber: data.gstNumber,
             address: data.address,
+            bankName: data.bankName,
+            bankAccountNumber: data.bankAccountNumber,
+            ifscCode: data.ifscCode,
+            accountHolderName: data.accountHolderName,
             subscriptionPlan: data.subscriptionPlan,
           },
           adminUser: {
@@ -235,6 +251,26 @@ export default function TenantOnboarding() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="gstNumber">GST Number</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="gstNumber"
+                      placeholder="e.g., 29GGGGG1314R9Z6"
+                      {...form.register("gstNumber")}
+                      className="flex-1"
+                    />
+                    <VoiceInput
+                      onResult={(value) => handleVoiceInput('gstNumber', value)}
+                      placeholder="Voice input"
+                      type="text"
+                    />
+                  </div>
+                  {form.formState.errors.gstNumber && (
+                    <p className="text-sm text-red-600">{form.formState.errors.gstNumber.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="address">Full Address</Label>
                   <div className="flex gap-2">
                     <Input
@@ -252,6 +288,95 @@ export default function TenantOnboarding() {
                   {form.formState.errors.address && (
                     <p className="text-sm text-red-600">{form.formState.errors.address.message}</p>
                   )}
+                </div>
+
+                {/* Bank Information Section */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">Bank Information (For Receiving Payments)</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bankName">Bank Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="bankName"
+                          placeholder="e.g., State Bank of India"
+                          {...form.register("bankName")}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleVoiceInput('bankName', value)}
+                          placeholder="Voice input"
+                          type="text"
+                        />
+                      </div>
+                      {form.formState.errors.bankName && (
+                        <p className="text-sm text-red-600">{form.formState.errors.bankName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="accountHolderName">Account Holder Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="accountHolderName"
+                          placeholder="e.g., ABC Traders"
+                          {...form.register("accountHolderName")}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleVoiceInput('accountHolderName', value)}
+                          placeholder="Voice input"
+                          type="text"
+                        />
+                      </div>
+                      {form.formState.errors.accountHolderName && (
+                        <p className="text-sm text-red-600">{form.formState.errors.accountHolderName.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bankAccountNumber">Account Number</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="bankAccountNumber"
+                          placeholder="e.g., 1234567890123456"
+                          {...form.register("bankAccountNumber")}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleVoiceInput('bankAccountNumber', value)}
+                          placeholder="Voice input"
+                          type="text"
+                        />
+                      </div>
+                      {form.formState.errors.bankAccountNumber && (
+                        <p className="text-sm text-red-600">{form.formState.errors.bankAccountNumber.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ifscCode">IFSC Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="ifscCode"
+                          placeholder="e.g., SBIN0001234"
+                          {...form.register("ifscCode")}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleVoiceInput('ifscCode', value)}
+                          placeholder="Voice input"
+                          type="text"
+                        />
+                      </div>
+                      {form.formState.errors.ifscCode && (
+                        <p className="text-sm text-red-600">{form.formState.errors.ifscCode.message}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

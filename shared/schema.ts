@@ -9,11 +9,16 @@ export const tenants = pgTable("tenants", {
   name: text("name").notNull(),
   apmcCode: text("apmc_code").notNull().unique(),
   mobileNumber: text("mobile_number").notNull(),
+  gstNumber: text("gst_number"), // GST registration number
   subscriptionPlan: text("subscription_plan").notNull(), // 'basic', 'gold', 'diamond'
   maxUsers: integer("max_users").notNull().default(1),
   logo: text("logo"),
   place: text("place"),
   address: text("address"),
+  bankName: text("bank_name"), // Bank details for receiving payments
+  bankAccountNumber: text("bank_account_number"),
+  ifscCode: text("ifsc_code"),
+  accountHolderName: text("account_holder_name"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   settings: jsonb("settings").default({}), // GST rates, unload hamali, etc.
