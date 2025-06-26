@@ -208,6 +208,21 @@ export interface BuyerDayBill {
   buyerContact: string;
   buyerAddress: string;
   date: string;
+  // Trader/APMC Information
+  traderInfo: {
+    name: string;
+    apmcCode: string;
+    place: string;
+    address: string;
+    mobile: string;
+    gstNumber?: string;
+    bankDetails?: {
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      accountHolderName?: string;
+    };
+  };
   lots: Array<{
     lotNumber: string;
     farmerName: string;
@@ -223,6 +238,9 @@ export interface BuyerDayBill {
       packaging: number;
       weighingFee: number;
       apmcCommission: number;
+      sgst?: number;
+      cgst?: number;
+      cess?: number;
     };
     netAmount: number;
   }>;
@@ -233,6 +251,12 @@ export interface BuyerDayBill {
     totalWeightQuintals: number;
     grossAmount: number;
     totalDeductions: number;
+    taxDetails: {
+      sgst: number;
+      cgst: number;
+      cess: number;
+      totalTax: number;
+    };
     netPayable: number;
   };
 }
@@ -347,11 +371,32 @@ export async function generateBuyerDayBill(
           packaging,
           weighingFee,
           apmcCommission,
+          sgst: (lotGrossAmount * 9) / 100,
+          cgst: (lotGrossAmount * 9) / 100,
+          cess: (lotGrossAmount * 1) / 100,
         },
         netAmount,
       };
     })
   );
+
+  // Calculate total tax using existing rates
+  const totalTax = (grossAmount * (9 + 9 + 1)) / 100;
+
+  const traderInfo = {
+    name: tenant?.name || "Unknown Trader",
+    apmcCode: tenant?.apmcCode || "",
+    place: tenant?.place || "",
+    address: tenant?.address || "",
+    mobile: tenant?.mobileNumber || "",
+    gstNumber: tenant?.gstNumber || undefined,
+    bankDetails: {
+      bankName: tenant?.bankName || undefined,
+      accountNumber: tenant?.bankAccountNumber || undefined,
+      ifscCode: tenant?.ifscCode || undefined,
+      accountHolderName: tenant?.accountHolderName || undefined
+    }
+  };
 
   return {
     buyerId: buyer.id,
@@ -359,6 +404,7 @@ export async function generateBuyerDayBill(
     buyerContact: buyer.mobile || buyer.contactPerson || '',
     buyerAddress: buyer.address || '',
     date: date.toISOString().split('T')[0],
+    traderInfo,
     lots: lotDetails,
     summary: {
       totalLots,
@@ -367,7 +413,13 @@ export async function generateBuyerDayBill(
       totalWeightQuintals,
       grossAmount,
       totalDeductions,
-      netPayable: grossAmount - totalDeductions,
+      taxDetails: {
+        sgst: (grossAmount * sgstRate) / 100,
+        cgst: (grossAmount * cgstRate) / 100,
+        cess: (grossAmount * cessRate) / 100,
+        totalTax,
+      },
+      netPayable: grossAmount - totalDeductions + totalTax,
     },
   };
 }
@@ -419,7 +471,20 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
   const sampleBills: BuyerDayBill[] = [];
   
   // Get tenant settings for calculations
-  const [tenant] = await db.select()
+  const [tenant] = await db.select({
+    id: tenants.id,
+    name: tenants.name,
+    apmcCode: tenants.apmcCode,
+    place: tenants.place,
+    address: tenants.address,
+    mobileNumber: tenants.mobileNumber,
+    gstNumber: tenants.gstNumber,
+    bankName: tenants.bankName,
+    bankAccountNumber: tenants.bankAccountNumber,
+    ifscCode: tenants.ifscCode,
+    accountHolderName: tenants.accountHolderName,
+    settings: tenants.settings
+  })
     .from(tenants)
     .where(eq(tenants.id, tenantId));
 
@@ -430,6 +495,25 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
   const packagingRate = gstSettings.packaging || 2;
   const weighingFeeRate = gstSettings.weighingFee || 1;
   const apmcCommissionRate = gstSettings.apmcCommission || 2;
+  const sgstRate = gstSettings.sgst || 9;
+  const cgstRate = gstSettings.cgst || 9;
+  const cessRate = gstSettings.cess || 1;
+
+  // Trader information for bills
+  const traderInfo = {
+    name: tenant?.name || "Unknown Trader",
+    apmcCode: tenant?.apmcCode || "",
+    place: tenant?.place || "",
+    address: tenant?.address || "",
+    mobile: tenant?.mobileNumber || "",
+    gstNumber: tenant?.gstNumber || undefined,
+    bankDetails: {
+      bankName: tenant?.bankName || undefined,
+      accountNumber: tenant?.bankAccountNumber || undefined,
+      ifscCode: tenant?.ifscCode || undefined,
+      accountHolderName: tenant?.accountHolderName || undefined
+    }
+  };
 
   if (allBuyers.length > 0) {
     // If we have completed lots with pricing, use them
@@ -461,8 +545,14 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         const weighingFee = weighingFeeRate * numberOfBags;
         const apmcCommission = (grossAmount * apmcCommissionRate) / 100;
         
+        // Calculate GST on gross amount
+        const sgstAmount = (grossAmount * sgstRate) / 100;
+        const cgstAmount = (grossAmount * cgstRate) / 100;
+        const cessAmount = (grossAmount * cessRate) / 100;
+        const totalTax = sgstAmount + cgstAmount + cessAmount;
+        
         const totalDeductions = unloadHamali + packaging + weighingFee + apmcCommission;
-        const netAmount = grossAmount - totalDeductions;
+        const netAmount = grossAmount - totalDeductions + totalTax;
 
         const buyerBill: BuyerDayBill = {
           buyerId: buyer.id,
@@ -470,6 +560,7 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
           buyerContact: buyer.mobile || '',
           buyerAddress: buyer.address || '',
           date: date.toISOString().split('T')[0],
+          traderInfo,
           lots: [{
             lotNumber: lot.lotNumber,
             farmerName: farmer.name,
@@ -485,6 +576,9 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
               packaging,
               weighingFee,
               apmcCommission,
+              sgst: sgstAmount,
+              cgst: cgstAmount,
+              cess: cessAmount,
             },
             netAmount,
           }],
@@ -495,6 +589,12 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeightQuintals: weightQuintals,
             grossAmount,
             totalDeductions,
+            taxDetails: {
+              sgst: sgstAmount,
+              cgst: cgstAmount,
+              cess: cessAmount,
+              totalTax,
+            },
             netPayable: netAmount,
           },
         };
@@ -509,6 +609,12 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
       for (let i = 0; i < Math.min(allBuyers.length, 2); i++) {
         const buyer = allBuyers[i];
         
+        // Calculate demo GST amounts
+        const demoSgst = (12500 * sgstRate) / 100;
+        const demoCgst = (12500 * cgstRate) / 100;
+        const demoCess = (12500 * cessRate) / 100;
+        const demoTotalTax = demoSgst + demoCgst + demoCess;
+        
         // Create a sample bill with demo data
         const buyerBill: BuyerDayBill = {
           buyerId: buyer.id,
@@ -516,6 +622,7 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
           buyerContact: buyer.mobile || '9876543210',
           buyerAddress: buyer.address || 'Sample Address',
           date: date.toISOString().split('T')[0],
+          traderInfo,
           lots: [{
             lotNumber: `DEMO${i + 1}`,
             farmerName: 'Sample Farmer',
@@ -531,8 +638,11 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
               packaging: packagingRate * 10,
               weighingFee: weighingFeeRate * 10,
               apmcCommission: (12500 * apmcCommissionRate) / 100,
+              sgst: demoSgst,
+              cgst: demoCgst,
+              cess: demoCess,
             },
-            netAmount: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100),
+            netAmount: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
           }],
           summary: {
             totalLots: 1,
@@ -541,7 +651,13 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeightQuintals: 5.0,
             grossAmount: 12500,
             totalDeductions: (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100),
-            netPayable: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100),
+            taxDetails: {
+              sgst: demoSgst,
+              cgst: demoCgst,
+              cess: demoCess,
+              totalTax: demoTotalTax,
+            },
+            netPayable: 12500 - (unloadHamaliRate * 10) - (packagingRate * 10) - (weighingFeeRate * 10) - ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
           },
         };
         
@@ -556,12 +672,19 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
     
     const buyer = allBuyers[0]; // Use first buyer for demo
     
+    // Calculate demo GST for final bill
+    const finalDemoSgst = (20000 * sgstRate) / 100;
+    const finalDemoCgst = (20000 * cgstRate) / 100;
+    const finalDemoCess = (20000 * cessRate) / 100;
+    const finalDemoTotalTax = finalDemoSgst + finalDemoCgst + finalDemoCess;
+    
     const demoBill: BuyerDayBill = {
       buyerId: buyer.id,
       buyerName: buyer.name,
       buyerContact: buyer.mobile || '9876543210',
       buyerAddress: buyer.address || 'Agricultural Market',
       date: date.toISOString().split('T')[0],
+      traderInfo,
       lots: [{
         lotNumber: 'DEMO-001',
         farmerName: 'Sample Farmer',
@@ -577,8 +700,11 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
           packaging: packagingRate * 20,
           weighingFee: weighingFeeRate * 20,
           apmcCommission: (20000 * apmcCommissionRate) / 100,
+          sgst: finalDemoSgst,
+          cgst: finalDemoCgst,
+          cess: finalDemoCess,
         },
-        netAmount: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100),
+        netAmount: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
       }],
       summary: {
         totalLots: 1,
@@ -587,7 +713,13 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         totalWeightQuintals: 8.0,
         grossAmount: 20000,
         totalDeductions: (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100),
-        netPayable: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100),
+        taxDetails: {
+          sgst: finalDemoSgst,
+          cgst: finalDemoCgst,
+          cess: finalDemoCess,
+          totalTax: finalDemoTotalTax,
+        },
+        netPayable: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
       },
     };
     
