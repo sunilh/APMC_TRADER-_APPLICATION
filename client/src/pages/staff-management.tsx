@@ -53,7 +53,7 @@ export default function StaffManagement() {
 
   const createStaffMutation = useMutation({
     mutationFn: async (data: StaffFormData) => {
-      return await apiRequest("/api/staff", "POST", data);
+      return await apiRequest("POST", "/api/staff", data);
     },
     onSuccess: () => {
       toast({
@@ -75,7 +75,7 @@ export default function StaffManagement() {
 
   const updateStaffMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<StaffFormData> }) => {
-      return await apiRequest(`/api/staff/${data.id}`, "PATCH", data.updates);
+      return await apiRequest("PATCH", `/api/staff/${data.id}`, data.updates);
     },
     onSuccess: () => {
       toast({
@@ -98,7 +98,7 @@ export default function StaffManagement() {
 
   const deleteStaffMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/staff/${id}`, "DELETE");
+      return await apiRequest("DELETE", `/api/staff/${id}`);
     },
     onSuccess: () => {
       toast({
