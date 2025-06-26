@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Users, Plus, Edit, Trash2, UserPlus, Shield, ShieldCheck } from "lucide-react";
+import { Users, Plus, Edit, Trash2, UserPlus, Shield, ShieldCheck, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, InsertUser } from "@shared/schema";
@@ -202,10 +202,18 @@ export default function StaffManagement() {
           </DialogTrigger>
           
           <DialogContent className="max-w-md">
-            <DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle>
                 {editingUser ? "Edit Staff Member" : "Add New Staff Member"}
               </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDialogOpen(false)}
+                className="h-6 w-6 p-0 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </DialogHeader>
             
             <Form {...form}>
