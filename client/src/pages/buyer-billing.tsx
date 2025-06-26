@@ -15,6 +15,20 @@ interface BuyerBill {
   buyerContact: string;
   buyerAddress: string;
   date: string;
+  traderInfo: {
+    name: string;
+    apmcCode: string;
+    place: string;
+    address: string;
+    mobile: string;
+    gstNumber?: string;
+    bankDetails?: {
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      accountHolderName?: string;
+    };
+  };
   lots: Array<{
     lotNumber: string;
     farmerName: string;
@@ -30,6 +44,9 @@ interface BuyerBill {
       packaging: number;
       weighingFee: number;
       apmcCommission: number;
+      sgst?: number;
+      cgst?: number;
+      cess?: number;
     };
     netAmount: number;
   }>;
@@ -40,6 +57,12 @@ interface BuyerBill {
     totalWeightQuintals: number;
     grossAmount: number;
     totalDeductions: number;
+    taxDetails: {
+      sgst: number;
+      cgst: number;
+      cess: number;
+      totalTax: number;
+    };
     netPayable: number;
   };
 }
@@ -408,21 +431,65 @@ export default function BuyerBilling() {
             </div>
           </CardHeader>
           <CardContent className="p-6">
+            {/* Trader Information Header */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200">
+                  {buyerBill.traderInfo?.name || "TRADER NAME"}
+                </h2>
+                <p className="text-sm text-blue-600 dark:text-blue-300">
+                  Code: {buyerBill.traderInfo?.apmcCode} | Place: {buyerBill.traderInfo?.place}
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-300">
+                  {buyerBill.traderInfo?.address}
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-300">
+                  Mobile: {buyerBill.traderInfo?.mobile}
+                </p>
+                {buyerBill.traderInfo?.gstNumber && (
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-200">
+                    GST: {buyerBill.traderInfo.gstNumber}
+                  </p>
+                )}
+              </div>
+              
+              {/* Bank Details */}
+              {buyerBill.traderInfo?.bankDetails && (
+                <div className="border-t border-blue-200 dark:border-blue-700 pt-3">
+                  <h4 className="font-semibold text-sm text-blue-800 dark:text-blue-200 mb-2">Bank Details:</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
+                    {buyerBill.traderInfo.bankDetails.bankName && (
+                      <div>Bank: {buyerBill.traderInfo.bankDetails.bankName}</div>
+                    )}
+                    {buyerBill.traderInfo.bankDetails.accountNumber && (
+                      <div>A/C: {buyerBill.traderInfo.bankDetails.accountNumber}</div>
+                    )}
+                    {buyerBill.traderInfo.bankDetails.ifscCode && (
+                      <div>IFSC: {buyerBill.traderInfo.bankDetails.ifscCode}</div>
+                    )}
+                    {buyerBill.traderInfo.bankDetails.accountHolderName && (
+                      <div>Holder: {buyerBill.traderInfo.bankDetails.accountHolderName}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Buyer Information */}
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6">
               <h3 className="font-semibold mb-3 flex items-center">
                 <User className="h-4 w-4 mr-2" />
-                {t("billing.buyerInformation")}
+                Buyer Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center">
                   <Building className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="font-medium mr-2">{t("billing.company")}:</span>
+                  <span className="font-medium mr-2">Company:</span>
                   <span>{buyerBill.buyerName}</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="font-medium mr-2">{t("billing.contact")}:</span>
+                  <span className="font-medium mr-2">Contact:</span>
                   <span>{buyerBill.buyerContact}</span>
                 </div>
                 <div className="flex items-center col-span-2">
@@ -514,9 +581,33 @@ export default function BuyerBilling() {
                   <span className="ml-1">{formatCurrency(buyerBill.summary.grossAmount, language)}</span>
                 </div>
               </div>
+              
+              {/* Tax Details Section */}
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Tax Details:</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>SGST (9%):</span>
+                    <span>{formatCurrency(buyerBill.summary.taxDetails.sgst, language)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CGST (9%):</span>
+                    <span>{formatCurrency(buyerBill.summary.taxDetails.cgst, language)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>CESS (1%):</span>
+                    <span>{formatCurrency(buyerBill.summary.taxDetails.cess, language)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Total Tax:</span>
+                    <span>{formatCurrency(buyerBill.summary.taxDetails.totalTax, language)}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span>{t("billing.netPayable")}:</span>
+                  <span>Net Payable:</span>
                   <span className="text-blue-600 dark:text-blue-400">
                     {formatCurrency(buyerBill.summary.netPayable, language)}
                   </span>

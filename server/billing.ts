@@ -414,9 +414,9 @@ export async function generateBuyerDayBill(
       grossAmount,
       totalDeductions,
       taxDetails: {
-        sgst: (grossAmount * sgstRate) / 100,
-        cgst: (grossAmount * cgstRate) / 100,
-        cess: (grossAmount * cessRate) / 100,
+        sgst: (grossAmount * 9) / 100,
+        cgst: (grossAmount * 9) / 100,
+        cess: (grossAmount * 1) / 100,
         totalTax,
       },
       netPayable: grossAmount - totalDeductions + totalTax,

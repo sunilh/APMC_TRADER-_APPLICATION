@@ -193,6 +193,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added prominent "Generate Bills" button with clear user interface
   - Bills show detailed breakdown: gross amount, all deductions, net payable amount
   - System ready to use real completed lot data when available for authentic billing
+- June 26, 2025: Enhanced buyer billing with comprehensive GST and bank details integration
+  - Updated buyer billing interface to match professional bill format from user requirements
+  - Added comprehensive trader information header with APMC code, place, address, mobile
+  - Integrated GST number display and complete bank details section (bank name, account number, IFSC, holder name)
+  - Enhanced tax calculations with detailed SGST (9%), CGST (9%), and CESS (1%) breakdown
+  - Added professional formatting with proper trader branding and contact information
+  - Bills now include all elements from user's bill format image: trader details, buyer info, lot details, tax breakdown
+  - System displays authentic data from tenant onboarding including GST registration and banking information
 
 # User Preferences
 
