@@ -48,10 +48,55 @@ export function VoiceInput({
       
       // Process based on input type
       if (type === "number" || type === "currency" || type === "tel") {
-        // Extract numbers from speech
-        const numbers = processedText.match(/\d+/g);
-        if (numbers) {
-          processedText = numbers.join('');
+        // Convert spoken words to numbers and handle decimals
+        processedText = processedText
+          .toLowerCase()
+          .replace(/point|dot|\./g, '.')
+          .replace(/thirty[\s-]?eight/g, '38')
+          .replace(/thirty[\s-]?nine/g, '39')
+          .replace(/thirty[\s-]?seven/g, '37')
+          .replace(/thirty[\s-]?six/g, '36')
+          .replace(/thirty[\s-]?five/g, '35')
+          .replace(/thirty[\s-]?four/g, '34')
+          .replace(/thirty[\s-]?three/g, '33')
+          .replace(/thirty[\s-]?two/g, '32')
+          .replace(/thirty[\s-]?one/g, '31')
+          .replace(/thirty/g, '30')
+          .replace(/twenty[\s-]?nine/g, '29')
+          .replace(/twenty[\s-]?eight/g, '28')
+          .replace(/twenty[\s-]?seven/g, '27')
+          .replace(/twenty[\s-]?six/g, '26')
+          .replace(/twenty[\s-]?five/g, '25')
+          .replace(/twenty[\s-]?four/g, '24')
+          .replace(/twenty[\s-]?three/g, '23')
+          .replace(/twenty[\s-]?two/g, '22')
+          .replace(/twenty[\s-]?one/g, '21')
+          .replace(/twenty/g, '20')
+          .replace(/nineteen/g, '19')
+          .replace(/eighteen/g, '18')
+          .replace(/seventeen/g, '17')
+          .replace(/sixteen/g, '16')
+          .replace(/fifteen/g, '15')
+          .replace(/fourteen/g, '14')
+          .replace(/thirteen/g, '13')
+          .replace(/twelve/g, '12')
+          .replace(/eleven/g, '11')
+          .replace(/ten/g, '10')
+          .replace(/nine/g, '9')
+          .replace(/eight/g, '8')
+          .replace(/seven/g, '7')
+          .replace(/six/g, '6')
+          .replace(/five/g, '5')
+          .replace(/four/g, '4')
+          .replace(/three/g, '3')
+          .replace(/two/g, '2')
+          .replace(/one/g, '1')
+          .replace(/zero/g, '0');
+        
+        // Extract numbers with decimal points from the processed text
+        const numberMatch = processedText.match(/(\d+\.?\d*)/);
+        if (numberMatch) {
+          processedText = numberMatch[1];
         }
       }
       
