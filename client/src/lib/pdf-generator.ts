@@ -185,8 +185,14 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
           margin-bottom: 30px;
         }
         
-        .detail-item {
+        .detail-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
           margin-bottom: 15px;
+        }
+        
+        .detail-item {
           display: flex;
           align-items: center;
         }
@@ -198,7 +204,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         
         .underline {
           border-bottom: 1px solid #000;
-          min-width: 200px;
+          min-width: 150px;
           padding-bottom: 2px;
         }
         
@@ -281,6 +287,11 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         }
         
         @media (max-width: 768px) {
+          .detail-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+          
           .signatures-section {
             grid-template-columns: 1fr;
             gap: 30px;
@@ -318,21 +329,25 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         </div>
         
         <div class="details-section">
-          <div class="detail-item">
-            <strong>Trader Code:</strong>
-            <span class="underline">${data.traderCode}</span>
+          <div class="detail-row">
+            <div class="detail-item">
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Mobile:</strong>
+              <span class="underline">${data.traderName}</span>
+            </div>
           </div>
-          <div class="detail-item">
-            <strong>Mobile:</strong>
-            <span class="underline">${data.traderName}</span>
-          </div>
-          <div class="detail-item">
-            <strong>Date:</strong>
-            <span class="underline">${data.date}</span>
-          </div>
-          <div class="detail-item">
-            <strong>Place:</strong>
-            <span class="underline">${data.place}</span>
+          <div class="detail-row">
+            <div class="detail-item">
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Place:</strong>
+              <span class="underline">${data.place}</span>
+            </div>
           </div>
         </div>
         
@@ -422,19 +437,26 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
           margin-bottom: 30px;
         }
         
-        .detail-item {
+        .detail-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
           margin-bottom: 15px;
         }
         
+        .detail-item {
+          display: flex;
+          align-items: center;
+        }
+        
         .detail-item strong {
-          display: inline-block;
-          width: 120px;
+          min-width: 120px;
+          margin-right: 10px;
         }
         
         .detail-item .underline {
           border-bottom: 1px solid #000;
-          display: inline-block;
-          min-width: 200px;
+          min-width: 150px;
           padding-bottom: 2px;
         }
         
@@ -492,21 +514,25 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         </div>
         
         <div class="details-section">
-          <div class="detail-item">
-            <strong>Trader Code:</strong>
-            <span class="underline">${data.traderCode}</span>
+          <div class="detail-row">
+            <div class="detail-item">
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Mobile:</strong>
+              <span class="underline">${data.traderName}</span>
+            </div>
           </div>
-          <div class="detail-item">
-            <strong>Mobile:</strong>
-            <span class="underline">${data.traderName}</span>
-          </div>
-          <div class="detail-item">
-            <strong>Date:</strong>
-            <span class="underline">${data.date}</span>
-          </div>
-          <div class="detail-item">
-            <strong>Place:</strong>
-            <span class="underline">${data.place}</span>
+          <div class="detail-row">
+            <div class="detail-item">
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Place:</strong>
+              <span class="underline">${data.place}</span>
+            </div>
           </div>
         </div>
         
