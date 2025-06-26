@@ -384,18 +384,6 @@ export default function BagEntryNew() {
       }
       return bag;
     }));
-    
-    // Auto-focus next weight input if weight was entered
-    if (weight !== undefined && weight > 0) {
-      setTimeout(() => {
-        const nextBagNumber = bagNumber + 1;
-        const nextInput = document.querySelector(`input[data-bag="${nextBagNumber}"]`) as HTMLInputElement;
-        if (nextInput) {
-          nextInput.focus();
-          nextInput.select();
-        }
-      }, 100);
-    }
   };
 
   if (isNaN(lotId)) {
