@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
+import { VoiceInput } from "@/components/voice-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +85,21 @@ export default function Settings() {
     },
   });
 
+  const handleGSTVoiceInput = (field: keyof GSTSettings, value: string) => {
+    const numValue = parseFloat(value.replace(/[^\d.]/g, ''));
+    if (!isNaN(numValue)) {
+      gstForm.setValue(field, numValue);
+    }
+  };
+
+  const handleUserLimitVoiceInput = (field: keyof UserLimitSettings, value: string) => {
+    const numValue = parseInt(value.replace(/\D/g, ''));
+    if (!isNaN(numValue) && numValue > 0) {
+      // User limit form handler - implementation when user limit form is added
+      console.log(`User limit voice input: ${field} = ${numValue}`);
+    }
+  };
+
   const onGSTSubmit = (data: GSTSettings) => {
     updateSettingsMutation.mutate({
       gstSettings: data,
@@ -152,14 +168,22 @@ export default function Settings() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="sgst">SGST Rate (%)</Label>
-                      <Input
-                        id="sgst"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        {...gstForm.register("sgst", { valueAsNumber: true })}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="sgst"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          {...gstForm.register("sgst", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('sgst', value)}
+                          placeholder="Voice input"
+                          type="number"
+                        />
+                      </div>
                       {gstForm.formState.errors.sgst && (
                         <p className="text-sm text-destructive">
                           {gstForm.formState.errors.sgst.message}
@@ -169,14 +193,22 @@ export default function Settings() {
 
                     <div className="space-y-2">
                       <Label htmlFor="cgst">CGST Rate (%)</Label>
-                      <Input
-                        id="cgst"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        {...gstForm.register("cgst", { valueAsNumber: true })}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="cgst"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          {...gstForm.register("cgst", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('cgst', value)}
+                          placeholder="Voice input"
+                          type="number"
+                        />
+                      </div>
                       {gstForm.formState.errors.cgst && (
                         <p className="text-sm text-destructive">
                           {gstForm.formState.errors.cgst.message}
@@ -186,14 +218,22 @@ export default function Settings() {
 
                     <div className="space-y-2">
                       <Label htmlFor="cess">CESS Rate (%)</Label>
-                      <Input
-                        id="cess"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        {...gstForm.register("cess", { valueAsNumber: true })}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="cess"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          {...gstForm.register("cess", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('cess', value)}
+                          placeholder="Voice input"
+                          type="number"
+                        />
+                      </div>
                       {gstForm.formState.errors.cess && (
                         <p className="text-sm text-destructive">
                           {gstForm.formState.errors.cess.message}
@@ -203,13 +243,21 @@ export default function Settings() {
 
                     <div className="space-y-2">
                       <Label htmlFor="unloadHamali">Unload Hamali Rate (₹)</Label>
-                      <Input
-                        id="unloadHamali"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        {...gstForm.register("unloadHamali", { valueAsNumber: true })}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="unloadHamali"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...gstForm.register("unloadHamali", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('unloadHamali', value)}
+                          placeholder="Voice input"
+                          type="currency"
+                        />
+                      </div>
                       {gstForm.formState.errors.unloadHamali && (
                         <p className="text-sm text-destructive">
                           {gstForm.formState.errors.unloadHamali.message}

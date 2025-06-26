@@ -11,6 +11,7 @@ import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
 import { Sprout, Globe, Users, BarChart3 } from "lucide-react";
 import { useLocation } from "wouter";
+import { VoiceInput } from "@/components/voice-input";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -67,6 +68,14 @@ export default function AuthPage() {
     registerMutation.mutate(userData);
   };
 
+  const handleLoginVoiceInput = (field: keyof LoginForm, value: string) => {
+    loginForm.setValue(field, value);
+  };
+
+  const handleRegisterVoiceInput = (field: keyof RegisterForm, value: string) => {
+    registerForm.setValue(field, value);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex">
       {/* Left side - Auth forms */}
@@ -95,11 +104,18 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-username">Username</Label>
-                      <Input
-                        id="login-username"
-                        {...loginForm.register("username")}
-                        placeholder="Enter your username"
-                      />
+                      <div className="flex space-x-2">
+                        <Input
+                          id="login-username"
+                          {...loginForm.register("username")}
+                          placeholder="Enter your username"
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleLoginVoiceInput('username', value)}
+                          placeholder="Username"
+                        />
+                      </div>
                       {loginForm.formState.errors.username && (
                         <p className="text-sm text-destructive">
                           {loginForm.formState.errors.username.message}
@@ -109,12 +125,19 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Password</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        {...loginForm.register("password")}
-                        placeholder="Enter your password"
-                      />
+                      <div className="flex space-x-2">
+                        <Input
+                          id="login-password"
+                          type="password"
+                          {...loginForm.register("password")}
+                          placeholder="Enter your password"
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleLoginVoiceInput('password', value)}
+                          placeholder="Password"
+                        />
+                      </div>
                       {loginForm.formState.errors.password && (
                         <p className="text-sm text-destructive">
                           {loginForm.formState.errors.password.message}
@@ -144,11 +167,18 @@ export default function AuthPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="register-name">Full Name</Label>
-                        <Input
-                          id="register-name"
-                          {...registerForm.register("name")}
-                          placeholder="Your full name"
-                        />
+                        <div className="flex space-x-2">
+                          <Input
+                            id="register-name"
+                            {...registerForm.register("name")}
+                            placeholder="Your full name"
+                            className="flex-1"
+                          />
+                          <VoiceInput
+                            onResult={(value) => handleRegisterVoiceInput('name', value)}
+                            placeholder="Full Name"
+                          />
+                        </div>
                         {registerForm.formState.errors.name && (
                           <p className="text-sm text-destructive">
                             {registerForm.formState.errors.name.message}
@@ -158,11 +188,18 @@ export default function AuthPage() {
 
                       <div className="space-y-2">
                         <Label htmlFor="register-username">Username</Label>
-                        <Input
-                          id="register-username"
-                          {...registerForm.register("username")}
-                          placeholder="Choose username"
-                        />
+                        <div className="flex space-x-2">
+                          <Input
+                            id="register-username"
+                            {...registerForm.register("username")}
+                            placeholder="Choose username"
+                            className="flex-1"
+                          />
+                          <VoiceInput
+                            onResult={(value) => handleRegisterVoiceInput('username', value)}
+                            placeholder="Username"
+                          />
+                        </div>
                         {registerForm.formState.errors.username && (
                           <p className="text-sm text-destructive">
                             {registerForm.formState.errors.username.message}
@@ -173,12 +210,19 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="register-email">Email</Label>
-                      <Input
-                        id="register-email"
-                        type="email"
-                        {...registerForm.register("email")}
-                        placeholder="your.email@example.com"
-                      />
+                      <div className="flex space-x-2">
+                        <Input
+                          id="register-email"
+                          type="email"
+                          {...registerForm.register("email")}
+                          placeholder="your.email@example.com"
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleRegisterVoiceInput('email', value)}
+                          placeholder="Email"
+                        />
+                      </div>
                       {registerForm.formState.errors.email && (
                         <p className="text-sm text-destructive">
                           {registerForm.formState.errors.email.message}
@@ -188,12 +232,19 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="register-password">Password</Label>
-                      <Input
-                        id="register-password"
-                        type="password"
-                        {...registerForm.register("password")}
-                        placeholder="Create password"
-                      />
+                      <div className="flex space-x-2">
+                        <Input
+                          id="register-password"
+                          type="password"
+                          {...registerForm.register("password")}
+                          placeholder="Create password"
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleRegisterVoiceInput('password', value)}
+                          placeholder="Password"
+                        />
+                      </div>
                       {registerForm.formState.errors.password && (
                         <p className="text-sm text-destructive">
                           {registerForm.formState.errors.password.message}
@@ -203,12 +254,19 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="register-confirm">Confirm Password</Label>
-                      <Input
-                        id="register-confirm"
-                        type="password"
-                        {...registerForm.register("confirmPassword")}
-                        placeholder="Confirm password"
-                      />
+                      <div className="flex space-x-2">
+                        <Input
+                          id="register-confirm"
+                          type="password"
+                          {...registerForm.register("confirmPassword")}
+                          placeholder="Confirm password"
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleRegisterVoiceInput('confirmPassword', value)}
+                          placeholder="Confirm Password"
+                        />
+                      </div>
                       {registerForm.formState.errors.confirmPassword && (
                         <p className="text-sm text-destructive">
                           {registerForm.formState.errors.confirmPassword.message}

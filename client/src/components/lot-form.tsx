@@ -229,21 +229,39 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="varietyGrade">{t('lot.varietyGrade')} *</Label>
-          <Select
-            value={form.watch("varietyGrade")}
-            onValueChange={(value) => form.setValue("varietyGrade", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('lot.selectVariety')} />
-            </SelectTrigger>
-            <SelectContent>
-              {varietyOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex space-x-2">
+            <Select
+              value={form.watch("varietyGrade")}
+              onValueChange={(value) => form.setValue("varietyGrade", value)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder={t('lot.selectVariety')} />
+              </SelectTrigger>
+              <SelectContent>
+                {varietyOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <VoiceInput
+              onResult={(value) => {
+                // Match voice input to variety options
+                const lowerValue = value.toLowerCase();
+                const matchedOption = varietyOptions.find(option => 
+                  option.label.toLowerCase().includes(lowerValue) ||
+                  option.value.toLowerCase().includes(lowerValue)
+                );
+                if (matchedOption) {
+                  form.setValue("varietyGrade", matchedOption.value);
+                } else {
+                  form.setValue("varietyGrade", value);
+                }
+              }}
+              placeholder={t('lot.varietyGrade')}
+            />
+          </div>
           {form.formState.errors.varietyGrade && (
             <p className="text-sm text-destructive">
               {form.formState.errors.varietyGrade.message}

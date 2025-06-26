@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
+import { VoiceInput } from "@/components/voice-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,10 @@ export default function Buyers() {
     },
   });
 
+  const handleVoiceInput = (field: keyof InsertBuyer, value: string) => {
+    form.setValue(field, value);
+  };
+
   const onSubmit = (data: InsertBuyer) => {
     console.log("Form submission data:", data);
     console.log("Form validation errors:", form.formState.errors);
@@ -186,7 +191,14 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Company/Business Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter company or business name" {...field} />
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter company or business name" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('name', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -199,7 +211,14 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Contact Person</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter contact person name" {...field} />
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter contact person name" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('contactPerson', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -212,7 +231,14 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Mobile Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter mobile number" {...field} />
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter mobile number" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('mobile', value)}
+                                placeholder="Voice input"
+                                type="tel"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -225,7 +251,14 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter address" {...field} />
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter address" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('address', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

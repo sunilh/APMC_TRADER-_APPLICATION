@@ -715,23 +715,36 @@ export default function BagEntry() {
 
                     <div>
                       <Label htmlFor={`notes-${bag.bagNumber}`}>Notes</Label>
-                      <Input
-                        id={`notes-${bag.bagNumber}`}
-                        placeholder="Enter notes"
-                        value={bag.notes || ""}
-                        onChange={(e) =>
-                          handleBagUpdate(
-                            bag.bagNumber,
-                            "notes",
-                            e.target.value,
-                          )
-                        }
-                        className={
-                          bag.status === "saved"
-                            ? "bg-green-50 border-green-200"
-                            : ""
-                        }
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id={`notes-${bag.bagNumber}`}
+                          placeholder="Enter notes"
+                          value={bag.notes || ""}
+                          onChange={(e) =>
+                            handleBagUpdate(
+                              bag.bagNumber,
+                              "notes",
+                              e.target.value,
+                            )
+                          }
+                          className={`flex-1 ${
+                            bag.status === "saved"
+                              ? "bg-green-50 border-green-200"
+                              : ""
+                          }`}
+                        />
+                        <VoiceInput
+                          onResult={(text) =>
+                            handleBagUpdate(
+                              bag.bagNumber,
+                              "notes",
+                              text,
+                            )
+                          }
+                          type="text"
+                          placeholder="Voice input"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -167,11 +167,18 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="place">{t('farmer.place')} *</Label>
-          <Input
-            id="place"
-            {...form.register("place")}
-            placeholder={t('farmer.placePlaceholder')}
-          />
+          <div className="flex space-x-2">
+            <Input
+              id="place"
+              {...form.register("place")}
+              placeholder={t('farmer.placePlaceholder')}
+              className="flex-1"
+            />
+            <VoiceInput
+              onResult={(value) => handleVoiceInput('place', value)}
+              placeholder={t('farmer.place')}
+            />
+          </div>
           {form.formState.errors.place && (
             <p className="text-sm text-destructive">
               {form.formState.errors.place.message}
@@ -181,11 +188,18 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="nameAsInBank">{t('farmer.nameAsInBank')}</Label>
-          <Input
-            id="nameAsInBank"
-            {...form.register("nameAsInBank")}
-            placeholder={t('farmer.nameAsInBankPlaceholder')}
-          />
+          <div className="flex space-x-2">
+            <Input
+              id="nameAsInBank"
+              {...form.register("nameAsInBank")}
+              placeholder={t('farmer.nameAsInBankPlaceholder')}
+              className="flex-1"
+            />
+            <VoiceInput
+              onResult={(value) => handleVoiceInput('nameAsInBank', value)}
+              placeholder={t('farmer.nameAsInBank')}
+            />
+          </div>
           {form.formState.errors.nameAsInBank && (
             <p className="text-sm text-destructive">
               {form.formState.errors.nameAsInBank.message}
@@ -195,11 +209,18 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="bankName">{t('farmer.bankName')}</Label>
-          <Input
-            id="bankName"
-            {...form.register("bankName")}
-            placeholder={t('farmer.bankNamePlaceholder')}
-          />
+          <div className="flex space-x-2">
+            <Input
+              id="bankName"
+              {...form.register("bankName")}
+              placeholder={t('farmer.bankNamePlaceholder')}
+              className="flex-1"
+            />
+            <VoiceInput
+              onResult={(value) => handleVoiceInput('bankName', value)}
+              placeholder={t('farmer.bankName')}
+            />
+          </div>
           {form.formState.errors.bankName && (
             <p className="text-sm text-destructive">
               {form.formState.errors.bankName.message}
@@ -209,11 +230,19 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="bankAccountNumber">{t('farmer.bankAccount')}</Label>
-          <Input
-            id="bankAccountNumber"
-            {...form.register("bankAccountNumber")}
-            placeholder={t('farmer.bankAccountPlaceholder')}
-          />
+          <div className="flex space-x-2">
+            <Input
+              id="bankAccountNumber"
+              {...form.register("bankAccountNumber")}
+              placeholder={t('farmer.bankAccountPlaceholder')}
+              className="flex-1"
+            />
+            <VoiceInput
+              onResult={(value) => handleVoiceInput('bankAccountNumber', value)}
+              placeholder={t('farmer.bankAccount')}
+              type="number"
+            />
+          </div>
           {form.formState.errors.bankAccountNumber && (
             <p className="text-sm text-destructive">
               {form.formState.errors.bankAccountNumber.message}
@@ -224,16 +253,22 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
         <div className="md:col-span-2">
           <div className="space-y-2">
             <Label htmlFor="ifscCode">{t('farmer.ifscCode')}</Label>
-            <Input
-              id="ifscCode"
-              {...form.register("ifscCode")}
-              placeholder={t('farmer.ifscCodePlaceholder')}
-              className="uppercase"
-              onChange={(e) => {
-                e.target.value = e.target.value.toUpperCase();
-                form.setValue("ifscCode", e.target.value);
-              }}
-            />
+            <div className="flex space-x-2">
+              <Input
+                id="ifscCode"
+                {...form.register("ifscCode")}
+                placeholder={t('farmer.ifscCodePlaceholder')}
+                className="uppercase flex-1"
+                onChange={(e) => {
+                  e.target.value = e.target.value.toUpperCase();
+                  form.setValue("ifscCode", e.target.value);
+                }}
+              />
+              <VoiceInput
+                onResult={(value) => handleVoiceInput('ifscCode', value.toUpperCase())}
+                placeholder={t('farmer.ifscCode')}
+              />
+            </div>
             {form.formState.errors.ifscCode && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.ifscCode.message}

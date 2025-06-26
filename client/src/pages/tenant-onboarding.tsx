@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { AlertCircle } from "lucide-react";
+import { VoiceInput } from "@/components/voice-input";
 
 // Schema for tenant onboarding form
 const tenantOnboardingSchema = z.object({
@@ -105,6 +106,16 @@ export default function TenantOnboarding() {
     },
   });
 
+  const handleVoiceInput = (field: keyof TenantOnboardingForm, value: string) => {
+    if (field === 'mobileNumber') {
+      // Clean and validate mobile number
+      const cleanNumber = value.replace(/\D/g, '').slice(0, 10);
+      form.setValue(field, cleanNumber);
+    } else {
+      form.setValue(field, value);
+    }
+  };
+
   const onSubmit = async (data: TenantOnboardingForm) => {
     setIsSubmitting(true);
     try {
@@ -142,11 +153,19 @@ export default function TenantOnboarding() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="tenantName">Business Name *</Label>
-                    <Input
-                      id="tenantName"
-                      placeholder="e.g., ABC Traders"
-                      {...form.register("tenantName")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="tenantName"
+                        placeholder="e.g., ABC Traders"
+                        {...form.register("tenantName")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('tenantName', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
                     {form.formState.errors.tenantName && (
                       <p className="text-sm text-red-600">{form.formState.errors.tenantName.message}</p>
                     )}
@@ -154,11 +173,19 @@ export default function TenantOnboarding() {
 
                   <div className="space-y-2">
                     <Label htmlFor="apmcCode">APMC Code *</Label>
-                    <Input
-                      id="apmcCode"
-                      placeholder="e.g., TC001"
-                      {...form.register("apmcCode")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="apmcCode"
+                        placeholder="e.g., TC001"
+                        {...form.register("apmcCode")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('apmcCode', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
                     {form.formState.errors.apmcCode && (
                       <p className="text-sm text-red-600">{form.formState.errors.apmcCode.message}</p>
                     )}
@@ -168,11 +195,19 @@ export default function TenantOnboarding() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="place">Place *</Label>
-                    <Input
-                      id="place"
-                      placeholder="e.g., Byadagi"
-                      {...form.register("place")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="place"
+                        placeholder="e.g., Byadagi"
+                        {...form.register("place")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('place', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
                     {form.formState.errors.place && (
                       <p className="text-sm text-red-600">{form.formState.errors.place.message}</p>
                     )}
@@ -180,11 +215,19 @@ export default function TenantOnboarding() {
 
                   <div className="space-y-2">
                     <Label htmlFor="mobileNumber">Mobile Number *</Label>
-                    <Input
-                      id="mobileNumber"
-                      placeholder="e.g., 9876543210"
-                      {...form.register("mobileNumber")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="mobileNumber"
+                        placeholder="e.g., 9876543210"
+                        {...form.register("mobileNumber")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('mobileNumber', value)}
+                        placeholder="Voice input"
+                        type="tel"
+                      />
+                    </div>
                     {form.formState.errors.mobileNumber && (
                       <p className="text-sm text-red-600">{form.formState.errors.mobileNumber.message}</p>
                     )}
@@ -193,11 +236,19 @@ export default function TenantOnboarding() {
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Full Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="e.g., Main Market, Byadagi, Haveri District, Karnataka"
-                    {...form.register("address")}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="address"
+                      placeholder="e.g., Main Market, Byadagi, Haveri District, Karnataka"
+                      {...form.register("address")}
+                      className="flex-1"
+                    />
+                    <VoiceInput
+                      onResult={(value) => handleVoiceInput('address', value)}
+                      placeholder="Voice input"
+                      type="text"
+                    />
+                  </div>
                   {form.formState.errors.address && (
                     <p className="text-sm text-red-600">{form.formState.errors.address.message}</p>
                   )}
@@ -231,11 +282,19 @@ export default function TenantOnboarding() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="adminUsername">Admin Username *</Label>
-                    <Input
-                      id="adminUsername"
-                      placeholder="e.g., admin"
-                      {...form.register("adminUsername")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="adminUsername"
+                        placeholder="e.g., admin"
+                        {...form.register("adminUsername")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('adminUsername', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
                     {form.formState.errors.adminUsername && (
                       <p className="text-sm text-red-600">{form.formState.errors.adminUsername.message}</p>
                     )}
@@ -243,12 +302,20 @@ export default function TenantOnboarding() {
 
                   <div className="space-y-2">
                     <Label htmlFor="adminPassword">Admin Password *</Label>
-                    <Input
-                      id="adminPassword"
-                      type="password"
-                      placeholder="Minimum 6 characters"
-                      {...form.register("adminPassword")}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="adminPassword"
+                        type="password"
+                        placeholder="Minimum 6 characters"
+                        {...form.register("adminPassword")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('adminPassword', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
                     {form.formState.errors.adminPassword && (
                       <p className="text-sm text-red-600">{form.formState.errors.adminPassword.message}</p>
                     )}
@@ -257,12 +324,20 @@ export default function TenantOnboarding() {
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Re-enter password"
-                    {...form.register("confirmPassword")}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Re-enter password"
+                      {...form.register("confirmPassword")}
+                      className="flex-1"
+                    />
+                    <VoiceInput
+                      onResult={(value) => handleVoiceInput('confirmPassword', value)}
+                      placeholder="Voice input"
+                      type="text"
+                    />
+                  </div>
                   {form.formState.errors.confirmPassword && (
                     <p className="text-sm text-red-600">{form.formState.errors.confirmPassword.message}</p>
                   )}
