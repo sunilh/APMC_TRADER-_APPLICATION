@@ -16,6 +16,7 @@ import BuyersSimple from "@/pages/buyers-simple";
 import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
+import StaffManagement from "@/pages/staff-management";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntry} />
       <ProtectedRoute path="/buyers" component={BuyersSimple} />
+      <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/billing" component={Billing} />
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />

@@ -20,6 +20,7 @@ export function Navigation() {
     { name: t('nav.farmers'), href: '/farmers', icon: Users },
     { name: t('nav.lots'), href: '/lots', icon: Package },
     { name: 'Buyers', href: '/buyers', icon: Users },
+    { name: 'Staff', href: '/staff', icon: Users },
     { name: 'Billing', href: '/billing', icon: IndianRupee },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];

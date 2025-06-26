@@ -633,6 +633,123 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Staff management routes
+  app.get(
+    "/api/staff",
+    requireAuth,
+    requireTenant,
+    async (req: any, res) => {
+      try {
+        const staff = await storage.getUsersByTenant(req.user.tenantId);
+        res.json(staff);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+        res.status(500).json({ message: "Failed to fetch staff" });
+      }
+    },
+  );
+
+  app.post(
+    "/api/staff",
+    requireAuth,
+    requireTenant,
+    async (req: any, res) => {
+      try {
+        const userData = req.body;
+        
+        // Check if username already exists in this tenant
+        const existingUser = await storage.getUserByUsername(userData.username, req.user.tenantId);
+        if (existingUser) {
+          return res.status(400).json({ message: "Username already exists in this APMC center" });
+        }
+
+        // Create staff user
+        const user = await storage.createUser({
+          username: userData.username,
+          password: userData.password,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          tenantId: req.user.tenantId,
+          isActive: userData.isActive ?? true,
+        });
+
+        await createAuditLog(req.user.id, "CREATE", "USER", `Created staff: ${user.name}`, req.user.tenantId);
+        
+        res.json(user);
+      } catch (error) {
+        console.error("Error creating staff:", error);
+        res.status(500).json({ message: "Failed to create staff member" });
+      }
+    },
+  );
+
+  app.patch(
+    "/api/staff/:id",
+    requireAuth,
+    requireTenant,
+    async (req: any, res) => {
+      try {
+        const staffId = parseInt(req.params.id);
+        const updates = req.body;
+        
+        // Ensure the staff member belongs to the same tenant
+        const existingUser = await storage.getUser(staffId);
+        if (!existingUser || existingUser.tenantId !== req.user.tenantId) {
+          return res.status(404).json({ message: "Staff member not found" });
+        }
+
+        // Don't allow changing tenantId
+        delete updates.tenantId;
+        
+        // If password is empty, don't update it
+        if (updates.password === "") {
+          delete updates.password;
+        }
+
+        const user = await storage.updateUser(staffId, updates);
+        
+        await createAuditLog(req.user.id, "UPDATE", "USER", `Updated staff: ${user.name}`, req.user.tenantId);
+        
+        res.json(user);
+      } catch (error) {
+        console.error("Error updating staff:", error);
+        res.status(500).json({ message: "Failed to update staff member" });
+      }
+    },
+  );
+
+  app.delete(
+    "/api/staff/:id",
+    requireAuth,
+    requireTenant,
+    async (req: any, res) => {
+      try {
+        const staffId = parseInt(req.params.id);
+        
+        // Ensure the staff member belongs to the same tenant
+        const existingUser = await storage.getUser(staffId);
+        if (!existingUser || existingUser.tenantId !== req.user.tenantId) {
+          return res.status(404).json({ message: "Staff member not found" });
+        }
+
+        // Don't allow deleting yourself
+        if (staffId === req.user.id) {
+          return res.status(400).json({ message: "Cannot delete your own account" });
+        }
+
+        await storage.updateUser(staffId, { isActive: false });
+        
+        await createAuditLog(req.user.id, "DELETE", "USER", `Deleted staff: ${existingUser.name}`, req.user.tenantId);
+        
+        res.json({ message: "Staff member deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting staff:", error);
+        res.status(500).json({ message: "Failed to delete staff member" });
+      }
+    },
+  );
+
   const httpServer = createServer(app);
   return httpServer;
 }
