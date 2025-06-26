@@ -354,6 +354,19 @@ export default function BuyerBilling() {
               </Select>
             </div>
           </div>
+          <div className="flex justify-center pt-4">
+            <Button 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
+              onClick={() => {
+                // Force refetch of bills
+                window.location.reload();
+              }}
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              Generate Bills for {formatDate(new Date(selectedDate), language)}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
