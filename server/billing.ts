@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { lots, bags, farmers } from "@shared/schema";
+import { lots, bags, farmers, tenants } from "@shared/schema";
 import { eq, and, between, sql } from "drizzle-orm";
 
 export interface FarmerDayBill {
@@ -17,6 +17,9 @@ export interface FarmerDayBill {
     vehicleRent?: number;
     advance?: number;
     unloadHamali?: number;
+    packaging?: number;
+    weighingFee?: number;
+    apmcCommission?: number;
     grade?: string;
   }>;
   summary: {
@@ -51,6 +54,20 @@ export async function generateFarmerDayBill(
     .limit(1);
 
   if (!farmer.length) return null;
+
+  // Get tenant settings for billing rates
+  const tenant = await db.select()
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+
+  const tenantSettings = tenant[0]?.settings as any || {};
+  const gstSettings = tenantSettings.gstSettings || {};
+  
+  // Default values if not set in settings
+  const packagingRate = gstSettings.packaging || 5;
+  const weighingFeeRate = gstSettings.weighingFee || 2;
+  const apmcCommissionRate = gstSettings.apmcCommission || 2;
 
   // Get all lots for farmer on this date that have lot price set
   const farmerLots = await db.select({
@@ -95,6 +112,8 @@ export async function generateFarmerDayBill(
     // Only include lots that have both weight entries and lot price
     if (totalWeight > 0 && weighedBags > 0 && lot.lotPrice && parseFloat(lot.lotPrice) > 0) {
       const totalWeightQuintals = totalWeight / 100; // Convert kg to quintals
+      const grossAmount = totalWeightQuintals * parseFloat(lot.lotPrice);
+      
       lotsWithWeights.push({
         lotNumber: lot.lotNumber,
         lotPrice: parseFloat(lot.lotPrice),
@@ -105,23 +124,31 @@ export async function generateFarmerDayBill(
         vehicleRent: parseFloat(lot.vehicleRent || '0'),
         advance: parseFloat(lot.advance || '0'),
         unloadHamali: parseFloat(lot.unloadHamali || '0') * lot.numberOfBags, // Calculate per bag
-        grade: lot.grade,
+        packaging: packagingRate * lot.numberOfBags, // Calculate per bag
+        weighingFee: weighingFeeRate * lot.numberOfBags, // Calculate per bag
+        apmcCommission: (grossAmount * apmcCommissionRate) / 100, // Calculate percentage of gross amount
+        grade: lot.grade || undefined,
       });
     }
   }
 
   // Calculate summary - only from lots with weights and prices
   const summary = lotsWithWeights.reduce(
-    (acc, lot) => ({
-      totalLots: acc.totalLots + 1,
-      totalBags: acc.totalBags + lot.numberOfBags,
-      totalWeighedBags: acc.totalWeighedBags + lot.weighedBags,
-      totalWeight: acc.totalWeight + lot.totalWeight,
-      totalWeightQuintals: acc.totalWeightQuintals + lot.totalWeightQuintals,
-      grossAmount: acc.grossAmount + (lot.totalWeightQuintals * lot.lotPrice),
-      totalDeductions: acc.totalDeductions + lot.vehicleRent + lot.advance + lot.unloadHamali,
-      netAmount: acc.netAmount + ((lot.totalWeightQuintals * lot.lotPrice) - lot.vehicleRent - lot.advance - lot.unloadHamali),
-    }),
+    (acc, lot) => {
+      const lotDeductions = lot.vehicleRent + lot.advance + lot.unloadHamali + (lot.packaging || 0) + (lot.weighingFee || 0) + (lot.apmcCommission || 0);
+      const lotGrossAmount = lot.totalWeightQuintals * lot.lotPrice;
+      
+      return {
+        totalLots: acc.totalLots + 1,
+        totalBags: acc.totalBags + lot.numberOfBags,
+        totalWeighedBags: acc.totalWeighedBags + lot.weighedBags,
+        totalWeight: acc.totalWeight + lot.totalWeight,
+        totalWeightQuintals: acc.totalWeightQuintals + lot.totalWeightQuintals,
+        grossAmount: acc.grossAmount + lotGrossAmount,
+        totalDeductions: acc.totalDeductions + lotDeductions,
+        netAmount: acc.netAmount + (lotGrossAmount - lotDeductions),
+      };
+    },
     {
       totalLots: 0,
       totalBags: 0,

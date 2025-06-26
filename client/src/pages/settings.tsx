@@ -21,6 +21,9 @@ const gstSettingsSchema = z.object({
   cgst: z.number().min(0).max(100),
   cess: z.number().min(0).max(100),
   unloadHamali: z.number().min(0),
+  packaging: z.number().min(0),
+  weighingFee: z.number().min(0),
+  apmcCommission: z.number().min(0).max(100),
 });
 
 const userLimitSchema = z.object({
@@ -36,6 +39,9 @@ interface TenantSettings {
     cgst: number;
     cess: number;
     unloadHamali: number;
+    packaging: number;
+    weighingFee: number;
+    apmcCommission: number;
   };
   maxUsers: number;
   subscriptionPlan: string;
@@ -62,6 +68,9 @@ export default function Settings() {
       cgst: 9,
       cess: 0,
       unloadHamali: 3,
+      packaging: 5,
+      weighingFee: 2,
+      apmcCommission: 2,
     },
   });
 
@@ -73,6 +82,9 @@ export default function Settings() {
         cgst: settings.gstSettings.cgst,
         cess: settings.gstSettings.cess,
         unloadHamali: settings.gstSettings.unloadHamali,
+        packaging: settings.gstSettings.packaging || 5,
+        weighingFee: settings.gstSettings.weighingFee || 2,
+        apmcCommission: settings.gstSettings.apmcCommission || 2,
       });
     }
   }, [settings, gstForm]);
@@ -276,6 +288,79 @@ export default function Settings() {
                         </p>
                       )}
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="packaging">Packaging (₹ per bag)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="packaging"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...gstForm.register("packaging", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('packaging', value)}
+                          placeholder="Voice input"
+                          type="currency"
+                        />
+                      </div>
+                      {gstForm.formState.errors.packaging && (
+                        <p className="text-sm text-destructive">
+                          {gstForm.formState.errors.packaging.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="weighingFee">Weighing Fee (₹ per bag)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="weighingFee"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          {...gstForm.register("weighingFee", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('weighingFee', value)}
+                          placeholder="Voice input"
+                          type="currency"
+                        />
+                      </div>
+                      {gstForm.formState.errors.weighingFee && (
+                        <p className="text-sm text-destructive">
+                          {gstForm.formState.errors.weighingFee.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="apmcCommission">APMC Commission (%)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="apmcCommission"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          {...gstForm.register("apmcCommission", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('apmcCommission', value)}
+                          placeholder="Voice input"
+                          type="number"
+                        />
+                      </div>
+                      {gstForm.formState.errors.apmcCommission && (
+                        <p className="text-sm text-destructive">
+                          {gstForm.formState.errors.apmcCommission.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg">
@@ -285,8 +370,16 @@ export default function Settings() {
                       CGST: ₹{((gstForm.watch("cgst") || 0) * 10).toFixed(2)}, 
                       CESS: ₹{((gstForm.watch("cess") || 0) * 10).toFixed(2)}
                     </p>
-                    <p className="text-sm text-blue-800 mt-1">
-                      Total Tax: ₹{(((gstForm.watch("sgst") || 0) + (gstForm.watch("cgst") || 0) + (gstForm.watch("cess") || 0)) * 10).toFixed(2)}
+                    <p className="text-sm text-blue-800">
+                      APMC Commission: ₹{((gstForm.watch("apmcCommission") || 0) * 10).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      Per bag charges (50 bags): Unload Hamali: ₹{((gstForm.watch("unloadHamali") || 0) * 50).toFixed(2)}, 
+                      Packaging: ₹{((gstForm.watch("packaging") || 0) * 50).toFixed(2)}, 
+                      Weighing: ₹{((gstForm.watch("weighingFee") || 0) * 50).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-blue-800 mt-1 font-medium">
+                      Total Tax: ₹{(((gstForm.watch("sgst") || 0) + (gstForm.watch("cgst") || 0) + (gstForm.watch("cess") || 0) + (gstForm.watch("apmcCommission") || 0)) * 10).toFixed(2)}
                     </p>
                   </div>
 

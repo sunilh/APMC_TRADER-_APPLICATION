@@ -22,9 +22,13 @@ interface FarmerDayBill {
     numberOfBags: number;
     weighedBags: number;
     totalWeight: number;
+    totalWeightQuintals: number;
     vehicleRent?: number;
     advance?: number;
     unloadHamali?: number;
+    packaging?: number;
+    weighingFee?: number;
+    apmcCommission?: number;
     grade?: string;
   }>;
   summary: {
@@ -32,6 +36,7 @@ interface FarmerDayBill {
     totalBags: number;
     totalWeighedBags: number;
     totalWeight: number;
+    totalWeightQuintals: number;
     grossAmount: number;
     totalDeductions: number;
     netAmount: number;
@@ -182,22 +187,37 @@ export default function Billing() {
                             <TableHead>Weight (Qt)</TableHead>
                             <TableHead>Price/Qt (₹)</TableHead>
                             <TableHead>Amount (₹)</TableHead>
-                            <TableHead>Deductions (₹)</TableHead>
+                            <TableHead>Vehicle</TableHead>
+                            <TableHead>Advance</TableHead>
+                            <TableHead>Hamali</TableHead>
+                            <TableHead>Packaging</TableHead>
+                            <TableHead>Weighing</TableHead>
+                            <TableHead>Commission</TableHead>
+                            <TableHead>Total Deductions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {bill.lots.map((lot) => (
-                            <TableRow key={lot.lotNumber}>
-                              <TableCell className="font-medium">{lot.lotNumber}</TableCell>
-                              <TableCell>{lot.grade || '-'}</TableCell>
-                              <TableCell>{lot.weighedBags}/{lot.numberOfBags}</TableCell>
-                              <TableCell>{lot.totalWeight.toFixed(1)}</TableCell>
-                              <TableCell>{lot.totalWeightQuintals.toFixed(2)}</TableCell>
-                              <TableCell>₹{lot.lotPrice.toFixed(2)}</TableCell>
-                              <TableCell className="font-medium">₹{(lot.totalWeightQuintals * lot.lotPrice).toFixed(2)}</TableCell>
-                              <TableCell>₹{(lot.vehicleRent + lot.advance + lot.unloadHamali).toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))}
+                          {bill.lots.map((lot) => {
+                            const totalDeductions = (lot.vehicleRent || 0) + (lot.advance || 0) + (lot.unloadHamali || 0) + (lot.packaging || 0) + (lot.weighingFee || 0) + (lot.apmcCommission || 0);
+                            return (
+                              <TableRow key={lot.lotNumber}>
+                                <TableCell className="font-medium">{lot.lotNumber}</TableCell>
+                                <TableCell>{lot.grade || '-'}</TableCell>
+                                <TableCell>{lot.weighedBags}/{lot.numberOfBags}</TableCell>
+                                <TableCell>{lot.totalWeight.toFixed(1)}</TableCell>
+                                <TableCell>{lot.totalWeightQuintals.toFixed(2)}</TableCell>
+                                <TableCell>₹{lot.lotPrice.toFixed(2)}</TableCell>
+                                <TableCell className="font-medium">₹{(lot.totalWeightQuintals * lot.lotPrice).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.vehicleRent || 0).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.advance || 0).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.unloadHamali || 0).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.packaging || 0).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.weighingFee || 0).toFixed(2)}</TableCell>
+                                <TableCell>₹{(lot.apmcCommission || 0).toFixed(2)}</TableCell>
+                                <TableCell className="font-medium">₹{totalDeductions.toFixed(2)}</TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
