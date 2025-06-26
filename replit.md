@@ -148,11 +148,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced UI with connection status indicator showing "Online (Auto-sync)" or "Offline (Local save)"
   - Updated save button to reflect current mode: "Save & Sync" when online, "Save Offline" when offline
   - Ensured cross-device synchronization while maintaining full offline capability for field operations
-- June 26, 2025: Enhanced voice recognition with multilingual support for bag entry operations
+- June 26, 2025: Enhanced voice recognition with trilingual support for bag entry operations
   - Fixed voice input to properly recognize decimal numbers like "38.7" or "thirty-eight point seven"
   - Improved voice recognition to handle compound numbers and decimal points correctly
   - Added comprehensive Kannada language support for voice input with native numerals
-  - Implemented multilingual number recognition (English, Hindi, Kannada) for agricultural operations
+  - Added complete Hindi language support with Devanagari numerals and spoken words
+  - Implemented trilingual number recognition (English, Hindi, Kannada) for agricultural operations
   - Removed automatic focus advancement per user preference for manual control of data entry flow
   - Enhanced keyboard navigation with Enter key support for rapid data entry
 
