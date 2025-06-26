@@ -2,12 +2,24 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 import { LotForm } from "@/components/lot-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Edit, Printer, Package, CheckCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Plus,
+  Search,
+  Package,
+  CheckCircle,
+  Printer,
+} from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +54,7 @@ export default function Lots() {
   const { data: lots, isLoading } = useQuery<Lot[]>({
     queryKey: ["/api/lots", searchTerm],
     queryFn: async () => {
-      const url = searchTerm 
+      const url = searchTerm
         ? `/api/lots?search=${encodeURIComponent(searchTerm)}`
         : "/api/lots";
       const response = await fetch(url, { credentials: "include" });
@@ -51,43 +63,10 @@ export default function Lots() {
     },
   });
 
-  const printMutation = useMutation({
-    mutationFn: async (lot: Lot) => {
-      const apmcData = {
-        place: lot.farmer.place,
-        traderName: "APMC Trader", // This should come from settings or user data
-        traderCode: "TRADER001", // This should come from settings
-        date: formatDateForAPMC(new Date()),
-        lots: [{
-          lotNumber: lot.lotNumber,
-          farmerName: lot.farmer.name,
-          place: lot.farmer.place,
-          numberOfBags: lot.numberOfBags
-        }]
-      };
-      
-      await generateAPMCPDF(apmcData);
-      return lot;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "APMC format generated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const completeLotMutation = useMutation({
     mutationFn: async (lotId: number) => {
       return await apiRequest("PUT", `/api/lots/${lotId}`, {
-        status: "completed"
+        status: "completed",
       });
     },
     onSuccess: () => {
@@ -106,12 +85,45 @@ export default function Lots() {
     },
   });
 
-  const handlePrint = (lot: Lot) => {
-    printMutation.mutate(lot);
-  };
-
   const handleCompleteLot = (lotId: number) => {
     completeLotMutation.mutate(lotId);
+  };
+
+  const handlePrintAllLots = async () => {
+    if (!lots) return;
+
+    const sortedLots = [...lots].sort((a, b) => {
+      const lotA = parseInt(a.lotNumber.replace(/\D/g, ""), 10) || 0;
+      const lotB = parseInt(b.lotNumber.replace(/\D/g, ""), 10) || 0;
+      return lotA - lotB;
+    });
+
+    const apmcData = {
+      place: sortedLots[0]?.farmer.place || "",
+      traderName: "APMC Trader",
+      traderCode: "TRADER001",
+      date: formatDateForAPMC(new Date()),
+      lots: sortedLots.map((lot) => ({
+        lotNumber: lot.lotNumber,
+        farmerName: lot.farmer.name,
+        place: lot.farmer.place,
+        numberOfBags: lot.numberOfBags,
+      })),
+    };
+
+    try {
+      await generateAPMCPDF(apmcData);
+      toast({
+        title: "Success",
+        description: "All lots printed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -130,11 +142,13 @@ export default function Lots() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Lot Management</h1>
-          
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">
+            Lot Management
+          </h1>
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -146,7 +160,7 @@ export default function Lots() {
                 className="pl-10 w-full sm:w-80"
               />
             </div>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90">
@@ -207,7 +221,9 @@ export default function Lots() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">
-                          <div className="font-medium text-gray-900">{lot.farmer.name}</div>
+                          <div className="font-medium text-gray-900">
+                            {lot.farmer.name}
+                          </div>
                           <div className="text-gray-500">{lot.farmer.mobile}</div>
                           <div className="text-gray-500">{lot.farmer.place}</div>
                         </div>
@@ -246,15 +262,19 @@ export default function Lots() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <Link href={`/lots/${lot.id}/bags`}>
-                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:text-primary/80"
+                            >
                               <Package className="h-4 w-4 mr-1" />
                               Bag Entry
                             </Button>
                           </Link>
-                          {lot.status === 'active' && lot.lotPrice && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                          {lot.status === "active" && lot.lotPrice && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-green-600 hover:text-green-700"
                               onClick={() => handleCompleteLot(lot.id)}
                               disabled={completeLotMutation.isPending}
@@ -263,16 +283,6 @@ export default function Lots() {
                               Complete
                             </Button>
                           )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-secondary hover:text-secondary/80"
-                            onClick={() => handlePrint(lot)}
-                            disabled={printMutation.isPending}
-                          >
-                            <Printer className="h-4 w-4 mr-1" />
-                            Print
-                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -285,16 +295,17 @@ export default function Lots() {
                           <Package className="h-8 w-8 text-gray-400" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">No lots found</h3>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            No lots found
+                          </h3>
                           <p className="text-gray-500 mt-1">
-                            {searchTerm 
+                            {searchTerm
                               ? "Try adjusting your search terms"
-                              : "Get started by creating your first lot"
-                            }
+                              : "Get started by creating your first lot"}
                           </p>
                         </div>
                         {!searchTerm && (
-                          <Button 
+                          <Button
                             onClick={() => setIsDialogOpen(true)}
                             className="bg-primary hover:bg-primary/90"
                           >
@@ -308,6 +319,18 @@ export default function Lots() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Print All Lots Button */}
+          <div className="flex justify-end px-6 py-4 border-t border-gray-200">
+            <Button
+              className="bg-secondary hover:bg-secondary/90"
+              onClick={handlePrintAllLots}
+              disabled={lots?.length === 0}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print All Lots
+            </Button>
           </div>
         </Card>
       </div>

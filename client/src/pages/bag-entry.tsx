@@ -7,7 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -32,16 +38,16 @@ interface BagEntryData {
   bagNumber: number;
   weight?: number;
   notes?: string;
-  status: 'pending' | 'saved';
+  status: "pending" | "saved";
 }
 
 export default function BagEntry() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const lotId = parseInt(params.id as string);
-  
+
   // State
   const [lotPrice, setLotPrice] = useState("");
   const [selectedBuyer, setSelectedBuyer] = useState("");
@@ -51,19 +57,19 @@ export default function BagEntry() {
   const [newBuyerName, setNewBuyerName] = useState("");
 
   // Queries - always called at top level
-  const { data: lot, isLoading: lotLoading, error: lotError } = useQuery<LotWithDetails>({
+  const {
+    data: lot,
+    isLoading: lotLoading,
+    error: lotError,
+  } = useQuery<LotWithDetails>({
     queryKey: [`/api/lots/${lotId}`],
     enabled: !isNaN(lotId),
   });
-
-
 
   const { data: existingBags } = useQuery<Bag[]>({
     queryKey: [`/api/lots/${lotId}/bags`],
     enabled: !isNaN(lotId),
   });
-
-
 
   const { data: buyers = [] } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
@@ -71,40 +77,54 @@ export default function BagEntry() {
 
   // Mutations
   const createBagMutation = useMutation({
-    mutationFn: async (bag: { bagNumber: number; weight?: string; notes?: string }) => {
+    mutationFn: async (bag: {
+      bagNumber: number;
+      weight?: string;
+      notes?: string;
+    }) => {
       return await apiRequest("POST", `/api/lots/${lotId}/bags`, bag);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
-      
+
       // Update local state to mark as saved
-      setBagData(prev => prev.map(bag => 
-        bag.bagNumber === variables.bagNumber 
-          ? { ...bag, status: 'saved' as const }
-          : bag
-      ));
-      
+      setBagData((prev) =>
+        prev.map((bag) =>
+          bag.bagNumber === variables.bagNumber
+            ? { ...bag, status: "saved" as const }
+            : bag,
+        ),
+      );
+
       toast({ title: "Success", description: "Bag saved successfully" });
     },
   });
 
   const updateBagMutation = useMutation({
-    mutationFn: async ({ bagId, bag }: { bagId: number; bag: Partial<Bag> }) => {
+    mutationFn: async ({
+      bagId,
+      bag,
+    }: {
+      bagId: number;
+      bag: Partial<Bag>;
+    }) => {
       return await apiRequest("PUT", `/api/bags/${bagId}`, bag);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
-      
+
       // Find the bag number from existing bags and update status
-      const existingBag = existingBags?.find(eb => eb.id === variables.bagId);
+      const existingBag = existingBags?.find((eb) => eb.id === variables.bagId);
       if (existingBag) {
-        setBagData(prev => prev.map(bag => 
-          bag.bagNumber === existingBag.bagNumber 
-            ? { ...bag, status: 'saved' as const }
-            : bag
-        ));
+        setBagData((prev) =>
+          prev.map((bag) =>
+            bag.bagNumber === existingBag.bagNumber
+              ? { ...bag, status: "saved" as const }
+              : bag,
+          ),
+        );
       }
-      
+
       toast({ title: "Success", description: "Bag updated successfully" });
     },
   });
@@ -134,34 +154,37 @@ export default function BagEntry() {
 
   const saveAllMutation = useMutation({
     mutationFn: async () => {
-      const pendingBags = bagData.filter(bag => 
-        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
+      const pendingBags = bagData.filter(
+        (bag) =>
+          bag.status === "pending" && (bag.weight || bag.grade || bag.notes),
       );
-      
-      const savePromises = pendingBags.map(bag =>
+
+      const savePromises = pendingBags.map((bag) =>
         apiRequest("POST", `/api/lots/${lotId}/bags`, {
           bagNumber: bag.bagNumber,
           weight: bag.weight,
           grade: bag.grade,
           notes: bag.notes,
-        })
+        }),
       );
-      
+
       return await Promise.all(savePromises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/lots/${lotId}/bags`] });
-      
+
       // Update local state to mark all as saved
-      setBagData(prev => prev.map(bag => 
-        bag.status === 'pending' && (bag.weight || bag.grade || bag.notes)
-          ? { ...bag, status: 'saved' as const }
-          : bag
-      ));
-      
-      toast({ 
-        title: "Success", 
-        description: "All bags saved successfully" 
+      setBagData((prev) =>
+        prev.map((bag) =>
+          bag.status === "pending" && (bag.weight || bag.grade || bag.notes)
+            ? { ...bag, status: "saved" as const }
+            : bag,
+        ),
+      );
+
+      toast({
+        title: "Success",
+        description: "All bags saved successfully",
       });
     },
     onError: (error: Error) => {
@@ -179,23 +202,27 @@ export default function BagEntry() {
       if (lot.lotPrice) setLotPrice(lot.lotPrice);
       if (lot.buyerId) setSelectedBuyer(lot.buyerId.toString());
       if (lot.grade) setLotGrade(lot.grade);
-      
+
       // Create initial bag structure
       const initialBags = Array.from({ length: lot.numberOfBags }, (_, i) => ({
         bagNumber: i + 1,
-        status: 'pending' as const,
+        status: "pending" as const,
       }));
 
       // If we have existing bags data, merge it immediately
       if (existingBags && existingBags.length > 0) {
-        const mergedBags = initialBags.map(bag => {
-          const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
+        const mergedBags = initialBags.map((bag) => {
+          const existingBag = existingBags.find(
+            (eb) => eb.bagNumber === bag.bagNumber,
+          );
           if (existingBag) {
             return {
               ...bag,
-              weight: existingBag.weight ? parseFloat(existingBag.weight.toString()) : undefined,
+              weight: existingBag.weight
+                ? parseFloat(existingBag.weight.toString())
+                : undefined,
               notes: existingBag.notes || undefined,
-              status: 'saved' as const,
+              status: "saved" as const,
             };
           }
           return bag;
@@ -208,26 +235,28 @@ export default function BagEntry() {
   }, [lot, existingBags]);
 
   const handleBagUpdate = (bagNumber: number, field: string, value: any) => {
-    setBagData(prev => {
-      const updatedBags = prev.map(bag => 
-        bag.bagNumber === bagNumber 
-          ? { ...bag, [field]: value, status: 'pending' as const }
-          : bag
+    setBagData((prev) => {
+      const updatedBags = prev.map((bag) =>
+        bag.bagNumber === bagNumber
+          ? { ...bag, [field]: value, status: "pending" as const }
+          : bag,
       );
-      
+
       // Auto-save after a short delay using the updated data
       setTimeout(() => {
-        const bagToUpdate = updatedBags.find(b => b.bagNumber === bagNumber);
+        const bagToUpdate = updatedBags.find((b) => b.bagNumber === bagNumber);
         if (bagToUpdate && (bagToUpdate.weight || bagToUpdate.notes)) {
-          const existingBag = existingBags?.find(eb => eb.bagNumber === bagNumber);
-          
+          const existingBag = existingBags?.find(
+            (eb) => eb.bagNumber === bagNumber,
+          );
+
           if (existingBag) {
             updateBagMutation.mutate({
               bagId: existingBag.id,
               bag: {
                 weight: bagToUpdate.weight?.toString(),
                 notes: bagToUpdate.notes,
-              }
+              },
             });
           } else {
             createBagMutation.mutate({
@@ -238,7 +267,7 @@ export default function BagEntry() {
           }
         }
       }, 1000);
-      
+
       return updatedBags;
     });
   };
@@ -254,7 +283,7 @@ export default function BagEntry() {
 
   const handleLotPriceUpdate = () => {
     if (lotPrice && lot) {
-      updateLotMutation.mutate({ 
+      updateLotMutation.mutate({
         lotPrice,
         buyerId: selectedBuyer ? parseInt(selectedBuyer) : undefined,
         grade: lotGrade || undefined,
@@ -273,7 +302,7 @@ export default function BagEntry() {
   const handleBuyerUpdate = (buyerId: string) => {
     setSelectedBuyer(buyerId);
     if (buyerId && lot) {
-      updateLotMutation.mutate({ 
+      updateLotMutation.mutate({
         buyerId: parseInt(buyerId),
         lotPrice: lotPrice || undefined,
         grade: lotGrade || undefined,
@@ -286,16 +315,19 @@ export default function BagEntry() {
   };
 
   const handleAddExtraBag = () => {
-    const nextBagNumber = Math.max(...bagData.map(b => b.bagNumber)) + 1;
-    setBagData(prev => [...prev, {
-      bagNumber: nextBagNumber,
-      status: 'pending' as const,
-    }]);
+    const nextBagNumber = Math.max(...bagData.map((b) => b.bagNumber)) + 1;
+    setBagData((prev) => [
+      ...prev,
+      {
+        bagNumber: nextBagNumber,
+        status: "pending" as const,
+      },
+    ]);
   };
 
   const handleRemoveBag = (bagNumber: number) => {
     if (bagData.length > 1) {
-      setBagData(prev => prev.filter(bag => bag.bagNumber !== bagNumber));
+      setBagData((prev) => prev.filter((bag) => bag.bagNumber !== bagNumber));
     }
   };
 
@@ -307,8 +339,12 @@ export default function BagEntry() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
             <CardContent className="p-8 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Invalid Lot ID</h2>
-              <p className="text-gray-600 mb-4">The lot ID provided is not valid.</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Invalid Lot ID
+              </h2>
+              <p className="text-gray-600 mb-4">
+                The lot ID provided is not valid.
+              </p>
               <Button onClick={() => setLocation("/lots")}>Back to Lots</Button>
             </CardContent>
           </Card>
@@ -335,8 +371,13 @@ export default function BagEntry() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
             <CardContent className="p-8 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Lot Not Found</h2>
-              <p className="text-gray-600 mb-4">The requested lot could not be found or is missing farmer information.</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Lot Not Found
+              </h2>
+              <p className="text-gray-600 mb-4">
+                The requested lot could not be found or is missing farmer
+                information.
+              </p>
               <Button onClick={() => setLocation("/lots")}>Back to Lots</Button>
             </CardContent>
           </Card>
@@ -348,11 +389,11 @@ export default function BagEntry() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => setLocation("/lots")}
             className="text-primary hover:text-primary/80 mb-4"
           >
@@ -369,36 +410,58 @@ export default function BagEntry() {
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <Label className="text-sm font-medium text-gray-500">Farmer Name</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.name}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Farmer Name
+                </Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.farmer.name}
+                </p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Mobile</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.mobile}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Mobile
+                </Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.farmer.mobile}
+                </p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Place</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.farmer.place}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Place
+                </Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.farmer.place}
+                </p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Number of Bags</Label>
-                <p className="text-lg font-semibold text-gray-900">{lot.numberOfBags}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Number of Bags
+                </Label>
+                <p className="text-lg font-semibold text-gray-900">
+                  {lot.numberOfBags}
+                </p>
               </div>
             </div>
-            
+
             {/* Buyer Information */}
             {lot.buyer && (
               <div className="mt-4 pt-4 border-t">
-                <Label className="text-sm font-medium text-gray-500">Buyer Information</Label>
+                <Label className="text-sm font-medium text-gray-500">
+                  Buyer Information
+                </Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                   <div>
                     <p className="font-medium">{lot.buyer.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Contact: {lot.buyer.contactPerson || "N/A"}</p>
+                    <p className="text-sm text-gray-600">
+                      Contact: {lot.buyer.contactPerson || "N/A"}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Mobile: {lot.buyer.mobile || "N/A"}</p>
+                    <p className="text-sm text-gray-600">
+                      Mobile: {lot.buyer.mobile || "N/A"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -413,7 +476,10 @@ export default function BagEntry() {
               <div>
                 <Label>Select Buyer</Label>
                 <div className="flex space-x-2">
-                  <Select value={selectedBuyer} onValueChange={handleBuyerUpdate}>
+                  <Select
+                    value={selectedBuyer}
+                    onValueChange={handleBuyerUpdate}
+                  >
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select buyer" />
                     </SelectTrigger>
@@ -435,7 +501,7 @@ export default function BagEntry() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 {showInlineBuyerForm && (
                   <div className="flex space-x-2 mt-2">
                     <Input
@@ -463,7 +529,7 @@ export default function BagEntry() {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <Label htmlFor="lot-price">Lot Price (₹)</Label>
                 <div className="flex space-x-2">
@@ -484,7 +550,7 @@ export default function BagEntry() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="grade">Grade</Label>
                 <div className="flex space-x-2">
@@ -517,35 +583,54 @@ export default function BagEntry() {
               <h3 className="text-lg font-semibold">Bag Entry</h3>
               <div className="flex items-center space-x-4">
                 <div className="text-sm text-gray-600">
-                  {bagData.filter(b => b.status === 'saved').length} of {bagData.length} bags saved
+                  {bagData.filter((b) => b.status === "saved").length} of{" "}
+                  {bagData.length} bags saved
                 </div>
                 <Button
                   onClick={handleSaveAll}
-                  disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.grade || b.notes)).length === 0}
+                  disabled={
+                    saveAllMutation.isPending ||
+                    bagData.filter(
+                      (b) =>
+                        b.status === "pending" &&
+                        (b.weight || b.grade || b.notes),
+                    ).length === 0
+                  }
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {saveAllMutation.isPending ? 'Saving...' : 'Save All'}
+                  {saveAllMutation.isPending ? "Saving..." : "Save All"}
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-6">
               {bagData.map((bag) => (
-                <div key={bag.bagNumber} className={`border rounded-lg p-4 ${
-                  bag.status === 'saved' ? 'border-green-200 bg-green-50' : 'border-gray-200'
-                }`}>
+                <div
+                  key={bag.bagNumber}
+                  className={`border rounded-lg p-4 ${
+                    bag.status === "saved"
+                      ? "border-green-200 bg-green-50"
+                      : "border-gray-200"
+                  }`}
+                >
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-lg font-medium">
                       Bag #{bag.bagNumber}
-                      {bag.status === 'saved' && <span className="ml-2 text-green-600 text-sm">✓ Saved</span>}
+                      {bag.status === "saved" && (
+                        <span className="ml-2 text-green-600 text-sm">
+                          ✓ Saved
+                        </span>
+                      )}
                     </h4>
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        bag.status === 'saved' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {bag.status === 'saved' ? 'Saved' : 'Pending'}
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          bag.status === "saved"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {bag.status === "saved" ? "Saved" : "Pending"}
                       </span>
                       {bagData.length > 1 && (
                         <Button
@@ -559,10 +644,12 @@ export default function BagEntry() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor={`weight-${bag.bagNumber}`}>Weight (kg)</Label>
+                      <Label htmlFor={`weight-${bag.bagNumber}`}>
+                        Weight (kg)
+                      </Label>
                       <div className="flex space-x-2">
                         <Input
                           id={`weight-${bag.bagNumber}`}
@@ -573,22 +660,38 @@ export default function BagEntry() {
                           value={bag.weight || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === '') {
-                              handleBagUpdate(bag.bagNumber, 'weight', undefined);
+                            if (value === "") {
+                              handleBagUpdate(
+                                bag.bagNumber,
+                                "weight",
+                                undefined,
+                              );
                             } else {
                               const numValue = parseFloat(value);
                               if (!isNaN(numValue)) {
-                                handleBagUpdate(bag.bagNumber, 'weight', numValue);
+                                handleBagUpdate(
+                                  bag.bagNumber,
+                                  "weight",
+                                  numValue,
+                                );
                               }
                             }
                           }}
-                          className={bag.status === 'saved' ? 'bg-green-50 border-green-200' : ''}
+                          className={
+                            bag.status === "saved"
+                              ? "bg-green-50 border-green-200"
+                              : ""
+                          }
                         />
                         <VoiceInput
                           onResult={(result) => {
                             const numValue = parseFloat(result);
                             if (!isNaN(numValue)) {
-                              handleBagUpdate(bag.bagNumber, 'weight', numValue);
+                              handleBagUpdate(
+                                bag.bagNumber,
+                                "weight",
+                                numValue,
+                              );
                             }
                           }}
                           type="number"
@@ -596,59 +699,89 @@ export default function BagEntry() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor={`notes-${bag.bagNumber}`}>Notes</Label>
                       <Input
                         id={`notes-${bag.bagNumber}`}
                         placeholder="Enter notes"
                         value={bag.notes || ""}
-                        onChange={(e) => handleBagUpdate(bag.bagNumber, 'notes', e.target.value)}
-                        className={bag.status === 'saved' ? 'bg-green-50 border-green-200' : ''}
+                        onChange={(e) =>
+                          handleBagUpdate(
+                            bag.bagNumber,
+                            "notes",
+                            e.target.value,
+                          )
+                        }
+                        className={
+                          bag.status === "saved"
+                            ? "bg-green-50 border-green-200"
+                            : ""
+                        }
                       />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            
+
             {/* Summary Statistics */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <Label className="text-sm font-medium text-blue-600">Total Bags</Label>
+                  <Label className="text-sm font-medium text-blue-600">
+                    Total Bags
+                  </Label>
                   <p className="text-2xl font-bold text-blue-800">
                     {bagData.length}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-blue-600">Bags with Weight</Label>
+                  <Label className="text-sm font-medium text-blue-600">
+                    Bags with Weight
+                  </Label>
                   <p className="text-2xl font-bold text-blue-800">
-                    {bagData.filter(bag => bag.weight && bag.weight > 0).length}
+                    {
+                      bagData.filter((bag) => bag.weight && bag.weight > 0)
+                        .length
+                    }
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-blue-600">Total Weight</Label>
+                  <Label className="text-sm font-medium text-blue-600">
+                    Total Weight
+                  </Label>
                   <p className="text-2xl font-bold text-blue-800">
                     {bagData
-                      .filter(bag => bag.weight && bag.weight > 0)
+                      .filter((bag) => bag.weight && bag.weight > 0)
                       .reduce((sum, bag) => sum + (bag.weight || 0), 0)
-                      .toFixed(1)} kg
+                      .toFixed(1)}{" "}
+                    kg
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-blue-600">Average Weight</Label>
+                  <Label className="text-sm font-medium text-blue-600">
+                    Average Weight
+                  </Label>
                   <p className="text-2xl font-bold text-blue-800">
                     {(() => {
-                      const bagsWithWeight = bagData.filter(bag => bag.weight && bag.weight > 0);
-                      const totalWeight = bagsWithWeight.reduce((sum, bag) => sum + (bag.weight || 0), 0);
-                      return bagsWithWeight.length > 0 ? (totalWeight / bagsWithWeight.length).toFixed(1) : '0.0';
-                    })()} kg
+                      const bagsWithWeight = bagData.filter(
+                        (bag) => bag.weight && bag.weight > 0,
+                      );
+                      const totalWeight = bagsWithWeight.reduce(
+                        (sum, bag) => sum + (bag.weight || 0),
+                        0,
+                      );
+                      return bagsWithWeight.length > 0
+                        ? (totalWeight / bagsWithWeight.length).toFixed(1)
+                        : "0.0";
+                    })()}{" "}
+                    kg
                   </p>
                 </div>
               </div>
             </div>
-            
+
             {/* Bottom Action Buttons */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <div className="flex space-x-3">
@@ -660,7 +793,7 @@ export default function BagEntry() {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Extra Bag
                 </Button>
-                
+
                 <Button
                   onClick={() => setLocation("/lots")}
                   variant="outline"
@@ -670,13 +803,18 @@ export default function BagEntry() {
                   Go to Lots
                 </Button>
               </div>
-              
+
               <Button
                 onClick={handleSaveAll}
-                disabled={saveAllMutation.isPending || bagData.filter(b => b.status === 'pending' && (b.weight || b.notes)).length === 0}
+                disabled={
+                  saveAllMutation.isPending ||
+                  bagData.filter(
+                    (b) => b.status === "pending" && (b.weight || b.notes),
+                  ).length === 0
+                }
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {saveAllMutation.isPending ? 'Saving...' : 'Save All'}
+                {saveAllMutation.isPending ? "Saving..." : "Save All"}
               </Button>
             </div>
           </CardContent>
