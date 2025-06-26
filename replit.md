@@ -153,6 +153,8 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced keyboard navigation with Enter key support for rapid data entry
   - Fixed voice input to properly recognize decimal numbers like "38.7" or "thirty-eight point seven"
   - Improved voice recognition to handle compound numbers and decimal points correctly
+  - Added comprehensive Kannada language support for voice input with native numerals
+  - Implemented multilingual number recognition (English, Hindi, Kannada) for agricultural operations
   - Streamlined weighing workflow for faster field operations during busy periods
 
 # User Preferences

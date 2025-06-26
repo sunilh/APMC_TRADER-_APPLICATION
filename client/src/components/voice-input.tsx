@@ -48,10 +48,12 @@ export function VoiceInput({
       
       // Process based on input type
       if (type === "number" || type === "currency" || type === "tel") {
-        // Convert spoken words to numbers and handle decimals
+        // Convert spoken words to numbers and handle decimals (English, Hindi, Kannada)
         processedText = processedText
           .toLowerCase()
-          .replace(/point|dot|\./g, '.')
+          // Decimal point recognition
+          .replace(/point|dot|दशमलव|ಬಿಂದು/g, '.')
+          // English numbers 30-39
           .replace(/thirty[\s-]?eight/g, '38')
           .replace(/thirty[\s-]?nine/g, '39')
           .replace(/thirty[\s-]?seven/g, '37')
@@ -62,6 +64,7 @@ export function VoiceInput({
           .replace(/thirty[\s-]?two/g, '32')
           .replace(/thirty[\s-]?one/g, '31')
           .replace(/thirty/g, '30')
+          // English numbers 20-29
           .replace(/twenty[\s-]?nine/g, '29')
           .replace(/twenty[\s-]?eight/g, '28')
           .replace(/twenty[\s-]?seven/g, '27')
@@ -72,6 +75,7 @@ export function VoiceInput({
           .replace(/twenty[\s-]?two/g, '22')
           .replace(/twenty[\s-]?one/g, '21')
           .replace(/twenty/g, '20')
+          // English numbers 10-19
           .replace(/nineteen/g, '19')
           .replace(/eighteen/g, '18')
           .replace(/seventeen/g, '17')
@@ -82,6 +86,7 @@ export function VoiceInput({
           .replace(/twelve/g, '12')
           .replace(/eleven/g, '11')
           .replace(/ten/g, '10')
+          // English numbers 0-9
           .replace(/nine/g, '9')
           .replace(/eight/g, '8')
           .replace(/seven/g, '7')
@@ -91,7 +96,48 @@ export function VoiceInput({
           .replace(/three/g, '3')
           .replace(/two/g, '2')
           .replace(/one/g, '1')
-          .replace(/zero/g, '0');
+          .replace(/zero/g, '0')
+          // Kannada numbers (ಕನ್ನಡ ಸಂಖ್ಯೆಗಳು)
+          .replace(/ಮೂವತ್ತೆಂಟು|೩೮/g, '38')
+          .replace(/ಮೂವತ್ತೊಂಬತ್ತು|೩೯/g, '39')
+          .replace(/ಮೂವತ್ತೇಳು|೩೭/g, '37')
+          .replace(/ಮೂವತ್ತಾರು|೩೬/g, '36')
+          .replace(/ಮೂವತ್ತೈದು|೩೫/g, '35')
+          .replace(/ಮೂವತ್ತನಾಲ್ಕು|೩೪/g, '34')
+          .replace(/ಮೂವತ್ತಮೂರು|೩೩/g, '33')
+          .replace(/ಮೂವತ್ತೆರಡು|೩೨/g, '32')
+          .replace(/ಮೂವತ್ತೊಂದು|೩೧/g, '31')
+          .replace(/ಮೂವತ್ತು|೩೦/g, '30')
+          .replace(/ಇಪ್ಪತ್ತೊಂಬತ್ತು|೨೯/g, '29')
+          .replace(/ಇಪ್ಪತ್ತೆಂಟು|೨೮/g, '28')
+          .replace(/ಇಪ್ಪತ್ತೇಳು|೨೭/g, '27')
+          .replace(/ಇಪ್ಪತ್ತಾರು|೨೬/g, '26')
+          .replace(/ಇಪ್ಪತ್ತೈದು|೨೫/g, '25')
+          .replace(/ಇಪ್ಪತ್ತನಾಲ್ಕು|೨೪/g, '24')
+          .replace(/ಇಪ್ಪತ್ತಮೂರು|೨೩/g, '23')
+          .replace(/ಇಪ್ಪತ್ತೆರಡು|೨೨/g, '22')
+          .replace(/ಇಪ್ಪತ್ತೊಂದು|೨೧/g, '21')
+          .replace(/ಇಪ್ಪತ್ತು|೨೦/g, '20')
+          .replace(/ಹತ್ತೊಂಬತ್ತು|೧೯/g, '19')
+          .replace(/ಹದಿನೆಂಟು|೧೮/g, '18')
+          .replace(/ಹದಿನೇಳು|೧೭/g, '17')
+          .replace(/ಹದಿನಾರು|೧೬/g, '16')
+          .replace(/ಹದಿನೈದು|೧೫/g, '15')
+          .replace(/ಹದಿನಾಲ್ಕು|೧೪/g, '14')
+          .replace(/ಹದಿಮೂರು|೧೩/g, '13')
+          .replace(/ಹನ್ನೆರಡು|೧೨/g, '12')
+          .replace(/ಹದಿನೊಂದು|೧೧/g, '11')
+          .replace(/ಹತ್ತು|೧೦/g, '10')
+          .replace(/ಒಂಬತ್ತು|೯/g, '9')
+          .replace(/ಎಂಟು|೮/g, '8')
+          .replace(/ಏಳು|೭/g, '7')
+          .replace(/ಆರು|೬/g, '6')
+          .replace(/ಐದು|೫/g, '5')
+          .replace(/ನಾಲ್ಕು|೪/g, '4')
+          .replace(/ಮೂರು|೩/g, '3')
+          .replace(/ಎರಡು|೨/g, '2')
+          .replace(/ಒಂದು|೧/g, '1')
+          .replace(/ಸೊನ್ನೆ|೦/g, '0');
         
         // Extract numbers with decimal points from the processed text
         const numberMatch = processedText.match(/(\d+\.?\d*)/);
