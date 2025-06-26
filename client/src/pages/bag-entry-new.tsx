@@ -86,10 +86,14 @@ export default function BagEntryNew() {
     queryKey: ["/api/buyers"],
   });
 
+  // Offline/Online state detection
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const storageKey = `bag-entry-${lotId}`;
+
   // Draft syncing queries and mutations for cross-device functionality
   const { data: draftResponse } = useQuery({
     queryKey: [`/api/bag-entry-draft/${lotId}`],
-    enabled: !isNaN(lotId),
+    enabled: !isNaN(lotId) && isOnline,
     retry: false,
   });
 
@@ -104,6 +108,39 @@ export default function BagEntryNew() {
       await apiRequest("DELETE", `/api/bag-entry-draft/${lotId}`);
     },
   });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-sync when coming back online
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          saveDraftMutation.mutate(draft, {
+            onSuccess: () => {
+              toast({
+                title: "Auto-Synced",
+                description: "Your offline work has been synced to server",
+              });
+            },
+          });
+        } catch (e) {
+          console.error("Failed to auto-sync:", e);
+        }
+      }
+    };
+    
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [storageKey, saveDraftMutation, toast]);
 
   // Save mutation
   const saveAllMutation = useMutation({
@@ -213,8 +250,8 @@ export default function BagEntryNew() {
   useEffect(() => {
     if (!lot) return;
 
-    // Load from server draft if available
-    if (draftResponse?.draftData) {
+    // Priority 1: Load from server draft if online and available
+    if (isOnline && draftResponse?.draftData) {
       try {
         const draft = draftResponse.draftData;
         setBagEntries(draft.bagEntries || []);
@@ -228,8 +265,28 @@ export default function BagEntryNew() {
         setBuyer2Count(draft.buyer2Count || "");
         return;
       } catch (e) {
-        console.error("Failed to parse draft data:", e);
+        console.error("Failed to parse server draft data:", e);
       }
+    }
+
+    // Priority 2: Load from localStorage if offline or server draft not available
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        setBagEntries(draft.bagEntries || []);
+        setLotPrice(draft.lotPrice || "");
+        setLotGrade(draft.lotGrade || "");
+        setFinalNotes(draft.finalNotes || "");
+        setBuyer1(draft.buyer1 || "");
+        setBuyer2(draft.buyer2 || "");
+        setBuyer3(draft.buyer3 || "");
+        setBuyer1Count(draft.buyer1Count || "");
+        setBuyer2Count(draft.buyer2Count || "");
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to parse localStorage draft:", e);
     }
 
     // Initialize with empty bag entries if no draft
@@ -240,9 +297,30 @@ export default function BagEntryNew() {
       });
     }
     setBagEntries(initialBags);
-  }, [lot, draftResponse]);
+  }, [lot, draftResponse, isOnline, storageKey]);
 
-  // Manual save to server for cross-device syncing
+  // Auto-save to localStorage for offline functionality
+  useEffect(() => {
+    if (bagEntries.length === 0) return;
+
+    const dataToSave = {
+      bagEntries,
+      lotPrice,
+      lotGrade,
+      finalNotes,
+      buyer1,
+      buyer2,
+      buyer3,
+      buyer1Count,
+      buyer2Count,
+      timestamp: Date.now(),
+    };
+
+    // Always save to localStorage for offline capability
+    localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+  }, [bagEntries, lotPrice, lotGrade, finalNotes, buyer1, buyer2, buyer3, buyer1Count, buyer2Count, storageKey]);
+
+  // Sync to server when online
   const handleManualSave = () => {
     const dataToSave = {
       bagEntries,
@@ -257,21 +335,32 @@ export default function BagEntryNew() {
       timestamp: Date.now(),
     };
 
-    saveDraftMutation.mutate(dataToSave, {
-      onSuccess: () => {
-        toast({
-          title: "Draft Saved",
-          description: "Your progress has been saved and will sync across devices",
-        });
-      },
-      onError: () => {
-        toast({
-          title: "Save Failed",
-          description: "Could not save draft to server",
-          variant: "destructive",
-        });
-      },
-    });
+    // Always save to localStorage first
+    localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+
+    if (isOnline) {
+      // Try to sync to server if online
+      saveDraftMutation.mutate(dataToSave, {
+        onSuccess: () => {
+          toast({
+            title: "Draft Synced",
+            description: "Your progress has been saved to server and will sync across devices",
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Sync Failed",
+            description: "Saved locally but could not sync to server",
+            variant: "destructive",
+          });
+        },
+      });
+    } else {
+      toast({
+        title: "Saved Offline",
+        description: "Your progress is saved locally. Will sync when internet returns.",
+      });
+    }
   };
 
   // Get buyer for specific bag number
@@ -655,7 +744,12 @@ export default function BagEntryNew() {
                     className="px-6 py-3"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                    {saveDraftMutation.isPending 
+                      ? "Saving..." 
+                      : isOnline 
+                        ? "Save & Sync" 
+                        : "Save Offline"
+                    }
                   </Button>
                   
                   <Button
