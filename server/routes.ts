@@ -830,6 +830,23 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Buyer billing route without date parameter (uses today)
+  app.get(
+    "/api/billing/buyers/daily",
+    requireAuth,
+    requireTenant,
+    async (req: any, res) => {
+      try {
+        const date = new Date(); // Use today's date
+        const bills = await getBuyerDayBills(date, req.user.tenantId);
+        res.json(bills);
+      } catch (error) {
+        console.error("Error fetching buyer daily bills:", error);
+        res.status(500).json({ message: "Failed to fetch buyer daily bills" });
+      }
+    },
+  );
+
   // Bag entry draft syncing endpoints for cross-device functionality
   app.post('/api/bag-entry-draft/:lotId', requireAuth, requireTenant, 
     async (req: any, res) => {
