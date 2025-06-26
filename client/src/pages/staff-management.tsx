@@ -14,10 +14,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { Users, Plus, Edit, Trash2, UserPlus, Shield, ShieldCheck, X } from "lucide-react";
+import { Users, Plus, Edit, Trash2, UserPlus, Shield, ShieldCheck, X, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, InsertUser } from "@shared/schema";
+import { useLocation } from "wouter";
 
 const staffFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -34,6 +35,7 @@ export default function StaffManagement() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: staff = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/staff"],
@@ -185,9 +187,20 @@ export default function StaffManagement() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
-          <p className="text-gray-600 mt-2">Manage your APMC center staff members</p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="flex items-center gap-2 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
+            <p className="text-gray-600 mt-2">Manage your APMC center staff members</p>
+          </div>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
