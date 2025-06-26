@@ -130,6 +130,9 @@ function generateDownloadableBagEntryHTML(data: BagEntryData, filename: string):
 
 // Generate the mobile-friendly HTML content for trader report
 function generateAPMCMobileHTML(data: APMCPrintData): string {
+  // Extract trader name from address (before the " - Trader Code:" part)
+  const traderName = data.traderAddress.split(' - Trader Code:')[0];
+  
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -179,9 +182,6 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         }
         
         .details-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40px;
           margin-bottom: 30px;
         }
         
@@ -198,7 +198,7 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         
         .underline {
           border-bottom: 1px solid #000;
-          min-width: 150px;
+          min-width: 200px;
           padding-bottom: 2px;
         }
         
@@ -281,11 +281,6 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         }
         
         @media (max-width: 768px) {
-          .details-section {
-            grid-template-columns: 1fr;
-            gap: 20px;
-          }
-          
           .signatures-section {
             grid-template-columns: 1fr;
             gap: 30px;
@@ -318,30 +313,26 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
       
       <div class="trader-container">
         <div class="header">
-          <h1>${data.traderName.toUpperCase()}</h1>
-          <h2>${data.traderAddress}</h2>
+          <h1>MAHANTESHWAR TRADERS BYADAGI</h1>
+          <h2>${traderName} - Trader Code: ${data.traderCode}</h2>
         </div>
         
         <div class="details-section">
-          <div>
-            <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Mobile Number:</strong>
-              <span class="underline">${data.traderName}</span>
-            </div>
+          <div class="detail-item">
+            <strong>Trader Code:</strong>
+            <span class="underline">${data.traderCode}</span>
           </div>
-          <div>
-            <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Place:</strong>
-              <span class="underline">${data.place}</span>
-            </div>
+          <div class="detail-item">
+            <strong>Mobile:</strong>
+            <span class="underline">${data.traderName}</span>
+          </div>
+          <div class="detail-item">
+            <strong>Date:</strong>
+            <span class="underline">${data.date}</span>
+          </div>
+          <div class="detail-item">
+            <strong>Place:</strong>
+            <span class="underline">${data.place}</span>
           </div>
         </div>
         
@@ -388,6 +379,9 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
 
 // Generate popup HTML for desktop trader report
 function generateAPMCPopupHTML(data: APMCPrintData): string {
+  // Extract trader name from address (before the " - Trader Code:" part)
+  const traderName = data.traderAddress.split(' - Trader Code:')[0];
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -425,9 +419,6 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         }
         
         .details-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40px;
           margin-bottom: 30px;
         }
         
@@ -443,7 +434,7 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         .detail-item .underline {
           border-bottom: 1px solid #000;
           display: inline-block;
-          min-width: 150px;
+          min-width: 200px;
           padding-bottom: 2px;
         }
         
@@ -496,30 +487,26 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
     <body>
       <div class="trader-container">
         <div class="header">
-          <h1>${data.traderName.toUpperCase()}</h1>
-          <h2>${data.traderAddress}</h2>
+          <h1>MAHANTESHWAR TRADERS BYADAGI</h1>
+          <h2>${traderName} - Trader Code: ${data.traderCode}</h2>
         </div>
         
         <div class="details-section">
-          <div>
-            <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Mobile Number:</strong>
-              <span class="underline">${data.traderName}</span>
-            </div>
+          <div class="detail-item">
+            <strong>Trader Code:</strong>
+            <span class="underline">${data.traderCode}</span>
           </div>
-          <div>
-            <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Place:</strong>
-              <span class="underline">${data.place}</span>
-            </div>
+          <div class="detail-item">
+            <strong>Mobile:</strong>
+            <span class="underline">${data.traderName}</span>
+          </div>
+          <div class="detail-item">
+            <strong>Date:</strong>
+            <span class="underline">${data.date}</span>
+          </div>
+          <div class="detail-item">
+            <strong>Place:</strong>
+            <span class="underline">${data.place}</span>
           </div>
         </div>
         
