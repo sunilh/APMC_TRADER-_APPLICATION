@@ -212,6 +212,11 @@ export const insertLotSchema = createInsertSchema(lots).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  lotPrice: z.string().min(1, "Lot price is required").refine(
+    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+    "Lot price must be a valid positive number"
+  ),
 });
 
 export const insertBagSchema = createInsertSchema(bags).omit({

@@ -33,6 +33,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
       advance: "0",
       varietyGrade: "",
       unloadHamali: "0",
+      lotPrice: "",
     },
   });
 
@@ -80,7 +81,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
   };
 
   const handleVoiceInput = (field: keyof InsertLot, value: string) => {
-    if (['vehicleRent', 'advance', 'unloadHamali'].includes(field)) {
+    if (['vehicleRent', 'advance', 'unloadHamali', 'lotPrice'].includes(field)) {
       // Clean and format monetary values
       const numValue = parseFloat(value.replace(/[^\d.]/g, ''));
       if (!isNaN(numValue)) {
@@ -251,6 +252,36 @@ export function LotForm({ onSuccess }: LotFormProps) {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="lotPrice">{t('lot.lotPrice')} *</Label>
+          <div className="flex space-x-2">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+              <Input
+                id="lotPrice"
+                type="number"
+                step="0.01"
+                min="0.01"
+                {...form.register("lotPrice")}
+                placeholder="0.00"
+                className="pl-8"
+                required
+              />
+            </div>
+            <VoiceInput
+              onResult={(value) => handleVoiceInput('lotPrice', value)}
+              placeholder={t('lot.lotPrice')}
+              type="currency"
+            />
+          </div>
+          <p className="text-xs text-gray-500">{t('lot.lotPriceNote')}</p>
+          {form.formState.errors.lotPrice && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.lotPrice.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="unloadHamali">{t('lot.unloadHamali')} *</Label>
           <div className="flex space-x-2">
             <div className="relative flex-1">
@@ -282,10 +313,14 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
       <div className="bg-blue-50 p-4 rounded-lg">
         <h4 className="font-medium text-blue-900 mb-2">{t('lot.summary')}</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-blue-800">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm text-blue-800">
           <div>
             <span className="font-medium">{t('lot.bags')}:</span>
             <span className="ml-1">{form.watch("numberOfBags") || 0}</span>
+          </div>
+          <div>
+            <span className="font-medium">{t('lot.price')}:</span>
+            <span className="ml-1">₹{form.watch("lotPrice") || "0"}</span>
           </div>
           <div>
             <span className="font-medium">{t('lot.vehicleRent')}:</span>

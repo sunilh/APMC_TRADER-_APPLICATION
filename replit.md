@@ -156,6 +156,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Implemented trilingual number recognition (English, Hindi, Kannada) for agricultural operations
   - Removed automatic focus advancement per user preference for manual control of data entry flow
   - Enhanced keyboard navigation with Enter key support for rapid data entry
+- June 26, 2025: Implemented mandatory lot pricing for proper agricultural trading workflow
+  - Added lot price field as mandatory requirement in lot creation form with voice input support
+  - Updated lot completion logic to require both bag weighing AND price setting for proper trading
+  - Enhanced form validation to ensure lot price is positive number before submission
+  - Restored proper business workflow where lots remain "active" until fully priced and weighed
+  - Updated dashboard to accurately reflect active lots (incomplete pricing/weighing) vs completed lots
 
 # User Preferences
 
