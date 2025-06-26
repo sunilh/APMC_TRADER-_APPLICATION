@@ -329,7 +329,12 @@ export function formatNumber(number: number, language: string): string {
 }
 
 // Utility function for currency formatting
-export function formatCurrency(amount: number, language: string): string {
+export function formatCurrency(amount: number | undefined | null, language: string): string {
+  // Handle undefined/null values
+  if (amount === undefined || amount === null) {
+    return '₹0.00';
+  }
+  
   const options: Intl.NumberFormatOptions = {
     style: 'currency',
     currency: 'INR',

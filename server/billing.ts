@@ -703,8 +703,8 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         totalWeight: 800,
         totalWeightQuintals: 8.0,
         pricePerQuintal: 2500,
-        grossAmount: 20000,
-        deductions: {
+        basicAmount: 20000,
+        charges: {
           unloadHamali: unloadHamaliRate * 20,
           packaging: packagingRate * 20,
           weighingFee: weighingFeeRate * 20,
@@ -713,22 +713,25 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
           cgst: finalDemoCgst,
           cess: finalDemoCess,
         },
-        netAmount: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
+        totalAmount: 20000 + (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
       }],
       summary: {
         totalLots: 1,
         totalBags: 20,
         totalWeight: 800,
         totalWeightQuintals: 8.0,
-        grossAmount: 20000,
-        totalDeductions: (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100),
-        taxDetails: {
+        basicAmount: 20000,
+        totalCharges: (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
+        chargeBreakdown: {
+          unloadHamali: unloadHamaliRate * 20,
+          packaging: packagingRate * 20,
+          weighingFee: weighingFeeRate * 20,
+          apmcCommission: (20000 * apmcCommissionRate) / 100,
           sgst: finalDemoSgst,
           cgst: finalDemoCgst,
           cess: finalDemoCess,
-          totalTax: finalDemoTotalTax,
         },
-        netPayable: 20000 - (unloadHamaliRate * 20) - (packagingRate * 20) - (weighingFeeRate * 20) - ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
+        totalPayable: 20000 + (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
       },
     };
     
