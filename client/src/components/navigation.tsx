@@ -51,7 +51,7 @@ export function Navigation() {
     return location.startsWith(href);
   };
 
-  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : navigation;
+  const currentNavigation = (user?.role === 'super_admin' && user?.tenantId === null) ? superAdminNavigation : navigation;
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
     <>
