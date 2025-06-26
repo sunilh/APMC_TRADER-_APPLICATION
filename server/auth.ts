@@ -45,6 +45,10 @@ export function setupAuth(app: Express) {
       // Try to authenticate against each user until password matches
       for (const user of users) {
         if (await comparePasswords(password, user.password)) {
+          // Check if user account is active
+          if (!user.isActive) {
+            return done(null, false, { message: "Your account has been deactivated. Please contact your admin." });
+          }
           return done(null, user);
         }
       }
@@ -77,8 +81,23 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.status(401).json({ 
+          message: info?.message || "Invalid username or password" 
+        });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        res.status(200).json(user);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {

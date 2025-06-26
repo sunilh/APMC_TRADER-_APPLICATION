@@ -135,6 +135,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Migrated all existing plaintext passwords in database to secure bcrypt hashes
   - Enhanced password security consistency across tenant creation, staff management, and user updates
   - All user accounts now use industry-standard password encryption
+- June 26, 2025: Implemented inactive user login prevention with admin contact message
+  - Added authentication check to prevent inactive staff members from logging in
+  - Inactive users receive clear message: "Your account has been deactivated. Please contact your admin."
+  - Enhanced staff management with X close button in creation dialog for better user experience
+  - Fixed API parameter order issue in staff management that was causing fetch errors
+  - System now properly validates user account status during authentication flow
 
 # User Preferences
 
