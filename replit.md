@@ -129,6 +129,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Implemented proper data isolation ensuring users only see their tenant's data
   - Added navigation restrictions: super admins see "Create Tenant", tenant admins see "Staff"
   - Created super admin account (username: superadmin, password: password) for system administration
+- June 26, 2025: Enhanced password security and fixed authentication issues
+  - Fixed critical password hashing bug in tenant onboarding that prevented new admin users from logging in
+  - Implemented proper bcrypt password hashing across all user creation and update endpoints
+  - Migrated all existing plaintext passwords in database to secure bcrypt hashes
+  - Enhanced password security consistency across tenant creation, staff management, and user updates
+  - All user accounts now use industry-standard password encryption
 
 # User Preferences
 
