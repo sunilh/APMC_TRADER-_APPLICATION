@@ -210,6 +210,11 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Updated buyer table display to show PAN and GST numbers for complete business records
   - Implemented proper form validation and editing functionality for tax compliance documentation
   - System now collects all necessary buyer information for professional invoice generation and tax reporting
+- June 26, 2025: Enhanced seller/buyer relationship clarity in billing system
+  - Updated buyer bill header to clearly show "SALE INVOICE" with "SELLER: [Trader] → BUYER: [Customer]" format
+  - Enhanced buyer information section with explicit label "BUYER DETAILS (CUSTOMER PURCHASING FROM TRADER)"
+  - Clarified business model: Farmers sell to Traders/APMC operators, who then sell to Buyers/Customers
+  - Bills now clearly distinguish trader as seller and buyer as customer in agricultural trading workflow
 
 # User Preferences
 

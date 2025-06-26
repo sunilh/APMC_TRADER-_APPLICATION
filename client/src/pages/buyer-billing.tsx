@@ -406,9 +406,10 @@ export default function BuyerBilling() {
               <div>
                 <CardTitle className="text-xl flex items-center space-x-2">
                   <Building className="h-6 w-6" />
-                  <span>Bill from {buyerBill.traderInfo?.name || "Trader"}</span>
+                  <span>SALE INVOICE</span>
                 </CardTitle>
-                <p className="text-blue-100">To: {buyerBill.buyerName} - {formatDate(new Date(buyerBill.date), language)}</p>
+                <p className="text-blue-100">SELLER: {buyerBill.traderInfo?.name || "Trader"} → BUYER: {buyerBill.buyerName}</p>
+                <p className="text-blue-200 text-sm">Date: {formatDate(new Date(buyerBill.date), language)}</p>
               </div>
               <div className="flex space-x-2">
                 <Button 
@@ -478,10 +479,10 @@ export default function BuyerBilling() {
             </div>
 
             {/* Buyer Information */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6">
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6 border-l-4 border-green-500">
               <h3 className="font-semibold mb-3 flex items-center">
                 <User className="h-4 w-4 mr-2" />
-                Buyer Information (Customer)
+                BUYER DETAILS (CUSTOMER PURCHASING FROM TRADER)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center">
