@@ -561,6 +561,78 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get all tenants (super admin only)
+  app.get('/api/tenants', requireAuth, requireSuperAdmin, async (req: any, res) => {
+    try {
+      const tenants = await storage.getAllTenants();
+      res.json(tenants);
+    } catch (error) {
+      console.error("Error fetching tenants:", error);
+      res.status(500).json({ message: "Failed to fetch tenants" });
+    }
+  });
+
+  // Tenant onboarding (super admin only)
+  app.post('/api/tenant/onboard', requireAuth, requireSuperAdmin, async (req: any, res) => {
+    try {
+      const { tenant: tenantData, adminUser: userData } = req.body;
+
+      // Validate required fields
+      if (!tenantData.name || !tenantData.apmcCode || !tenantData.place || !tenantData.mobileNumber) {
+        return res.status(400).json({ message: "Missing required tenant fields" });
+      }
+
+      if (!userData.username || !userData.password) {
+        return res.status(400).json({ message: "Missing required admin user fields" });
+      }
+
+      // Check if APMC code already exists
+      const existingTenant = await storage.getTenantByCode(tenantData.apmcCode);
+      if (existingTenant) {
+        return res.status(400).json({ message: "APMC code already exists" });
+      }
+
+      // Create tenant
+      const tenant = await storage.createTenant({
+        name: tenantData.name,
+        apmcCode: tenantData.apmcCode,
+        place: tenantData.place,
+        mobileNumber: tenantData.mobileNumber,
+        address: tenantData.address || "",
+        subscriptionPlan: tenantData.subscriptionPlan || "basic",
+        settings: {}
+      });
+
+      // Check if username already exists for this tenant
+      const existingUser = await storage.getUserByUsername(userData.username, tenant.id);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Create admin user
+      const user = await storage.createUser({
+        username: userData.username,
+        password: userData.password,
+        name: userData.username, // Use username as name for admin
+        email: `${userData.username}@${tenant.apmcCode.toLowerCase()}.local`, // Generate email
+        role: "admin",
+        tenantId: tenant.id
+      });
+
+      // Log tenant creation
+      await createAuditLog(req.user.id, "tenant_created", `Created tenant: ${tenant.name}`, null);
+
+      res.status(201).json({
+        message: "Tenant and admin user created successfully",
+        tenant,
+        user: { id: user.id, username: user.username, role: user.role }
+      });
+    } catch (error) {
+      console.error("Error creating tenant:", error);
+      res.status(500).json({ message: "Failed to create tenant" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

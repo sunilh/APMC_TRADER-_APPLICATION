@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee } from "lucide-react";
+import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -22,6 +22,12 @@ export function Navigation() {
     { name: 'Buyers', href: '/buyers', icon: Users },
     { name: 'Billing', href: '/billing', icon: IndianRupee },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
+
+  // Add tenant onboarding for super admins
+  const superAdminNavigation = [
+    ...navigation,
+    { name: 'Create Tenant', href: '/tenant-onboarding', icon: Building2 },
   ];
 
   const handleLogout = () => {
@@ -44,9 +50,11 @@ export function Navigation() {
     return location.startsWith(href);
   };
 
+  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : navigation;
+
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
     <>
-      {navigation.map((item) => {
+      {currentNavigation.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href);
         
