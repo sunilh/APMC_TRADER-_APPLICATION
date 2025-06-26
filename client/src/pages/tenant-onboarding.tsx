@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { AlertCircle } from "lucide-react";
 
 // Schema for tenant onboarding form
 const tenantOnboardingSchema = z.object({
@@ -36,6 +38,7 @@ export default function TenantOnboarding() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const form = useForm<TenantOnboardingForm>({
     resolver: zodResolver(tenantOnboardingSchema),
@@ -89,9 +92,11 @@ export default function TenantOnboarding() {
         description: `Tenant "${response.tenant.name}" created successfully with admin user "${response.user.username}"`,
       });
       form.reset();
+      setErrorMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/tenants"] });
     },
     onError: (error: Error) => {
+      setErrorMessage(error.message);
       toast({
         title: "Error",
         description: error.message,
@@ -104,6 +109,9 @@ export default function TenantOnboarding() {
     setIsSubmitting(true);
     try {
       await createTenantMutation.mutateAsync(data);
+    } catch (error) {
+      console.error('Tenant creation failed:', error);
+      // Error is already handled by the mutation's onError callback
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +128,12 @@ export default function TenantOnboarding() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {errorMessage && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Tenant Information Section */}
               <div className="space-y-4">
