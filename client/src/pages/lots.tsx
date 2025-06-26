@@ -115,7 +115,7 @@ export default function Lots() {
     });
 
     const apmcData = {
-      place: tenant.name, // Use tenant name as place
+      place: tenant.place || tenant.name, // Use tenant place or name as fallback
       traderName: tenant.name,
       traderCode: tenant.apmcCode,
       traderAddress: tenant.mobileNumber, // Use mobile as address for now

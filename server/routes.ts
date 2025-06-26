@@ -60,15 +60,20 @@ export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Tenant info
-  app.get("/api/tenant", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/tenant", requireAuth, requireTenant, async (req: any, res) => {
     try {
+      if (!req.user || !req.user.tenantId) {
+        return res.status(400).json({ message: "Invalid user or tenant context" });
+      }
+      
       const tenant = await storage.getTenant(req.user.tenantId);
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
       res.json(tenant);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch tenant info" });
+      console.error("Error fetching tenant info:", error);
+      res.status(500).json({ message: "Failed to fetch tenant info", error: (error as Error).message });
     }
   });
 
