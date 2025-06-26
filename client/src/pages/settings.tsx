@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 import { VoiceInput } from "@/components/voice-input";
@@ -58,12 +58,24 @@ export default function Settings() {
   const gstForm = useForm<GSTSettings>({
     resolver: zodResolver(gstSettingsSchema),
     defaultValues: {
-      sgst: settings?.gstSettings.sgst || 9,
-      cgst: settings?.gstSettings.cgst || 9,
-      cess: settings?.gstSettings.cess || 0,
-      unloadHamali: settings?.gstSettings.unloadHamali || 50,
+      sgst: 9,
+      cgst: 9,
+      cess: 0,
+      unloadHamali: 50,
     },
   });
+
+  // Update form when settings data loads
+  useEffect(() => {
+    if (settings) {
+      gstForm.reset({
+        sgst: settings.gstSettings.sgst,
+        cgst: settings.gstSettings.cgst,
+        cess: settings.gstSettings.cess,
+        unloadHamali: settings.gstSettings.unloadHamali,
+      });
+    }
+  }, [settings, gstForm]);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: Partial<TenantSettings>) => {

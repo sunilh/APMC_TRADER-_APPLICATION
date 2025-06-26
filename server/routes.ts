@@ -819,6 +819,92 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Settings API endpoints
+  app.get('/api/settings', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      // Return default settings if not set
+      const defaultSettings = {
+        gstSettings: {
+          sgst: 9,
+          cgst: 9,
+          cess: 0,
+          unloadHamali: 50,
+        },
+        maxUsers: tenant.maxUsers || 1,
+        subscriptionPlan: tenant.subscriptionPlan || "basic",
+      };
+
+      // Merge with existing settings
+      const settings = {
+        ...defaultSettings,
+        ...(tenant.settings || {}),
+        maxUsers: tenant.maxUsers,
+        subscriptionPlan: tenant.subscriptionPlan,
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put('/api/settings', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { gstSettings, maxUsers, subscriptionPlan, ...otherSettings } = req.body;
+      
+      const tenant = await storage.getTenant(req.user.tenantId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      // Get current settings or use defaults
+      const currentSettings = tenant.settings || {};
+      
+      // Update settings
+      const updatedSettings = {
+        ...currentSettings,
+        ...otherSettings,
+      };
+
+      // Update GST settings if provided
+      if (gstSettings) {
+        updatedSettings.gstSettings = {
+          ...(currentSettings.gstSettings || {}),
+          ...gstSettings,
+        };
+      }
+
+      // Prepare tenant update data
+      const tenantUpdateData: any = {
+        settings: updatedSettings,
+      };
+
+      // Update maxUsers and subscriptionPlan if provided
+      if (maxUsers !== undefined) {
+        tenantUpdateData.maxUsers = maxUsers;
+      }
+      if (subscriptionPlan !== undefined) {
+        tenantUpdateData.subscriptionPlan = subscriptionPlan;
+      }
+
+      // Update tenant
+      await storage.updateTenant(req.user.tenantId, tenantUpdateData);
+      
+      await createAuditLog(req.user.id, "UPDATE", "SETTINGS", "Updated tenant settings", req.user.tenantId);
+
+      res.json({ message: "Settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
