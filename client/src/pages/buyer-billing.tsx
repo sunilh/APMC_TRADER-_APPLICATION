@@ -60,6 +60,11 @@ export default function BuyerBilling() {
     enabled: !!selectedDate,
   });
 
+  // Debug logging
+  console.log("Daily bills data:", dailyBills);
+  console.log("Is loading:", isLoadingDaily);
+  console.log("Selected buyer ID:", selectedBuyerId);
+
   // Fetch specific buyer bill
   const { data: buyerBill, isLoading: isLoadingBuyer } = useQuery({
     queryKey: ["/api/billing/buyer", selectedBuyerId, selectedDate],
@@ -523,7 +528,7 @@ export default function BuyerBilling() {
       )}
 
       {/* Daily Bills Summary */}
-      {(!selectedBuyerId || selectedBuyerId === "all") && dailyBills.length > 0 && (
+      {(!selectedBuyerId || selectedBuyerId === "all") && Array.isArray(dailyBills) && dailyBills.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>{t("billing.dailyBuyerBills")} - {formatDate(new Date(selectedDate), language)}</CardTitle>
@@ -574,17 +579,77 @@ export default function BuyerBilling() {
         </Card>
       )}
 
-      {/* No data message */}
-      {!selectedBuyerId && dailyBills.length === 0 && !isLoadingDaily && (
+      {/* Bills Display - Show data directly */}
+      {!selectedBuyerId && (
         <Card>
-          <CardContent className="text-center py-8">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {t("billing.noBuyerBills")}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              {t("billing.noBuyerBillsDescription")}
-            </p>
+          <CardHeader>
+            <CardTitle>Daily Buyer Bills - {formatDate(new Date(selectedDate), language)}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingDaily ? (
+              <div className="text-center py-8">
+                <p>Loading bills...</p>
+              </div>
+            ) : (
+              <div>
+                {Array.isArray(dailyBills) && dailyBills.length > 0 ? (
+                  <div className="space-y-4">
+                    {dailyBills.map((bill: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white dark:bg-gray-900 shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-lg font-semibold text-blue-600">{bill.buyerName}</h3>
+                            <div className="text-sm text-gray-600 space-y-1 mt-2">
+                              <p>Contact: {bill.buyerContact}</p>
+                              <p>Lots: {bill.summary?.totalLots} • Bags: {bill.summary?.totalBags}</p>
+                              <p>Weight: {bill.summary?.totalWeightQuintals?.toFixed(2)} Quintals</p>
+                            </div>
+                            <div className="mt-3">
+                              <p className="text-lg">
+                                <span className="text-gray-600">Gross: </span>
+                                <span className="font-semibold">{formatCurrency(bill.summary?.grossAmount || 0, language)}</span>
+                              </p>
+                              <p className="text-lg">
+                                <span className="text-red-600">Deductions: </span>
+                                <span className="font-semibold">-{formatCurrency(bill.summary?.totalDeductions || 0, language)}</span>
+                              </p>
+                              <p className="text-xl font-bold text-green-600 border-t pt-2">
+                                Net Payable: {formatCurrency(bill.summary?.netPayable || 0, language)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col space-y-2">
+                            <Button 
+                              onClick={() => printBuyerBill(bill)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Printer className="h-4 w-4 mr-2" />
+                              Print Bill
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              onClick={() => setSelectedBuyerId(bill.buyerId.toString())}
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      No bills found for this date
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Click the Generate Bills button to create bills for your buyers
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
