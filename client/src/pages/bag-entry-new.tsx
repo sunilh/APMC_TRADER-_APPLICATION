@@ -251,9 +251,9 @@ export default function BagEntryNew() {
     if (!lot) return;
 
     // Priority 1: Load from server draft if online and available
-    if (isOnline && draftResponse?.draftData) {
+    if (isOnline && draftResponse && (draftResponse as any).draftData) {
       try {
-        const draft = draftResponse.draftData;
+        const draft = (draftResponse as any).draftData;
         setBagEntries(draft.bagEntries || []);
         setLotPrice(draft.lotPrice || "");
         setLotGrade(draft.lotGrade || "");
@@ -261,8 +261,8 @@ export default function BagEntryNew() {
         setBuyer1(draft.buyer1 || "");
         setBuyer2(draft.buyer2 || "");
         setBuyer3(draft.buyer3 || "");
-        setBuyer1Count(draft.buyer1Count || "");
-        setBuyer2Count(draft.buyer2Count || "");
+        setBuyer1Count(draft.buyer1Count || 0);
+        setBuyer2Count(draft.buyer2Count || 0);
         return;
       } catch (e) {
         console.error("Failed to parse server draft data:", e);
