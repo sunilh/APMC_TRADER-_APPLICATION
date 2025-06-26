@@ -406,9 +406,9 @@ export default function BuyerBilling() {
               <div>
                 <CardTitle className="text-xl flex items-center space-x-2">
                   <Building className="h-6 w-6" />
-                  <span>{buyerBill.buyerName}</span>
+                  <span>Bill from {buyerBill.traderInfo?.name || "Trader"}</span>
                 </CardTitle>
-                <p className="text-blue-100">{t("billing.buyerBill")} - {formatDate(new Date(buyerBill.date), language)}</p>
+                <p className="text-blue-100">To: {buyerBill.buyerName} - {formatDate(new Date(buyerBill.date), language)}</p>
               </div>
               <div className="flex space-x-2">
                 <Button 
@@ -431,26 +431,28 @@ export default function BuyerBilling() {
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            {/* Trader Information Header */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+            {/* Seller/Trader Information - Prominent Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-gradient-to-r dark:from-blue-900/30 dark:to-indigo-900/30 p-6 rounded-lg mb-6 border-2 border-blue-300 dark:border-blue-600 shadow-lg">
               <div className="text-center mb-4">
-                <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200">
+                <div className="bg-blue-600 text-white px-4 py-2 rounded-full inline-block mb-3">
+                  <h2 className="text-lg font-bold">
+                    SELLER DETAILS
+                  </h2>
+                </div>
+                <h3 className="text-2xl font-bold text-blue-800 dark:text-blue-200 mb-2">
                   {buyerBill.traderInfo?.name || "TRADER NAME"}
-                </h2>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Code: {buyerBill.traderInfo?.apmcCode} | Place: {buyerBill.traderInfo?.place}
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  {buyerBill.traderInfo?.address}
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Mobile: {buyerBill.traderInfo?.mobile}
-                </p>
-                {buyerBill.traderInfo?.gstNumber && (
-                  <p className="text-sm font-medium text-blue-700 dark:text-blue-200">
-                    GST: {buyerBill.traderInfo.gstNumber}
-                  </p>
-                )}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-700 dark:text-blue-300">
+                  <p><span className="font-semibold">APMC Code:</span> {buyerBill.traderInfo?.apmcCode}</p>
+                  <p><span className="font-semibold">Place:</span> {buyerBill.traderInfo?.place}</p>
+                  <p className="md:col-span-2"><span className="font-semibold">Address:</span> {buyerBill.traderInfo?.address}</p>
+                  <p><span className="font-semibold">Mobile:</span> {buyerBill.traderInfo?.mobile}</p>
+                  {buyerBill.traderInfo?.gstNumber && (
+                    <p className="font-semibold text-blue-800 dark:text-blue-200">
+                      <span>GST:</span> {buyerBill.traderInfo.gstNumber}
+                    </p>
+                  )}
+                </div>
               </div>
               
               {/* Bank Details */}
@@ -479,7 +481,7 @@ export default function BuyerBilling() {
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6">
               <h3 className="font-semibold mb-3 flex items-center">
                 <User className="h-4 w-4 mr-2" />
-                Buyer Information
+                Buyer Information (Customer)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center">

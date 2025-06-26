@@ -201,6 +201,9 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added professional formatting with proper trader branding and contact information
   - Bills now include all elements from user's bill format image: trader details, buyer info, lot details, tax breakdown
   - System displays authentic data from tenant onboarding including GST registration and banking information
+  - Enhanced seller prominence in buyer bills with tenant details displayed prominently at top as they are the seller
+  - Updated bill header to show "Bill from [Trader]" and "To: [Buyer]" for clear business relationship
+  - Added prominent "SELLER DETAILS" section with enhanced styling and complete tenant information display
 
 # User Preferences
 
