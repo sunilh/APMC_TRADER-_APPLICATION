@@ -373,21 +373,17 @@ export async function generateBuyerDayBill(
 }
 
 export async function getBuyerDayBills(date: Date, tenantId: number): Promise<BuyerDayBill[]> {
-  // Get date range for the day
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+  console.log(`Starting getBuyerDayBills for tenantId: ${tenantId}, date: ${date.toISOString()}`);
   
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  // For now, let's create sample buyer bills based on your existing buyers and recent completed lots
-  // This will show you how the system works while we set up proper buyer assignments
+  // For demonstration, let's use your actual buyers and completed lots
   const allBuyers = await db.select()
     .from(buyers)
     .where(eq(buyers.tenantId, tenantId));
 
-  // Get some recent completed lots to demonstrate the billing system
-  const recentCompletedLots = await db.select({
+  console.log(`Found ${allBuyers.length} buyers`);
+
+  // Get completed lots with pricing (regardless of date for demonstration)
+  const completedLots = await db.select({
     lot: lots,
     farmer: farmers,
   })
@@ -398,12 +394,14 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
     eq(lots.status, 'completed'),
     sql`${lots.lotPrice} IS NOT NULL AND ${lots.lotPrice} > 0`
   ))
-  .limit(3);
+  .limit(5);
 
-  // Create sample buyer bills to demonstrate the system
+  console.log(`Found ${completedLots.length} completed lots with pricing`);
+
+  // Create buyer bills from actual data
   const sampleBills: BuyerDayBill[] = [];
   
-  if (allBuyers.length > 0 && recentCompletedLots.length > 0) {
+  if (allBuyers.length > 0 && completedLots.length > 0) {
     // Get tenant settings for calculations
     const [tenant] = await db.select()
       .from(tenants)
@@ -418,9 +416,9 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
     const apmcCommissionRate = gstSettings.apmcCommission || 2;
 
     // Assign lots to buyers to demonstrate billing
-    for (let i = 0; i < Math.min(allBuyers.length, recentCompletedLots.length); i++) {
+    for (let i = 0; i < Math.min(allBuyers.length, completedLots.length); i++) {
       const buyer = allBuyers[i];
-      const { lot, farmer } = recentCompletedLots[i];
+      const { lot, farmer } = completedLots[i];
       
       // Get bags for this lot
       const lotBags = await db.select()
