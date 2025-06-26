@@ -6,7 +6,7 @@ import {
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql } from "drizzle-orm";
+import { eq, and, desc, count, sql, gte, lt, isNotNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -357,6 +357,8 @@ export class DatabaseStorage implements IStorage {
   }> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
     const [farmersCount] = await db.select({ count: count() })
       .from(farmers)
@@ -366,12 +368,42 @@ export class DatabaseStorage implements IStorage {
       .from(lots)
       .where(and(eq(lots.tenantId, tenantId), eq(lots.status, 'active')));
 
-    // For now, return basic stats - can be enhanced with more complex queries
+    // Count bags created today
+    const [bagsToday] = await db.select({ count: count() })
+      .from(bags)
+      .where(and(
+        eq(bags.tenantId, tenantId),
+        gte(bags.createdAt, today),
+        lt(bags.createdAt, tomorrow)
+      ));
+
+    // Calculate revenue from completed lots today
+    const completedLotsToday = await db.select({
+      totalWeight: sql<number>`SUM(${bags.weight})`,
+      lotPrice: lots.lotPrice
+    })
+    .from(bags)
+    .innerJoin(lots, eq(bags.lotId, lots.id))
+    .where(and(
+      eq(bags.tenantId, tenantId),
+      eq(lots.status, 'completed'),
+      gte(bags.createdAt, today),
+      lt(bags.createdAt, tomorrow),
+      isNotNull(bags.weight)
+    ))
+    .groupBy(lots.id, lots.lotPrice);
+
+    const revenueToday = completedLotsToday.reduce((total, lot) => {
+      const weightInQuintals = (lot.totalWeight || 0) / 100; // Convert kg to quintals
+      const price = parseFloat(lot.lotPrice || '0');
+      return total + (weightInQuintals * price);
+    }, 0);
+
     return {
       totalFarmers: farmersCount.count,
       activeLots: activeLotsCount.count,
-      totalBagsToday: 0, // Would need date-based bag counting
-      revenueToday: 0, // Would need revenue calculation
+      totalBagsToday: bagsToday.count,
+      revenueToday: Math.round(revenueToday),
     };
   }
 
