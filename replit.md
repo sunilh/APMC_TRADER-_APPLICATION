@@ -179,6 +179,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Fixed settings API endpoints (GET/PUT /api/settings) for proper GST configuration persistence
   - Enhanced form data loading to display saved settings values correctly from database
   - Billing now calculates: Total Unload Hamali = Rate per bag × Number of bags in lot
+- June 26, 2025: Enhanced billing system with comprehensive fee structure and settings cleanup
+  - Added three new settings fields: Packaging per bag, Weighing fee per bag, and APMC Commission percentage
+  - Updated backend billing calculations to include all new charges with proper per-bag and percentage calculations
+  - Enhanced frontend billing display with detailed breakdown showing all charges separately in farmer bills
+  - Fixed billing summary calculations to include packaging, weighing fee, and APMC commission in total deductions
+  - Removed user management tab from settings page as per user request for cleaner interface
+  - Maintained proper per-bag calculations for packaging and weighing fees while adding percentage-based APMC commission
 
 # User Preferences
 

@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Settings as SettingsIcon, Users, Receipt, Globe } from "lucide-react";
+import { Settings as SettingsIcon, Receipt, Globe } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,12 +26,7 @@ const gstSettingsSchema = z.object({
   apmcCommission: z.number().min(0).max(100),
 });
 
-const userLimitSchema = z.object({
-  maxUsers: z.number().min(1),
-});
-
 type GSTSettings = z.infer<typeof gstSettingsSchema>;
-type UserLimitSettings = z.infer<typeof userLimitSchema>;
 
 interface TenantSettings {
   gstSettings: {
@@ -116,14 +111,6 @@ export default function Settings() {
     }
   };
 
-  const handleUserLimitVoiceInput = (field: keyof UserLimitSettings, value: string) => {
-    const numValue = parseInt(value.replace(/\D/g, ''));
-    if (!isNaN(numValue) && numValue > 0) {
-      // User limit form handler - implementation when user limit form is added
-      console.log(`User limit voice input: ${field} = ${numValue}`);
-    }
-  };
-
   const onGSTSubmit = (data: GSTSettings) => {
     updateSettingsMutation.mutate({
       gstSettings: data,
@@ -164,10 +151,6 @@ export default function Settings() {
             <TabsTrigger value="gst" className="flex items-center space-x-2">
               <Receipt className="h-4 w-4" />
               <span>GST & Charges</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span>User Management</span>
             </TabsTrigger>
             <TabsTrigger value="language" className="flex items-center space-x-2">
               <Globe className="h-4 w-4" />
@@ -395,61 +378,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Manage user limits and permissions for your organization
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900">Current Plan</h4>
-                      <p className="text-2xl font-bold text-primary mt-1">
-                        {settings?.subscriptionPlan?.toUpperCase() || "BASIC"}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900">User Limit</h4>
-                      <p className="text-2xl font-bold text-gray-900 mt-1">
-                        {settings?.maxUsers || 1}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900">Active Users</h4>
-                      <p className="text-2xl font-bold text-success mt-1">
-                        0 {/* This would come from actual user count */}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="border-t pt-6">
-                    <h4 className="font-medium text-gray-900 mb-4">Subscription Plans</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="border rounded-lg p-4">
-                        <h5 className="font-medium">Basic</h5>
-                        <p className="text-sm text-gray-600">1-2 Users</p>
-                        <p className="text-lg font-bold mt-2">₹999/month</p>
-                      </div>
-                      <div className="border rounded-lg p-4 border-primary">
-                        <h5 className="font-medium">Gold</h5>
-                        <p className="text-sm text-gray-600">Up to 10 Users</p>
-                        <p className="text-lg font-bold mt-2">₹2999/month</p>
-                      </div>
-                      <div className="border rounded-lg p-4">
-                        <h5 className="font-medium">Diamond</h5>
-                        <p className="text-sm text-gray-600">10+ Users</p>
-                        <p className="text-lg font-bold mt-2">₹4999/month</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="language">
             <Card>
