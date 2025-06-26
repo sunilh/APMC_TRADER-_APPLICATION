@@ -501,6 +501,7 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         
         sampleBills.push(buyerBill);
       }
+    }
     } else {
       // No completed lots found - create demo bills to show how the system works
       console.log("Creating demo buyer bills for demonstration");
