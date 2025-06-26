@@ -64,6 +64,8 @@ export const buyers = pgTable("buyers", {
   contactPerson: text("contact_person"),
   mobile: text("mobile"),
   address: text("address"),
+  panNumber: text("pan_number"),
+  gstNumber: text("gst_number"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

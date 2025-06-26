@@ -40,6 +40,8 @@ export default function Buyers() {
       contactPerson: "",
       mobile: "",
       address: "",
+      panNumber: "",
+      gstNumber: "",
     },
     mode: "onChange",
   });
@@ -132,6 +134,8 @@ export default function Buyers() {
       contactPerson: buyer.contactPerson || "",
       mobile: buyer.mobile || "",
       address: buyer.address || "",
+      panNumber: buyer.panNumber || "",
+      gstNumber: buyer.gstNumber || "",
     });
     setIsDialogOpen(true);
   };
@@ -264,6 +268,46 @@ export default function Buyers() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="panNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>PAN Number</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter PAN number" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('panNumber', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gstNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>GST Number</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter GST number" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('gstNumber', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <div className="flex justify-end space-x-2">
                       <Button
                         type="button"
@@ -325,6 +369,8 @@ export default function Buyers() {
                     <TableHead>Contact Person</TableHead>
                     <TableHead>Mobile</TableHead>
                     <TableHead>Address</TableHead>
+                    <TableHead>PAN Number</TableHead>
+                    <TableHead>GST Number</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -335,6 +381,8 @@ export default function Buyers() {
                       <TableCell>{buyer.contactPerson || "-"}</TableCell>
                       <TableCell>{buyer.mobile || "-"}</TableCell>
                       <TableCell>{buyer.address || "-"}</TableCell>
+                      <TableCell>{buyer.panNumber || "-"}</TableCell>
+                      <TableCell>{buyer.gstNumber || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button

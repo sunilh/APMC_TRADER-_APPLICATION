@@ -204,6 +204,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced seller prominence in buyer bills with tenant details displayed prominently at top as they are the seller
   - Updated bill header to show "Bill from [Trader]" and "To: [Buyer]" for clear business relationship
   - Added prominent "SELLER DETAILS" section with enhanced styling and complete tenant information display
+- June 26, 2025: Added PAN and GST number collection for buyer management system
+  - Added pan_number and gst_number fields to buyers database table
+  - Enhanced buyer creation form with PAN and GST number fields including voice input support
+  - Updated buyer table display to show PAN and GST numbers for complete business records
+  - Implemented proper form validation and editing functionality for tax compliance documentation
+  - System now collects all necessary buyer information for professional invoice generation and tax reporting
 
 # User Preferences
 
