@@ -63,7 +63,7 @@ export default function BuyerBilling() {
   // Fetch specific buyer bill
   const { data: buyerBill, isLoading: isLoadingBuyer } = useQuery({
     queryKey: ["/api/billing/buyer", selectedBuyerId, selectedDate],
-    enabled: !!selectedBuyerId && !!selectedDate,
+    enabled: !!selectedBuyerId && selectedBuyerId !== "all" && !!selectedDate,
   });
 
   const handleVoiceInput = (field: string, value: string) => {
@@ -344,7 +344,7 @@ export default function BuyerBilling() {
                   <SelectValue placeholder={t("billing.selectBuyer")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t("billing.allBuyers")}</SelectItem>
+                  <SelectItem value="all">{t("billing.allBuyers")}</SelectItem>
                   {buyers.map((buyer: any) => (
                     <SelectItem key={buyer.id} value={buyer.id.toString()}>
                       {buyer.name}
@@ -358,7 +358,7 @@ export default function BuyerBilling() {
       </Card>
 
       {/* Individual Buyer Bill */}
-      {selectedBuyerId && buyerBill && (
+      {selectedBuyerId && selectedBuyerId !== "all" && buyerBill && (
         <Card>
           <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
             <div className="flex items-center justify-between">
@@ -510,7 +510,7 @@ export default function BuyerBilling() {
       )}
 
       {/* Daily Bills Summary */}
-      {!selectedBuyerId && dailyBills.length > 0 && (
+      {(!selectedBuyerId || selectedBuyerId === "all") && dailyBills.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>{t("billing.dailyBuyerBills")} - {formatDate(new Date(selectedDate), language)}</CardTitle>
