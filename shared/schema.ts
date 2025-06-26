@@ -13,6 +13,7 @@ export const tenants = pgTable("tenants", {
   maxUsers: integer("max_users").notNull().default(1),
   logo: text("logo"),
   place: text("place"),
+  address: text("address"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   settings: jsonb("settings").default({}), // GST rates, unload hamali, etc.

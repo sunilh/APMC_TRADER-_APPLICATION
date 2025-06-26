@@ -118,7 +118,7 @@ export default function Lots() {
       place: tenant.place || tenant.name, // Use tenant place or name as fallback
       traderName: tenant.name,
       traderCode: tenant.apmcCode,
-      traderAddress: tenant.mobileNumber, // Use mobile as address for now
+      traderAddress: tenant.address || tenant.mobileNumber, // Use address field, fallback to mobile
       date: formatDateForAPMC(new Date()),
       lots: sortedLots.map((lot) => ({
         lotNumber: lot.lotNumber,
