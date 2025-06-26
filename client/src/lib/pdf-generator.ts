@@ -325,8 +325,8 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         <div class="details-section">
           <div>
             <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
+              <strong>Mobile Number:</strong>
+              <span class="underline">${data.traderName}</span>
             </div>
             <div class="detail-item">
               <strong>Date:</strong>
@@ -339,8 +339,8 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
               <span class="underline">${data.place}</span>
             </div>
             <div class="detail-item">
-              <strong>Trader Name:</strong>
-              <span class="underline">${data.traderName}</span>
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
             </div>
           </div>
         </div>
@@ -503,8 +503,8 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         <div class="details-section">
           <div>
             <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
+              <strong>Mobile Number:</strong>
+              <span class="underline">${data.traderName}</span>
             </div>
             <div class="detail-item">
               <strong>Date:</strong>
@@ -517,8 +517,8 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
               <span class="underline">${data.place}</span>
             </div>
             <div class="detail-item">
-              <strong>Trader Name:</strong>
-              <span class="underline">${data.traderName}</span>
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
             </div>
           </div>
         </div>
