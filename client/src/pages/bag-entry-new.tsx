@@ -384,6 +384,18 @@ export default function BagEntryNew() {
       }
       return bag;
     }));
+    
+    // Auto-focus next weight input if weight was entered
+    if (weight !== undefined && weight > 0) {
+      setTimeout(() => {
+        const nextBagNumber = bagNumber + 1;
+        const nextInput = document.querySelector(`input[data-bag="${nextBagNumber}"]`) as HTMLInputElement;
+        if (nextInput) {
+          nextInput.focus();
+          nextInput.select();
+        }
+      }, 100);
+    }
   };
 
   if (isNaN(lotId)) {
@@ -658,12 +670,25 @@ export default function BagEntryNew() {
                         min="0"
                         placeholder="Weight (kg)"
                         value={bag.weight || ""}
+                        data-bag={bag.bagNumber}
                         onChange={(e) => {
                           const value = e.target.value;
                           updateBagWeight(
                             bag.bagNumber,
                             value === "" ? undefined : parseFloat(value)
                           );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const value = (e.target as HTMLInputElement).value;
+                            if (value) {
+                              updateBagWeight(
+                                bag.bagNumber,
+                                value === "" ? undefined : parseFloat(value)
+                              );
+                            }
+                          }
                         }}
                         className="flex-1"
                       />
