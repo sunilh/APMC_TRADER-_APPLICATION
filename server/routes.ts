@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import bcrypt from "bcrypt";
 import { generateFarmerDayBill, getFarmerDayBills } from "./billing";
 import {
   insertFarmerSchema,
@@ -609,10 +610,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Username already exists" });
       }
 
+      // Hash password before creating admin user
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
       // Create admin user
       const user = await storage.createUser({
         username: userData.username,
-        password: userData.password,
+        password: hashedPassword,
         name: userData.username, // Use username as name for admin
         email: `${userData.username}@${tenant.apmcCode.toLowerCase()}.local`, // Generate email
         role: "admin",
@@ -663,10 +667,13 @@ export function registerRoutes(app: Express): Server {
           return res.status(400).json({ message: "Username already exists in this APMC center" });
         }
 
+        // Hash password before creating staff user
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        
         // Create staff user
         const user = await storage.createUser({
           username: userData.username,
-          password: userData.password,
+          password: hashedPassword,
           name: userData.name,
           email: userData.email,
           role: userData.role,
@@ -705,6 +712,9 @@ export function registerRoutes(app: Express): Server {
         // If password is empty, don't update it
         if (updates.password === "") {
           delete updates.password;
+        } else if (updates.password) {
+          // Hash password if it's being updated
+          updates.password = await bcrypt.hash(updates.password, 10);
         }
 
         const user = await storage.updateUser(staffId, updates);
