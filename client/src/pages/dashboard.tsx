@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navigation } from "@/components/navigation";
-import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer } from "lucide-react";
+import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -12,6 +12,16 @@ interface DashboardStats {
   activeLots: number;
   totalBagsToday: number;
   revenueToday: number;
+}
+
+interface LotCompletionStat {
+  lotId: number;
+  lotNumber: string;
+  farmerName: string;
+  expectedBags: number;
+  actualBags: number;
+  missingBags: number;
+  completionPercentage: number;
 }
 
 interface Lot {
@@ -42,6 +52,10 @@ export default function Dashboard() {
 
   const { data: lots = [], isLoading: lotsLoading } = useQuery<Lot[]>({
     queryKey: ["/api/lots"],
+  });
+
+  const { data: lotCompletion = [], isLoading: completionLoading } = useQuery<LotCompletionStat[]>({
+    queryKey: ["/api/dashboard/lot-completion"],
   });
 
   return (
@@ -118,6 +132,43 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Missing Bags Alert */}
+        {!completionLoading && lotCompletion.some(lot => lot.missingBags > 0) && (
+          <div className="mb-8">
+            <Card className="bg-red-50 border-red-200">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-red-900 mb-2">Missing Bags Detected</h3>
+                    <p className="text-red-700 mb-4">Some lots have incomplete bag entries that need attention:</p>
+                    <div className="space-y-2">
+                      {lotCompletion
+                        .filter(lot => lot.missingBags > 0)
+                        .map(lot => (
+                          <div key={lot.lotId} className="flex items-center justify-between bg-red-100 p-3 rounded-lg">
+                            <div>
+                              <span className="font-medium text-red-900">{lot.lotNumber}</span>
+                              <span className="text-red-700 ml-2">({lot.farmerName})</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-red-900 font-semibold">
+                                {lot.missingBags} bags missing
+                              </div>
+                              <div className="text-sm text-red-600">
+                                {lot.actualBags}/{lot.expectedBags} completed ({lot.completionPercentage}%)
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="mb-8">

@@ -93,6 +93,21 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Lot completion analysis
+  app.get(
+    "/api/dashboard/lot-completion",
+    requireAuth,
+    requireTenant,
+    async (req, res) => {
+      try {
+        const completionStats = await storage.getLotCompletionStats(req.user.tenantId);
+        res.json(completionStats);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch lot completion stats" });
+      }
+    },
+  );
+
   // Billing routes
   app.get(
     "/api/billing/farmer/:farmerId/:date",

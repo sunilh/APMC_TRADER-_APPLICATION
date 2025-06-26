@@ -67,6 +67,17 @@ export interface IStorage {
     revenueToday: number;
   }>;
 
+  // Lot completion analysis
+  getLotCompletionStats(tenantId: number): Promise<Array<{
+    lotId: number;
+    lotNumber: string;
+    farmerName: string;
+    expectedBags: number;
+    actualBags: number;
+    missingBags: number;
+    completionPercentage: number;
+  }>>;
+
   // Bag entry draft management for cross-device syncing
   saveBagEntryDraft(lotId: number, userId: number, tenantId: number, draftData: any): Promise<void>;
   getBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<any | null>;
@@ -405,6 +416,45 @@ export class DatabaseStorage implements IStorage {
       totalBagsToday: bagsToday.count,
       revenueToday: Math.round(revenueToday),
     };
+  }
+
+  async getLotCompletionStats(tenantId: number): Promise<Array<{
+    lotId: number;
+    lotNumber: string;
+    farmerName: string;
+    expectedBags: number;
+    actualBags: number;
+    missingBags: number;
+    completionPercentage: number;
+  }>> {
+    const result = await db.select({
+      lotId: lots.id,
+      lotNumber: lots.lotNumber,
+      farmerName: farmers.name,
+      expectedBags: lots.numberOfBags,
+      actualBags: sql<number>`COALESCE(COUNT(${bags.id}), 0)`,
+    })
+    .from(lots)
+    .innerJoin(farmers, eq(lots.farmerId, farmers.id))
+    .leftJoin(bags, eq(lots.id, bags.lotId))
+    .where(eq(lots.tenantId, tenantId))
+    .groupBy(lots.id, lots.lotNumber, farmers.name, lots.numberOfBags)
+    .orderBy(lots.id);
+
+    return result.map(row => {
+      const missingBags = row.expectedBags - row.actualBags;
+      const completionPercentage = row.expectedBags > 0 ? Math.round((row.actualBags / row.expectedBags) * 100) : 0;
+      
+      return {
+        lotId: row.lotId,
+        lotNumber: row.lotNumber,
+        farmerName: row.farmerName,
+        expectedBags: row.expectedBags,
+        actualBags: row.actualBags,
+        missingBags,
+        completionPercentage,
+      };
+    });
   }
 
   // Bag entry draft management for cross-device syncing
