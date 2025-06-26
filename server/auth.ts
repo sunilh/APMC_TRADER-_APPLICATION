@@ -35,12 +35,22 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
-      if (!user || !(await comparePasswords(password, user.password))) {
+      // Get all users with this username across all tenants
+      const users = await storage.getUsersByUsername(username);
+      
+      if (!users || users.length === 0) {
         return done(null, false);
-      } else {
-        return done(null, user);
       }
+      
+      // Try to authenticate against each user until password matches
+      for (const user of users) {
+        if (await comparePasswords(password, user.password)) {
+          return done(null, user);
+        }
+      }
+      
+      // No matching password found
+      return done(null, false);
     }),
   );
 
