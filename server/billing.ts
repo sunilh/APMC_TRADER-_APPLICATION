@@ -104,7 +104,7 @@ export async function generateFarmerDayBill(
         totalWeightQuintals: totalWeightQuintals,
         vehicleRent: parseFloat(lot.vehicleRent || '0'),
         advance: parseFloat(lot.advance || '0'),
-        unloadHamali: parseFloat(lot.unloadHamali || '0'),
+        unloadHamali: parseFloat(lot.unloadHamali || '0') * lot.numberOfBags, // Calculate per bag
         grade: lot.grade,
       });
     }

@@ -833,7 +833,7 @@ export function registerRoutes(app: Express): Server {
           sgst: 9,
           cgst: 9,
           cess: 0,
-          unloadHamali: 50,
+          unloadHamali: 3,
         },
         maxUsers: tenant.maxUsers || 1,
         subscriptionPlan: tenant.subscriptionPlan || "basic",

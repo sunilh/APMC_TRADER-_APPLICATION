@@ -61,7 +61,7 @@ export default function Settings() {
       sgst: 9,
       cgst: 9,
       cess: 0,
-      unloadHamali: 50,
+      unloadHamali: 3,
     },
   });
 
@@ -254,7 +254,7 @@ export default function Settings() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="unloadHamali">Unload Hamali Rate (₹)</Label>
+                      <Label htmlFor="unloadHamali">Unload Hamali Rate (₹ per bag)</Label>
                       <div className="flex gap-2">
                         <Input
                           id="unloadHamali"

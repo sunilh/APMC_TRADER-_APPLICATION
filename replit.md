@@ -172,6 +172,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added voice input to settings page for all GST configuration fields (SGST, CGST, CESS, unload hamali)
   - Completed lot creation forms with voice input for pricing, bags, vehicle rent, advance, variety selection
   - Achieved 100% voice input coverage providing 5x speed improvement for agricultural data entry operations
+- June 26, 2025: Implemented per-bag unload hamali calculation system for accurate agricultural billing
+  - Changed unload hamali from fixed amount to per-bag rate calculation (₹3 per bag default)
+  - Updated billing logic to multiply unload hamali rate by number of bags in each lot
+  - Modified settings page to clearly indicate "₹ per bag" for unload hamali rate
+  - Fixed settings API endpoints (GET/PUT /api/settings) for proper GST configuration persistence
+  - Enhanced form data loading to display saved settings values correctly from database
+  - Billing now calculates: Total Unload Hamali = Rate per bag × Number of bags in lot
 
 # User Preferences
 
