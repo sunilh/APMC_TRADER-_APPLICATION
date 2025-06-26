@@ -325,22 +325,22 @@ function generateAPMCMobileHTML(data: APMCPrintData): string {
         <div class="details-section">
           <div>
             <div class="detail-item">
-              <strong>Mobile Number:</strong>
-              <span class="underline">${data.traderName}</span>
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
             </div>
             <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
+              <strong>Mobile Number:</strong>
+              <span class="underline">${data.traderName}</span>
             </div>
           </div>
           <div>
             <div class="detail-item">
-              <strong>Place:</strong>
-              <span class="underline">${data.place}</span>
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
             </div>
             <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
+              <strong>Place:</strong>
+              <span class="underline">${data.place}</span>
             </div>
           </div>
         </div>
@@ -503,22 +503,22 @@ function generateAPMCPopupHTML(data: APMCPrintData): string {
         <div class="details-section">
           <div>
             <div class="detail-item">
-              <strong>Mobile Number:</strong>
-              <span class="underline">${data.traderName}</span>
+              <strong>Trader Code:</strong>
+              <span class="underline">${data.traderCode}</span>
             </div>
             <div class="detail-item">
-              <strong>Date:</strong>
-              <span class="underline">${data.date}</span>
+              <strong>Mobile Number:</strong>
+              <span class="underline">${data.traderName}</span>
             </div>
           </div>
           <div>
             <div class="detail-item">
-              <strong>Place:</strong>
-              <span class="underline">${data.place}</span>
+              <strong>Date:</strong>
+              <span class="underline">${data.date}</span>
             </div>
             <div class="detail-item">
-              <strong>Trader Code:</strong>
-              <span class="underline">${data.traderCode}</span>
+              <strong>Place:</strong>
+              <span class="underline">${data.place}</span>
             </div>
           </div>
         </div>
