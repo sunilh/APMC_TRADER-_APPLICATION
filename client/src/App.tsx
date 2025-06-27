@@ -13,9 +13,7 @@ import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntryNew from "@/pages/bag-entry-new";
 import Buyers from "@/pages/buyers";
-import Billing from "@/pages/billing";
-import BuyerBilling from "@/pages/buyer-billing";
-import ProfessionalInvoice from "@/pages/professional-invoice";
+
 import TaxInvoice from "@/pages/tax-invoice";
 
 import Settings from "@/pages/settings";
@@ -31,9 +29,7 @@ function Router() {
       <ProtectedRoute path="/lots/:id/bags" component={BagEntryNew} />
       <ProtectedRoute path="/buyers" component={Buyers} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
-      <ProtectedRoute path="/billing" component={Billing} />
-      <ProtectedRoute path="/buyer-billing" component={BuyerBilling} />
-      <ProtectedRoute path="/professional-invoice" component={ProfessionalInvoice} />
+
       <ProtectedRoute path="/tax-invoice" component={TaxInvoice} />
 
       <ProtectedRoute path="/settings" component={Settings} />

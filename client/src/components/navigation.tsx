@@ -21,9 +21,7 @@ export function Navigation() {
     { name: t('nav.lots'), href: '/lots', icon: Package },
     { name: 'Buyers', href: '/buyers', icon: Users },
     ...(user?.role === 'admin' ? [{ name: 'Staff', href: '/staff', icon: Users }] : []),
-    { name: 'Billing', href: '/billing', icon: IndianRupee },
-    { name: 'Buyer Billing', href: '/buyer-billing', icon: Receipt },
-    { name: 'Professional Invoice', href: '/professional-invoice', icon: FileText },
+
     { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];

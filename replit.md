@@ -284,6 +284,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Fixed calculations section to use correct property names: `basicAmount`, `packaging`, `weighingCharges`
   - Tax invoices now correctly display all calculated amounts: basic amounts, charges, taxes, and totals
   - System generates authentic tax invoices with proper amount calculations from real agricultural trading data
+- June 27, 2025: Streamlined navigation interface by removing redundant billing tabs
+  - Removed "Billing", "Buyer Billing", and "Professional Invoice" tabs from navigation menu
+  - Consolidated invoice functionality into single "Tax Invoice" tab for professional invoice generation
+  - Cleaned up route definitions and component imports to improve application performance
+  - Simplified user interface focusing on core agricultural trading operations
+  - Enhanced PDF layout with horizontal left-to-right format for better readability and page utilization
 
 # User Preferences
 
