@@ -58,9 +58,11 @@ export default function BuyerTracking() {
 
   const queryClient = useQueryClient();
 
-  const { data: buyerSummaries = [], isLoading } = useQuery<BuyerSummary[]>({
+  const { data: buyerSummaries = [], isLoading, error } = useQuery<BuyerSummary[]>({
     queryKey: ['/api/buyers/summary', search],
     queryFn: () => apiRequest(`/api/buyers/summary?search=${encodeURIComponent(search)}`),
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: purchases = [] } = useQuery<BuyerPurchase[]>({
@@ -171,6 +173,14 @@ export default function BuyerTracking() {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading buyers...</div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              <div className="text-red-600 font-medium">Error loading buyer data</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Please check your connection and try again
+              </div>
+            </div>
           ) : buyerSummaries.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No buyers found
