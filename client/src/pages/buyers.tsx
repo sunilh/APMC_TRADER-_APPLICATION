@@ -42,6 +42,7 @@ export default function Buyers() {
       address: "",
       panNumber: "",
       gstNumber: "",
+      hsnCode: "",
     },
     mode: "onChange",
   });
@@ -136,6 +137,7 @@ export default function Buyers() {
       address: buyer.address || "",
       panNumber: buyer.panNumber || "",
       gstNumber: buyer.gstNumber || "",
+      hsnCode: buyer.hsnCode || "",
     });
     setIsDialogOpen(true);
   };
