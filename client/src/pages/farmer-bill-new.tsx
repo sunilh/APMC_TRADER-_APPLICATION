@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Download } from "lucide-react";
-import { VoiceInput } from "@/components/voice-input";
+import { VoiceInput } from "@/components/VoiceInput";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FarmerBillData {
   hamali: number;
@@ -17,7 +17,7 @@ interface FarmerBillData {
   commission: number;
 }
 
-export default function FarmerBill() {
+export default function FarmerBillNew() {
   const { user } = useAuth();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
   const [pattiNumber, setPattiNumber] = useState<string>("");
@@ -215,7 +215,6 @@ export default function FarmerBill() {
           {uniqueFarmers.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No completed lots found for billing</p>
-              <p className="text-sm text-gray-400">Complete some lots first to generate farmer bills</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -303,15 +302,15 @@ export default function FarmerBill() {
                       <tr key={lot.id}>
                         <td className="border border-gray-300 p-2">{lot.lotNumber}</td>
                         <td className="border border-gray-300 p-2">{lot.numberOfBags}</td>
-                        <td className="border border-gray-300 p-2">{lot.totalWeight ? lot.totalWeight.toFixed(1) : '0'}</td>
-                        <td className="border border-gray-300 p-2">{formatCurrency(lot.pricePerQuintal || 0)}</td>
-                        <td className="border border-gray-300 p-2">{formatCurrency(lot.totalWeight && lot.pricePerQuintal ? (lot.totalWeight / 100) * lot.pricePerQuintal : 0)}</td>
+                        <td className="border border-gray-300 p-2">{lot.totalWeight.toFixed(1)}</td>
+                        <td className="border border-gray-300 p-2">{formatCurrency(lot.pricePerQuintal)}</td>
+                        <td className="border border-gray-300 p-2">{formatCurrency((lot.totalWeight / 100) * lot.pricePerQuintal)}</td>
                       </tr>
                     ))}
                     <tr className="bg-yellow-50 font-semibold">
                       <td className="border border-gray-300 p-2">Total</td>
                       <td className="border border-gray-300 p-2">{totalBags}</td>
-                      <td className="border border-gray-300 p-2">{totalWeight ? totalWeight.toFixed(1) : '0'}</td>
+                      <td className="border border-gray-300 p-2">{totalWeight.toFixed(1)}</td>
                       <td className="border border-gray-300 p-2">-</td>
                       <td className="border border-gray-300 p-2">{formatCurrency(totalAmount)}</td>
                     </tr>
@@ -406,7 +405,7 @@ export default function FarmerBill() {
                   </div>
                   <div className="flex justify-between">
                     <span>Total Weight:</span>
-                    <span className="font-semibold">{totalWeight ? totalWeight.toFixed(1) : '0'} kg</span>
+                    <span className="font-semibold">{totalWeight.toFixed(1)} kg</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-semibold">
