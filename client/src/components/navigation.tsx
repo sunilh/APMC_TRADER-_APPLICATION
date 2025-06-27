@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2, Receipt, FileText, Search } from "lucide-react";
+import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2, Receipt, FileText, Search, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -24,6 +24,7 @@ export function Navigation() {
 
     { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
     { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
+    { name: 'Tax Reports', href: '/tax-reports', icon: BarChart3 },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 
