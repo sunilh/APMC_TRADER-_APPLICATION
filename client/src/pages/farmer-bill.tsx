@@ -57,6 +57,8 @@ export default function FarmerBill() {
 
   // Get completed lots only
   const completedLots = lots?.filter((lot: any) => lot.status === 'completed') || [];
+  console.log("Completed lots:", completedLots);
+  console.log("Selected farmer ID:", selectedFarmerId);
   
   // Get unique farmers with completed lots
   const uniqueFarmers = Array.from(
@@ -66,6 +68,7 @@ export default function FarmerBill() {
   // Get lots for selected farmer
   const farmerLots = selectedFarmerId ? 
     completedLots.filter((lot: any) => lot.farmerId.toString() === selectedFarmerId) : [];
+  console.log("Farmer lots for selected farmer:", farmerLots);
 
   const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
 
