@@ -25,7 +25,6 @@ export function Navigation() {
     { name: 'Buyer Billing', href: '/buyer-billing', icon: Receipt },
     { name: 'Professional Invoice', href: '/professional-invoice', icon: FileText },
     { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
-    { name: 'Buyer Tracking', href: '/buyer-tracking', icon: Search },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 

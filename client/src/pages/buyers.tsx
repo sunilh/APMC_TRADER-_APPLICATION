@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Edit, Trash2, Search, Eye, CreditCard, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,20 +19,124 @@ import { useToast } from "@/hooks/use-toast";
 import type { Buyer, InsertBuyer } from "@shared/schema";
 import { insertBuyerSchema } from "@shared/schema";
 
+interface BuyerSummary extends Buyer {
+  totalLots: number;
+  completedLots: number;
+  billGeneratedLots: number;
+  pendingBills: number;
+  totalAmountDue: string;
+  totalAmountPaid: string;
+  pendingPayments: number;
+}
+
+interface BuyerPurchase {
+  lotId: number;
+  lotNumber: string;
+  farmerName: string;
+  numberOfBags: number;
+  varietyGrade: string;
+  grade: string;
+  status: string;
+  billGenerated: boolean;
+  billGeneratedAt: string;
+  paymentStatus: string;
+  amountDue: string;
+  amountPaid: string;
+  paymentDate: string;
+  createdAt: string;
+}
+
 export default function Buyers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBuyer, setEditingBuyer] = useState<Buyer | null>(null);
+  const [selectedBuyer, setSelectedBuyer] = useState<BuyerSummary | null>(null);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [paymentDialog, setPaymentDialog] = useState<{ open: boolean; purchase: BuyerPurchase | null }>({
+    open: false,
+    purchase: null,
+  });
+  const [paymentForm, setPaymentForm] = useState({
+    paymentStatus: 'pending',
+    amountPaid: '',
+    paymentDate: '',
+  });
   const { toast } = useToast();
 
-  const { data: buyers = [], isLoading } = useQuery<Buyer[]>({
-    queryKey: ["/api/buyers"],
+  // Fetch buyers with purchase summary
+  const { data: buyerSummaries = [], isLoading, error } = useQuery<BuyerSummary[]>({
+    queryKey: ['/api/buyers/summary', searchTerm],
     queryFn: async () => {
-      const response = await fetch("/api/buyers", { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch buyers");
+      const response = await fetch(`/api/buyers/summary?search=${encodeURIComponent(searchTerm)}`, {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Failed to fetch buyer summaries");
       return response.json();
     },
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Fetch detailed purchases for selected buyer
+  const { data: purchases = [] } = useQuery<BuyerPurchase[]>({
+    queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'],
+    queryFn: async () => {
+      const response = await fetch(`/api/buyers/${selectedBuyer?.id}/purchases`, {
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Failed to fetch buyer purchases");
+      return response.json();
+    },
+    enabled: !!selectedBuyer,
+  });
+
+  // Payment update mutation
+  const updatePaymentMutation = useMutation({
+    mutationFn: async ({ lotId, data }: { lotId: number; data: any }) => {
+      const response = await fetch(`/api/lots/${lotId}/payment`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update payment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/buyers/summary'] });
+      setPaymentDialog({ open: false, purchase: null });
+      setPaymentForm({ paymentStatus: 'pending', amountPaid: '', paymentDate: '' });
+      toast({ title: "Success", description: "Payment status updated successfully" });
+    },
+  });
+
+  // Helper functions
+  const formatCurrency = (amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return isNaN(num) ? '₹0' : `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('en-IN');
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'partial': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-red-100 text-red-800';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'active': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const form = useForm<InsertBuyer>({
     resolver: zodResolver(insertBuyerSchema),
@@ -47,65 +152,41 @@ export default function Buyers() {
     mode: "onChange",
   });
 
-  // Debug form state
-  console.log("Form state:", {
-    isValid: form.formState.isValid,
-    errors: form.formState.errors,
-    values: form.getValues(),
-  });
-
-  const createBuyerMutation = useMutation({
-    mutationFn: async (data: InsertBuyer) => {
-      console.log("Creating buyer with data:", data);
-      try {
-        const result = await apiRequest("POST", "/api/buyers", data);
-        console.log("Buyer creation result:", result);
-        return result;
-      } catch (error) {
-        console.error("API request failed:", error);
-        throw error;
-      }
-    },
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertBuyer) =>
+      apiRequest("/api/buyers", { method: "POST", body: data }),
     onSuccess: () => {
-      console.log("Buyer creation successful, invalidating queries");
-      queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
-      toast({ title: "Success", description: "Buyer created successfully" });
-      setIsDialogOpen(false);
-      form.reset();
-    },
-    onError: (error: Error) => {
-      console.error("Buyer creation error:", error);
-      toast({ 
-        title: "Error", 
-        description: `Failed to create buyer: ${error.message}`, 
-        variant: "destructive" 
-      });
-    },
-  });
-
-  const updateBuyerMutation = useMutation({
-    mutationFn: async (data: InsertBuyer) => {
-      if (!editingBuyer) return;
-      await apiRequest("PUT", `/api/buyers/${editingBuyer.id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
-      toast({ title: "Success", description: "Buyer updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       setIsDialogOpen(false);
       setEditingBuyer(null);
       form.reset();
+      toast({ title: "Success", description: "Buyer created successfully" });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const deleteBuyerMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/buyers/${id}`);
-    },
+  const updateMutation = useMutation({
+    mutationFn: async (data: InsertBuyer) =>
+      apiRequest(`/api/buyers/${editingBuyer?.id}`, { method: "PATCH", body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
+      setIsDialogOpen(false);
+      setEditingBuyer(null);
+      form.reset();
+      toast({ title: "Success", description: "Buyer updated successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) =>
+      apiRequest(`/api/buyers/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       toast({ title: "Success", description: "Buyer deleted successfully" });
     },
     onError: (error: Error) => {
@@ -113,18 +194,11 @@ export default function Buyers() {
     },
   });
 
-  const handleVoiceInput = (field: keyof InsertBuyer, value: string) => {
-    form.setValue(field, value);
-  };
-
   const onSubmit = (data: InsertBuyer) => {
-    console.log("Form submission data:", data);
-    console.log("Form validation errors:", form.formState.errors);
-    
     if (editingBuyer) {
-      updateBuyerMutation.mutate(data);
+      updateMutation.mutate(data);
     } else {
-      createBuyerMutation.mutate(data);
+      createMutation.mutate(data);
     }
   };
 
@@ -132,84 +206,95 @@ export default function Buyers() {
     setEditingBuyer(buyer);
     form.reset({
       name: buyer.name,
-      contactPerson: buyer.contactPerson || "",
-      mobile: buyer.mobile || "",
-      address: buyer.address || "",
+      contactPerson: buyer.contactPerson,
+      mobile: buyer.mobile,
+      address: buyer.address,
       panNumber: buyer.panNumber || "",
       gstNumber: buyer.gstNumber || "",
-      hsnCode: buyer.hsnCode || "",
+      hsnCode: buyer.hsnCode,
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this buyer?")) {
-      deleteBuyerMutation.mutate(id);
-    }
+  const handleViewPurchases = (buyer: BuyerSummary) => {
+    setSelectedBuyer(buyer);
+    setPurchaseDialogOpen(true);
   };
 
-  const handleNewBuyer = () => {
-    setEditingBuyer(null);
-    form.reset();
-    setIsDialogOpen(true);
+  const handlePaymentUpdate = (purchase: BuyerPurchase) => {
+    setPaymentDialog({ open: true, purchase });
+    setPaymentForm({
+      paymentStatus: purchase.paymentStatus,
+      amountPaid: purchase.amountPaid,
+      paymentDate: purchase.paymentDate || '',
+    });
   };
 
-  const filteredBuyers = buyers.filter(buyer =>
+  const handlePaymentSubmit = () => {
+    if (!paymentDialog.purchase) return;
+    
+    updatePaymentMutation.mutate({
+      lotId: paymentDialog.purchase.lotId,
+      data: paymentForm,
+    });
+  };
+
+  // Filter buyers based on search term
+  const filteredBuyers = buyerSummaries.filter((buyer: any) =>
     buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (buyer.mobile && buyer.mobile.includes(searchTerm)) ||
-    (buyer.address && buyer.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (buyer.contactPerson && buyer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()))
+    buyer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    buyer.mobile.includes(searchTerm)
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <Navigation />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Buyers Management</h1>
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Buyers Management & Purchase Tracking
+            </CardTitle>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleNewBuyer}>
+                <Button
+                  onClick={() => {
+                    setEditingBuyer(null);
+                    form.reset();
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add New Buyer
+                  Add Buyer
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>
                     {editingBuyer ? "Edit Buyer" : "Add New Buyer"}
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                  <form 
-                    onSubmit={(e) => {
-                      console.log("Form onSubmit triggered");
-                      e.preventDefault();
-                      form.handleSubmit(onSubmit)(e);
-                    }} 
-                    className="space-y-4"
-                  >
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company/Business Name *</FormLabel>
+                          <FormLabel>Company Name</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter company or business name" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('name', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              placeholder="Enter company name"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="contactPerson"
@@ -217,19 +302,18 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Contact Person</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter contact person name" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('contactPerson', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              placeholder="Enter contact person name"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="mobile"
@@ -237,19 +321,18 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Mobile Number</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter mobile number" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('mobile', value)}
-                                placeholder="Voice input"
-                                type="tel"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              placeholder="Enter mobile number"
+                              type="tel"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="address"
@@ -257,19 +340,18 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter address" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('address', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              placeholder="Enter address"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="panNumber"
@@ -277,19 +359,19 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>PAN Number</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter PAN number" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('panNumber', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              value={field.value || ""}
+                              placeholder="Enter PAN number"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="gstNumber"
@@ -297,118 +379,129 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>GST Number</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter GST number" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('gstNumber', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              value={field.value || ""}
+                              placeholder="Enter GST number"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="hsnCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>HSN Code *</FormLabel>
+                          <FormLabel>HSN Code</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input placeholder="Enter HSN code (e.g., 09042110)" {...field} className="flex-1" />
-                              <VoiceInput
-                                onResult={(value) => handleVoiceInput('hsnCode', value)}
-                                placeholder="Voice input"
-                                type="text"
-                              />
-                            </div>
+                            <VoiceInput
+                              {...field}
+                              placeholder="Enter HSN code"
+                              type="text"
+                              onResult={(text) => field.onChange(text)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setIsDialogOpen(false);
-                          setEditingBuyer(null);
-                          form.reset();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={createBuyerMutation.isPending || updateBuyerMutation.isPending}
-                        onClick={() => console.log("Submit button clicked")}
-                      >
-                        {editingBuyer ? "Update" : "Create"}
-                      </Button>
-                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={createMutation.isPending || updateMutation.isPending}
+                    >
+                      {createMutation.isPending || updateMutation.isPending
+                        ? "Saving..."
+                        : editingBuyer
+                        ? "Update Buyer"
+                        : "Create Buyer"}
+                    </Button>
                   </form>
                 </Form>
               </DialogContent>
             </Dialog>
-          </div>
-
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search buyers by company, contact person, mobile, or address..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Badge variant="secondary" className="px-3 py-1">
-              {filteredBuyers.length} buyer{filteredBuyers.length !== 1 ? 's' : ''}
-            </Badge>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Buyers List</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search buyers by name, contact person, or mobile..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
             {isLoading ? (
               <div className="text-center py-8">Loading buyers...</div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                <div className="text-red-600 font-medium">Error loading buyer data</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Please check your connection and try again
+                </div>
+              </div>
             ) : filteredBuyers.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                {searchTerm ? "No buyers found matching your search." : "No buyers found. Add your first buyer to get started."}
+              <div className="text-center py-8 text-muted-foreground">
+                No buyers found
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Company/Business</TableHead>
+                    <TableHead>Company Name</TableHead>
                     <TableHead>Contact Person</TableHead>
                     <TableHead>Mobile</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>PAN Number</TableHead>
-                    <TableHead>GST Number</TableHead>
-                    <TableHead>HSN Code</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Lots Purchased</TableHead>
+                    <TableHead>Total Amount</TableHead>
+                    <TableHead>Payment Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBuyers.map((buyer) => (
+                  {filteredBuyers.map((buyer: any) => (
                     <TableRow key={buyer.id}>
                       <TableCell className="font-medium">{buyer.name}</TableCell>
-                      <TableCell>{buyer.contactPerson || "-"}</TableCell>
-                      <TableCell>{buyer.mobile || "-"}</TableCell>
-                      <TableCell>{buyer.address || "-"}</TableCell>
-                      <TableCell>{buyer.panNumber || "-"}</TableCell>
-                      <TableCell>{buyer.gstNumber || "-"}</TableCell>
-                      <TableCell>{buyer.hsnCode || "-"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
+                      <TableCell>{buyer.contactPerson}</TableCell>
+                      <TableCell>{buyer.mobile}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Badge variant="outline">{buyer.totalLots} Total</Badge>
+                          <Badge className="bg-green-100 text-green-800">
+                            {buyer.completedLots} Completed
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="text-sm">Due: {formatCurrency(buyer.totalAmountDue)}</div>
+                          <div className="text-sm text-green-600">Paid: {formatCurrency(buyer.totalAmountPaid)}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={buyer.pendingPayments > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}>
+                          {buyer.pendingPayments > 0 ? `${buyer.pendingPayments} Pending` : 'All Paid'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewPurchases(buyer)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Purchases
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -419,8 +512,8 @@ export default function Buyers() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(buyer.id)}
-                            className="text-red-600 hover:text-red-700"
+                            onClick={() => deleteMutation.mutate(buyer.id)}
+                            disabled={deleteMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -433,6 +526,124 @@ export default function Buyers() {
             )}
           </CardContent>
         </Card>
+
+        {/* Purchase Details Dialog */}
+        <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>
+                Purchase History - {selectedBuyer?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {purchases.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No purchases found for this buyer
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lot #</TableHead>
+                      <TableHead>Farmer</TableHead>
+                      <TableHead>Variety/Grade</TableHead>
+                      <TableHead>Bags</TableHead>
+                      <TableHead>Amount Due</TableHead>
+                      <TableHead>Payment Status</TableHead>
+                      <TableHead>Bill</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {purchases.map((purchase: any) => (
+                      <TableRow key={purchase.lotId}>
+                        <TableCell>{purchase.lotNumber}</TableCell>
+                        <TableCell>{purchase.farmerName}</TableCell>
+                        <TableCell>{purchase.varietyGrade} - {purchase.grade}</TableCell>
+                        <TableCell>{purchase.numberOfBags}</TableCell>
+                        <TableCell>{formatCurrency(purchase.amountDue)}</TableCell>
+                        <TableCell>
+                          <Badge className={getPaymentStatusBadge(purchase.paymentStatus)}>
+                            {purchase.paymentStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={purchase.billGenerated ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {purchase.billGenerated ? 'Generated' : 'Pending'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePaymentUpdate(purchase)}
+                          >
+                            <CreditCard className="h-4 w-4 mr-1" />
+                            Update Payment
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Update Dialog */}
+        <Dialog open={paymentDialog.open} onOpenChange={(open) => setPaymentDialog({ open, purchase: null })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Update Payment Status</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Payment Status</Label>
+                <Select
+                  value={paymentForm.paymentStatus}
+                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentStatus: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="partial">Partial Payment</SelectItem>
+                    <SelectItem value="paid">Fully Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Amount Paid</Label>
+                <VoiceInput
+                  value={paymentForm.amountPaid}
+                  placeholder="Enter amount paid"
+                  type="currency"
+                  onResult={(text) => setPaymentForm({ ...paymentForm, amountPaid: text })}
+                />
+              </div>
+
+              <div>
+                <Label>Payment Date</Label>
+                <Input
+                  type="date"
+                  value={paymentForm.paymentDate}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
+                />
+              </div>
+
+              <Button 
+                onClick={handlePaymentSubmit}
+                className="w-full"
+                disabled={updatePaymentMutation.isPending}
+              >
+                {updatePaymentMutation.isPending ? "Updating..." : "Update Payment"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
