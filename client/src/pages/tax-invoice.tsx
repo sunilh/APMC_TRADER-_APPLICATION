@@ -119,41 +119,43 @@ export default function TaxInvoice() {
           <meta charset="utf-8">
           <title>Tax Invoice - ${taxInvoice.invoiceNumber}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 15px; font-size: 10px; line-height: 1.2; }
-            .header { text-align: center; margin-bottom: 12px; }
-            .invoice-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
-            .invoice-info { font-size: 11px; margin-bottom: 12px; }
-            .details-box { border: 1px solid #000; padding: 8px; margin-bottom: 8px; }
-            .details-header { font-weight: bold; text-align: center; margin-bottom: 6px; padding: 3px; background-color: #f0f0f0; font-size: 10px; }
-            .details-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-            .details-label { font-weight: bold; min-width: 120px; font-size: 9px; }
-            .details-value { font-size: 9px; }
-            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; }
-            .items-table th, .items-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+            body { font-family: Arial, sans-serif; margin: 40px auto; font-size: 12px; line-height: 1.4; max-width: 80%; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .invoice-title { font-size: 22px; font-weight: bold; margin-bottom: 8px; }
+            .invoice-info { font-size: 13px; margin-bottom: 15px; }
+            .details-box { border: 1px solid #000; padding: 12px; margin-bottom: 12px; }
+            .details-header { font-weight: bold; text-align: center; margin-bottom: 8px; padding: 4px; background-color: #f0f0f0; font-size: 12px; }
+            .details-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+            .details-label { font-weight: bold; min-width: 150px; font-size: 11px; }
+            .details-value { font-size: 11px; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; }
+            .items-table th, .items-table td { border: 1px solid #000; padding: 6px; text-align: center; }
             .items-table th { background-color: #f0f0f0; font-weight: bold; }
-            .calculations-box { border: 1px solid #000; padding: 8px; margin-bottom: 8px; }
-            .calc-row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 9px; }
+            .calculations-box { border: 1px solid #000; padding: 12px; margin-bottom: 12px; }
+            .calc-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 11px; }
             .calc-label { font-weight: bold; }
-            .total-row { border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-weight: bold; font-size: 11px; }
-            .bank-details { border: 1px solid #000; padding: 8px; margin-bottom: 10px; }
-            .footer { margin-top: 15px; text-align: right; font-size: 9px; }
-            .company-details { display: flex; justify-content: space-between; gap: 10px; }
+            .total-row { border-top: 1px solid #000; padding-top: 6px; margin-top: 6px; font-weight: bold; font-size: 13px; }
+            .bank-details { border: 1px solid #000; padding: 12px; margin-bottom: 15px; }
+            .footer { margin-top: 20px; text-align: right; font-size: 11px; }
+            .company-details { display: flex; justify-content: space-between; gap: 15px; }
             .company-box { flex: 1; }
-            .two-column { display: flex; gap: 10px; margin-bottom: 8px; }
+            .two-column { display: flex; gap: 15px; margin-bottom: 12px; }
             .column { flex: 1; }
-            .horizontal-layout { margin-bottom: 10px; }
-            .full-width-section { margin-bottom: 8px; border: 1px solid #000; padding: 6px; }
-            .section-header-horizontal { font-weight: bold; text-align: center; margin-bottom: 6px; padding: 3px; background-color: #f0f0f0; font-size: 10px; border-bottom: 1px solid #000; }
+            .horizontal-layout { margin-bottom: 15px; }
+            .full-width-section { margin-bottom: 12px; border: 1px solid #000; padding: 10px; }
+            .section-header-horizontal { font-weight: bold; text-align: center; margin-bottom: 8px; padding: 4px; background-color: #f0f0f0; font-size: 12px; border-bottom: 1px solid #000; }
             .horizontal-rows { }
-            .row-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 4px; }
-            .row-group span { font-size: 9px; min-width: 150px; }
+            .row-group { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 6px; }
+            .row-group span { font-size: 11px; min-width: 180px; }
             @media print { 
-              body { margin: 10px; font-size: 9px; } 
-              .header { margin-bottom: 8px; }
-              .details-box { margin-bottom: 6px; padding: 6px; }
-              .calculations-box { margin-bottom: 6px; padding: 6px; }
-              .bank-details { margin-bottom: 6px; padding: 6px; }
-              .footer { margin-top: 10px; }
+              body { margin: 30px auto; font-size: 11px; max-width: 80%; } 
+              .header { margin-bottom: 15px; }
+              .invoice-title { font-size: 20px; }
+              .details-box { margin-bottom: 10px; padding: 10px; }
+              .calculations-box { margin-bottom: 10px; padding: 10px; }
+              .bank-details { margin-bottom: 12px; padding: 10px; }
+              .footer { margin-top: 15px; }
+              .row-group span { font-size: 10px; min-width: 170px; }
             }
           </style>
         </head>
