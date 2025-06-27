@@ -250,14 +250,15 @@ export default function Buyers() {
                   Add Buyer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingBuyer ? "Edit Buyer" : "Add New Buyer"}
                   </DialogTitle>
                 </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="max-h-[70vh] overflow-y-auto pr-2">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
                       name="name"
@@ -406,6 +407,7 @@ export default function Buyers() {
                     </Button>
                   </form>
                 </Form>
+                </div>
               </DialogContent>
             </Dialog>
           </CardHeader>
