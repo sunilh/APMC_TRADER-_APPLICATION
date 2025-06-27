@@ -10,7 +10,12 @@ import {
   insertBagSchema,
   insertBuyerSchema,
   insertTenantSchema,
+  lots,
+  farmers,
+  buyers,
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, gte, lte, or, ilike, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
@@ -1000,6 +1005,152 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error updating settings:", error);
       res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  // Buyer purchase tracking - get buyer's purchase history and payment status
+  app.get('/api/buyers/:buyerId/purchases', requireAuth, requireTenant, async (req, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user?.tenantId!;
+
+      const purchases = await db
+        .select({
+          lotId: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerName: farmers.name,
+          numberOfBags: lots.numberOfBags,
+          varietyGrade: lots.varietyGrade,
+          grade: lots.grade,
+          status: lots.status,
+          billGenerated: lots.billGenerated,
+          billGeneratedAt: lots.billGeneratedAt,
+          paymentStatus: lots.paymentStatus,
+          amountDue: lots.amountDue,
+          amountPaid: lots.amountPaid,
+          paymentDate: lots.paymentDate,
+          createdAt: lots.createdAt,
+        })
+        .from(lots)
+        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+        .where(
+          and(
+            eq(lots.buyerId, buyerId),
+            eq(lots.tenantId, tenantId)
+          )
+        )
+        .orderBy(desc(lots.createdAt));
+
+      res.json(purchases);
+    } catch (error) {
+      console.error('Error fetching buyer purchases:', error);
+      res.status(500).json({ message: 'Failed to fetch buyer purchases' });
+    }
+  });
+
+  // Get all buyers with their purchase summary
+  app.get('/api/buyers/summary', requireAuth, requireTenant, async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const { search } = req.query;
+
+      let whereCondition = eq(buyers.tenantId, tenantId);
+      
+      if (search) {
+        whereCondition = and(
+          whereCondition,
+          or(
+            ilike(buyers.name, `%${search}%`),
+            ilike(buyers.mobile, `%${search}%`),
+            ilike(buyers.contactPerson, `%${search}%`)
+          )
+        );
+      }
+
+      const buyerSummaries = await db
+        .select({
+          buyerId: buyers.id,
+          buyerName: buyers.name,
+          buyerMobile: buyers.mobile,
+          buyerContact: buyers.contactPerson,
+          totalLots: sql<number>`COUNT(${lots.id})::int`,
+          completedLots: sql<number>`COUNT(CASE WHEN ${lots.status} = 'completed' THEN 1 END)::int`,
+          billGeneratedLots: sql<number>`COUNT(CASE WHEN ${lots.billGenerated} = true THEN 1 END)::int`,
+          pendingBills: sql<number>`COUNT(CASE WHEN ${lots.status} = 'completed' AND ${lots.billGenerated} = false THEN 1 END)::int`,
+          totalAmountDue: sql<string>`COALESCE(SUM(${lots.amountDue}), 0)`,
+          totalAmountPaid: sql<string>`COALESCE(SUM(${lots.amountPaid}), 0)`,
+          pendingPayments: sql<number>`COUNT(CASE WHEN ${lots.paymentStatus} = 'pending' AND ${lots.billGenerated} = true THEN 1 END)::int`,
+        })
+        .from(buyers)
+        .leftJoin(lots, and(eq(buyers.id, lots.buyerId), eq(lots.tenantId, tenantId)))
+        .where(whereCondition)
+        .groupBy(buyers.id, buyers.name, buyers.mobile, buyers.contactPerson)
+        .orderBy(buyers.name);
+
+      res.json(buyerSummaries);
+    } catch (error) {
+      console.error('Error fetching buyer summaries:', error);
+      res.status(500).json({ message: 'Failed to fetch buyer summaries' });
+    }
+  });
+
+  // Update payment status for a lot
+  app.patch('/api/lots/:lotId/payment', requireAuth, requireTenant, async (req, res) => {
+    try {
+      const lotId = parseInt(req.params.lotId);
+      const tenantId = req.user?.tenantId!;
+      const { paymentStatus, amountPaid, paymentDate } = req.body;
+
+      await db
+        .update(lots)
+        .set({
+          paymentStatus,
+          amountPaid: amountPaid?.toString(),
+          paymentDate: paymentDate ? new Date(paymentDate) : null,
+        })
+        .where(
+          and(
+            eq(lots.id, lotId),
+            eq(lots.tenantId, tenantId)
+          )
+        );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      res.status(500).json({ message: 'Failed to update payment status' });
+    }
+  });
+
+  // Mark tax invoice as generated and calculate amount due
+  app.patch('/api/tax-invoice/:buyerId/mark-generated', requireAuth, requireTenant, async (req, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user?.tenantId!;
+      const { totalAmount } = req.body;
+
+      // Mark all completed lots for this buyer as bill generated and set amount due
+      await db
+        .update(lots)
+        .set({
+          billGenerated: true,
+          billGeneratedAt: new Date(),
+          amountDue: totalAmount?.toString(),
+          paymentStatus: 'pending',
+        })
+        .where(
+          and(
+            eq(lots.buyerId, buyerId),
+            eq(lots.tenantId, tenantId),
+            eq(lots.status, 'completed'),
+            eq(lots.billGenerated, false)
+          )
+        );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking bills as generated:', error);
+      res.status(500).json({ message: 'Failed to mark bills as generated' });
     }
   });
 

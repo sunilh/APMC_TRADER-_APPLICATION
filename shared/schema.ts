@@ -88,6 +88,12 @@ export const lots = pgTable("lots", {
   lotPrice: decimal("lot_price", { precision: 10, scale: 2 }),
   buyerId: integer("buyer_id").references(() => buyers.id),
   status: text("status").notNull().default("active"), // 'active', 'completed', 'cancelled'
+  billGenerated: boolean("bill_generated").notNull().default(false),
+  billGeneratedAt: timestamp("bill_generated_at"),
+  paymentStatus: text("payment_status").notNull().default("pending"), // 'pending', 'partial', 'paid'
+  amountDue: decimal("amount_due", { precision: 12, scale: 2 }),
+  amountPaid: decimal("amount_paid", { precision: 12, scale: 2 }).default('0'),
+  paymentDate: timestamp("payment_date"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

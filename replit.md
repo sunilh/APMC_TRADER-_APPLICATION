@@ -247,6 +247,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added Tax Invoice navigation menu item for easy access to invoice generation system
   - Optimized invoice layout to fit single page at 70% usage with compact two-column design and reduced font sizes
   - Fixed buyer lot assignment to ensure all buyers can generate tax invoices from their completed transactions
+- June 27, 2025: Implemented comprehensive buyer tracking and purchase monitoring system
+  - Created buyer tracking dashboard with search functionality by name, mobile number, and contact person
+  - Added buyer summary view showing total lots, completed purchases, bill generation status, and payment tracking
+  - Implemented detailed purchase history with lot-by-lot breakdown showing farmer details, payment status, and bill generation
+  - Added payment status management system allowing staff to update payment received, payment dates, and status
+  - Created buyer search API endpoints with SQL aggregation for purchase summaries and payment analytics
+  - Enhanced navigation with dedicated "Buyer Tracking" menu item for easy access to purchase monitoring
+  - System provides complete visibility into buyer purchase patterns, outstanding payments, and billing workflow
 
 # User Preferences
 
