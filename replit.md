@@ -263,6 +263,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Maintained trilingual voice input functionality across all form fields
   - Confirmed all fields work properly: Company Name, Contact Person, Mobile, Address, PAN Number, GST Number, HSN Code
   - Both create and edit modes function correctly with proper field validation and data persistence
+- June 27, 2025: Completed enhanced tax calculation system with advanced features
+  - Implemented packaging weight field for accurate weight-based calculations in agricultural trading
+  - Added comprehensive SGST/CGST/IGST handling with proper taxable amount display and breakdown
+  - Integrated hamali calculations from settings with cess on commission for complete fee structure
+  - Added bank branch name and address fields to database for complete banking information
+  - Enhanced settings interface with packaging weight configuration and preview calculations
+  - Fixed tax invoice runtime errors with proper null checking for currency formatting
+  - System now provides complete tax compliance with all Indian agricultural trading standards
 
 # User Preferences
 

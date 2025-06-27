@@ -99,7 +99,10 @@ export default function TaxInvoice() {
     enabled: !!selectedBuyerId,
   });
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '₹0.00';
+    }
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 

@@ -22,6 +22,7 @@ const gstSettingsSchema = z.object({
   cess: z.number().min(0).max(100),
   unloadHamali: z.number().min(0),
   packaging: z.number().min(0),
+  packagingWeight: z.number().min(0),
   weighingFee: z.number().min(0),
   apmcCommission: z.number().min(0).max(100),
 });
@@ -35,6 +36,7 @@ interface TenantSettings {
     cess: number;
     unloadHamali: number;
     packaging: number;
+    packagingWeight: number;
     weighingFee: number;
     apmcCommission: number;
   };
