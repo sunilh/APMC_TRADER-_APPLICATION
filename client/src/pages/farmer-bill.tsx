@@ -68,9 +68,10 @@ export default function FarmerBill() {
   });
 
   // Get all completed lots for the selected farmer
-  const farmerLots = lots?.filter((lot: Lot) => 
-    lot.farmerId.toString() === selectedFarmerId && lot.status === 'completed'
-  ) || [];
+  const farmerLots = selectedFarmerId && lots ? 
+    lots.filter((lot: Lot) => 
+      lot.farmerId.toString() === selectedFarmerId && lot.status === 'completed'
+    ) : [];
 
   const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
 
@@ -336,6 +337,7 @@ export default function FarmerBill() {
   console.log('Selected farmer ID:', selectedFarmerId);
   console.log('Farmer lots for selected farmer:', farmerLots);
   console.log('Selected farmer object:', selectedFarmer);
+  console.log('Will show billing form?', selectedFarmer && tenant && farmerLots.length > 0);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -396,7 +398,10 @@ export default function FarmerBill() {
                       ? 'ring-2 ring-blue-500 bg-blue-50' 
                       : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setSelectedFarmerId(lot.farmerId.toString())}
+                  onClick={() => {
+                    console.log('Farmer clicked:', lot.farmer.name, 'ID:', lot.farmerId);
+                    setSelectedFarmerId(lot.farmerId.toString());
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="space-y-2">
