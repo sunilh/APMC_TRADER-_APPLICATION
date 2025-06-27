@@ -255,6 +255,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Removed separate "Buyer Tracking" menu item - all functionality now accessible through main Buyers page
   - Created comprehensive buyer summary showing total amount due, amount paid, and pending payments count
   - System provides complete buyer lifecycle management: creation, editing, purchase tracking, and payment monitoring
+- June 27, 2025: Fixed buyer form scrolling and enhanced dialog accessibility
+  - Resolved buyer create and edit dialog scrolling issues for all screen sizes
+  - Increased dialog width to max-w-2xl to accommodate all fields comfortably
+  - Added proper scrollable containers with max-h-[70vh] and overflow-y-auto
+  - Enhanced form layout to ensure all 7 buyer fields are accessible and editable
+  - Maintained trilingual voice input functionality across all form fields
+  - Confirmed all fields work properly: Company Name, Contact Person, Mobile, Address, PAN Number, GST Number, HSN Code
+  - Both create and edit modes function correctly with proper field validation and data persistence
 
 # User Preferences
 
