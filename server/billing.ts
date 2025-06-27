@@ -462,18 +462,22 @@ export interface TaxInvoice {
     hsnCode: string;
     bags: number;
     weightKg: number;
+    weightQuintals: number;
     ratePerQuintal: number;
-    amountInRupees: number;
+    basicAmount: number;
   }>;
   calculations: {
-    subTotal: number;
-    packingCharges: number;
+    basicAmount: number;
+    packaging: number;
+    hamali: number;
     weighingCharges: number;
     commission: number;
+    cessOnCommission: number;
     taxableAmount: number;
     sgst: number;
     cgst: number;
-    cess: number;
+    igst: number;
+    totalGst: number;
     totalAmount: number;
   };
   bankDetails: {
@@ -481,6 +485,8 @@ export interface TaxInvoice {
     accountNumber: string;
     ifscCode: string;
     accountHolder: string;
+    branchName: string;
+    branchAddress: string;
   };
 }
 
@@ -552,35 +558,45 @@ export async function generateTaxInvoice(
         hsnCode: buyer.hsnCode,
         bags: bagCount,
         weightKg: weightKg,
+        weightQuintals: weightKg / 100,
         ratePerQuintal: lotPrice,
-        amountInRupees: amountInRupees,
+        basicAmount: amountInRupees,
       });
 
       totalBags += bagCount;
       subTotal += amountInRupees;
     }
 
-    // Get tenant settings for calculations
+    // Get tenant settings for enhanced calculations
     const settings = (tenant.settings as any) || {};
     const gstSettings = settings.gstSettings || {};
     
-    const packingRate = gstSettings.packaging || 5;
-    const weighingRate = gstSettings.weighingFee || 1.5;
-    const commissionRate = gstSettings.apmcCommission || 2;
+    const packagingWeight = gstSettings.packagingWeight || 1.0; // kg per bag
+    const hamaliRate = gstSettings.unloadHamali || 3.0; // per bag
+    const weighingFeeRate = gstSettings.weighingFee || 2.0; // per bag
+    const commissionRate = gstSettings.apmcCommission || 5.0; // percentage
     const sgstRate = gstSettings.sgst || 2.5;
     const cgstRate = gstSettings.cgst || 2.5;
     const cessRate = gstSettings.cess || 0.6;
 
-    // Calculate charges
-    const packingCharges = totalBags * packingRate;
-    const weighingCharges = totalBags * weighingRate;
+    // Enhanced charge calculations
+    const packaging = totalBags * packagingWeight * 1; // ₹1 per kg packaging weight
+    const hamali = totalBags * hamaliRate;
+    const weighingCharges = totalBags * weighingFeeRate;
     const commission = (subTotal * commissionRate) / 100;
-    const taxableAmount = subTotal + packingCharges + weighingCharges + commission;
+    const cessOnCommission = (commission * cessRate) / 100;
     
+    // Calculate taxable amount
+    const basicAmount = subTotal;
+    const taxableAmount = basicAmount + packaging + hamali + weighingCharges + commission + cessOnCommission;
+    
+    // Calculate GST (assuming intra-state for now)
     const sgst = (taxableAmount * sgstRate) / 100;
     const cgst = (taxableAmount * cgstRate) / 100;
-    const cess = (taxableAmount * cessRate) / 100;
-    const totalAmount = taxableAmount + sgst + cgst + cess;
+    const igst = 0; // For inter-state transactions, sgst + cgst = igst
+    const totalGst = sgst + cgst + igst;
+    
+    const totalAmount = taxableAmount + totalGst;
 
     // Generate invoice number
     const today = new Date();
@@ -610,14 +626,17 @@ export async function generateTaxInvoice(
       },
       items,
       calculations: {
-        subTotal: Math.round(subTotal * 100) / 100,
-        packingCharges: Math.round(packingCharges * 100) / 100,
+        basicAmount: Math.round(basicAmount * 100) / 100,
+        packaging: Math.round(packaging * 100) / 100,
+        hamali: Math.round(hamali * 100) / 100,
         weighingCharges: Math.round(weighingCharges * 100) / 100,
         commission: Math.round(commission * 100) / 100,
+        cessOnCommission: Math.round(cessOnCommission * 100) / 100,
         taxableAmount: Math.round(taxableAmount * 100) / 100,
         sgst: Math.round(sgst * 100) / 100,
         cgst: Math.round(cgst * 100) / 100,
-        cess: Math.round(cess * 100) / 100,
+        igst: Math.round(igst * 100) / 100,
+        totalGst: Math.round(totalGst * 100) / 100,
         totalAmount: Math.round(totalAmount * 100) / 100,
       },
       bankDetails: {
@@ -625,6 +644,8 @@ export async function generateTaxInvoice(
         accountNumber: tenant.bankAccountNumber || '',
         ifscCode: tenant.ifscCode || '',
         accountHolder: tenant.accountHolderName || '',
+        branchName: tenant.branchName || '',
+        branchAddress: tenant.branchAddress || '',
       },
     };
 

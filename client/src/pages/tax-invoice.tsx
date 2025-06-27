@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Download, FileText, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Tax Invoice Interface matching backend
+// Enhanced Tax Invoice Interface matching backend
 interface TaxInvoice {
   invoiceNumber: string;
   invoiceDate: string;
@@ -35,18 +35,22 @@ interface TaxInvoice {
     hsnCode: string;
     bags: number;
     weightKg: number;
+    weightQuintals: number;
     ratePerQuintal: number;
-    amountInRupees: number;
+    basicAmount: number;
   }>;
   calculations: {
-    subTotal: number;
-    packingCharges: number;
+    basicAmount: number;
+    packaging: number;
+    hamali: number;
     weighingCharges: number;
     commission: number;
+    cessOnCommission: number;
     taxableAmount: number;
     sgst: number;
     cgst: number;
-    cess: number;
+    igst: number;
+    totalGst: number;
     totalAmount: number;
   };
   bankDetails: {
@@ -54,6 +58,8 @@ interface TaxInvoice {
     accountNumber: string;
     ifscCode: string;
     accountHolder: string;
+    branchName: string;
+    branchAddress: string;
   };
 }
 
@@ -238,7 +244,7 @@ export default function TaxInvoice() {
                   <td>${item.bags}</td>
                   <td>${item.weightKg.toFixed(1)}</td>
                   <td>${formatCurrency(item.ratePerQuintal)}</td>
-                  <td>${formatCurrency(item.amountInRupees)}</td>
+                  <td>${formatCurrency(item.basicAmount)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -248,22 +254,30 @@ export default function TaxInvoice() {
             <div class="calculations-box column">
               <div class="details-header">AMOUNT CALCULATIONS</div>
               <div class="calc-row">
-                <span class="calc-label">Sub Total</span>
-                <span>${formatCurrency(taxInvoice.calculations.subTotal)}</span>
+                <span class="calc-label">Basic Amount</span>
+                <span>${formatCurrency(taxInvoice.calculations.basicAmount)}</span>
               </div>
               <div class="calc-row">
-                <span class="calc-label">+ Packing (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
-                <span>${formatCurrency(taxInvoice.calculations.packingCharges)}</span>
+                <span class="calc-label">+ Packaging (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span>${formatCurrency(taxInvoice.calculations.packaging)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ Hamali (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span>${formatCurrency(taxInvoice.calculations.hamali)}</span>
               </div>
               <div class="calc-row">
                 <span class="calc-label">+ Weighing (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
                 <span>${formatCurrency(taxInvoice.calculations.weighingCharges)}</span>
               </div>
               <div class="calc-row">
-                <span class="calc-label">+ Commission (2%)</span>
+                <span class="calc-label">+ Commission</span>
                 <span>${formatCurrency(taxInvoice.calculations.commission)}</span>
               </div>
               <div class="calc-row">
+                <span class="calc-label">+ Cess on Commission</span>
+                <span>${formatCurrency(taxInvoice.calculations.cessOnCommission)}</span>
+              </div>
+              <div class="calc-row" style="background-color: #fef3c7; font-weight: bold;">
                 <span class="calc-label">Taxable Amount</span>
                 <span>${formatCurrency(taxInvoice.calculations.taxableAmount)}</span>
               </div>
@@ -275,9 +289,14 @@ export default function TaxInvoice() {
                 <span class="calc-label">+ CGST (2.5%)</span>
                 <span>${formatCurrency(taxInvoice.calculations.cgst)}</span>
               </div>
+              ${taxInvoice.calculations.igst > 0 ? `
               <div class="calc-row">
-                <span class="calc-label">+ CESS (0.6%)</span>
-                <span>${formatCurrency(taxInvoice.calculations.cess)}</span>
+                <span class="calc-label">+ IGST (5%)</span>
+                <span>${formatCurrency(taxInvoice.calculations.igst)}</span>
+              </div>` : ''}
+              <div class="calc-row" style="background-color: #dbeafe; font-weight: bold;">
+                <span class="calc-label">Total GST</span>
+                <span>${formatCurrency(taxInvoice.calculations.totalGst)}</span>
               </div>
               <div class="calc-row total-row">
                 <span class="calc-label">TOTAL PAYABLE</span>
@@ -302,6 +321,14 @@ export default function TaxInvoice() {
               <div class="details-row">
                 <span class="details-label">Holder:</span>
                 <span class="details-value">${taxInvoice.bankDetails.accountHolder}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Branch:</span>
+                <span class="details-value">${taxInvoice.bankDetails.branchName}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Branch Address:</span>
+                <span class="details-value">${taxInvoice.bankDetails.branchAddress}</span>
               </div>
               <div style="margin-top: 15px; font-size: 9px;">
                 <strong>Terms:</strong> Payment due within 30 days<br>

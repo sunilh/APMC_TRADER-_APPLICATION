@@ -297,6 +297,30 @@ export default function Settings() {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="packagingWeight">Packaging Weight (kg per bag)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="packagingWeight"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          {...gstForm.register("packagingWeight", { valueAsNumber: true })}
+                          className="flex-1"
+                        />
+                        <VoiceInput
+                          onResult={(value) => handleGSTVoiceInput('packagingWeight', value)}
+                          placeholder="Voice input"
+                          type="number"
+                        />
+                      </div>
+                      {gstForm.formState.errors.packagingWeight && (
+                        <p className="text-sm text-destructive">
+                          {gstForm.formState.errors.packagingWeight.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="weighingFee">Weighing Fee (₹ per bag)</Label>
                       <div className="flex gap-2">
                         <Input
@@ -360,6 +384,9 @@ export default function Settings() {
                       Per bag charges (50 bags): Unload Hamali: ₹{((gstForm.watch("unloadHamali") || 0) * 50).toFixed(2)}, 
                       Packaging: ₹{((gstForm.watch("packaging") || 0) * 50).toFixed(2)}, 
                       Weighing: ₹{((gstForm.watch("weighingFee") || 0) * 50).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      Packaging Weight: {((gstForm.watch("packagingWeight") || 0) * 50).toFixed(1)} kg for 50 bags
                     </p>
                     <p className="text-sm text-blue-800 mt-1 font-medium">
                       Total Tax: ₹{(((gstForm.watch("sgst") || 0) + (gstForm.watch("cgst") || 0) + (gstForm.watch("cess") || 0) + (gstForm.watch("apmcCommission") || 0)) * 10).toFixed(2)}
