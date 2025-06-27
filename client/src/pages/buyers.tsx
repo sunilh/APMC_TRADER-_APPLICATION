@@ -308,6 +308,26 @@ export default function Buyers() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="hsnCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>HSN Code *</FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input placeholder="Enter HSN code (e.g., 09042110)" {...field} className="flex-1" />
+                              <VoiceInput
+                                onResult={(value) => handleVoiceInput('hsnCode', value)}
+                                placeholder="Voice input"
+                                type="text"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <div className="flex justify-end space-x-2">
                       <Button
                         type="button"
@@ -371,6 +391,7 @@ export default function Buyers() {
                     <TableHead>Address</TableHead>
                     <TableHead>PAN Number</TableHead>
                     <TableHead>GST Number</TableHead>
+                    <TableHead>HSN Code</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -383,6 +404,7 @@ export default function Buyers() {
                       <TableCell>{buyer.address || "-"}</TableCell>
                       <TableCell>{buyer.panNumber || "-"}</TableCell>
                       <TableCell>{buyer.gstNumber || "-"}</TableCell>
+                      <TableCell>{buyer.hsnCode || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button

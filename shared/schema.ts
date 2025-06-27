@@ -66,6 +66,7 @@ export const buyers = pgTable("buyers", {
   address: text("address"),
   panNumber: text("pan_number"),
   gstNumber: text("gst_number"),
+  hsnCode: text("hsn_code").notNull(), // Mandatory HSN code for billing
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -238,6 +239,7 @@ export const insertBuyerSchema = createInsertSchema(buyers).omit({
   contactPerson: z.string().optional(),
   mobile: z.string().optional(), 
   address: z.string().optional(),
+  hsnCode: z.string().min(1, "HSN code is required"),
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({

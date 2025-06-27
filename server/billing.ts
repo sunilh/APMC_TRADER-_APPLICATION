@@ -232,15 +232,15 @@ export interface BuyerDayBill {
     totalWeight: number;
     totalWeightQuintals: number;
     pricePerQuintal: number;
+    hsnCode: string;
     basicAmount: number;
     charges: {
-      unloadHamali: number;
-      packaging: number;
-      weighingFee: number;
-      apmcCommission: number;
-      sgst: number;
-      cgst: number;
-      cess: number;
+      packing: number;
+      weighingCharges: number;
+      commission: number;
+      sgst: number; // 2.5%
+      cgst: number; // 2.5%
+      cess: number; // 0.6%
     };
     totalAmount: number;
   }>;
@@ -252,13 +252,12 @@ export interface BuyerDayBill {
     basicAmount: number;
     totalCharges: number;
     chargeBreakdown: {
-      unloadHamali: number;
-      packaging: number;
-      weighingFee: number;
-      apmcCommission: number;
-      sgst: number;
-      cgst: number;
-      cess: number;
+      packing: number;
+      weighingCharges: number;
+      commission: number;
+      sgst: number; // 2.5%
+      cgst: number; // 2.5%
+      cess: number; // 0.6%
     };
     totalPayable: number;
   };
@@ -348,9 +347,9 @@ export async function generateBuyerDayBill(
       const weighingFee = weighingFeeRate * numberOfBags;
       const apmcCommission = (lotGrossAmount * apmcCommissionRate) / 100;
       
-      const sgst = (lotGrossAmount * 9) / 100;
-      const cgst = (lotGrossAmount * 9) / 100;
-      const cess = (lotGrossAmount * 1) / 100;
+      const sgst = (lotGrossAmount * 2.5) / 100;
+      const cgst = (lotGrossAmount * 2.5) / 100;
+      const cess = (lotGrossAmount * 0.6) / 100;
       const lotCharges = unloadHamali + packaging + weighingFee + apmcCommission + sgst + cgst + cess;
       const totalAmount = lotGrossAmount + lotCharges;
 
@@ -371,12 +370,12 @@ export async function generateBuyerDayBill(
         totalWeight: weightKg,
         totalWeightQuintals: weightQuintals,
         pricePerQuintal: Number(lot.lotPrice) || 0,
+        hsnCode: buyer.hsnCode || '09042110', // Use buyer's HSN code from database
         basicAmount: lotGrossAmount,
         charges: {
-          unloadHamali,
-          packaging,
-          weighingFee,
-          apmcCommission,
+          packing: packaging,
+          weighingCharges: weighingFee,
+          commission: apmcCommission,
           sgst,
           cgst,
           cess,
@@ -423,10 +422,9 @@ export async function generateBuyerDayBill(
       basicAmount: grossAmount,
       totalCharges: totalDeductions,
       chargeBreakdown: {
-        unloadHamali: unloadHamaliRate * totalBags,
-        packaging: packagingRate * totalBags,
-        weighingFee: weighingFeeRate * totalBags,
-        apmcCommission: (grossAmount * apmcCommissionRate) / 100,
+        packing: packagingRate * totalBags,
+        weighingCharges: weighingFeeRate * totalBags,
+        commission: (grossAmount * apmcCommissionRate) / 100,
         sgst: totalSgst,
         cgst: totalCgst,
         cess: totalCess,
@@ -582,12 +580,12 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeight: weightKg,
             totalWeightQuintals: weightQuintals,
             pricePerQuintal,
+            hsnCode: buyer.hsnCode || '09042110',
             basicAmount,
             charges: {
-              unloadHamali,
-              packaging,
-              weighingFee,
-              apmcCommission,
+              packing: packaging,
+              weighingCharges: weighingFee,
+              commission: apmcCommission,
               sgst: sgstAmount,
               cgst: cgstAmount,
               cess: cessAmount,
@@ -602,10 +600,9 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             basicAmount,
             totalCharges,
             chargeBreakdown: {
-              unloadHamali,
-              packaging,
-              weighingFee,
-              apmcCommission,
+              packing: packaging,
+              weighingCharges: weighingFee,
+              commission: apmcCommission,
               sgst: sgstAmount,
               cgst: cgstAmount,
               cess: cessAmount,
@@ -648,11 +645,11 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             totalWeightQuintals: 5.0,
             pricePerQuintal: 2500,
             basicAmount: 12500,
+            hsnCode: '09042110',
             charges: {
-              unloadHamali: unloadHamaliRate * 10,
-              packaging: packagingRate * 10,
-              weighingFee: weighingFeeRate * 10,
-              apmcCommission: (12500 * apmcCommissionRate) / 100,
+              packing: packagingRate * 10,
+              weighingCharges: weighingFeeRate * 10,
+              commission: (12500 * apmcCommissionRate) / 100,
               sgst: demoSgst,
               cgst: demoCgst,
               cess: demoCess,
@@ -667,10 +664,9 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
             basicAmount: 12500,
             totalCharges: (unloadHamaliRate * 10) + (packagingRate * 10) + (weighingFeeRate * 10) + ((12500 * apmcCommissionRate) / 100) + demoTotalTax,
             chargeBreakdown: {
-              unloadHamali: unloadHamaliRate * 10,
-              packaging: packagingRate * 10,
-              weighingFee: weighingFeeRate * 10,
-              apmcCommission: (12500 * apmcCommissionRate) / 100,
+              packing: packagingRate * 10,
+              weighingCharges: weighingFeeRate * 10,
+              commission: (12500 * apmcCommissionRate) / 100,
               sgst: demoSgst,
               cgst: demoCgst,
               cess: demoCess,
@@ -713,11 +709,11 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         totalWeightQuintals: 8.0,
         pricePerQuintal: 2500,
         basicAmount: 20000,
+        hsnCode: '09042110',
         charges: {
-          unloadHamali: unloadHamaliRate * 20,
-          packaging: packagingRate * 20,
-          weighingFee: weighingFeeRate * 20,
-          apmcCommission: (20000 * apmcCommissionRate) / 100,
+          packing: packagingRate * 20,
+          weighingCharges: weighingFeeRate * 20,
+          commission: (20000 * apmcCommissionRate) / 100,
           sgst: finalDemoSgst,
           cgst: finalDemoCgst,
           cess: finalDemoCess,
@@ -732,10 +728,9 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
         basicAmount: 20000,
         totalCharges: (unloadHamaliRate * 20) + (packagingRate * 20) + (weighingFeeRate * 20) + ((20000 * apmcCommissionRate) / 100) + finalDemoTotalTax,
         chargeBreakdown: {
-          unloadHamali: unloadHamaliRate * 20,
-          packaging: packagingRate * 20,
-          weighingFee: weighingFeeRate * 20,
-          apmcCommission: (20000 * apmcCommissionRate) / 100,
+          packing: packagingRate * 20,
+          weighingCharges: weighingFeeRate * 20,
+          commission: (20000 * apmcCommissionRate) / 100,
           sgst: finalDemoSgst,
           cgst: finalDemoCgst,
           cess: finalDemoCess,
