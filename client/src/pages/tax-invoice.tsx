@@ -141,6 +141,12 @@ export default function TaxInvoice() {
             .company-box { flex: 1; }
             .two-column { display: flex; gap: 10px; margin-bottom: 8px; }
             .column { flex: 1; }
+            .horizontal-layout { margin-bottom: 10px; }
+            .full-width-section { margin-bottom: 8px; border: 1px solid #000; padding: 6px; }
+            .section-header-horizontal { font-weight: bold; text-align: center; margin-bottom: 6px; padding: 3px; background-color: #f0f0f0; font-size: 10px; border-bottom: 1px solid #000; }
+            .horizontal-rows { }
+            .row-group { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 4px; }
+            .row-group span { font-size: 9px; min-width: 150px; }
             @media print { 
               body { margin: 10px; font-size: 9px; } 
               .header { margin-bottom: 8px; }
@@ -160,64 +166,42 @@ export default function TaxInvoice() {
             </div>
           </div>
 
-          <div class="two-column">
-            <div class="details-box column">
-              <div class="details-header">SELLER DETAILS</div>
-              <div class="details-row">
-                <span class="details-label">Company:</span>
-                <span class="details-value">${taxInvoice.seller.companyName}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">APMC:</span>
-                <span class="details-value">${taxInvoice.seller.apmcCode}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">Address:</span>
-                <span class="details-value">${taxInvoice.seller.address}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">Mobile:</span>
-                <span class="details-value">${taxInvoice.seller.mobile}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">GSTIN:</span>
-                <span class="details-value">${taxInvoice.seller.gstin}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">PAN:</span>
-                <span class="details-value">${taxInvoice.seller.pan}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">FSSAI:</span>
-                <span class="details-value">${taxInvoice.seller.fssai}</span>
+          <!-- Horizontal Layout: All details in flowing rows -->
+          <div class="horizontal-layout">
+            <div class="full-width-section">
+              <div class="section-header-horizontal">SELLER DETAILS</div>
+              <div class="horizontal-rows">
+                <div class="row-group">
+                  <span><strong>Company:</strong> ${taxInvoice.seller.companyName}</span>
+                  <span><strong>APMC Code:</strong> ${taxInvoice.seller.apmcCode}</span>
+                  <span><strong>Mobile:</strong> ${taxInvoice.seller.mobile}</span>
+                </div>
+                <div class="row-group">
+                  <span><strong>Address:</strong> ${taxInvoice.seller.address}</span>
+                </div>
+                <div class="row-group">
+                  <span><strong>GSTIN:</strong> ${taxInvoice.seller.gstin}</span>
+                  <span><strong>PAN:</strong> ${taxInvoice.seller.pan}</span>
+                  <span><strong>FSSAI:</strong> ${taxInvoice.seller.fssai}</span>
+                </div>
               </div>
             </div>
 
-            <div class="details-box column">
-              <div class="details-header">BUYER DETAILS</div>
-              <div class="details-row">
-                <span class="details-label">Company:</span>
-                <span class="details-value">${taxInvoice.buyer.companyName}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">Contact:</span>
-                <span class="details-value">${taxInvoice.buyer.contactPerson}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">Address:</span>
-                <span class="details-value">${taxInvoice.buyer.address}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">Mobile:</span>
-                <span class="details-value">${taxInvoice.buyer.mobile}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">GSTIN:</span>
-                <span class="details-value">${taxInvoice.buyer.gstin}</span>
-              </div>
-              <div class="details-row">
-                <span class="details-label">PAN:</span>
-                <span class="details-value">${taxInvoice.buyer.pan || 'N/A'}</span>
+            <div class="full-width-section">
+              <div class="section-header-horizontal">BUYER DETAILS</div>
+              <div class="horizontal-rows">
+                <div class="row-group">
+                  <span><strong>Company:</strong> ${taxInvoice.buyer.companyName}</span>
+                  <span><strong>Contact Person:</strong> ${taxInvoice.buyer.contactPerson}</span>
+                  <span><strong>Mobile:</strong> ${taxInvoice.buyer.mobile}</span>
+                </div>
+                <div class="row-group">
+                  <span><strong>Address:</strong> ${taxInvoice.buyer.address}</span>
+                </div>
+                <div class="row-group">
+                  <span><strong>GSTIN:</strong> ${taxInvoice.buyer.gstin}</span>
+                  <span><strong>PAN:</strong> ${taxInvoice.buyer.pan || 'N/A'}</span>
+                </div>
               </div>
             </div>
           </div>
