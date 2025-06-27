@@ -148,6 +148,17 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+// Patti numbers for farmer bill management
+export const pattis = pgTable("pattis", {
+  id: serial("id").primaryKey(),
+  pattiNumber: text("patti_number").notNull(),
+  description: text("description"),
+  status: text("status").default("active").notNull(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const tenantRelations = relations(tenants, ({ many }) => ({
   users: many(users),
@@ -257,6 +268,15 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   timestamp: true,
 });
 
+export const insertPattiSchema = createInsertSchema(pattis).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  pattiNumber: z.string().min(1, "Patti number is required"),
+  description: z.string().optional(),
+});
+
 // Types
 export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
@@ -272,3 +292,5 @@ export type Buyer = typeof buyers.$inferSelect;
 export type InsertBuyer = z.infer<typeof insertBuyerSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type Patti = typeof pattis.$inferSelect;
+export type InsertPatti = z.infer<typeof insertPattiSchema>;

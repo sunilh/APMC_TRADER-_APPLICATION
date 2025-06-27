@@ -115,6 +115,10 @@ export interface IStorage {
     paymentDate: string | null;
   }): Promise<void>;
 
+  // Patti management methods
+  getPattisByTenant(tenantId: number): Promise<any[]>;
+  createPatti(patti: { pattiNumber: string; description?: string; tenantId: number }): Promise<any>;
+
   sessionStore: any;
 }
 

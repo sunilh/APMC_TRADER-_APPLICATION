@@ -321,7 +321,14 @@ export default function FarmerBill() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Farmer Bill / ರೈತ ಬಿಲ್</h1>
-          <p className="text-gray-600 mt-2">Generate consolidated farmer payment bills / ಏಕೀಕೃತ ರೈತ ಪಾವತಿ ಬಿಲ್‌ಗಳನ್ನು ರಚಿಸಿ</p>
+          <p className="text-gray-600 mt-2">Generate consolidated farmer payment bills for ALL completed lots / ಎಲ್ಲಾ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳಿಗೆ ಏಕೀಕೃತ ರೈತ ಪಾವತಿ ಬಿಲ್‌ಗಳನ್ನು ರಚಿಸಿ</p>
+          {farmerLots.length > 1 && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800 font-medium">
+                ✓ Multi-lot billing: This farmer has {farmerLots.length} completed lots that will be included in one consolidated bill
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -349,13 +356,33 @@ export default function FarmerBill() {
 
             <div className="space-y-2">
               <Label htmlFor="patti-number">Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ</Label>
-              <VoiceInput
-                onResult={setPattiNumber}
-                placeholder="Enter patti number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
-                type="text"
-                value={pattiNumber}
-                onChange={(e) => setPattiNumber(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <VoiceInput
+                  onResult={setPattiNumber}
+                  placeholder="Enter patti number (e.g., P001, P002) / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
+                  type="text"
+                  value={pattiNumber}
+                  onChange={(e) => setPattiNumber(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    const today = new Date();
+                    const dateStr = today.toISOString().slice(2, 10).replace(/-/g, "");
+                    const timeStr = today.getHours().toString().padStart(2, "0") + 
+                                   today.getMinutes().toString().padStart(2, "0");
+                    setPattiNumber(`P${dateStr}${timeStr}`);
+                  }}
+                  className="whitespace-nowrap"
+                >
+                  Generate / ರಚನೆ
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Patti number is used to group farmer bills / ಪಟ್ಟಿ ಸಂಖ್ಯೆಯನ್ನು ರೈತರ ಬಿಲ್‌ಗಳನ್ನು ಗುಂಪುಗೂಡಿಸಲು ಬಳಸಲಾಗುತ್ತದೆ
+              </p>
             </div>
           </div>
         </CardContent>
