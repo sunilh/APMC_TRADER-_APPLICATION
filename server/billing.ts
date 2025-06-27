@@ -552,7 +552,7 @@ export async function generateTaxInvoice(
       const lotPrice = Number(lot.lotPrice) || 0;
       const amountInRupees = (weightKg / 100) * lotPrice;
 
-      console.log(`Debug Tax Invoice - Lot ${lot.lotNumber}: weight=${weightKg}kg, bags=${bagCount}, price=${lotPrice}, amount=${amountInRupees}`);
+
 
       items.push({
         lotNo: lot.lotNumber,

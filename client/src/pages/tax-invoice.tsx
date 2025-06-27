@@ -45,7 +45,7 @@ interface TaxInvoice {
     hamali: number;
     weighingCharges: number;
     commission: number;
-    cessOnCommission: number;
+    cess: number;
     taxableAmount: number;
     sgst: number;
     cgst: number;
@@ -513,7 +513,7 @@ export default function TaxInvoice() {
                           <td className="border border-gray-300 p-2 text-center">{item.bags}</td>
                           <td className="border border-gray-300 p-2 text-center">{item.weightKg.toFixed(1)}</td>
                           <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.ratePerQuintal)}</td>
-                          <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.amountInRupees)}</td>
+                          <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.basicAmount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -527,11 +527,11 @@ export default function TaxInvoice() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span><strong>Sub Total (Basic Amount)</strong></span>
-                    <span>{formatCurrency(taxInvoice.calculations.subTotal)}</span>
+                    <span>{formatCurrency(taxInvoice.calculations.basicAmount)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span><strong>Add: Packing Charges ({taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹5)</strong></span>
-                    <span>{formatCurrency(taxInvoice.calculations.packingCharges)}</span>
+                    <span>{formatCurrency(taxInvoice.calculations.packaging)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span><strong>Add: Weighing Charges ({taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹1.50)</strong></span>

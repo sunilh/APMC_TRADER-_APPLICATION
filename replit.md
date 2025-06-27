@@ -278,6 +278,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Fixed TaxInvoice TypeScript interface to use `cess` instead of `cessOnCommission`
   - Fixed default cess rate from 0% to 0.6% in both backend and frontend settings for proper tax calculations
   - Tax calculations now follow authentic Indian agricultural trading tax structure
+- June 27, 2025: Resolved tax invoice amount display issue with correct data mapping
+  - Fixed critical frontend-backend property mapping mismatch causing zero amounts in tax invoices
+  - Corrected item amount display from `amountInRupees` to `basicAmount` to match backend response
+  - Fixed calculations section to use correct property names: `basicAmount`, `packaging`, `weighingCharges`
+  - Tax invoices now correctly display all calculated amounts: basic amounts, charges, taxes, and totals
+  - System generates authentic tax invoices with proper amount calculations from real agricultural trading data
 
 # User Preferences
 
