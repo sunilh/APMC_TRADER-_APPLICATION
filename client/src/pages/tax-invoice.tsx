@@ -110,24 +110,36 @@ export default function TaxInvoice() {
           <meta charset="utf-8">
           <title>Tax Invoice - ${taxInvoice.invoiceNumber}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .invoice-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-            .invoice-info { font-size: 14px; margin-bottom: 20px; }
-            .details-box { border: 2px solid #000; padding: 15px; margin-bottom: 20px; }
-            .details-header { font-weight: bold; text-align: center; margin-bottom: 10px; padding: 5px; background-color: #f0f0f0; }
-            .details-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-            .details-label { font-weight: bold; min-width: 150px; }
-            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .items-table th, .items-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+            body { font-family: Arial, sans-serif; margin: 15px; font-size: 10px; line-height: 1.2; }
+            .header { text-align: center; margin-bottom: 12px; }
+            .invoice-title { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
+            .invoice-info { font-size: 11px; margin-bottom: 12px; }
+            .details-box { border: 1px solid #000; padding: 8px; margin-bottom: 8px; }
+            .details-header { font-weight: bold; text-align: center; margin-bottom: 6px; padding: 3px; background-color: #f0f0f0; font-size: 10px; }
+            .details-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+            .details-label { font-weight: bold; min-width: 120px; font-size: 9px; }
+            .details-value { font-size: 9px; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9px; }
+            .items-table th, .items-table td { border: 1px solid #000; padding: 4px; text-align: center; }
             .items-table th { background-color: #f0f0f0; font-weight: bold; }
-            .calculations-box { border: 2px solid #000; padding: 15px; margin-bottom: 20px; }
-            .calc-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+            .calculations-box { border: 1px solid #000; padding: 8px; margin-bottom: 8px; }
+            .calc-row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 9px; }
             .calc-label { font-weight: bold; }
-            .total-row { border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 16px; }
-            .bank-details { border: 2px solid #000; padding: 15px; margin-bottom: 20px; }
-            .footer { margin-top: 40px; text-align: right; }
-            @media print { body { margin: 0; } }
+            .total-row { border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; font-weight: bold; font-size: 11px; }
+            .bank-details { border: 1px solid #000; padding: 8px; margin-bottom: 10px; }
+            .footer { margin-top: 15px; text-align: right; font-size: 9px; }
+            .company-details { display: flex; justify-content: space-between; gap: 10px; }
+            .company-box { flex: 1; }
+            .two-column { display: flex; gap: 10px; margin-bottom: 8px; }
+            .column { flex: 1; }
+            @media print { 
+              body { margin: 10px; font-size: 9px; } 
+              .header { margin-bottom: 8px; }
+              .details-box { margin-bottom: 6px; padding: 6px; }
+              .calculations-box { margin-bottom: 6px; padding: 6px; }
+              .bank-details { margin-bottom: 6px; padding: 6px; }
+              .footer { margin-top: 10px; }
+            }
           </style>
         </head>
         <body>
@@ -139,63 +151,65 @@ export default function TaxInvoice() {
             </div>
           </div>
 
-          <div class="details-box">
-            <div class="details-header">SELLER DETAILS</div>
-            <div class="details-row">
-              <span class="details-label">Company Name:</span>
-              <span>${taxInvoice.seller.companyName}</span>
+          <div class="two-column">
+            <div class="details-box column">
+              <div class="details-header">SELLER DETAILS</div>
+              <div class="details-row">
+                <span class="details-label">Company:</span>
+                <span class="details-value">${taxInvoice.seller.companyName}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">APMC:</span>
+                <span class="details-value">${taxInvoice.seller.apmcCode}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Address:</span>
+                <span class="details-value">${taxInvoice.seller.address}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Mobile:</span>
+                <span class="details-value">${taxInvoice.seller.mobile}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">GSTIN:</span>
+                <span class="details-value">${taxInvoice.seller.gstin}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">PAN:</span>
+                <span class="details-value">${taxInvoice.seller.pan}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">FSSAI:</span>
+                <span class="details-value">${taxInvoice.seller.fssai}</span>
+              </div>
             </div>
-            <div class="details-row">
-              <span class="details-label">APMC Code:</span>
-              <span>${taxInvoice.seller.apmcCode}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Address:</span>
-              <span>${taxInvoice.seller.address}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Mobile:</span>
-              <span>${taxInvoice.seller.mobile}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">GSTIN:</span>
-              <span>${taxInvoice.seller.gstin}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">PAN:</span>
-              <span>${taxInvoice.seller.pan}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">FSSAI:</span>
-              <span>${taxInvoice.seller.fssai}</span>
-            </div>
-          </div>
 
-          <div class="details-box">
-            <div class="details-header">BUYER DETAILS</div>
-            <div class="details-row">
-              <span class="details-label">Company Name:</span>
-              <span>${taxInvoice.buyer.companyName}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Contact Person:</span>
-              <span>${taxInvoice.buyer.contactPerson}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Address:</span>
-              <span>${taxInvoice.buyer.address}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Mobile:</span>
-              <span>${taxInvoice.buyer.mobile}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">GSTIN:</span>
-              <span>${taxInvoice.buyer.gstin}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">PAN:</span>
-              <span>${taxInvoice.buyer.pan}</span>
+            <div class="details-box column">
+              <div class="details-header">BUYER DETAILS</div>
+              <div class="details-row">
+                <span class="details-label">Company:</span>
+                <span class="details-value">${taxInvoice.buyer.companyName}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Contact:</span>
+                <span class="details-value">${taxInvoice.buyer.contactPerson}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Address:</span>
+                <span class="details-value">${taxInvoice.buyer.address}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Mobile:</span>
+                <span class="details-value">${taxInvoice.buyer.mobile}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">GSTIN:</span>
+                <span class="details-value">${taxInvoice.buyer.gstin}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">PAN:</span>
+                <span class="details-value">${taxInvoice.buyer.pan || 'N/A'}</span>
+              </div>
             </div>
           </div>
 
@@ -230,73 +244,78 @@ export default function TaxInvoice() {
             </tbody>
           </table>
 
-          <div class="calculations-box">
-            <div class="details-header">AMOUNT CALCULATIONS</div>
-            <div class="calc-row">
-              <span class="calc-label">Sub Total (Basic Amount)</span>
-              <span>${formatCurrency(taxInvoice.calculations.subTotal)}</span>
+          <div class="two-column">
+            <div class="calculations-box column">
+              <div class="details-header">AMOUNT CALCULATIONS</div>
+              <div class="calc-row">
+                <span class="calc-label">Sub Total</span>
+                <span>${formatCurrency(taxInvoice.calculations.subTotal)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ Packing (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span>${formatCurrency(taxInvoice.calculations.packingCharges)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ Weighing (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span>${formatCurrency(taxInvoice.calculations.weighingCharges)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ Commission (2%)</span>
+                <span>${formatCurrency(taxInvoice.calculations.commission)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">Taxable Amount</span>
+                <span>${formatCurrency(taxInvoice.calculations.taxableAmount)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ SGST (2.5%)</span>
+                <span>${formatCurrency(taxInvoice.calculations.sgst)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ CGST (2.5%)</span>
+                <span>${formatCurrency(taxInvoice.calculations.cgst)}</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">+ CESS (0.6%)</span>
+                <span>${formatCurrency(taxInvoice.calculations.cess)}</span>
+              </div>
+              <div class="calc-row total-row">
+                <span class="calc-label">TOTAL PAYABLE</span>
+                <span>${formatCurrency(taxInvoice.calculations.totalAmount)}</span>
+              </div>
             </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: Packing Charges (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹5)</span>
-              <span>${formatCurrency(taxInvoice.calculations.packingCharges)}</span>
-            </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: Weighing Charges (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹1.50)</span>
-              <span>${formatCurrency(taxInvoice.calculations.weighingCharges)}</span>
-            </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: Commission (2% of basic amount)</span>
-              <span>${formatCurrency(taxInvoice.calculations.commission)}</span>
-            </div>
-            <div style="margin: 10px 0;"></div>
-            <div class="calc-row">
-              <span class="calc-label">Taxable Amount</span>
-              <span>${formatCurrency(taxInvoice.calculations.taxableAmount)}</span>
-            </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: SGST @ 2.5%</span>
-              <span>${formatCurrency(taxInvoice.calculations.sgst)}</span>
-            </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: CGST @ 2.5%</span>
-              <span>${formatCurrency(taxInvoice.calculations.cgst)}</span>
-            </div>
-            <div class="calc-row">
-              <span class="calc-label">Add: CESS @ 0.6%</span>
-              <span>${formatCurrency(taxInvoice.calculations.cess)}</span>
-            </div>
-            <div class="calc-row total-row">
-              <span class="calc-label">TOTAL AMOUNT PAYABLE</span>
-              <span>${formatCurrency(taxInvoice.calculations.totalAmount)}</span>
-            </div>
-          </div>
 
-          <div class="bank-details">
-            <div class="details-header">BANK DETAILS FOR PAYMENT</div>
-            <div class="details-row">
-              <span class="details-label">Bank Name:</span>
-              <span>${taxInvoice.bankDetails.bankName}</span>
+            <div class="bank-details column">
+              <div class="details-header">BANK DETAILS FOR PAYMENT</div>
+              <div class="details-row">
+                <span class="details-label">Bank:</span>
+                <span class="details-value">${taxInvoice.bankDetails.bankName}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">A/C No:</span>
+                <span class="details-value">${taxInvoice.bankDetails.accountNumber}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">IFSC:</span>
+                <span class="details-value">${taxInvoice.bankDetails.ifscCode}</span>
+              </div>
+              <div class="details-row">
+                <span class="details-label">Holder:</span>
+                <span class="details-value">${taxInvoice.bankDetails.accountHolder}</span>
+              </div>
+              <div style="margin-top: 15px; font-size: 9px;">
+                <strong>Terms:</strong> Payment due within 30 days<br>
+                Goods once sold will not be taken back
+              </div>
             </div>
-            <div class="details-row">
-              <span class="details-label">Account Number:</span>
-              <span>${taxInvoice.bankDetails.accountNumber}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">IFSC Code:</span>
-              <span>${taxInvoice.bankDetails.ifscCode}</span>
-            </div>
-            <div class="details-row">
-              <span class="details-label">Account Holder:</span>
-              <span>${taxInvoice.bankDetails.accountHolder}</span>
-            </div>
-          </div>
-
-          <div style="margin-top: 30px;">
-            <strong>Terms & Conditions:</strong> Payment due within 30 days
           </div>
 
           <div class="footer">
-            Authorized Signature: _________________________
+            <div style="text-align: right; margin-top: 10px;">
+              <div style="border-top: 1px solid #000; padding-top: 5px; width: 150px; margin-left: auto;">
+                Authorized Signature
+              </div>
+            </div>
           </div>
         </body>
       </html>
