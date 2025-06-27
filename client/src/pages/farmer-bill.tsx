@@ -35,6 +35,11 @@ export default function FarmerBill() {
     enabled: !!user?.tenantId,
   });
 
+  const { data: bags } = useQuery({
+    queryKey: ["/api/bags"],
+    enabled: !!user?.tenantId,
+  });
+
   const { data: tenant } = useQuery({
     queryKey: ["/api/tenant"],
     enabled: !!user?.tenantId,
@@ -54,18 +59,38 @@ export default function FarmerBill() {
 
   const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
 
-  // Calculate totals with proper null checking
-  const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
-    const weight = parseFloat(lot.totalWeight) || 0;
-    const price = parseFloat(lot.pricePerQuintal) || 0;
+  // Calculate weight from bags for each lot
+  const enrichedFarmerLots = farmerLots.map((lot: any) => {
+    const lotBags = bags?.filter((bag: any) => bag.lotId === lot.id) || [];
+    const totalWeightFromBags = lotBags.reduce((sum: number, bag: any) => 
+      sum + (parseFloat(bag.weight) || 0), 0);
+    const totalBagsCount = lotBags.length;
+    
+    return {
+      ...lot,
+      actualTotalWeight: totalWeightFromBags,
+      actualBagCount: totalBagsCount,
+      lotPrice: parseFloat(lot.lotPrice) || 0,
+      vehicleRent: parseFloat(lot.vehicleRent) || 0,
+      advance: parseFloat(lot.advance) || 0,
+      unloadHamali: parseFloat(lot.unloadHamali) || 0
+    };
+  });
+
+  // Calculate totals with bag data
+  const totalAmount = enrichedFarmerLots.reduce((sum: number, lot: any) => {
+    const weight = lot.actualTotalWeight || 0;
+    const price = lot.lotPrice || 0;
     return sum + ((weight / 100) * price);
   }, 0);
   
-  const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (parseInt(lot.numberOfBags) || 0), 0);
-  const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + (parseFloat(lot.totalWeight) || 0), 0);
+  const totalBags = enrichedFarmerLots.reduce((sum: number, lot: any) => sum + lot.actualBagCount, 0);
+  const totalWeight = enrichedFarmerLots.reduce((sum: number, lot: any) => sum + lot.actualTotalWeight, 0);
   
-  console.log('Farmer lots for calculation:', farmerLots);
-  console.log('Total weight calculated:', totalWeight);
+  console.log('All lots:', lots);
+  console.log('All bags:', bags);
+  console.log('Enriched farmer lots:', enrichedFarmerLots);
+  console.log('Total weight from bags:', totalWeight);
   console.log('Total amount calculated:', totalAmount);
   
   const commission = totalAmount * 0.03; // 3% commission
@@ -80,13 +105,13 @@ export default function FarmerBill() {
 
   // Auto-populate deductions from lot data when farmer is selected
   useEffect(() => {
-    if (farmerLots.length > 0) {
-      const totalVehicleRent = farmerLots.reduce((sum: number, lot: any) => 
-        sum + (parseFloat(lot.vehicleRent) || 0), 0);
-      const totalAdvance = farmerLots.reduce((sum: number, lot: any) => 
-        sum + (parseFloat(lot.advance) || 0), 0);
-      const totalUnloadHamali = farmerLots.reduce((sum: number, lot: any) => 
-        sum + (parseFloat(lot.unloadHamali) || 0), 0);
+    if (enrichedFarmerLots.length > 0) {
+      const totalVehicleRent = enrichedFarmerLots.reduce((sum: number, lot: any) => 
+        sum + lot.vehicleRent, 0);
+      const totalAdvance = enrichedFarmerLots.reduce((sum: number, lot: any) => 
+        sum + lot.advance, 0);
+      const totalUnloadHamali = enrichedFarmerLots.reduce((sum: number, lot: any) => 
+        sum + lot.unloadHamali, 0);
       
       setBillData(prev => ({
         ...prev,
@@ -329,15 +354,15 @@ export default function FarmerBill() {
                     </tr>
                   </thead>
                   <tbody>
-                    {farmerLots.map((lot: any) => (
+                    {enrichedFarmerLots.map((lot: any) => (
                       <tr key={lot.id}>
                         <td className="border border-gray-300 p-2">{lot.lotNumber}</td>
-                        <td className="border border-gray-300 p-2">{lot.numberOfBags}</td>
+                        <td className="border border-gray-300 p-2">{lot.actualBagCount}</td>
                         <td className="border border-gray-300 p-2 font-semibold text-blue-600">
-                          {parseFloat(lot.totalWeight) ? parseFloat(lot.totalWeight).toFixed(1) : '0'}
+                          {lot.actualTotalWeight ? lot.actualTotalWeight.toFixed(1) : '0'} kg
                         </td>
                         <td className="border border-gray-300 p-2 font-semibold text-green-600">
-                          {formatCurrency(parseFloat(lot.pricePerQuintal) || 0)}
+                          {formatCurrency(lot.lotPrice)}
                         </td>
                         <td className="border border-gray-300 p-2 text-orange-600">
                           {formatCurrency(parseFloat(lot.vehicleRent) || 0)}
