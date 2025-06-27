@@ -276,6 +276,7 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Updated tax invoice interface to properly display "CESS @ 0.6% (on basic amount)"
   - Enhanced bank details table to show "Account Holder" for clear identification
   - Fixed TaxInvoice TypeScript interface to use `cess` instead of `cessOnCommission`
+  - Fixed default cess rate from 0% to 0.6% in both backend and frontend settings for proper tax calculations
   - Tax calculations now follow authentic Indian agricultural trading tax structure
 
 # User Preferences

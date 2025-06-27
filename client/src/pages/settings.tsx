@@ -63,7 +63,7 @@ export default function Settings() {
     defaultValues: {
       sgst: 9,
       cgst: 9,
-      cess: 0,
+      cess: 0.6,
       unloadHamali: 3,
       packaging: 5,
       weighingFee: 2,
