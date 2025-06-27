@@ -84,8 +84,8 @@ export default function FarmerBill() {
     
     // Sort bags by bag number for consistent display
     const sortedBags = lotBags.sort((a: any, b: any) => {
-      const numA = parseInt(a.bagNumber.replace(/\D/g, '')) || 0;
-      const numB = parseInt(b.bagNumber.replace(/\D/g, '')) || 0;
+      const numA = parseInt(String(a.bagNumber).replace(/\D/g, '')) || 0;
+      const numB = parseInt(String(b.bagNumber).replace(/\D/g, '')) || 0;
       return numA - numB;
     });
     
