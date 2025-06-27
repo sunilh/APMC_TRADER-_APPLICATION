@@ -327,6 +327,11 @@ export default function FarmerBill() {
         <div>
           <h1 className="text-3xl font-bold">Farmer Bill / ರೈತ ಬಿಲ್</h1>
           <p className="text-gray-600 mt-2">Generate consolidated farmer payment bills for ALL completed lots / ಎಲ್ಲಾ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳಿಗೆ ಏಕೀಕೃತ ರೈತ ಪಾವತಿ ಬಿಲ್‌ಗಳನ್ನು ರಚಿಸಿ</p>
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium">
+              📊 Status: {lots ? `${lots.length} total lots, ${completedLots.length} completed, ${uniqueFarmers.length} farmers ready for billing` : 'Loading...'}
+            </p>
+          </div>
           {farmerLots.length > 1 && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800 font-medium">
