@@ -11,6 +11,7 @@ export const tenants = pgTable("tenants", {
   mobileNumber: text("mobile_number").notNull(),
   gstNumber: text("gst_number"), // GST registration number
   fssaiNumber: text("fssai_number"), // FSSAI registration number
+  panNumber: text("pan_number").notNull(), // PAN card number
   subscriptionPlan: text("subscription_plan").notNull(), // 'basic', 'gold', 'diamond'
   maxUsers: integer("max_users").notNull().default(1),
   logo: text("logo"),

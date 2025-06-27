@@ -22,6 +22,8 @@ const tenantOnboardingSchema = z.object({
   place: z.string().min(1, "Place is required"),
   mobileNumber: z.string().min(10, "Valid mobile number is required"),
   gstNumber: z.string().optional(),
+  fssaiNumber: z.string().optional(),
+  panNumber: z.string().min(1, "PAN card number is required"),
   address: z.string().optional(),
   // Bank details for receiving payments from buyers
   bankName: z.string().optional(),
@@ -81,6 +83,8 @@ export default function TenantOnboarding() {
             place: data.place,
             mobileNumber: data.mobileNumber,
             gstNumber: data.gstNumber,
+            fssaiNumber: data.fssaiNumber,
+            panNumber: data.panNumber,
             address: data.address,
             bankName: data.bankName,
             bankAccountNumber: data.bankAccountNumber,
@@ -250,23 +254,65 @@ export default function TenantOnboarding() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gstNumber">GST Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="gstNumber"
+                        placeholder="e.g., 29GGGGG1314R9Z6"
+                        {...form.register("gstNumber")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('gstNumber', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
+                    {form.formState.errors.gstNumber && (
+                      <p className="text-sm text-red-600">{form.formState.errors.gstNumber.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fssaiNumber">FSSAI Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="fssaiNumber"
+                        placeholder="e.g., 12345678901234"
+                        {...form.register("fssaiNumber")}
+                        className="flex-1"
+                      />
+                      <VoiceInput
+                        onResult={(value) => handleVoiceInput('fssaiNumber', value)}
+                        placeholder="Voice input"
+                        type="text"
+                      />
+                    </div>
+                    {form.formState.errors.fssaiNumber && (
+                      <p className="text-sm text-red-600">{form.formState.errors.fssaiNumber.message}</p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="gstNumber">GST Number</Label>
+                  <Label htmlFor="panNumber">PAN Card Number</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="gstNumber"
-                      placeholder="e.g., 29GGGGG1314R9Z6"
-                      {...form.register("gstNumber")}
+                      id="panNumber"
+                      placeholder="e.g., ABCDE1234F"
+                      {...form.register("panNumber")}
                       className="flex-1"
                     />
                     <VoiceInput
-                      onResult={(value) => handleVoiceInput('gstNumber', value)}
+                      onResult={(value) => handleVoiceInput('panNumber', value)}
                       placeholder="Voice input"
                       type="text"
                     />
                   </div>
-                  {form.formState.errors.gstNumber && (
-                    <p className="text-sm text-red-600">{form.formState.errors.gstNumber.message}</p>
+                  {form.formState.errors.panNumber && (
+                    <p className="text-sm text-red-600">{form.formState.errors.panNumber.message}</p>
                   )}
                 </div>
 

@@ -221,6 +221,21 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Distinguished farmer payments (with deductions) from buyer invoices (with added charges)
   - Fixed both backend billing calculations and frontend display to reflect proper invoice format
   - Buyer bills now correctly show charges as additions with + symbols, matching real agricultural trading practices
+- June 27, 2025: Added comprehensive Professional Invoice Generator with complete tax compliance
+  - Created standalone professional invoice system separate from buyer billing for custom invoice generation
+  - Added company information section with English/Kannada name support, address, phone, GSTIN, FSSAI, APMC code
+  - Implemented buyer information section with customer name, invoice date, lot number, product details
+  - Added complete purchase details form with voice input support for all fields
+  - Integrated proper GST calculations (SGST 2.5%, CGST 2.5%, CESS 0.6%) matching Indian tax standards
+  - Created professional print/download functionality with proper formatting and signature sections
+  - Added trilingual language support (English/Hindi/Kannada) for invoice generation
+  - System provides complete invoice solution with authentic company branding and tax compliance
+- June 27, 2025: Enhanced tenant onboarding with PAN card number collection for complete business registration
+  - Added PAN card number field to tenants database table for complete tax documentation
+  - Enhanced tenant onboarding form with PAN card number field including voice input support
+  - Updated backend tenant creation API to handle PAN card number storage
+  - System now collects complete business information: GST, FSSAI, PAN numbers for full compliance
+  - Tenant records now include all required Indian business registration details for professional operations
 
 # User Preferences
 

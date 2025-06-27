@@ -670,6 +670,8 @@ export function registerRoutes(app: Express): Server {
         place: tenantData.place,
         mobileNumber: tenantData.mobileNumber,
         gstNumber: tenantData.gstNumber || null,
+        fssaiNumber: tenantData.fssaiNumber || null,
+        panNumber: tenantData.panNumber,
         address: tenantData.address || "",
         bankName: tenantData.bankName || null,
         bankAccountNumber: tenantData.bankAccountNumber || null,
