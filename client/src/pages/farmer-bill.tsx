@@ -376,18 +376,29 @@ export default function FarmerBill() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="farmer-select">Farmer / ರೈತ</Label>
-                <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueFarmers.map((lot: Lot) => (
-                      <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
-                        {lot.farmer.name} - {lot.farmer.place}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueFarmers.map((lot: Lot) => (
+                        <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
+                          {lot.farmer.name} - {lot.farmer.place}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {uniqueFarmers.length > 0 && !selectedFarmerId && (
+                    <Button 
+                      onClick={() => setSelectedFarmerId(uniqueFarmers[0].farmerId.toString())}
+                      variant="outline" 
+                      size="sm"
+                    >
+                      Select {uniqueFarmers[0].farmer.name} for billing
+                    </Button>
+                  )}
+                </div>
               </div>
 
             <div className="space-y-2">
