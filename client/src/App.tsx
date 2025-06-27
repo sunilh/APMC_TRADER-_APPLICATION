@@ -15,6 +15,7 @@ import BagEntryNew from "@/pages/bag-entry-new";
 import Buyers from "@/pages/buyers";
 
 import TaxInvoice from "@/pages/tax-invoice";
+import FarmerBill from "@/pages/farmer-bill";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -31,6 +32,7 @@ function Router() {
       <ProtectedRoute path="/staff" component={StaffManagement} />
 
       <ProtectedRoute path="/tax-invoice" component={TaxInvoice} />
+      <ProtectedRoute path="/farmer-bill" component={FarmerBill} />
 
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />

@@ -23,6 +23,7 @@ export function Navigation() {
     ...(user?.role === 'admin' ? [{ name: 'Staff', href: '/staff', icon: Users }] : []),
 
     { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
+    { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 

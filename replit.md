@@ -290,6 +290,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Cleaned up route definitions and component imports to improve application performance
   - Simplified user interface focusing on core agricultural trading operations
   - Enhanced PDF layout with horizontal left-to-right format for better readability and page utilization
+- June 27, 2025: Created comprehensive Farmer Bill system with bilingual English/Kannada layout
+  - Built complete farmer payment bill interface with authentic tenant and lot data integration
+  - Implemented bilingual text display throughout (English / Kannada) for all field labels and sections
+  - Added editable deduction fields with voice input support: hamali, vehicle rent, empty bag charges, advance, other
+  - Created auto-calculating 3% commission based on total amount with real-time net payable calculation
+  - Developed professional PDF generation with proper bilingual formatting and signature sections
+  - Added comprehensive farmer bill workflow: lot selection, patti number entry, deduction management, bill generation
+  - System calculates net amount automatically: Total Amount - All Deductions = Net Payable to Farmer
 
 # User Preferences
 
