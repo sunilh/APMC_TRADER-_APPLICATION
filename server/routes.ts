@@ -591,6 +591,59 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Buyer summary route with purchase statistics
+  app.get("/api/buyers/summary", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const search = req.query.search as string || '';
+      const buyers = await storage.getBuyersByTenant(req.user.tenantId, search);
+      
+      // Get purchase statistics for each buyer
+      const buyerSummaries = await Promise.all(buyers.map(async (buyer) => {
+        const stats = await storage.getBuyerPurchaseStats(buyer.id, req.user.tenantId);
+        return {
+          ...buyer,
+          ...stats
+        };
+      }));
+
+      res.json(buyerSummaries);
+    } catch (error) {
+      console.error("Error fetching buyer summaries:", error);
+      res.status(500).json({ message: "Failed to fetch buyer summaries" });
+    }
+  });
+
+  // Buyer purchase history route
+  app.get("/api/buyers/:id/purchases", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const buyerId = parseInt(req.params.id);
+      const purchases = await storage.getBuyerPurchaseHistory(buyerId, req.user.tenantId);
+      res.json(purchases);
+    } catch (error) {
+      console.error("Error fetching buyer purchases:", error);
+      res.status(500).json({ message: "Failed to fetch buyer purchases" });
+    }
+  });
+
+  // Update lot payment status
+  app.patch("/api/lots/:id/payment", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const lotId = parseInt(req.params.id);
+      const { paymentStatus, amountPaid, paymentDate } = req.body;
+      
+      await storage.updateLotPayment(lotId, req.user.tenantId, {
+        paymentStatus,
+        amountPaid: amountPaid ? parseFloat(amountPaid) : null,
+        paymentDate: paymentDate || null
+      });
+
+      res.json({ message: "Payment status updated successfully" });
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      res.status(500).json({ message: "Failed to update payment" });
+    }
+  });
+
   // Tenant management (super admin only)
   app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
     try {

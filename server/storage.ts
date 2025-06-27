@@ -83,6 +83,38 @@ export interface IStorage {
   getBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<any | null>;
   deleteBagEntryDraft(lotId: number, userId: number, tenantId: number): Promise<void>;
 
+  // Buyer tracking methods
+  getBuyerPurchaseStats(buyerId: number, tenantId: number): Promise<{
+    totalLots: number;
+    completedLots: number;
+    billGeneratedLots: number;
+    pendingBills: number;
+    totalAmountDue: string;
+    totalAmountPaid: string;
+    pendingPayments: number;
+  }>;
+  getBuyerPurchaseHistory(buyerId: number, tenantId: number): Promise<Array<{
+    lotId: number;
+    lotNumber: string;
+    farmerName: string;
+    numberOfBags: number;
+    varietyGrade: string;
+    grade: string;
+    status: string;
+    billGenerated: boolean;
+    billGeneratedAt: string;
+    paymentStatus: string;
+    amountDue: string;
+    amountPaid: string;
+    paymentDate: string;
+    createdAt: string;
+  }>>;
+  updateLotPayment(lotId: number, tenantId: number, paymentData: {
+    paymentStatus: string;
+    amountPaid: number | null;
+    paymentDate: string | null;
+  }): Promise<void>;
+
   sessionStore: any;
 }
 
@@ -494,6 +526,116 @@ export class DatabaseStorage implements IStorage {
         eq(bagEntryDrafts.lotId, lotId),
         eq(bagEntryDrafts.userId, userId),
         eq(bagEntryDrafts.tenantId, tenantId)
+      ));
+  }
+
+  async getBuyerPurchaseStats(buyerId: number, tenantId: number): Promise<{
+    totalLots: number;
+    completedLots: number;
+    billGeneratedLots: number;
+    pendingBills: number;
+    totalAmountDue: string;
+    totalAmountPaid: string;
+    pendingPayments: number;
+  }> {
+    const result = await db
+      .select({
+        totalLots: sql<number>`count(*)`,
+        completedLots: sql<number>`count(case when ${lots.status} = 'completed' then 1 end)`,
+        billGeneratedLots: sql<number>`count(case when ${lots.billGenerated} = true then 1 end)`,
+        totalAmountDue: sql<string>`coalesce(sum(${lots.lotPrice} * ${lots.numberOfBags}), 0)`,
+        totalAmountPaid: sql<string>`coalesce(sum(${lots.amountPaid}), 0)`,
+      })
+      .from(lots)
+      .where(and(
+        eq(lots.buyerId, buyerId),
+        eq(lots.tenantId, tenantId)
+      ));
+
+    const stats = result[0];
+    const pendingBills = stats.totalLots - stats.billGeneratedLots;
+    const pendingPayments = stats.completedLots - Math.floor(parseFloat(stats.totalAmountPaid || '0') > 0 ? 1 : 0);
+
+    return {
+      totalLots: stats.totalLots,
+      completedLots: stats.completedLots,
+      billGeneratedLots: stats.billGeneratedLots,
+      pendingBills,
+      totalAmountDue: stats.totalAmountDue || '0',
+      totalAmountPaid: stats.totalAmountPaid || '0',
+      pendingPayments,
+    };
+  }
+
+  async getBuyerPurchaseHistory(buyerId: number, tenantId: number): Promise<Array<{
+    lotId: number;
+    lotNumber: string;
+    farmerName: string;
+    numberOfBags: number;
+    varietyGrade: string;
+    grade: string;
+    status: string;
+    billGenerated: boolean;
+    billGeneratedAt: string;
+    paymentStatus: string;
+    amountDue: string;
+    amountPaid: string;
+    paymentDate: string;
+    createdAt: string;
+  }>> {
+    const result = await db
+      .select({
+        lotId: lots.id,
+        lotNumber: lots.lotNumber,
+        farmerName: farmers.name,
+        numberOfBags: lots.numberOfBags,
+        varietyGrade: lots.varietyGrade,
+        grade: lots.grade,
+        status: lots.status,
+        billGenerated: lots.billGenerated,
+        billGeneratedAt: lots.billGeneratedAt,
+        paymentStatus: lots.paymentStatus,
+        amountDue: sql<string>`${lots.lotPrice} * ${lots.numberOfBags}`,
+        amountPaid: lots.amountPaid,
+        paymentDate: lots.paymentDate,
+        createdAt: lots.createdAt,
+      })
+      .from(lots)
+      .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+      .where(and(
+        eq(lots.buyerId, buyerId),
+        eq(lots.tenantId, tenantId)
+      ))
+      .orderBy(desc(lots.createdAt));
+
+    return result.map(row => ({
+      ...row,
+      farmerName: row.farmerName || '',
+      grade: row.grade || '',
+      billGeneratedAt: row.billGeneratedAt?.toISOString() || '',
+      paymentDate: row.paymentDate?.toISOString() || '',
+      createdAt: row.createdAt?.toISOString() || '',
+      amountDue: row.amountDue?.toString() || '0',
+      amountPaid: row.amountPaid?.toString() || '0',
+      paymentStatus: row.paymentStatus || 'pending',
+    }));
+  }
+
+  async updateLotPayment(lotId: number, tenantId: number, paymentData: {
+    paymentStatus: string;
+    amountPaid: number | null;
+    paymentDate: string | null;
+  }): Promise<void> {
+    await db
+      .update(lots)
+      .set({
+        paymentStatus: paymentData.paymentStatus,
+        amountPaid: paymentData.amountPaid,
+        paymentDate: paymentData.paymentDate ? new Date(paymentData.paymentDate) : null,
+      })
+      .where(and(
+        eq(lots.id, lotId),
+        eq(lots.tenantId, tenantId)
       ));
   }
 }

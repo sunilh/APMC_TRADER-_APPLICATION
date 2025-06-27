@@ -12,7 +12,7 @@ import AuthPage from "@/pages/auth-page";
 import Farmers from "@/pages/farmers";
 import Lots from "@/pages/lots";
 import BagEntryNew from "@/pages/bag-entry-new";
-import BuyersSimple from "@/pages/buyers-simple";
+import Buyers from "@/pages/buyers";
 import Billing from "@/pages/billing";
 import BuyerBilling from "@/pages/buyer-billing";
 import ProfessionalInvoice from "@/pages/professional-invoice";
@@ -29,7 +29,7 @@ function Router() {
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntryNew} />
-      <ProtectedRoute path="/buyers" component={BuyersSimple} />
+      <ProtectedRoute path="/buyers" component={Buyers} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/billing" component={Billing} />
       <ProtectedRoute path="/buyer-billing" component={BuyerBilling} />

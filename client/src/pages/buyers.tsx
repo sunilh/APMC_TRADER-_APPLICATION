@@ -64,43 +64,25 @@ export default function Buyers() {
   const { toast } = useToast();
 
   // Fetch buyers with purchase summary
-  const { data: buyerSummaries = [], isLoading, error } = useQuery<BuyerSummary[]>({
+  const { data: buyerSummaries = [], isLoading, error } = useQuery({
     queryKey: ['/api/buyers/summary', searchTerm],
-    queryFn: async () => {
-      const response = await fetch(`/api/buyers/summary?search=${encodeURIComponent(searchTerm)}`, {
-        credentials: "include"
-      });
-      if (!response.ok) throw new Error("Failed to fetch buyer summaries");
-      return response.json();
-    },
     retry: 3,
     retryDelay: 1000,
   });
 
   // Fetch detailed purchases for selected buyer
-  const { data: purchases = [] } = useQuery<BuyerPurchase[]>({
+  const { data: purchases = [] } = useQuery({
     queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'],
-    queryFn: async () => {
-      const response = await fetch(`/api/buyers/${selectedBuyer?.id}/purchases`, {
-        credentials: "include"
-      });
-      if (!response.ok) throw new Error("Failed to fetch buyer purchases");
-      return response.json();
-    },
     enabled: !!selectedBuyer,
   });
 
   // Payment update mutation
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ lotId, data }: { lotId: number; data: any }) => {
-      const response = await fetch(`/api/lots/${lotId}/payment`, {
+      return apiRequest(`/api/lots/${lotId}/payment`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
+        body: data,
       });
-      if (!response.ok) throw new Error("Failed to update payment");
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'] });
@@ -241,9 +223,9 @@ export default function Buyers() {
 
   // Filter buyers based on search term
   const filteredBuyers = buyerSummaries.filter((buyer: any) =>
-    buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    buyer.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    buyer.mobile.includes(searchTerm)
+    buyer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    buyer.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    buyer.mobile?.includes(searchTerm)
   );
 
   return (
