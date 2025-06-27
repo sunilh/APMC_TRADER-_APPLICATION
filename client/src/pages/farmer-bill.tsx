@@ -21,7 +21,7 @@ export default function FarmerBill() {
   const { user } = useAuth();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
   const [pattiNumber, setPattiNumber] = useState<string>("");
-  const [lastSelectedFarmerId, setLastSelectedFarmerId] = useState<string>("");
+  const [lastBillKey, setLastBillKey] = useState<string>("");
   const [billData, setBillData] = useState<FarmerBillData>({
     hamali: 0,
     vehicleRent: 0,
@@ -136,10 +136,15 @@ export default function FarmerBill() {
         commission: totalAmount * 0.03
       }));
 
-      // Check if we switched to a different farmer
-      if (selectedFarmerId !== lastSelectedFarmerId) {
+      // Create unique key based on farmer + date + lots combination
+      const today = new Date().toISOString().slice(0, 10);
+      const lotIds = enrichedFarmerLots.map(lot => lot.id).sort().join('-');
+      const currentBillKey = `${selectedFarmerId}-${today}-${lotIds}`;
+      
+      // Generate new patti number if this is a different combination
+      if (currentBillKey !== lastBillKey) {
         setPattiNumber(generatePattiNumber());
-        setLastSelectedFarmerId(selectedFarmerId);
+        setLastBillKey(currentBillKey);
       } else if (!pattiNumber) {
         // Generate patti number only if empty (first time)
         setPattiNumber(generatePattiNumber());
