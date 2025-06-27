@@ -62,9 +62,14 @@ export default function FarmerBill() {
   // Calculate weight from bags for each lot
   const enrichedFarmerLots = farmerLots.map((lot: any) => {
     const lotBags = bags?.filter((bag: any) => bag.lotId === lot.id) || [];
-    const totalWeightFromBags = lotBags.reduce((sum: number, bag: any) => 
-      sum + (parseFloat(bag.weight) || 0), 0);
+    const totalWeightFromBags = lotBags.reduce((sum: number, bag: any) => {
+      const weight = parseFloat(bag.weight) || 0;
+      console.log(`Bag ${bag.bagNumber}: ${weight} kg`);
+      return sum + weight;
+    }, 0);
     const totalBagsCount = lotBags.length;
+    
+    console.log(`Lot ${lot.lotNumber}: ${totalBagsCount} bags, ${totalWeightFromBags} kg total`);
     
     return {
       ...lot,
