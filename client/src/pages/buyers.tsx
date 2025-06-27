@@ -188,9 +188,9 @@ export default function Buyers() {
     setEditingBuyer(buyer);
     form.reset({
       name: buyer.name,
-      contactPerson: buyer.contactPerson,
-      mobile: buyer.mobile,
-      address: buyer.address,
+      contactPerson: buyer.contactPerson || "",
+      mobile: buyer.mobile || "",
+      address: buyer.address || "",
       panNumber: buyer.panNumber || "",
       gstNumber: buyer.gstNumber || "",
       hsnCode: buyer.hsnCode,
@@ -344,7 +344,6 @@ export default function Buyers() {
                           <FormControl>
                             <VoiceInput
                               {...field}
-                              value={field.value || ""}
                               placeholder="Enter PAN number"
                               type="text"
                               onResult={(text) => field.onChange(text)}
@@ -364,7 +363,6 @@ export default function Buyers() {
                           <FormControl>
                             <VoiceInput
                               {...field}
-                              value={field.value || ""}
                               placeholder="Enter GST number"
                               type="text"
                               onResult={(text) => field.onChange(text)}

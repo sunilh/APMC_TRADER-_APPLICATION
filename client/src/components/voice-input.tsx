@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Mic, MicOff } from "lucide-react";
 import { useVoiceRecognition } from "@/lib/voice-recognition";
 import { useI18n } from "@/lib/i18n";
@@ -11,15 +12,23 @@ interface VoiceInputProps {
   type?: "text" | "number" | "tel" | "currency";
   disabled?: boolean;
   className?: string;
+  value?: string | null;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
+  name?: string;
 }
 
-export function VoiceInput({ 
+export const VoiceInput = forwardRef<HTMLInputElement, VoiceInputProps>(({ 
   onResult, 
   placeholder = "Voice input", 
   type = "text",
   disabled = false,
-  className 
-}: VoiceInputProps) {
+  className,
+  value = "",
+  onChange,
+  onBlur,
+  name
+}, ref) => {
   const { language } = useI18n();
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,11 +197,15 @@ export function VoiceInput({
       }
       
       onResult(processedText);
+      // Also update the input field directly if onChange is provided
+      if (onChange) {
+        onChange({ target: { value: processedText } } as React.ChangeEvent<HTMLInputElement>);
+      }
       setError(null);
     } else if (transcript && confidence <= 0.7) {
       setError("Low confidence. Please try again.");
     }
-  }, [transcript, confidence, onResult, type]);
+  }, [transcript, confidence, onResult, onChange, type]);
 
   useEffect(() => {
     if (recognitionError) {
@@ -222,7 +235,18 @@ export function VoiceInput({
   }
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center gap-2">
+      <Input
+        ref={ref}
+        type={type}
+        placeholder={placeholder}
+        value={value || ""}
+        onChange={onChange}
+        onBlur={onBlur}
+        name={name}
+        disabled={disabled}
+        className={cn("flex-1", className)}
+      />
       <Button
         type="button"
         variant="ghost"
@@ -230,10 +254,9 @@ export function VoiceInput({
         disabled={disabled}
         onClick={handleToggleListening}
         className={cn(
-          "p-2 h-10 w-10",
+          "p-2 h-10 w-10 shrink-0",
           isListening && "mic-active",
-          error && "text-destructive",
-          className
+          error && "text-destructive"
         )}
         title={placeholder}
       >
@@ -257,4 +280,4 @@ export function VoiceInput({
       )}
     </div>
   );
-}
+});
