@@ -331,6 +331,11 @@ export default function FarmerBill() {
             <p className="text-sm text-blue-800 font-medium">
               📊 Status: {lots ? `${lots.length} total lots, ${completedLots.length} completed, ${uniqueFarmers.length} farmers ready for billing` : 'Loading...'}
             </p>
+            {uniqueFarmers.length > 0 && (
+              <p className="text-sm text-green-600 font-medium mt-1">
+                ✅ Ready to generate bills! Select farmer and scroll down to see the billing form.
+              </p>
+            )}
           </div>
           {farmerLots.length > 1 && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
