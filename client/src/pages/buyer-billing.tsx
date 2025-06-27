@@ -71,7 +71,7 @@ interface BuyerBill {
 }
 
 export default function BuyerBilling() {
-  const { t, language } = useI18n();
+  const { t, language, setLanguage } = useI18n();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>("");
 
@@ -106,10 +106,11 @@ export default function BuyerBilling() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Buyer Bill - ${bill.buyerName}</title>
+          <title>${t('billing.title')} - ${bill.buyerName}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+            .seller-info { margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px; }
             .buyer-info { margin-bottom: 20px; background: #f5f5f5; padding: 15px; border-radius: 5px; }
             .bill-details { margin-bottom: 20px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -126,13 +127,32 @@ export default function BuyerBilling() {
         </head>
         <body>
           <div class="header">
-            <h1>BUYER PURCHASE BILL</h1>
-            <h2>${bill.buyerName}</h2>
+            <h1>${t('billing.title')}</h1>
+            <h2>${t('billing.seller')}: ${bill.traderInfo.name} → ${t('billing.buyer')}: ${bill.buyerName}</h2>
             <p>Date: ${formatDate(new Date(bill.date), language)}</p>
           </div>
           
+          <div class="seller-info">
+            <h3>${t('billing.seller')} Details</h3>
+            <p><strong>Company:</strong> ${bill.traderInfo.name}</p>
+            <p><strong>APMC Code:</strong> ${bill.traderInfo.apmcCode}</p>
+            <p><strong>Place:</strong> ${bill.traderInfo.place}</p>
+            <p><strong>Address:</strong> ${bill.traderInfo.address}</p>
+            <p><strong>Mobile:</strong> ${bill.traderInfo.mobile}</p>
+            ${bill.traderInfo.gstNumber ? `<p><strong>GST Number:</strong> ${bill.traderInfo.gstNumber}</p>` : ''}
+            ${bill.traderInfo.bankDetails ? `
+              <div style="margin-top: 10px;">
+                <h4>${t('billing.bankDetails')}</h4>
+                <p><strong>Bank:</strong> ${bill.traderInfo.bankDetails.bankName || 'N/A'}</p>
+                <p><strong>Account:</strong> ${bill.traderInfo.bankDetails.accountNumber || 'N/A'}</p>
+                <p><strong>IFSC:</strong> ${bill.traderInfo.bankDetails.ifscCode || 'N/A'}</p>
+                <p><strong>Holder:</strong> ${bill.traderInfo.bankDetails.accountHolderName || 'N/A'}</p>
+              </div>
+            ` : ''}
+          </div>
+
           <div class="buyer-info">
-            <h3>Buyer Information</h3>
+            <h3>${t('billing.buyer')} Details</h3>
             <p><strong>Company:</strong> ${bill.buyerName}</p>
             <p><strong>Contact:</strong> ${bill.buyerContact}</p>
             <p><strong>Address:</strong> ${bill.buyerAddress}</p>
@@ -143,20 +163,22 @@ export default function BuyerBilling() {
             <table>
               <thead>
                 <tr>
-                  <th>Lot No.</th>
-                  <th>Farmer</th>
-                  <th>Variety</th>
-                  <th>Grade</th>
-                  <th>Bags</th>
-                  <th>Weight (Kg)</th>
+                  <th>${t('billing.lotNumber')}</th>
+                  <th>${t('billing.farmerName')}</th>
+                  <th>${t('billing.variety')}</th>
+                  <th>${t('billing.grade')}</th>
+                  <th>${t('billing.bags')}</th>
+                  <th>${t('billing.weight')} (Kg)</th>
                   <th>Quintals</th>
-                  <th>Rate/Qt</th>
-                  <th>Gross Amt</th>
-                  <th>Unload</th>
-                  <th>Packaging</th>
-                  <th>Weighing</th>
-                  <th>Commission</th>
-                  <th>Net Amount</th>
+                  <th>${t('billing.rate')}</th>
+                  <th>${t('billing.basicAmount')}</th>
+                  <th>${t('billing.packing')}</th>
+                  <th>${t('billing.weighingCharges')}</th>
+                  <th>${t('billing.commission')}</th>
+                  <th>${t('billing.sgst')}</th>
+                  <th>${t('billing.cgst')}</th>
+                  <th>${t('billing.cess')}</th>
+                  <th>${t('billing.totalAmount')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,10 +193,12 @@ export default function BuyerBilling() {
                     <td class="text-right">${lot.totalWeightQuintals.toFixed(2)}</td>
                     <td class="text-right">${formatCurrency(lot.pricePerQuintal, language)}</td>
                     <td class="text-right">${formatCurrency(lot.basicAmount, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.unloadHamali, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.packaging, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.weighingFee, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.apmcCommission, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.packing, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.weighingCharges, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.commission, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.sgst, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.cgst, language)}</td>
+                    <td class="text-right">+${formatCurrency(lot.charges.cess, language)}</td>
                     <td class="text-right">${formatCurrency(lot.totalAmount, language)}</td>
                   </tr>
                 `).join('')}
@@ -345,7 +369,20 @@ export default function BuyerBilling() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="language">Language / भाषा / ಭಾಷೆ</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="hi">हिंदी</SelectItem>
+                  <SelectItem value="kn">ಕನ್ನಡ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="date">{t("billing.selectDate")}</Label>
               <div className="flex space-x-2">
