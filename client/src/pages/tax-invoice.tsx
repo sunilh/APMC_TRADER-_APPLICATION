@@ -277,8 +277,8 @@ export default function TaxInvoice() {
                 <span>${formatCurrency(taxInvoice.calculations.commission)}</span>
               </div>
               <div class="calc-row">
-                <span class="calc-label">+ Cess on Commission</span>
-                <span>${formatCurrency(taxInvoice.calculations.cessOnCommission)}</span>
+                <span class="calc-label">+ Cess @ 0.6% (on basic amount)</span>
+                <span>${formatCurrency(taxInvoice.calculations.cess)}</span>
               </div>
               <div class="calc-row" style="background-color: #fef3c7; font-weight: bold;">
                 <span class="calc-label">Taxable Amount</span>
