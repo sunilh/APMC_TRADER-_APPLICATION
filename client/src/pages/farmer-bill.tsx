@@ -30,6 +30,14 @@ export default function FarmerBill() {
     commission: 0,
   });
 
+  // Auto-generate patti number when farmer is selected
+  const generatePattiNumber = () => {
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStr = today.getTime().toString().slice(-4);
+    return `P${dateStr}${timeStr}`;
+  };
+
   const { data: lots } = useQuery({
     queryKey: ["/api/lots"],
     enabled: !!user?.tenantId,
@@ -125,8 +133,13 @@ export default function FarmerBill() {
         hamali: totalUnloadHamali,
         commission: totalAmount * 0.03
       }));
+
+      // Auto-generate patti number if not already set
+      if (!pattiNumber) {
+        setPattiNumber(generatePattiNumber());
+      }
     }
-  }, [farmerLots, totalAmount]);
+  }, [farmerLots, totalAmount, pattiNumber]);
 
   const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
     const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
@@ -305,34 +318,15 @@ export default function FarmerBill() {
       {/* Billing Form - Shows when farmer is selected */}
       {selectedFarmer && farmerLots.length > 0 && (
         <>
-          {/* Patti Number */}
+          {/* Auto-generated Patti Number Display */}
           <Card>
             <CardHeader>
               <CardTitle>Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2">
-                <VoiceInput
-                  onResult={setPattiNumber}
-                  placeholder="Enter patti number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
-                  type="text"
-                  value={pattiNumber}
-                  onChange={(e) => setPattiNumber(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    const today = new Date();
-                    const dateStr = today.toISOString().slice(2, 10).replace(/-/g, "");
-                    const timeStr = today.getHours().toString().padStart(2, "0") + 
-                                   today.getMinutes().toString().padStart(2, "0");
-                    setPattiNumber(`P${dateStr}${timeStr}`);
-                  }}
-                >
-                  Auto Generate
-                </Button>
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700 mb-1">Auto-generated / ಸ್ವಯಂಚಾಲಿತವಾಗಿ ರಚಿಸಲಾಗಿದೆ</p>
+                <p className="text-lg font-semibold text-green-800">{pattiNumber || "Select farmer to generate"}</p>
               </div>
             </CardContent>
           </Card>
