@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,28 +59,33 @@ export default function FarmerBill() {
 
   const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
 
-  // Calculate weight from bags for each lot
-  const enrichedFarmerLots = farmerLots.map((lot: any) => {
-    const lotBags = bags?.filter((bag: any) => bag.lotId === lot.id) || [];
-    const totalWeightFromBags = lotBags.reduce((sum: number, bag: any) => {
-      const weight = parseFloat(bag.weight) || 0;
-      console.log(`Bag ${bag.bagNumber}: ${weight} kg`);
-      return sum + weight;
-    }, 0);
-    const totalBagsCount = lotBags.length;
-    
-    console.log(`Lot ${lot.lotNumber}: ${totalBagsCount} bags, ${totalWeightFromBags} kg total`);
-    
-    return {
-      ...lot,
-      actualTotalWeight: totalWeightFromBags,
-      actualBagCount: totalBagsCount,
-      lotPrice: parseFloat(lot.lotPrice) || 0,
-      vehicleRent: parseFloat(lot.vehicleRent) || 0,
-      advance: parseFloat(lot.advance) || 0,
-      unloadHamali: parseFloat(lot.unloadHamali) || 0
-    };
-  });
+  console.log('Selected farmer ID:', selectedFarmerId);
+  console.log('Farmer lots for selected farmer:', farmerLots);
+
+  // Calculate weight from bags for each lot - calculate when farmer is selected
+  const enrichedFarmerLots = [];
+  if (selectedFarmerId && farmerLots.length && bags) {
+    for (const lot of farmerLots) {
+      const lotBags = bags.filter((bag: any) => bag.lotId === lot.id) || [];
+      const totalWeightFromBags = lotBags.reduce((sum: number, bag: any) => {
+        const weight = parseFloat(bag.weight) || 0;
+        return sum + weight;
+      }, 0);
+      const totalBagsCount = lotBags.length;
+      
+      enrichedFarmerLots.push({
+        ...lot,
+        actualTotalWeight: totalWeightFromBags,
+        actualBagCount: totalBagsCount,
+        lotPrice: parseFloat(lot.lotPrice) || 0,
+        vehicleRent: parseFloat(lot.vehicleRent) || 0,
+        advance: parseFloat(lot.advance) || 0,
+        unloadHamali: parseFloat(lot.unloadHamali) || 0
+      });
+      
+      console.log(`Enriched lot ${lot.lotNumber}: ${totalBagsCount} bags, ${totalWeightFromBags} kg total`);
+    }
+  }
 
   // Calculate totals with bag data
   const totalAmount = enrichedFarmerLots.reduce((sum: number, lot: any) => {
@@ -283,7 +288,10 @@ export default function FarmerBill() {
                       ? 'ring-2 ring-blue-500 bg-blue-50' 
                       : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setSelectedFarmerId(lot.farmerId.toString())}
+                  onClick={() => {
+                    console.log('Clicking farmer:', lot.farmerId, lot.farmer.name);
+                    setSelectedFarmerId(lot.farmerId.toString());
+                  }}
                 >
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-lg">{lot.farmer.name}</h3>
