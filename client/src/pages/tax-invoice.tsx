@@ -265,7 +265,7 @@ export default function TaxInvoice() {
                 <span>${formatCurrency(taxInvoice.calculations.packaging)}</span>
               </div>
               <div class="calc-row">
-                <span class="calc-label">+ Hamali (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span class="calc-label">+ Hamali (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹5)</span>
                 <span>${formatCurrency(taxInvoice.calculations.hamali)}</span>
               </div>
               <div class="calc-row">
@@ -536,6 +536,10 @@ export default function TaxInvoice() {
                   <div className="flex justify-between">
                     <span><strong>Add: Weighing Charges ({taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹1.50)</strong></span>
                     <span>{formatCurrency(taxInvoice.calculations.weighingCharges)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span><strong>Add: Hamali ({taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹5)</strong></span>
+                    <span>{formatCurrency(taxInvoice.calculations.hamali)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span><strong>Add: Commission (2% of basic amount)</strong></span>
