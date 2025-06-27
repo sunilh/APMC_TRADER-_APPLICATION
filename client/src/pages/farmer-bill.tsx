@@ -17,11 +17,13 @@ interface Lot {
   numberOfBags: number;
   pricePerQuintal: number;
   totalWeight: number;
+  status: string;
   farmer: {
     id: number;
     name: string;
     place: string;
     mobile: string;
+    bankAccountNumber: string;
   };
 }
 
@@ -44,7 +46,7 @@ interface FarmerBillData {
 
 export default function FarmerBill() {
   const { user } = useAuth();
-  const [selectedLotId, setSelectedLotId] = useState<string>("");
+  const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
   const [pattiNumber, setPattiNumber] = useState("");
   const [billData, setBillData] = useState<FarmerBillData>({
     hamali: 0,
@@ -65,10 +67,21 @@ export default function FarmerBill() {
     enabled: !!user?.tenantId,
   });
 
-  const selectedLot = lots?.find((lot: Lot) => lot.id.toString() === selectedLotId);
+  // Get all completed lots for the selected farmer
+  const farmerLots = lots?.filter((lot: Lot) => 
+    lot.farmerId.toString() === selectedFarmerId && lot.status === 'completed'
+  ) || [];
 
-  // Calculate total amount and net payable
-  const totalAmount = selectedLot ? (selectedLot.totalWeight / 100) * selectedLot.pricePerQuintal : 0;
+  const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
+
+  // Calculate totals across all farmer's completed lots
+  const totalAmount = farmerLots.reduce((sum, lot) => {
+    return sum + ((lot.totalWeight / 100) * lot.pricePerQuintal);
+  }, 0);
+  
+  const totalBags = farmerLots.reduce((sum, lot) => sum + lot.numberOfBags, 0);
+  const totalWeight = farmerLots.reduce((sum, lot) => sum + lot.totalWeight, 0);
+  
   const commission = totalAmount * 0.03; // 3% commission
   const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
                          billData.advance + commission + billData.other;
@@ -79,278 +92,255 @@ export default function FarmerBill() {
     setBillData(prev => ({ ...prev, commission: totalAmount * 0.03 }));
   }, [totalAmount]);
 
-  const handleInputChange = (field: keyof FarmerBillData, value: string) => {
-    setBillData(prev => ({
-      ...prev,
-      [field]: parseFloat(value) || 0
-    }));
+  const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    setBillData(prev => ({ ...prev, [field]: numValue }));
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'INR'
+      currency: 'INR',
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
   const generatePDF = () => {
-    if (!selectedLot || !tenant) return;
+    if (!selectedFarmer || !tenant || farmerLots.length === 0) return;
 
-    const currentDate = new Date().toLocaleDateString('en-IN');
-    
-    const htmlContent = `
+    const printContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Farmer Bill - ${selectedLot.lotNumber}</title>
+          <title>Farmer Bill - ${selectedFarmer.name}</title>
           <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 30px auto; 
-              font-size: 14px; 
-              line-height: 1.5; 
-              max-width: 80%; 
-              background: white;
-            }
-            .header { 
-              text-align: center; 
-              margin-bottom: 25px; 
-              border-bottom: 2px solid #333;
-              padding-bottom: 15px;
-            }
-            .bill-title { 
-              font-size: 24px; 
-              font-weight: bold; 
-              margin-bottom: 10px; 
-              color: #333;
-            }
-            .section { 
-              margin-bottom: 20px; 
-              border: 1px solid #ccc; 
-              padding: 15px; 
-              border-radius: 5px;
-            }
-            .section-title { 
-              font-size: 16px; 
-              font-weight: bold; 
-              margin-bottom: 10px; 
-              color: #444;
-              border-bottom: 1px solid #eee;
-              padding-bottom: 5px;
-            }
-            .row { 
-              display: flex; 
-              justify-content: space-between; 
-              margin-bottom: 8px; 
-            }
-            .label { 
-              font-weight: bold; 
-              color: #555;
-            }
-            .value { 
-              color: #333;
-            }
-            .net-section { 
-              background-color: #f8f9fa; 
-              border: 2px solid #28a745; 
-              padding: 20px; 
-              text-align: center;
-            }
-            .net-amount { 
-              font-size: 20px; 
-              font-weight: bold; 
-              color: #28a745;
-            }
-            .signature-section { 
-              margin-top: 40px; 
-              display: flex; 
-              justify-content: space-between;
-            }
-            .signature-box { 
-              text-align: center; 
-              width: 45%;
-            }
-            .signature-line { 
-              border-top: 1px solid #333; 
-              margin-top: 50px; 
-              padding-top: 5px;
-            }
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; line-height: 1.4; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header h1 { margin: 0; font-size: 18px; font-weight: bold; }
+            .header h2 { margin: 5px 0; font-size: 14px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+            .info-section { border: 1px solid #ccc; padding: 10px; }
+            .info-section h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; background: #f5f5f5; padding: 5px; text-align: center; }
+            .info-row { display: flex; margin-bottom: 5px; }
+            .info-label { font-weight: bold; width: 120px; }
+            .lots-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            .lots-table th, .lots-table td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 11px; }
+            .lots-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+            .calc-section { margin: 15px 0; }
+            .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .calc-box { border: 1px solid #000; padding: 10px; }
+            .calc-box h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; text-align: center; background: #f5f5f5; padding: 5px; }
+            .calc-row { display: flex; justify-content: space-between; margin-bottom: 5px; padding: 2px 0; }
+            .calc-row.total { border-top: 2px solid #000; font-weight: bold; font-size: 13px; margin-top: 10px; padding-top: 5px; }
+            .net-amount { text-align: center; margin: 20px 0; padding: 15px; border: 2px solid #000; background: #f9f9f9; }
+            .net-amount h2 { margin: 0; font-size: 16px; }
+            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; }
+            .signature-box { text-align: center; border-top: 1px solid #000; padding-top: 10px; }
             @media print {
-              body { margin: 20px; font-size: 12px; max-width: 100%; }
-              .section { page-break-inside: avoid; }
+              body { margin: 0; }
+              .no-print { display: none; }
             }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="bill-title">Farmer Payment Bill / ರೈತ ಪಾವತಿ ಬಿಲ್</div>
+            <h1>${tenant.name} / ${tenant.name}</h1>
+            <h2>Farmer Payment Bill / ರೈತ ಪಾವತಿ ಬಿಲ್</h2>
+            <div>Date / ದಿನಾಂಕ: ${new Date().toLocaleDateString('en-IN')} | Patti No / ಪಟ್ಟಿ ಸಂ: ${pattiNumber}</div>
           </div>
 
-          <div class="section">
-            <div class="section-title">Tenant Details / ದಾರುಗಾರ ವಿವರಗಳು</div>
-            <div class="row">
-              <span class="label">Tenant Name / ದಾರುಗಾರನ ಹೆಸರು:</span>
-              <span class="value">${tenant.name}</span>
+          <div class="info-grid">
+            <div class="info-section">
+              <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
+              <div class="info-row">
+                <span class="info-label">Name / ಹೆಸರು:</span>
+                <span>${selectedFarmer.name}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Mobile / ಮೊಬೈಲ್:</span>
+                <span>${selectedFarmer.mobile}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Place / ಸ್ಥಳ:</span>
+                <span>${selectedFarmer.place}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Account / ಖಾತೆ:</span>
+                <span>${selectedFarmer.bankAccountNumber}</span>
+              </div>
             </div>
-            <div class="row">
-              <span class="label">GST No. / ಜಿ.ಎಸ್.ಟಿ ಸಂಖ್ಯೆ:</span>
-              <span class="value">${tenant.gstNumber || 'N/A'}</span>
-            </div>
-            <div class="row">
-              <span class="label">HSN Code / ಎಚ್.ಎಸ್.ಎನ್ ಕೋಡ್:</span>
-              <span class="value">${tenant.hsnCode || 'N/A'}</span>
-            </div>
-            <div class="row">
-              <span class="label">Mobile Number / ಮೊಬೈಲ್ ಸಂಖ್ಯೆ:</span>
-              <span class="value">${tenant.mobileNumber}</span>
-            </div>
-            <div class="row">
-              <span class="label">Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ:</span>
-              <span class="value">${pattiNumber || 'N/A'}</span>
-            </div>
-            <div class="row">
-              <span class="label">Date / ದಿನಾಂಕ:</span>
-              <span class="value">${currentDate}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Farmer Details / ರೈತ ವಿವರಗಳು</div>
-            <div class="row">
-              <span class="label">Farmer Name / ರೈತನ ಹೆಸರು:</span>
-              <span class="value">${selectedLot.farmer.name}</span>
-            </div>
-            <div class="row">
-              <span class="label">Place / ಸ್ಥಳ:</span>
-              <span class="value">${selectedLot.farmer.place}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Lot Details / ಲಾಟ್ ವಿವರಗಳು</div>
-            <div class="row">
-              <span class="label">Lot Number / ಲಾಟ್ ಸಂಖ್ಯೆ:</span>
-              <span class="value">${selectedLot.lotNumber}</span>
-            </div>
-            <div class="row">
-              <span class="label">Number of Bags / ಚೀಲಗಳ ಸಂಖ್ಯೆ:</span>
-              <span class="value">${selectedLot.numberOfBags}</span>
-            </div>
-            <div class="row">
-              <span class="label">Total Weight (Qtl) / ಒಟ್ಟು ತೂಕ:</span>
-              <span class="value">${(selectedLot.totalWeight / 100).toFixed(2)} Qtl</span>
-            </div>
-            <div class="row">
-              <span class="label">Rate per Quintal / ಪ್ರತಿ ಕ್ವಿಂಟಲ್ ದರ:</span>
-              <span class="value">${formatCurrency(selectedLot.pricePerQuintal)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Total Amount / ಒಟ್ಟು ಮೊತ್ತ:</span>
-              <span class="value">${formatCurrency(totalAmount)}</span>
+            
+            <div class="info-section">
+              <h3>Trader Details / ವ್ಯಾಪಾರಿ ವಿವರಗಳು</h3>
+              <div class="info-row">
+                <span class="info-label">Name / ಹೆಸರು:</span>
+                <span>${tenant.name}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">GST / ಜಿಎಸ್ಟಿ:</span>
+                <span>${tenant.gstNumber}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Mobile / ಮೊಬೈಲ್:</span>
+                <span>${tenant.mobileNumber}</span>
+              </div>
             </div>
           </div>
 
-          <div class="section">
-            <div class="section-title">Deductions / ಕಳೆದುಕೊಳ್ಳುವ ಮೊತ್ತಗಳು</div>
-            <div class="row">
-              <span class="label">Hamali / ಹಮಾಲಿ:</span>
-              <span class="value">${formatCurrency(billData.hamali)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Vehicle Rent / ವಾಹನ ಬಾಡಿಗೆ:</span>
-              <span class="value">${formatCurrency(billData.vehicleRent)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Empty Bag Charges / ಖಾಲಿ ಚೀಲಗಳು:</span>
-              <span class="value">${formatCurrency(billData.emptyBagCharges)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Advance / ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ:</span>
-              <span class="value">${formatCurrency(billData.advance)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Commission (3%) / ಕಮಿಷನ್ (3%):</span>
-              <span class="value">${formatCurrency(commission)}</span>
-            </div>
-            <div class="row">
-              <span class="label">Other / ಇತರೆ:</span>
-              <span class="value">${formatCurrency(billData.other)}</span>
-            </div>
-            <div class="row" style="border-top: 1px solid #ccc; padding-top: 8px; margin-top: 8px;">
-              <span class="label">Total Deductions / ಒಟ್ಟು ಕಳೆದುಕೊಳ್ಳುವ ಮೊತ್ತ:</span>
-              <span class="value">${formatCurrency(totalDeductions)}</span>
+          <table class="lots-table">
+            <thead>
+              <tr>
+                <th>Lot No / ಲಾಟ್ ಸಂ</th>
+                <th>Bags / ಚೀಲಗಳು</th>
+                <th>Weight (kg) / ತೂಕ</th>
+                <th>Price/Quintal / ದರ</th>
+                <th>Amount / ಮೊತ್ತ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${farmerLots.map(lot => `
+                <tr>
+                  <td>${lot.lotNumber}</td>
+                  <td>${lot.numberOfBags}</td>
+                  <td>${lot.totalWeight.toFixed(1)}</td>
+                  <td>${formatCurrency(lot.pricePerQuintal)}</td>
+                  <td>${formatCurrency((lot.totalWeight / 100) * lot.pricePerQuintal)}</td>
+                </tr>
+              `).join('')}
+              <tr style="background-color: #f0f0f0; font-weight: bold;">
+                <td>Total / ಒಟ್ಟು</td>
+                <td>${totalBags}</td>
+                <td>${totalWeight.toFixed(1)}</td>
+                <td>-</td>
+                <td>${formatCurrency(totalAmount)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="calc-section">
+            <div class="calc-grid">
+              <div class="calc-box">
+                <h3>Deductions / ಕಳೆದುಕೊಳ್ಳುವ ಮೊತ್ತಗಳು</h3>
+                <div class="calc-row">
+                  <span>Hamali / ಹಮಾಲಿ:</span>
+                  <span>${formatCurrency(billData.hamali)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Vehicle Rent / ವಾಹನ ಬಾಡಿಗೆ:</span>
+                  <span>${formatCurrency(billData.vehicleRent)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Empty Bags / ಖಾಲಿ ಚೀಲಗಳು:</span>
+                  <span>${formatCurrency(billData.emptyBagCharges)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Advance / ಮುಂಗಡ:</span>
+                  <span>${formatCurrency(billData.advance)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Commission (3%) / ಕಮಿಷನ್:</span>
+                  <span>${formatCurrency(commission)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Other / ಇತರೆ:</span>
+                  <span>${formatCurrency(billData.other)}</span>
+                </div>
+                <div class="calc-row total">
+                  <span>Total Deductions / ಒಟ್ಟು ಕಳೆತ:</span>
+                  <span>${formatCurrency(totalDeductions)}</span>
+                </div>
+              </div>
+
+              <div class="calc-box">
+                <h3>Summary / ಸಾರಾಂಶ</h3>
+                <div class="calc-row">
+                  <span>Total Lots / ಒಟ್ಟು ಲಾಟ್‌ಗಳು:</span>
+                  <span>${farmerLots.length}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Total Bags / ಒಟ್ಟು ಚೀಲಗಳು:</span>
+                  <span>${totalBags}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Total Weight / ಒಟ್ಟು ತೂಕ:</span>
+                  <span>${totalWeight.toFixed(1)} kg</span>
+                </div>
+                <div class="calc-row">
+                  <span>Gross Amount / ಒಟ್ಟು ಮೊತ್ತ:</span>
+                  <span>${formatCurrency(totalAmount)}</span>
+                </div>
+                <div class="calc-row">
+                  <span>Total Deductions / ಒಟ್ಟು ಕಳೆತ:</span>
+                  <span>${formatCurrency(totalDeductions)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="section net-section">
-            <div class="section-title">Net Payable Amount / ನಿವ್ವಳ ಪಾವತಿಸಬೇಕಾದ ಮೊತ್ತ</div>
-            <div class="net-amount">${formatCurrency(netPayable)}</div>
+          <div class="net-amount">
+            <h2>Net Payable to Farmer / ರೈತನಿಗೆ ನೀಡಬೇಕಾದ ನಿವ್ವಳ ಮೊತ್ತ: ${formatCurrency(netPayable)}</h2>
           </div>
 
-          <div class="signature-section">
+          <div class="signatures">
             <div class="signature-box">
-              <div class="signature-line">Farmer Signature / ರೈತನ ಸಹಿ</div>
+              <div>Farmer Signature / ರೈತ ಸಹಿ</div>
+              <div style="margin-top: 10px;">${selectedFarmer.name}</div>
             </div>
             <div class="signature-box">
-              <div class="signature-line">Authorized Signature / ಅಧಿಕೃತ ಸಹಿ</div>
+              <div>Authorized Signature / ಅಧಿಕೃತ ಸಹಿ</div>
+              <div style="margin-top: 10px;">${tenant.name}</div>
             </div>
           </div>
         </body>
       </html>
     `;
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
+    // Create and download the HTML file
+    const blob = new Blob([printContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `farmer-bill-${selectedLot.lotNumber}-${new Date().getTime()}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `farmer-bill-${selectedFarmer.name}-${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
-  if (!user?.tenantId) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Please log in to access farmer bills.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Get unique farmers with completed lots
+  const uniqueFarmers = Array.from(
+    new Map(
+      lots?.filter((lot: Lot) => lot.status === 'completed')
+        .map((lot: Lot) => [lot.farmerId, lot])
+    )?.values() || []
+  );
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Farmer Bill / ರೈತ ಬಿಲ್</h1>
-        {selectedLot && (
-          <Button onClick={generatePDF} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download Bill / ಬಿಲ್ ಡೌನ್‌ಲೋಡ್
-          </Button>
-        )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Farmer Bill / ರೈತ ಬಿಲ್</h1>
+          <p className="text-gray-600 mt-2">Generate consolidated farmer payment bills / ಏಕೀಕೃತ ರೈತ ಪಾವತಿ ಬಿಲ್‌ಗಳನ್ನು ರಚಿಸಿ</p>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Select Lot / ಲಾಟ್ ಆಯ್ಕೆ ಮಾಡಿ</CardTitle>
+          <CardTitle>Select Farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="lot-select">Lot / ಲಾಟ್</Label>
-              <Select value={selectedLotId} onValueChange={setSelectedLotId}>
+              <Label htmlFor="farmer-select">Farmer / ರೈತ</Label>
+              <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a lot / ಲಾಟ್ ಆಯ್ಕೆ ಮಾಡಿ" />
+                  <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lots?.map((lot: Lot) => (
-                    <SelectItem key={lot.id} value={lot.id.toString()}>
-                      {lot.lotNumber} - {lot.farmer.name}
+                  {uniqueFarmers.map((lot: Lot) => (
+                    <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
+                      {lot.farmer.name} - {lot.farmer.place}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -371,96 +361,43 @@ export default function FarmerBill() {
         </CardContent>
       </Card>
 
-      {selectedLot && tenant && (
+      {selectedFarmer && tenant && farmerLots.length > 0 && (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Header Details / ಮುಖ್ಯ ವಿವರಗಳು</CardTitle>
+              <CardTitle>Farmer's Completed Lots / ರೈತನ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳು</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div className="space-y-2">
-                    <Label>Tenant Name / ದಾರುಗಾರನ ಹೆಸರು</Label>
-                    <div className="p-2 bg-gray-50 rounded">{tenant.name}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>GST No. / ಜಿ.ಎಸ್.ಟಿ ಸಂಖ್ಯೆ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{tenant.gstNumber || 'N/A'}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>HSN Code / ಎಚ್.ಎಸ್.ಎನ್ ಕೋಡ್</Label>
-                    <div className="p-2 bg-gray-50 rounded">{tenant.hsnCode || 'N/A'}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Mobile Number / ಮೊಬೈಲ್ ಸಂಖ್ಯೆ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{tenant.mobileNumber}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Date / ದಿನಾಂಕ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{new Date().toLocaleDateString('en-IN')}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Farmer Name / ರೈತನ ಹೆಸರು</Label>
-                    <div className="p-2 bg-gray-50 rounded">{selectedLot.farmer.name}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Place / ಸ್ಥಳ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{selectedLot.farmer.place}</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Lot Details / ಲಾಟ್ ವಿವರಗಳು</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <div className="space-y-2">
-                    <Label>Lot Number / ಲಾಟ್ ಸಂಖ್ಯೆ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{selectedLot.lotNumber}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Number of Bags / ಚೀಲಗಳ ಸಂಖ್ಯೆ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{selectedLot.numberOfBags}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Total Weight (Qtl) / ಒಟ್ಟು ತೂಕ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{(selectedLot.totalWeight / 100).toFixed(2)} Qtl</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Rate per Quintal / ಪ್ರತಿ ಕ್ವಿಂಟಲ್ ದರ</Label>
-                    <div className="p-2 bg-gray-50 rounded">{formatCurrency(selectedLot.pricePerQuintal)}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <Label>Total Amount / ಒಟ್ಟು ಮೊತ್ತ</Label>
-                    <div className="p-2 bg-blue-50 rounded font-semibold text-blue-700">{formatCurrency(totalAmount)}</div>
-                  </div>
-                </div>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 p-2 text-left">Lot No / ಲಾಟ್ ಸಂ</th>
+                      <th className="border border-gray-300 p-2 text-left">Bags / ಚೀಲಗಳು</th>
+                      <th className="border border-gray-300 p-2 text-left">Weight (kg) / ತೂಕ</th>
+                      <th className="border border-gray-300 p-2 text-left">Price/Quintal / ದರ</th>
+                      <th className="border border-gray-300 p-2 text-left">Amount / ಮೊತ್ತ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {farmerLots.map((lot) => (
+                      <tr key={lot.id}>
+                        <td className="border border-gray-300 p-2">{lot.lotNumber}</td>
+                        <td className="border border-gray-300 p-2">{lot.numberOfBags}</td>
+                        <td className="border border-gray-300 p-2">{lot.totalWeight.toFixed(1)}</td>
+                        <td className="border border-gray-300 p-2">{formatCurrency(lot.pricePerQuintal)}</td>
+                        <td className="border border-gray-300 p-2">{formatCurrency((lot.totalWeight / 100) * lot.pricePerQuintal)}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-yellow-50 font-semibold">
+                      <td className="border border-gray-300 p-2">Total / ಒಟ್ಟು</td>
+                      <td className="border border-gray-300 p-2">{totalBags}</td>
+                      <td className="border border-gray-300 p-2">{totalWeight.toFixed(1)}</td>
+                      <td className="border border-gray-300 p-2">-</td>
+                      <td className="border border-gray-300 p-2">{formatCurrency(totalAmount)}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
@@ -512,7 +449,7 @@ export default function FarmerBill() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="commission">Commission (3%) / ಕಮಿಷನ್ (3%)</Label>
+                  <Label htmlFor="commission">Commission (3%) / ಕಮಿಷನ್</Label>
                   <div className="p-2 bg-yellow-50 rounded font-semibold text-yellow-700">
                     {formatCurrency(commission)}
                   </div>
@@ -528,28 +465,63 @@ export default function FarmerBill() {
                   />
                 </div>
               </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between items-center text-lg font-semibold">
-                <span>Total Deductions / ಒಟ್ಟು ಕಳೆದುಕೊಳ್ಳುವ ಮೊತ್ತ:</span>
-                <span className="text-red-600">{formatCurrency(totalDeductions)}</span>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Bill Summary / ಬಿಲ್ ಸಾರಾಂಶ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Total Lots / ಒಟ್ಟು ಲಾಟ್‌ಗಳು:</span>
+                    <span className="font-semibold">{farmerLots.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Bags / ಒಟ್ಟು ಚೀಲಗಳು:</span>
+                    <span className="font-semibold">{totalBags}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Weight / ಒಟ್ಟು ತೂಕ:</span>
+                    <span className="font-semibold">{totalWeight.toFixed(1)} kg</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Gross Amount / ಒಟ್ಟು ಮೊತ್ತ:</span>
+                    <span className="text-green-600">{formatCurrency(totalAmount)}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Total Deductions / ಒಟ್ಟು ಕಳೆತ:</span>
+                    <span className="font-semibold text-red-600">{formatCurrency(totalDeductions)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-xl font-bold">
+                    <span>Net Payable / ನಿವ್ವಳ ಪಾವತಿ:</span>
+                    <span className="text-blue-600">{formatCurrency(netPayable)}</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-green-50">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-green-800">Net Payable Amount / ನಿವ್ವಳ ಪಾವತಿಸಬೇಕಾದ ಮೊತ್ತ</CardTitle>
+              <CardTitle>Generate Bill / ಬಿಲ್ ರಚಿಸಿ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-700 mb-2">
-                  {formatCurrency(netPayable)}
-                </div>
-                <div className="text-sm text-green-600">
-                  Amount to be paid to farmer / ರೈತನಿಗೆ ಪಾವತಿಸಬೇಕಾದ ಮೊತ್ತ
-                </div>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={generatePDF}
+                  className="flex items-center gap-2"
+                  size="lg"
+                >
+                  <Download className="h-4 w-4" />
+                  Download Bill / ಬಿಲ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ
+                </Button>
               </div>
             </CardContent>
           </Card>
