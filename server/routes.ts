@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills } from "./billing";
+import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills, generateTaxInvoice } from "./billing";
 import {
   insertFarmerSchema,
   insertLotSchema,
@@ -162,6 +162,25 @@ export function registerRoutes(app: Express): Server {
       }
     },
   );
+
+  // Tax Invoice route
+  app.get("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user.tenantId;
+
+      const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
+      
+      if (!taxInvoice) {
+        return res.status(404).json({ message: "No completed lots found for this buyer" });
+      }
+
+      res.json(taxInvoice);
+    } catch (error) {
+      console.error("Error generating tax invoice:", error);
+      res.status(500).json({ message: "Failed to generate tax invoice" });
+    }
+  });
 
   // Buyer billing routes
   app.get(

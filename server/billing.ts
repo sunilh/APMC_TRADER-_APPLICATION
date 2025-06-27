@@ -434,6 +434,207 @@ export async function generateBuyerDayBill(
   };
 }
 
+// Tax Invoice Interface
+export interface TaxInvoice {
+  invoiceNumber: string;
+  invoiceDate: string;
+  hsnCode: string;
+  seller: {
+    companyName: string;
+    apmcCode: string;
+    address: string;
+    mobile: string;
+    gstin: string;
+    pan: string;
+    fssai: string;
+  };
+  buyer: {
+    companyName: string;
+    contactPerson: string;
+    address: string;
+    mobile: string;
+    gstin: string;
+    pan: string;
+  };
+  items: Array<{
+    lotNo: string;
+    itemName: string;
+    hsnCode: string;
+    bags: number;
+    weightKg: number;
+    ratePerQuintal: number;
+    amountInRupees: number;
+  }>;
+  calculations: {
+    subTotal: number;
+    packingCharges: number;
+    weighingCharges: number;
+    commission: number;
+    taxableAmount: number;
+    sgst: number;
+    cgst: number;
+    cess: number;
+    totalAmount: number;
+  };
+  bankDetails: {
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    accountHolder: string;
+  };
+}
+
+// Generate Tax Invoice for a specific buyer
+export async function generateTaxInvoice(
+  buyerId: number,
+  tenantId: number
+): Promise<TaxInvoice | null> {
+  try {
+    // Get buyer details
+    const [buyer] = await db
+      .select()
+      .from(buyers)
+      .where(and(eq(buyers.id, buyerId), eq(buyers.tenantId, tenantId)));
+
+    if (!buyer) {
+      return null;
+    }
+
+    // Get tenant/seller details
+    const [tenant] = await db
+      .select()
+      .from(tenants)
+      .where(eq(tenants.id, tenantId));
+
+    if (!tenant) {
+      return null;
+    }
+
+    // Get completed lots for this buyer
+    const completedLots = await db
+      .select()
+      .from(lots)
+      .where(
+        and(
+          eq(lots.buyerId, buyerId),
+          eq(lots.tenantId, tenantId),
+          eq(lots.status, "completed")
+        )
+      );
+
+    if (completedLots.length === 0) {
+      return null;
+    }
+
+    // Get bag details for all lots
+    const items = [];
+    let totalBags = 0;
+    let subTotal = 0;
+
+    for (const lot of completedLots) {
+      const bagDetails = await db
+        .select({
+          bagCount: sql<number>`COUNT(*)`,
+          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+        })
+        .from(bags)
+        .where(eq(bags.lotId, lot.id));
+
+      const bagData = bagDetails[0];
+      const weightKg = Number(bagData.totalWeight);
+      const bagCount = Number(bagData.bagCount);
+      const lotPrice = Number(lot.lotPrice) || 0;
+      const amountInRupees = (weightKg / 100) * lotPrice;
+
+      items.push({
+        lotNo: lot.lotNumber,
+        itemName: (lot.varietyGrade || 'AGRICULTURAL PRODUCE').toUpperCase(),
+        hsnCode: buyer.hsnCode,
+        bags: bagCount,
+        weightKg: weightKg,
+        ratePerQuintal: lotPrice,
+        amountInRupees: amountInRupees,
+      });
+
+      totalBags += bagCount;
+      subTotal += amountInRupees;
+    }
+
+    // Get tenant settings for calculations
+    const settings = (tenant.settings as any) || {};
+    const gstSettings = settings.gstSettings || {};
+    
+    const packingRate = gstSettings.packaging || 5;
+    const weighingRate = gstSettings.weighingFee || 1.5;
+    const commissionRate = gstSettings.apmcCommission || 2;
+    const sgstRate = gstSettings.sgst || 2.5;
+    const cgstRate = gstSettings.cgst || 2.5;
+    const cessRate = gstSettings.cess || 0.6;
+
+    // Calculate charges
+    const packingCharges = totalBags * packingRate;
+    const weighingCharges = totalBags * weighingRate;
+    const commission = (subTotal * commissionRate) / 100;
+    const taxableAmount = subTotal + packingCharges + weighingCharges + commission;
+    
+    const sgst = (taxableAmount * sgstRate) / 100;
+    const cgst = (taxableAmount * cgstRate) / 100;
+    const cess = (taxableAmount * cessRate) / 100;
+    const totalAmount = taxableAmount + sgst + cgst + cess;
+
+    // Generate invoice number
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const invoiceNumber = `INV-${dateStr}-${String(buyerId).padStart(3, '0')}`;
+
+    const taxInvoice: TaxInvoice = {
+      invoiceNumber,
+      invoiceDate: today.toLocaleDateString('en-GB'),
+      hsnCode: buyer.hsnCode,
+      seller: {
+        companyName: tenant.name,
+        apmcCode: tenant.apmcCode,
+        address: `${tenant.address || tenant.place}`,
+        mobile: tenant.mobileNumber,
+        gstin: tenant.gstNumber || '',
+        pan: tenant.panNumber || '',
+        fssai: tenant.fssaiNumber || '',
+      },
+      buyer: {
+        companyName: buyer.name,
+        contactPerson: buyer.contactPerson || '',
+        address: buyer.address || '',
+        mobile: buyer.mobile || '',
+        gstin: buyer.gstNumber || '',
+        pan: buyer.panNumber || '',
+      },
+      items,
+      calculations: {
+        subTotal: Math.round(subTotal * 100) / 100,
+        packingCharges: Math.round(packingCharges * 100) / 100,
+        weighingCharges: Math.round(weighingCharges * 100) / 100,
+        commission: Math.round(commission * 100) / 100,
+        taxableAmount: Math.round(taxableAmount * 100) / 100,
+        sgst: Math.round(sgst * 100) / 100,
+        cgst: Math.round(cgst * 100) / 100,
+        cess: Math.round(cess * 100) / 100,
+        totalAmount: Math.round(totalAmount * 100) / 100,
+      },
+      bankDetails: {
+        bankName: tenant.bankName || '',
+        accountNumber: tenant.bankAccountNumber || '',
+        ifscCode: tenant.ifscCode || '',
+        accountHolder: tenant.accountHolderName || '',
+      },
+    };
+
+    return taxInvoice;
+  } catch (error) {
+    console.error('Error generating tax invoice:', error);
+    return null;
+  }
+}
+
 export async function getBuyerDayBills(date: Date, tenantId: number): Promise<BuyerDayBill[]> {
   console.log(`Starting getBuyerDayBills for tenantId: ${tenantId}, date: ${date.toISOString()}`);
   
@@ -691,7 +892,7 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
     const finalDemoCgst = (20000 * cgstRate) / 100;
     const finalDemoCess = (20000 * cessRate) / 100;
     const finalDemoTotalTax = finalDemoSgst + finalDemoCgst + finalDemoCess;
-    
+
     const demoBill: BuyerDayBill = {
       buyerId: buyer.id,
       buyerName: buyer.name,

@@ -24,6 +24,7 @@ export function Navigation() {
     { name: 'Billing', href: '/billing', icon: IndianRupee },
     { name: 'Buyer Billing', href: '/buyer-billing', icon: Receipt },
     { name: 'Professional Invoice', href: '/professional-invoice', icon: FileText },
+    { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 
