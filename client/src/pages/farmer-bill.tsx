@@ -72,6 +72,26 @@ export default function FarmerBill() {
     setBillData(prev => ({ ...prev, commission: totalAmount * 0.03 }));
   }, [totalAmount]);
 
+  // Auto-populate deductions from lot data when farmer is selected
+  useEffect(() => {
+    if (farmerLots.length > 0) {
+      const totalVehicleRent = farmerLots.reduce((sum: number, lot: any) => 
+        sum + (parseFloat(lot.vehicleRent) || 0), 0);
+      const totalAdvance = farmerLots.reduce((sum: number, lot: any) => 
+        sum + (parseFloat(lot.advance) || 0), 0);
+      const totalUnloadHamali = farmerLots.reduce((sum: number, lot: any) => 
+        sum + (parseFloat(lot.unloadHamali) || 0), 0);
+      
+      setBillData(prev => ({
+        ...prev,
+        vehicleRent: totalVehicleRent,
+        advance: totalAdvance,
+        hamali: totalUnloadHamali,
+        commission: totalAmount * 0.03
+      }));
+    }
+  }, [farmerLots, totalAmount]);
+
   const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
     const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
     setBillData(prev => ({ ...prev, [field]: numValue }));
@@ -285,6 +305,7 @@ export default function FarmerBill() {
           <Card>
             <CardHeader>
               <CardTitle>Farmer's Completed Lots / ರೈತನ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳು</CardTitle>
+              <p className="text-sm text-blue-600">Auto-fetched from lot data: Weight, Price, Vehicle Rent, Advance, Hamali</p>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -295,6 +316,9 @@ export default function FarmerBill() {
                       <th className="border border-gray-300 p-2 text-left">Bags</th>
                       <th className="border border-gray-300 p-2 text-left">Weight (kg)</th>
                       <th className="border border-gray-300 p-2 text-left">Rate/Quintal</th>
+                      <th className="border border-gray-300 p-2 text-left">Vehicle Rent</th>
+                      <th className="border border-gray-300 p-2 text-left">Advance</th>
+                      <th className="border border-gray-300 p-2 text-left">Hamali</th>
                       <th className="border border-gray-300 p-2 text-left">Amount</th>
                     </tr>
                   </thead>
@@ -303,16 +327,40 @@ export default function FarmerBill() {
                       <tr key={lot.id}>
                         <td className="border border-gray-300 p-2">{lot.lotNumber}</td>
                         <td className="border border-gray-300 p-2">{lot.numberOfBags}</td>
-                        <td className="border border-gray-300 p-2">{lot.totalWeight ? lot.totalWeight.toFixed(1) : '0'}</td>
-                        <td className="border border-gray-300 p-2">{formatCurrency(lot.pricePerQuintal || 0)}</td>
-                        <td className="border border-gray-300 p-2">{formatCurrency(lot.totalWeight && lot.pricePerQuintal ? (lot.totalWeight / 100) * lot.pricePerQuintal : 0)}</td>
+                        <td className="border border-gray-300 p-2 font-semibold text-blue-600">
+                          {lot.totalWeight ? lot.totalWeight.toFixed(1) : '0'}
+                        </td>
+                        <td className="border border-gray-300 p-2 font-semibold text-green-600">
+                          {formatCurrency(lot.pricePerQuintal || 0)}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-orange-600">
+                          {formatCurrency(parseFloat(lot.vehicleRent) || 0)}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-purple-600">
+                          {formatCurrency(parseFloat(lot.advance) || 0)}
+                        </td>
+                        <td className="border border-gray-300 p-2 text-red-600">
+                          {formatCurrency(parseFloat(lot.unloadHamali) || 0)}
+                        </td>
+                        <td className="border border-gray-300 p-2 font-semibold">
+                          {formatCurrency(lot.totalWeight && lot.pricePerQuintal ? (lot.totalWeight / 100) * lot.pricePerQuintal : 0)}
+                        </td>
                       </tr>
                     ))}
                     <tr className="bg-yellow-50 font-semibold">
                       <td className="border border-gray-300 p-2">Total</td>
                       <td className="border border-gray-300 p-2">{totalBags}</td>
-                      <td className="border border-gray-300 p-2">{totalWeight ? totalWeight.toFixed(1) : '0'}</td>
+                      <td className="border border-gray-300 p-2 text-blue-600">{totalWeight ? totalWeight.toFixed(1) : '0'}</td>
                       <td className="border border-gray-300 p-2">-</td>
+                      <td className="border border-gray-300 p-2 text-orange-600">
+                        {formatCurrency(farmerLots.reduce((sum: number, lot: any) => sum + (parseFloat(lot.vehicleRent) || 0), 0))}
+                      </td>
+                      <td className="border border-gray-300 p-2 text-purple-600">
+                        {formatCurrency(farmerLots.reduce((sum: number, lot: any) => sum + (parseFloat(lot.advance) || 0), 0))}
+                      </td>
+                      <td className="border border-gray-300 p-2 text-red-600">
+                        {formatCurrency(farmerLots.reduce((sum: number, lot: any) => sum + (parseFloat(lot.unloadHamali) || 0), 0))}
+                      </td>
                       <td className="border border-gray-300 p-2">{formatCurrency(totalAmount)}</td>
                     </tr>
                   </tbody>
@@ -325,28 +373,41 @@ export default function FarmerBill() {
           <Card>
             <CardHeader>
               <CardTitle>Deductions / ಕಳೆದುಕೊಳ್ಳುವ ಮೊತ್ತಗಳು</CardTitle>
+              <p className="text-sm text-green-600">✓ Auto-populated from lot data. You can edit these values if needed.</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Hamali / ಹಮಾಲಿ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('hamali', value)}
-                    placeholder="0"
-                    type="currency"
-                    value={billData.hamali.toString()}
-                    onChange={(e) => handleInputChange('hamali', e.target.value)}
-                  />
+                  <div className="relative">
+                    <VoiceInput
+                      onResult={(value) => handleInputChange('hamali', value)}
+                      placeholder="0"
+                      type="currency"
+                      value={billData.hamali.toString()}
+                      onChange={(e) => handleInputChange('hamali', e.target.value)}
+                      className={billData.hamali > 0 ? "bg-red-50 border-red-200" : ""}
+                    />
+                    {billData.hamali > 0 && (
+                      <span className="text-xs text-red-600 mt-1 block">Fetched from lots</span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Vehicle Rent / ವಾಹನ ಬಾಡಿಗೆ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('vehicleRent', value)}
-                    placeholder="0"
-                    type="currency"
-                    value={billData.vehicleRent.toString()}
-                    onChange={(e) => handleInputChange('vehicleRent', e.target.value)}
-                  />
+                  <div className="relative">
+                    <VoiceInput
+                      onResult={(value) => handleInputChange('vehicleRent', value)}
+                      placeholder="0"
+                      type="currency"
+                      value={billData.vehicleRent.toString()}
+                      onChange={(e) => handleInputChange('vehicleRent', e.target.value)}
+                      className={billData.vehicleRent > 0 ? "bg-orange-50 border-orange-200" : ""}
+                    />
+                    {billData.vehicleRent > 0 && (
+                      <span className="text-xs text-orange-600 mt-1 block">Fetched from lots</span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Empty Bag Charges / ಖಾಲಿ ಚೀಲಗಳು</Label>
@@ -360,18 +421,25 @@ export default function FarmerBill() {
                 </div>
                 <div className="space-y-2">
                   <Label>Advance / ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('advance', value)}
-                    placeholder="0"
-                    type="currency"
-                    value={billData.advance.toString()}
-                    onChange={(e) => handleInputChange('advance', e.target.value)}
-                  />
+                  <div className="relative">
+                    <VoiceInput
+                      onResult={(value) => handleInputChange('advance', value)}
+                      placeholder="0"
+                      type="currency"
+                      value={billData.advance.toString()}
+                      onChange={(e) => handleInputChange('advance', e.target.value)}
+                      className={billData.advance > 0 ? "bg-purple-50 border-purple-200" : ""}
+                    />
+                    {billData.advance > 0 && (
+                      <span className="text-xs text-purple-600 mt-1 block">Fetched from lots</span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Commission (3%) / ಕಮಿಷನ್</Label>
                   <div className="p-2 bg-yellow-50 rounded font-semibold text-yellow-700">
                     {formatCurrency(commission)}
+                    <span className="text-xs block text-yellow-600">Auto-calculated</span>
                   </div>
                 </div>
                 <div className="space-y-2">
