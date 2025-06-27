@@ -649,8 +649,8 @@ export function registerRoutes(app: Express): Server {
       const { tenant: tenantData, adminUser: userData } = req.body;
 
       // Validate required fields
-      if (!tenantData.name || !tenantData.apmcCode || !tenantData.place || !tenantData.mobileNumber) {
-        return res.status(400).json({ message: "Missing required tenant fields" });
+      if (!tenantData.name || !tenantData.apmcCode || !tenantData.place || !tenantData.mobileNumber || !tenantData.panNumber) {
+        return res.status(400).json({ message: "Missing required tenant fields (name, APMC code, place, mobile number, and PAN card number are required)" });
       }
 
       if (!userData.username || !userData.password) {

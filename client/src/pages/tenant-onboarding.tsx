@@ -297,7 +297,7 @@ export default function TenantOnboarding() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="panNumber">PAN Card Number</Label>
+                  <Label htmlFor="panNumber">PAN Card Number *</Label>
                   <div className="flex gap-2">
                     <Input
                       id="panNumber"
