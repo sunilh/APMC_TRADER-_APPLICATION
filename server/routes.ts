@@ -434,6 +434,29 @@ export function registerRoutes(app: Express): Server {
 
   // Bag routes
   app.get(
+    "/api/bags",
+    requireAuth,
+    requireTenant,
+    async (req, res) => {
+      try {
+        // Get all bags for the tenant by fetching all lots first
+        const lots = await storage.getLotsByTenant(req.user.tenantId);
+        const allBags = [];
+        
+        for (const lot of lots) {
+          const bags = await storage.getBagsByLot(lot.id, req.user.tenantId);
+          allBags.push(...bags);
+        }
+        
+        res.json(allBags);
+      } catch (error) {
+        console.error("Error fetching all bags:", error);
+        res.status(500).json({ message: "Failed to fetch bags" });
+      }
+    },
+  );
+
+  app.get(
     "/api/lots/:lotId/bags",
     requireAuth,
     requireTenant,
