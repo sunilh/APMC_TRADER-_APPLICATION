@@ -54,13 +54,19 @@ export default function FarmerBill() {
 
   const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
 
-  // Calculate totals
+  // Calculate totals with proper null checking
   const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
-    return sum + ((lot.totalWeight / 100) * lot.pricePerQuintal);
+    const weight = parseFloat(lot.totalWeight) || 0;
+    const price = parseFloat(lot.pricePerQuintal) || 0;
+    return sum + ((weight / 100) * price);
   }, 0);
   
-  const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + lot.numberOfBags, 0);
-  const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + lot.totalWeight, 0);
+  const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (parseInt(lot.numberOfBags) || 0), 0);
+  const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + (parseFloat(lot.totalWeight) || 0), 0);
+  
+  console.log('Farmer lots for calculation:', farmerLots);
+  console.log('Total weight calculated:', totalWeight);
+  console.log('Total amount calculated:', totalAmount);
   
   const commission = totalAmount * 0.03; // 3% commission
   const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
@@ -328,10 +334,10 @@ export default function FarmerBill() {
                         <td className="border border-gray-300 p-2">{lot.lotNumber}</td>
                         <td className="border border-gray-300 p-2">{lot.numberOfBags}</td>
                         <td className="border border-gray-300 p-2 font-semibold text-blue-600">
-                          {lot.totalWeight ? lot.totalWeight.toFixed(1) : '0'}
+                          {parseFloat(lot.totalWeight) ? parseFloat(lot.totalWeight).toFixed(1) : '0'}
                         </td>
                         <td className="border border-gray-300 p-2 font-semibold text-green-600">
-                          {formatCurrency(lot.pricePerQuintal || 0)}
+                          {formatCurrency(parseFloat(lot.pricePerQuintal) || 0)}
                         </td>
                         <td className="border border-gray-300 p-2 text-orange-600">
                           {formatCurrency(parseFloat(lot.vehicleRent) || 0)}
