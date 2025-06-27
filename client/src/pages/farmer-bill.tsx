@@ -47,15 +47,6 @@ interface FarmerBillData {
 export default function FarmerBill() {
   const { user } = useAuth();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
-  
-  // Auto-select first farmer when data loads
-  useEffect(() => {
-    if (uniqueFarmers.length > 0 && !selectedFarmerId) {
-      const firstFarmerId = uniqueFarmers[0].farmerId.toString();
-      console.log('Auto-selecting farmer:', firstFarmerId, uniqueFarmers[0].farmer.name);
-      setSelectedFarmerId(firstFarmerId);
-    }
-  }, [uniqueFarmers.length, selectedFarmerId]);
   const [pattiNumber, setPattiNumber] = useState("");
   const [billData, setBillData] = useState<FarmerBillData>({
     hamali: 0,
@@ -324,6 +315,26 @@ export default function FarmerBill() {
       completedLots.map((lot: Lot) => [lot.farmerId, lot])
     ).values()
   );
+
+  // Auto-select first farmer when data loads
+  useEffect(() => {
+    if (uniqueFarmers.length > 0 && !selectedFarmerId) {
+      const firstFarmerId = uniqueFarmers[0].farmerId.toString();
+      console.log('Auto-selecting farmer:', firstFarmerId, uniqueFarmers[0].farmer.name);
+      setSelectedFarmerId(firstFarmerId);
+    }
+  }, [uniqueFarmers.length, selectedFarmerId]);
+
+  // Manual selection for SHIVAPPA
+  const selectShivappa = () => {
+    if (uniqueFarmers.length > 0) {
+      const shivappaLot = uniqueFarmers.find(lot => lot.farmer.name === 'SHIVAPPA');
+      if (shivappaLot) {
+        console.log('Manually selecting SHIVAPPA:', shivappaLot.farmerId);
+        setSelectedFarmerId(shivappaLot.farmerId.toString());
+      }
+    }
+  };
 
   // Debug: Show what lots we have
   console.log('All lots:', lots);
