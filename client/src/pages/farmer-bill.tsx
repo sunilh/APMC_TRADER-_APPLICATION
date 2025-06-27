@@ -63,7 +63,7 @@ export default function FarmerBill() {
   });
 
   const { data: tenant } = useQuery({
-    queryKey: [`/api/tenants/${user?.tenantId}`],
+    queryKey: ["/api/tenant"],
     enabled: !!user?.tenantId,
   });
 
@@ -331,12 +331,10 @@ export default function FarmerBill() {
   };
 
   // Debug: Show what lots we have
-  console.log('All lots:', lots);
-  console.log('Completed lots:', completedLots);
-  console.log('Unique farmers with completed lots:', uniqueFarmers);
   console.log('Selected farmer ID:', selectedFarmerId);
   console.log('Farmer lots for selected farmer:', farmerLots);
   console.log('Selected farmer object:', selectedFarmer);
+  console.log('Tenant data:', tenant);
   console.log('Will show billing form?', selectedFarmer && tenant && farmerLots.length > 0);
 
   return (
@@ -399,8 +397,9 @@ export default function FarmerBill() {
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => {
-                    console.log('Farmer clicked:', lot.farmer.name, 'ID:', lot.farmerId);
-                    setSelectedFarmerId(lot.farmerId.toString());
+                    const farmerId = lot.farmerId.toString();
+                    console.log('Farmer clicked:', lot.farmer.name, 'ID:', farmerId);
+                    setSelectedFarmerId(farmerId);
                   }}
                 >
                   <CardContent className="p-4">
@@ -425,7 +424,7 @@ export default function FarmerBill() {
         </CardContent>
       </Card>
 
-      {selectedFarmer && tenant && farmerLots.length > 0 && (
+      {selectedFarmer && farmerLots.length > 0 && (
         <>
           <Card>
             <CardHeader>
