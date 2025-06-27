@@ -15,6 +15,7 @@ import BagEntryNew from "@/pages/bag-entry-new";
 import BuyersSimple from "@/pages/buyers-simple";
 import Billing from "@/pages/billing";
 import BuyerBilling from "@/pages/buyer-billing";
+import ProfessionalInvoice from "@/pages/professional-invoice";
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
 import StaffManagement from "@/pages/staff-management";
@@ -30,6 +31,7 @@ function Router() {
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/billing" component={Billing} />
       <ProtectedRoute path="/buyer-billing" component={BuyerBilling} />
+      <ProtectedRoute path="/professional-invoice" component={ProfessionalInvoice} />
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
       <Route path="/auth" component={AuthPage} />
