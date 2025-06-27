@@ -21,6 +21,7 @@ export default function FarmerBill() {
   const { user } = useAuth();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
   const [pattiNumber, setPattiNumber] = useState<string>("");
+  const [lastSelectedFarmerId, setLastSelectedFarmerId] = useState<string>("");
   const [billData, setBillData] = useState<FarmerBillData>({
     hamali: 0,
     vehicleRent: 0,
@@ -135,8 +136,14 @@ export default function FarmerBill() {
         commission: totalAmount * 0.03
       }));
 
-      // Always generate a new unique patti number when farmer data loads
-      setPattiNumber(generatePattiNumber());
+      // Check if we switched to a different farmer
+      if (selectedFarmerId !== lastSelectedFarmerId) {
+        setPattiNumber(generatePattiNumber());
+        setLastSelectedFarmerId(selectedFarmerId);
+      } else if (!pattiNumber) {
+        // Generate patti number only if empty (first time)
+        setPattiNumber(generatePattiNumber());
+      }
     }
   }, [farmerLots, totalAmount]);
 
