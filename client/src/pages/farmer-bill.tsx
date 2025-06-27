@@ -82,12 +82,23 @@ export default function FarmerBill() {
     }, 0);
     const totalBagsCount = lotBags.length;
     
+    // Sort bags by bag number for consistent display
+    const sortedBags = lotBags.sort((a: any, b: any) => {
+      const numA = parseInt(a.bagNumber.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.bagNumber.replace(/\D/g, '')) || 0;
+      return numA - numB;
+    });
+    
     console.log(`Lot ${lot.lotNumber}: ${totalBagsCount} bags, ${totalWeightFromBags} kg total`);
     
     return {
       ...lot,
       actualTotalWeight: totalWeightFromBags,
       actualBagCount: totalBagsCount,
+      bagWeights: sortedBags.map((bag: any) => ({
+        bagNumber: bag.bagNumber,
+        weight: parseFloat(bag.weight) || 0
+      })),
       lotPrice: parseFloat(lot.lotPrice) || 0,
       vehicleRent: parseFloat(lot.vehicleRent) || 0,
       advance: parseFloat(lot.advance) || 0,
@@ -219,11 +230,17 @@ export default function FarmerBill() {
             <tbody>
               ${enrichedFarmerLots.map((lot: any) => `
                 <tr>
-                  <td>${lot.lotNumber}</td>
+                  <td rowspan="2">${lot.lotNumber}</td>
                   <td>${lot.actualBagCount}</td>
                   <td>${lot.actualTotalWeight.toFixed(1)}</td>
                   <td>${formatCurrency(lot.lotPrice)}</td>
                   <td>${formatCurrency((lot.actualTotalWeight / 100) * lot.lotPrice)}</td>
+                </tr>
+                <tr>
+                  <td colspan="4" style="padding: 8px; font-size: 12px; background-color: #f8f9fa; border-top: 1px dashed #ddd;">
+                    <strong>Individual Bag Weights / ಪ್ರತ್ಯೇಕ ಚೀಲದ ತೂಕ:</strong><br>
+                    ${lot.bagWeights.map((bag: any) => `${bag.bagNumber}: ${bag.weight.toFixed(1)}kg`).join(' | ')}
+                  </td>
                 </tr>
               `).join('')}
               <tr class="total-row">
