@@ -47,6 +47,15 @@ interface FarmerBillData {
 export default function FarmerBill() {
   const { user } = useAuth();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
+  
+  // Auto-select first farmer when data loads
+  useEffect(() => {
+    if (uniqueFarmers.length > 0 && !selectedFarmerId) {
+      const firstFarmerId = uniqueFarmers[0].farmerId.toString();
+      console.log('Auto-selecting farmer:', firstFarmerId, uniqueFarmers[0].farmer.name);
+      setSelectedFarmerId(firstFarmerId);
+    }
+  }, [uniqueFarmers.length, selectedFarmerId]);
   const [pattiNumber, setPattiNumber] = useState("");
   const [billData, setBillData] = useState<FarmerBillData>({
     hamali: 0,
