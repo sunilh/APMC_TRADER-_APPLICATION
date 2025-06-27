@@ -80,6 +80,16 @@ export default function TaxInvoice() {
   // Fetch tax invoice for selected buyer
   const { data: taxInvoice, isLoading: invoiceLoading, error } = useQuery<TaxInvoice>({
     queryKey: ["/api/tax-invoice", selectedBuyerId],
+    queryFn: async () => {
+      if (!selectedBuyerId) return null;
+      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
     enabled: !!selectedBuyerId,
   });
 
