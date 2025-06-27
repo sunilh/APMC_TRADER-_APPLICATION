@@ -21,6 +21,8 @@ export const tenants = pgTable("tenants", {
   bankAccountNumber: text("bank_account_number"),
   ifscCode: text("ifsc_code"),
   accountHolderName: text("account_holder_name"),
+  branchName: text("branch_name"), // Bank branch name
+  branchAddress: text("branch_address"), // Bank branch address
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   settings: jsonb("settings").default({}), // GST rates, unload hamali, etc.
