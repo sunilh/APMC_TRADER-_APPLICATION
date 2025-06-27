@@ -320,6 +320,9 @@ export default function FarmerBill() {
   console.log('All lots:', lots);
   console.log('Completed lots:', completedLots);
   console.log('Unique farmers with completed lots:', uniqueFarmers);
+  console.log('Selected farmer ID:', selectedFarmerId);
+  console.log('Farmer lots for selected farmer:', farmerLots);
+  console.log('Selected farmer object:', selectedFarmer);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
