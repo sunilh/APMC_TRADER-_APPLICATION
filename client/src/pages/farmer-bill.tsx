@@ -316,14 +316,7 @@ export default function FarmerBill() {
     ).values()
   );
 
-  // Auto-select first farmer when data loads
-  useEffect(() => {
-    if (uniqueFarmers.length > 0 && !selectedFarmerId) {
-      const firstFarmerId = uniqueFarmers[0].farmerId.toString();
-      console.log('Auto-selecting farmer:', firstFarmerId, uniqueFarmers[0].farmer.name);
-      setSelectedFarmerId(firstFarmerId);
-    }
-  }, [uniqueFarmers.length, selectedFarmerId]);
+  // Don't auto-select farmer - let user choose
 
   // Manual selection for SHIVAPPA
   const selectShivappa = () => {
@@ -372,7 +365,8 @@ export default function FarmerBill() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Select Farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ</CardTitle>
+          <CardTitle>Today's Farmers with Completed Lots / ಇಂದಿನ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳ ರೈತರು</CardTitle>
+          <p className="text-sm text-gray-600">Select a farmer to generate their payment bill / ಪಾವತಿ ಬಿಲ್ ರಚಿಸಲು ರೈತ ಆಯ್ಕೆ ಮಾಡಿ</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {!lots ? (
@@ -386,78 +380,86 @@ export default function FarmerBill() {
             </div>
           ) : uniqueFarmers.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-2">No completed lots found</p>
+              <p className="text-gray-500 mb-2">No completed lots found for today</p>
               <p className="text-sm text-gray-400">Complete some lots with bag weights and prices to generate farmer bills</p>
               <p className="text-xs text-gray-400 mt-2">
                 Total lots: {lots.length} | Active lots: {lots.filter((lot: any) => lot.status === 'active').length} | Completed lots: {lots.filter((lot: any) => lot.status === 'completed').length}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="farmer-select">Farmer / ರೈತ</Label>
-                <div className="space-y-2">
-                  <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {uniqueFarmers.map((lot: Lot) => (
-                        <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
-                          {lot.farmer.name} - {lot.farmer.place}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {uniqueFarmers.length > 0 && !selectedFarmerId && (
-                    <Button 
-                      onClick={() => setSelectedFarmerId(uniqueFarmers[0].farmerId.toString())}
-                      variant="outline" 
-                      size="sm"
-                    >
-                      Select {uniqueFarmers[0].farmer.name} for billing
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="patti-number">Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ</Label>
-              <div className="flex gap-2">
-                <VoiceInput
-                  onResult={setPattiNumber}
-                  placeholder="Enter patti number (e.g., P001, P002) / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
-                  type="text"
-                  value={pattiNumber}
-                  onChange={(e) => setPattiNumber(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    const today = new Date();
-                    const dateStr = today.toISOString().slice(2, 10).replace(/-/g, "");
-                    const timeStr = today.getHours().toString().padStart(2, "0") + 
-                                   today.getMinutes().toString().padStart(2, "0");
-                    setPattiNumber(`P${dateStr}${timeStr}`);
-                  }}
-                  className="whitespace-nowrap"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {uniqueFarmers.map((lot: Lot) => (
+                <Card 
+                  key={lot.farmerId} 
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    selectedFarmerId === lot.farmerId.toString() 
+                      ? 'ring-2 ring-blue-500 bg-blue-50' 
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => setSelectedFarmerId(lot.farmerId.toString())}
                 >
-                  Generate / ರಚನೆ
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500">
-                Patti number is used to group farmer bills / ಪಟ್ಟಿ ಸಂಖ್ಯೆಯನ್ನು ರೈತರ ಬಿಲ್‌ಗಳನ್ನು ಗುಂಪುಗೂಡಿಸಲು ಬಳಸಲಾಗುತ್ತದೆ
-              </p>
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">{lot.farmer.name}</h3>
+                      <p className="text-sm text-gray-600">{lot.farmer.place}</p>
+                      <p className="text-sm text-gray-600">Mobile: {lot.farmer.mobile}</p>
+                      <div className="mt-3 pt-3 border-t">
+                        <p className="text-xs text-gray-500">
+                          {farmerLots.filter(l => l.farmerId === lot.farmerId).length} completed lot(s)
+                        </p>
+                        <p className="text-xs text-green-600 font-medium">
+                          Ready for billing
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </div>
           )}
         </CardContent>
       </Card>
 
       {selectedFarmer && tenant && farmerLots.length > 0 && (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Enter Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="patti-number">Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ</Label>
+                <div className="flex gap-2">
+                  <VoiceInput
+                    onResult={setPattiNumber}
+                    placeholder="Enter patti number (e.g., P001, P002) / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
+                    type="text"
+                    value={pattiNumber}
+                    onChange={(e) => setPattiNumber(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      const today = new Date();
+                      const dateStr = today.toISOString().slice(2, 10).replace(/-/g, "");
+                      const timeStr = today.getHours().toString().padStart(2, "0") + 
+                                     today.getMinutes().toString().padStart(2, "0");
+                      setPattiNumber(`P${dateStr}${timeStr}`);
+                    }}
+                    className="whitespace-nowrap"
+                  >
+                    Generate / ರಚನೆ
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Patti number is used to group farmer bills / ಪಟ್ಟಿ ಸಂಖ್ಯೆಯನ್ನು ರೈತರ ಬಿಲ್‌ಗಳನ್ನು ಗುಂಪುಗೂಡಿಸಲು ಬಳಸಲಾಗುತ್ತದೆ
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Farmer's Completed Lots / ರೈತನ ಪೂರ್ಣಗೊಂಡ ಲಾಟ್‌ಗಳು</CardTitle>
