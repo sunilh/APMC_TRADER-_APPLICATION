@@ -245,6 +245,8 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added comprehensive invoice details: seller information, buyer details, item table with lot numbers, tax calculations
   - System generates authentic tax invoices from real completed agricultural trading data
   - Added Tax Invoice navigation menu item for easy access to invoice generation system
+  - Optimized invoice layout to fit single page at 70% usage with compact two-column design and reduced font sizes
+  - Fixed buyer lot assignment to ensure all buyers can generate tax invoices from their completed transactions
 
 # User Preferences
 
