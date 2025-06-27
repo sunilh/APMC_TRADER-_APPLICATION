@@ -30,12 +30,13 @@ export default function FarmerBill() {
     commission: 0,
   });
 
-  // Auto-generate patti number when farmer is selected
+  // Auto-generate unique patti number each time
   const generatePattiNumber = () => {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const timeStr = today.getTime().toString().slice(-4);
-    return `P${dateStr}${timeStr}`;
+    const timeStr = today.getTime().toString().slice(-6); // Use more digits for uniqueness
+    const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    return `P${dateStr}${timeStr}${randomNum}`;
   };
 
   const { data: lots } = useQuery({
@@ -134,12 +135,10 @@ export default function FarmerBill() {
         commission: totalAmount * 0.03
       }));
 
-      // Auto-generate patti number if not already set
-      if (!pattiNumber) {
-        setPattiNumber(generatePattiNumber());
-      }
+      // Always generate a new unique patti number when farmer data loads
+      setPattiNumber(generatePattiNumber());
     }
-  }, [farmerLots, totalAmount, pattiNumber]);
+  }, [farmerLots, totalAmount]);
 
   const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
     const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
@@ -325,8 +324,21 @@ export default function FarmerBill() {
             </CardHeader>
             <CardContent>
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700 mb-1">Auto-generated / ಸ್ವಯಂಚಾಲಿತವಾಗಿ ರಚಿಸಲಾಗಿದೆ</p>
-                <p className="text-lg font-semibold text-green-800">{pattiNumber || "Select farmer to generate"}</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-green-700 mb-1">Auto-generated / ಸ್ವಯಂಚಾಲಿತವಾಗಿ ರಚಿಸಲಾಗಿದೆ</p>
+                    <p className="text-lg font-semibold text-green-800">{pattiNumber || "Select farmer to generate"}</p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setPattiNumber(generatePattiNumber())}
+                    className="ml-2"
+                  >
+                    New Number
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
