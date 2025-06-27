@@ -261,7 +261,7 @@ export default function TaxInvoice() {
                 <span>${formatCurrency(taxInvoice.calculations.basicAmount)}</span>
               </div>
               <div class="calc-row">
-                <span class="calc-label">+ Packaging (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags)</span>
+                <span class="calc-label">+ Packaging (${taxInvoice.items.reduce((sum, item) => sum + item.bags, 0)} bags × ₹5)</span>
                 <span>${formatCurrency(taxInvoice.calculations.packaging)}</span>
               </div>
               <div class="calc-row">

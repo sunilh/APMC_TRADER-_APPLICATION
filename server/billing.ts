@@ -573,7 +573,7 @@ export async function generateTaxInvoice(
     const settings = (tenant.settings as any) || {};
     const gstSettings = settings.gstSettings || {};
     
-    const packagingWeight = gstSettings.packagingWeight || 1.0; // kg per bag
+    const packagingRate = gstSettings.packaging || 5.0; // per bag
     const hamaliRate = gstSettings.unloadHamali || 3.0; // per bag
     const weighingFeeRate = gstSettings.weighingFee || 2.0; // per bag
     const commissionRate = gstSettings.apmcCommission || 5.0; // percentage
@@ -582,7 +582,7 @@ export async function generateTaxInvoice(
     const cessRate = gstSettings.cess || 0.6;
 
     // Enhanced charge calculations
-    const packaging = totalBags * packagingWeight * 1; // ₹1 per kg packaging weight
+    const packaging = totalBags * packagingRate; // ₹ per bag packaging
     const hamali = totalBags * hamaliRate;
     const weighingCharges = totalBags * weighingFeeRate;
     const commission = (subTotal * commissionRate) / 100;
