@@ -309,12 +309,17 @@ export default function FarmerBill() {
   };
 
   // Get unique farmers with completed lots
+  const completedLots = lots?.filter((lot: Lot) => lot.status === 'completed') || [];
   const uniqueFarmers = Array.from(
     new Map(
-      lots?.filter((lot: Lot) => lot.status === 'completed')
-        .map((lot: Lot) => [lot.farmerId, lot])
-    )?.values() || []
+      completedLots.map((lot: Lot) => [lot.farmerId, lot])
+    ).values()
   );
+
+  // Debug: Show what lots we have
+  console.log('All lots:', lots);
+  console.log('Completed lots:', completedLots);
+  console.log('Unique farmers with completed lots:', uniqueFarmers);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -337,22 +342,40 @@ export default function FarmerBill() {
           <CardTitle>Select Farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="farmer-select">Farmer / ರೈತ</Label>
-              <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
-                </SelectTrigger>
-                <SelectContent>
-                  {uniqueFarmers.map((lot: Lot) => (
-                    <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
-                      {lot.farmer.name} - {lot.farmer.place}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {!lots ? (
+            <div className="text-center py-4">
+              <p className="text-gray-500">Loading lots data...</p>
             </div>
+          ) : lots.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-2">No lots found</p>
+              <p className="text-sm text-gray-400">Create some lots first to generate farmer bills</p>
+            </div>
+          ) : uniqueFarmers.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-2">No completed lots found</p>
+              <p className="text-sm text-gray-400">Complete some lots with bag weights and prices to generate farmer bills</p>
+              <p className="text-xs text-gray-400 mt-2">
+                Total lots: {lots.length} | Active lots: {lots.filter((lot: any) => lot.status === 'active').length} | Completed lots: {lots.filter((lot: any) => lot.status === 'completed').length}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="farmer-select">Farmer / ರೈತ</Label>
+                <Select value={selectedFarmerId} onValueChange={setSelectedFarmerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a farmer / ರೈತ ಆಯ್ಕೆ ಮಾಡಿ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueFarmers.map((lot: Lot) => (
+                      <SelectItem key={lot.farmerId} value={lot.farmerId.toString()}>
+                        {lot.farmer.name} - {lot.farmer.place}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
             <div className="space-y-2">
               <Label htmlFor="patti-number">Patti Number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ</Label>
@@ -385,6 +408,7 @@ export default function FarmerBill() {
               </p>
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
 
