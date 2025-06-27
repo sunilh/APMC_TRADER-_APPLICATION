@@ -190,13 +190,13 @@ export default function FarmerBill() {
               </tr>
             </thead>
             <tbody>
-              ${farmerLots.map((lot: any) => `
+              ${enrichedFarmerLots.map((lot: any) => `
                 <tr>
                   <td>${lot.lotNumber}</td>
-                  <td>${lot.numberOfBags}</td>
-                  <td>${lot.totalWeight.toFixed(1)}</td>
-                  <td>${formatCurrency(lot.pricePerQuintal)}</td>
-                  <td>${formatCurrency((lot.totalWeight / 100) * lot.pricePerQuintal)}</td>
+                  <td>${lot.actualBagCount}</td>
+                  <td>${lot.actualTotalWeight.toFixed(1)}</td>
+                  <td>${formatCurrency(lot.lotPrice)}</td>
+                  <td>${formatCurrency((lot.actualTotalWeight / 100) * lot.lotPrice)}</td>
                 </tr>
               `).join('')}
               <tr class="total-row">
