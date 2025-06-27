@@ -271,6 +271,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced settings interface with packaging weight configuration and preview calculations
   - Fixed tax invoice runtime errors with proper null checking for currency formatting
   - System now provides complete tax compliance with all Indian agricultural trading standards
+- June 27, 2025: Fixed cess calculation and enhanced bank details display
+  - Corrected cess calculation to be on main amount instead of commission as per Indian tax standards
+  - Updated tax invoice interface to properly display "CESS @ 0.6% (on basic amount)"
+  - Enhanced bank details table to show "Account Holder" for clear identification
+  - Fixed TaxInvoice TypeScript interface to use `cess` instead of `cessOnCommission`
+  - Tax calculations now follow authentic Indian agricultural trading tax structure
 
 # User Preferences
 

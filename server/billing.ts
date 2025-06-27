@@ -472,7 +472,7 @@ export interface TaxInvoice {
     hamali: number;
     weighingCharges: number;
     commission: number;
-    cessOnCommission: number;
+    cess: number;
     taxableAmount: number;
     sgst: number;
     cgst: number;
@@ -584,11 +584,11 @@ export async function generateTaxInvoice(
     const hamali = totalBags * hamaliRate;
     const weighingCharges = totalBags * weighingFeeRate;
     const commission = (subTotal * commissionRate) / 100;
-    const cessOnCommission = (commission * cessRate) / 100;
+    const cess = (subTotal * cessRate) / 100; // Cess on main amount, not commission
     
     // Calculate taxable amount
     const basicAmount = subTotal;
-    const taxableAmount = basicAmount + packaging + hamali + weighingCharges + commission + cessOnCommission;
+    const taxableAmount = basicAmount + packaging + hamali + weighingCharges + commission + cess;
     
     // Calculate GST (assuming intra-state for now)
     const sgst = (taxableAmount * sgstRate) / 100;
@@ -631,7 +631,7 @@ export async function generateTaxInvoice(
         hamali: Math.round(hamali * 100) / 100,
         weighingCharges: Math.round(weighingCharges * 100) / 100,
         commission: Math.round(commission * 100) / 100,
-        cessOnCommission: Math.round(cessOnCommission * 100) / 100,
+        cess: Math.round(cess * 100) / 100,
         taxableAmount: Math.round(taxableAmount * 100) / 100,
         sgst: Math.round(sgst * 100) / 100,
         cgst: Math.round(cgst * 100) / 100,

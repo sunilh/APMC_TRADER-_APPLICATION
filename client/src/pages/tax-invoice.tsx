@@ -555,7 +555,7 @@ export default function TaxInvoice() {
                     <span>{formatCurrency(taxInvoice.calculations.cgst)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span><strong>Add: CESS @ 0.6%</strong></span>
+                    <span><strong>Add: CESS @ 0.6% (on basic amount)</strong></span>
                     <span>{formatCurrency(taxInvoice.calculations.cess)}</span>
                   </div>
                   <Separator />
