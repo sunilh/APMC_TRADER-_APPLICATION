@@ -230,17 +230,11 @@ export default function FarmerBill() {
             <tbody>
               ${enrichedFarmerLots.map((lot: any) => `
                 <tr>
-                  <td rowspan="2">${lot.lotNumber}</td>
+                  <td>${lot.lotNumber}</td>
                   <td>${lot.actualBagCount}</td>
                   <td>${lot.actualTotalWeight.toFixed(1)}</td>
                   <td>${formatCurrency(lot.lotPrice)}</td>
                   <td>${formatCurrency((lot.actualTotalWeight / 100) * lot.lotPrice)}</td>
-                </tr>
-                <tr>
-                  <td colspan="4" style="padding: 8px; font-size: 12px; background-color: #f8f9fa; border-top: 1px dashed #ddd;">
-                    <strong>Individual Bag Weights / ಪ್ರತ್ಯೇಕ ಚೀಲದ ತೂಕ:</strong><br>
-                    ${lot.bagWeights.map((bag: any) => `${bag.bagNumber}: ${bag.weight.toFixed(1)}kg`).join(' | ')}
-                  </td>
                 </tr>
               `).join('')}
               <tr class="total-row">
@@ -275,6 +269,58 @@ export default function FarmerBill() {
             <div>
               <p>_____________________</p>
               <p>Date / ದಿನಾಂಕ</p>
+            </div>
+          </div>
+
+          <!-- Page Break for Back Side -->
+          <div style="page-break-before: always; margin-top: 50px;">
+            <div class="header">
+              <h1>${tenant?.name || 'APMC TRADER'}</h1>
+              <p><strong>BAG WEIGHT DETAILS / ಚೀಲದ ತೂಕದ ವಿವರಗಳು</strong></p>
+              <p>Date: ${new Date().toLocaleDateString('en-IN')} | Patti No: ${pattiNumber}</p>
+              <p>Farmer: ${selectedFarmer.name} | Mobile: ${selectedFarmer.mobile}</p>
+            </div>
+
+            ${enrichedFarmerLots.map((lot: any) => `
+              <div class="section">
+                <h3>Lot ${lot.lotNumber} - Individual Bag Weights / ಲಾಟ್ ${lot.lotNumber} - ಪ್ರತ್ಯೇಕ ಚೀಲದ ತೂಕ</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9;">
+                  ${lot.bagWeights.map((bag: any) => `
+                    <div style="display: inline-block; padding: 8px 12px; margin: 3px; border: 1px solid #ccc; background-color: white; border-radius: 4px; min-width: 80px; text-align: center;">
+                      <strong>${bag.bagNumber}</strong><br>
+                      <span style="color: #0066cc; font-weight: bold;">${bag.weight.toFixed(1)} kg</span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background-color: #e8f4f8; border-left: 4px solid #0066cc;">
+                  <strong>Lot Summary / ಲಾಟ್ ಸಾರಾಂಶ:</strong><br>
+                  Total Bags / ಒಟ್ಟು ಚೀಲಗಳು: ${lot.actualBagCount} |
+                  Total Weight / ಒಟ್ಟು ತೂಕ: ${lot.actualTotalWeight.toFixed(1)} kg |
+                  Rate / ದರ: ${formatCurrency(lot.lotPrice)}/quintal |
+                  Amount / ಮೊತ್ತ: ${formatCurrency((lot.actualTotalWeight / 100) * lot.lotPrice)}
+                </div>
+              </div>
+            `).join('')}
+
+            <div style="margin-top: 30px; padding: 15px; border: 2px solid #0066cc; background-color: #f0f8ff;">
+              <h3 style="margin-top: 0; color: #0066cc;">Overall Summary / ಒಟ್ಟಾರೆ ಸಾರಾಂಶ</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                  <strong>Total Lots / ಒಟ್ಟು ಲಾಟ್‌ಗಳು:</strong> ${enrichedFarmerLots.length}<br>
+                  <strong>Total Bags / ಒಟ್ಟು ಚೀಲಗಳು:</strong> ${totalBags}<br>
+                  <strong>Total Weight / ಒಟ್ಟು ತೂಕ:</strong> ${totalWeight.toFixed(1)} kg
+                </div>
+                <div>
+                  <strong>Gross Amount / ಒಟ್ಟು ಮೊತ್ತ:</strong> ${formatCurrency(totalAmount)}<br>
+                  <strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ:</strong> ${formatCurrency(netPayable)}<br>
+                  <strong>Commission (3%) / ಕಮಿಷನ್:</strong> ${formatCurrency(commission)}
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+              <p>This detailed breakdown shows individual bag weights for transparency and verification.</p>
+              <p>ಈ ವಿವರವಾದ ವಿಂಗಡಣೆಯು ಪಾರದರ್ಶಕತೆ ಮತ್ತು ಪರಿಶೀಲನೆಗಾಗಿ ಪ್ರತ್ಯೇಕ ಚೀಲದ ತೂಕವನ್ನು ತೋರಿಸುತ್ತದೆ.</p>
             </div>
           </div>
         </body>

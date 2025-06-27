@@ -313,6 +313,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added CSV download functionality for tax reports with all transaction details
   - Enhanced navigation with Tax Reports menu item for easy access to comprehensive tax compliance reporting
   - System provides complete GST and CESS reporting for Indian agricultural trading standards
+- June 27, 2025: Enhanced farmer bill with two-sided printing featuring horizontal bag weight display
+  - Implemented front-side standard farmer bill with lot summaries and payment calculations
+  - Added back-side detailed bag weight breakdown with individual bag weights displayed horizontally
+  - Created page-break functionality for proper two-sided printing with separate headers
+  - Enhanced bag weight display with card-style layout showing bag numbers and weights in grid format
+  - Added bilingual (English/Kannada) support for all bag weight details and explanatory text
+  - Included lot-wise summary sections showing total bags, weight, rate, and amount for each lot
+  - Enhanced overall summary section with complete transaction breakdown for transparency
+  - System provides complete weight verification and transparency for farmer payment documentation
 
 # User Preferences
 
