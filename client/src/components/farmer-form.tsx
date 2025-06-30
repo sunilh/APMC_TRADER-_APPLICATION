@@ -3,9 +3,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { VoiceInput } from "@/components/voice-input";
+import { UnifiedInput } from "@/components/ui/unified-input";
 import { insertFarmerSchema, type Farmer, type InsertFarmer } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -121,18 +120,13 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">{t('farmer.name')} *</Label>
-          <div className="flex space-x-2">
-            <Input
-              id="name"
-              {...form.register("name")}
-              placeholder={t('farmer.namePlaceholder')}
-              className="flex-1"
-            />
-            <VoiceInput
-              onResult={(value) => handleVoiceInput('name', value)}
-              placeholder={t('farmer.name')}
-            />
-          </div>
+          <UnifiedInput
+            id="name"
+            {...form.register("name")}
+            placeholder={t('farmer.namePlaceholder')}
+            type="text"
+            required
+          />
           {form.formState.errors.name && (
             <p className="text-sm text-destructive">
               {form.formState.errors.name.message}
