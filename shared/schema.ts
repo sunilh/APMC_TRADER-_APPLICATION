@@ -294,3 +294,73 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type Patti = typeof pattis.$inferSelect;
 export type InsertPatti = z.infer<typeof insertPattiSchema>;
+
+// Farmer Bill tracking table
+export const farmerBills = pgTable("farmer_bills", {
+  id: serial("id").primaryKey(),
+  pattiNumber: text("patti_number").notNull().unique(),
+  farmerId: integer("farmer_id").references(() => farmers.id).notNull(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  billDate: timestamp("bill_date").defaultNow(),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  hamali: decimal("hamali", { precision: 10, scale: 2 }).default('0'),
+  vehicleRent: decimal("vehicle_rent", { precision: 10, scale: 2 }).default('0'),
+  emptyBagCharges: decimal("empty_bag_charges", { precision: 10, scale: 2 }).default('0'),
+  advance: decimal("advance", { precision: 10, scale: 2 }).default('0'),
+  commission: decimal("commission", { precision: 10, scale: 2 }).default('0'),
+  otherCharges: decimal("other_charges", { precision: 10, scale: 2 }).default('0'),
+  totalDeductions: decimal("total_deductions", { precision: 12, scale: 2 }).notNull(),
+  netPayable: decimal("net_payable", { precision: 12, scale: 2 }).notNull(),
+  totalBags: integer("total_bags").notNull(),
+  totalWeight: decimal("total_weight", { precision: 10, scale: 2 }).notNull(),
+  lotIds: jsonb("lot_ids").notNull(), // Store array of lot IDs included in this bill
+  status: text("status").default("generated"), // generated, paid, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tax Invoice tracking table
+export const taxInvoices = pgTable("tax_invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  buyerId: integer("buyer_id").references(() => buyers.id).notNull(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  invoiceDate: timestamp("invoice_date").defaultNow(),
+  basicAmount: decimal("basic_amount", { precision: 12, scale: 2 }).notNull(),
+  packaging: decimal("packaging", { precision: 10, scale: 2 }).default('0'),
+  hamali: decimal("hamali", { precision: 10, scale: 2 }).default('0'),
+  weighingCharges: decimal("weighing_charges", { precision: 10, scale: 2 }).default('0'),
+  commission: decimal("commission", { precision: 10, scale: 2 }).default('0'),
+  cess: decimal("cess", { precision: 10, scale: 2 }).default('0'),
+  sgst: decimal("sgst", { precision: 10, scale: 2 }).default('0'),
+  cgst: decimal("cgst", { precision: 10, scale: 2 }).default('0'),
+  igst: decimal("igst", { precision: 10, scale: 2 }).default('0'),
+  totalGst: decimal("total_gst", { precision: 10, scale: 2 }).default('0'),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  totalBags: integer("total_bags").notNull(),
+  totalWeight: decimal("total_weight", { precision: 10, scale: 2 }).notNull(),
+  lotIds: jsonb("lot_ids").notNull(), // Store array of lot IDs included in this invoice
+  invoiceData: jsonb("invoice_data").notNull(), // Store complete invoice details
+  status: text("status").default("generated"), // generated, sent, paid, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for new tables
+export const insertFarmerBillSchema = createInsertSchema(farmerBills).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTaxInvoiceSchema = createInsertSchema(taxInvoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for new tables
+export type FarmerBill = typeof farmerBills.$inferSelect;
+export type InsertFarmerBill = typeof farmerBills.$inferInsert;
+export type TaxInvoiceRecord = typeof taxInvoices.$inferSelect;
+export type InsertTaxInvoice = typeof taxInvoices.$inferInsert;

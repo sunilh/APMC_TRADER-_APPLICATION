@@ -14,6 +14,8 @@ import {
   lots,
   farmers,
   buyers,
+  farmerBills,
+  taxInvoices,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql } from "drizzle-orm";
@@ -169,11 +171,154 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  // Tax Invoice route
-  app.get("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
+  // Check if farmer bill already exists
+  app.get("/api/farmer-bill/:farmerId/check", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+
+      const existingBill = await db.select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .limit(1);
+
+      res.json({ 
+        exists: existingBill.length > 0,
+        bill: existingBill[0] || null
+      });
+    } catch (error) {
+      console.error("Error checking farmer bill:", error);
+      res.status(500).json({ message: "Failed to check farmer bill" });
+    }
+  });
+
+  // Generate and save farmer bill (only if not exists)
+  app.post("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+      const { pattiNumber, billData, lotIds } = req.body;
+
+      // Check if bill already exists for this farmer
+      const existingBill = await db.select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .limit(1);
+
+      if (existingBill.length > 0) {
+        return res.status(400).json({ 
+          message: "Farmer bill already generated for this farmer",
+          billId: existingBill[0].id
+        });
+      }
+
+      // Check if patti number already exists
+      const existingPatti = await db.select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.pattiNumber, pattiNumber), eq(farmerBills.tenantId, tenantId)))
+        .limit(1);
+
+      if (existingPatti.length > 0) {
+        return res.status(400).json({ 
+          message: "Patti number already exists. Please generate a new one.",
+        });
+      }
+
+      // Calculate totals from request data
+      const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
+                             billData.advance + billData.commission + billData.other;
+
+      // Save bill to database
+      const savedBill = await db.insert(farmerBills).values({
+        pattiNumber: pattiNumber,
+        farmerId: farmerId,
+        tenantId: tenantId,
+        totalAmount: billData.totalAmount.toString(),
+        hamali: billData.hamali.toString(),
+        vehicleRent: billData.vehicleRent.toString(),
+        emptyBagCharges: billData.emptyBagCharges.toString(),
+        advance: billData.advance.toString(),
+        commission: billData.commission.toString(),
+        otherCharges: billData.other.toString(),
+        totalDeductions: totalDeductions.toString(),
+        netPayable: (billData.totalAmount - totalDeductions).toString(),
+        totalBags: billData.totalBags,
+        totalWeight: billData.totalWeight.toString(),
+        lotIds: JSON.stringify(lotIds),
+      }).returning();
+
+      res.json({ 
+        message: "Farmer bill generated and saved successfully",
+        billId: savedBill[0].id,
+        pattiNumber: pattiNumber
+      });
+    } catch (error) {
+      console.error("Error generating farmer bill:", error);
+      res.status(500).json({ message: "Failed to generate farmer bill" });
+    }
+  });
+
+  // Get farmer bill (for viewing previously generated)
+  app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+
+      const savedBill = await db.select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .limit(1);
+
+      if (savedBill.length === 0) {
+        return res.status(404).json({ message: "No farmer bill found for this farmer" });
+      }
+
+      res.json(savedBill[0]);
+    } catch (error) {
+      console.error("Error retrieving farmer bill:", error);
+      res.status(500).json({ message: "Failed to retrieve farmer bill" });
+    }
+  });
+
+  // Check if tax invoice already exists for buyer
+  app.get("/api/tax-invoice/:buyerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
       const tenantId = req.user.tenantId;
+
+      const existingInvoice = await db.select()
+        .from(taxInvoices)
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
+        .limit(1);
+
+      res.json({ 
+        exists: existingInvoice.length > 0,
+        invoice: existingInvoice[0] || null
+      });
+    } catch (error) {
+      console.error("Error checking tax invoice:", error);
+      res.status(500).json({ message: "Failed to check tax invoice" });
+    }
+  });
+
+  // Generate and save tax invoice (only if not exists)
+  app.post("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user.tenantId;
+
+      // Check if invoice already exists
+      const existingInvoice = await db.select()
+        .from(taxInvoices)
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
+        .limit(1);
+
+      if (existingInvoice.length > 0) {
+        return res.status(400).json({ 
+          message: "Tax invoice already generated for this buyer",
+          invoiceId: existingInvoice[0].id
+        });
+      }
 
       const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
       
@@ -181,10 +326,58 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "No completed lots found for this buyer" });
       }
 
-      res.json(taxInvoice);
+      // Save invoice to database
+      const savedInvoice = await db.insert(taxInvoices).values({
+        invoiceNumber: taxInvoice.invoiceNumber,
+        buyerId: buyerId,
+        tenantId: tenantId,
+        basicAmount: taxInvoice.calculations.basicAmount.toString(),
+        packaging: taxInvoice.calculations.packaging.toString(),
+        hamali: taxInvoice.calculations.hamali.toString(),
+        weighingCharges: taxInvoice.calculations.weighingCharges.toString(),
+        commission: taxInvoice.calculations.commission.toString(),
+        cess: taxInvoice.calculations.cess.toString(),
+        sgst: taxInvoice.calculations.sgst.toString(),
+        cgst: taxInvoice.calculations.cgst.toString(),
+        igst: taxInvoice.calculations.igst.toString(),
+        totalGst: taxInvoice.calculations.totalGst.toString(),
+        totalAmount: taxInvoice.calculations.totalAmount.toString(),
+        totalBags: taxInvoice.items.reduce((sum, item) => sum + item.bags, 0),
+        totalWeight: taxInvoice.items.reduce((sum, item) => sum + item.weightKg, 0).toString(),
+        lotIds: JSON.stringify(taxInvoice.items.map(item => item.lotNo)),
+        invoiceData: JSON.stringify(taxInvoice),
+      }).returning();
+
+      res.json({ 
+        message: "Tax invoice generated and saved successfully",
+        invoiceId: savedInvoice[0].id,
+        invoice: taxInvoice
+      });
     } catch (error) {
       console.error("Error generating tax invoice:", error);
       res.status(500).json({ message: "Failed to generate tax invoice" });
+    }
+  });
+
+  // Get tax invoice (for viewing previously generated)
+  app.get("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user.tenantId;
+
+      const savedInvoice = await db.select()
+        .from(taxInvoices)
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
+        .limit(1);
+
+      if (savedInvoice.length === 0) {
+        return res.status(404).json({ message: "No tax invoice found for this buyer" });
+      }
+
+      res.json(savedInvoice[0].invoiceData);
+    } catch (error) {
+      console.error("Error retrieving tax invoice:", error);
+      res.status(500).json({ message: "Failed to retrieve tax invoice" });
     }
   });
 

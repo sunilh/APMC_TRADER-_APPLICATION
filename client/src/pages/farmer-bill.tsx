@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Download } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Download, Eye, CheckCircle, AlertCircle } from "lucide-react";
 import { VoiceInput } from "@/components/voice-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface FarmerBillData {
   hamali: number;
@@ -19,6 +23,8 @@ interface FarmerBillData {
 
 export default function FarmerBill() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>("");
   const [pattiNumber, setPattiNumber] = useState<string>("");
   const [lastBillKey, setLastBillKey] = useState<string>("");
@@ -53,6 +59,68 @@ export default function FarmerBill() {
   const { data: tenant } = useQuery({
     queryKey: ["/api/tenant"],
     enabled: !!user?.tenantId,
+  });
+
+  // Check if farmer bill already exists
+  const { data: billCheck, isLoading: checkLoading } = useQuery({
+    queryKey: ["/api/farmer-bill", selectedFarmerId, "check"],
+    queryFn: async () => {
+      if (!selectedFarmerId) return null;
+      const response = await fetch(`/api/farmer-bill/${selectedFarmerId}/check`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!selectedFarmerId,
+  });
+
+  // Fetch existing farmer bill (only if exists)
+  const { data: existingBill, isLoading: billLoading } = useQuery({
+    queryKey: ["/api/farmer-bill", selectedFarmerId],
+    queryFn: async () => {
+      if (!selectedFarmerId) return null;
+      const response = await fetch(`/api/farmer-bill/${selectedFarmerId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!selectedFarmerId && billCheck?.exists,
+  });
+
+  // Generate new farmer bill
+  const generateBillMutation = useMutation({
+    mutationFn: async ({ farmerId, pattiNumber, billData, lotIds }: { 
+      farmerId: number; 
+      pattiNumber: string; 
+      billData: any; 
+      lotIds: number[];
+    }) => {
+      return await apiRequest(`/api/farmer-bill/${farmerId}`, {
+        method: "POST",
+        body: { pattiNumber, billData, lotIds },
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `Farmer bill generated and saved! Patti Number: ${data.pattiNumber}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/farmer-bill", selectedFarmerId, "check"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/farmer-bill", selectedFarmerId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate farmer bill",
+        variant: "destructive",
+      });
+    },
   });
 
   // Get completed lots only
@@ -391,6 +459,92 @@ export default function FarmerBill() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bill Status Display */}
+      {selectedFarmerId && billCheck && (
+        <Card className={billCheck.exists ? "border-green-500" : "border-blue-500"}>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              {billCheck.exists ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <div>
+                    <p className="font-medium text-green-700">Bill Already Generated</p>
+                    <p className="text-sm text-muted-foreground">
+                      Farmer bill was created on {new Date(billCheck.bill?.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm font-medium">
+                      Patti Number: {billCheck.bill?.pattiNumber}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="ml-auto">
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Only
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-blue-700">Ready to Generate</p>
+                    <p className="text-sm text-muted-foreground">
+                      No farmer bill exists for this farmer yet
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      if (!selectedFarmer || enrichedFarmerLots.length === 0) {
+                        toast({
+                          title: "Error",
+                          description: "Please select a farmer with completed lots.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      let finalPattiNumber = pattiNumber;
+                      if (!finalPattiNumber) {
+                        finalPattiNumber = generatePattiNumber();
+                        setPattiNumber(finalPattiNumber);
+                      }
+
+                      const billDataToSave = {
+                        totalAmount,
+                        totalBags,
+                        totalWeight,
+                        ...billData,
+                      };
+
+                      const lotIds = enrichedFarmerLots.map(lot => lot.id);
+
+                      generateBillMutation.mutate({
+                        farmerId: parseInt(selectedFarmerId),
+                        pattiNumber: finalPattiNumber,
+                        billData: billDataToSave,
+                        lotIds,
+                      });
+                    }}
+                    disabled={generateBillMutation.isPending || !enrichedFarmerLots.length}
+                    className="ml-auto"
+                  >
+                    {generateBillMutation.isPending ? "Generating..." : "Generate & Save Bill"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {(checkLoading || billLoading) && selectedFarmerId && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              {checkLoading ? "Checking bill status..." : "Loading bill..."}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Billing Form - Shows when farmer is selected */}
       {selectedFarmer && farmerLots.length > 0 && (

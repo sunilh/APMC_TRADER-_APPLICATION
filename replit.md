@@ -322,6 +322,16 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Included lot-wise summary sections showing total bags, weight, rate, and amount for each lot
   - Enhanced overall summary section with complete transaction breakdown for transparency
   - System provides complete weight verification and transparency for farmer payment documentation
+- July 8, 2025: Implemented comprehensive bill/invoice saving with duplicate prevention system
+  - Created farmer_bills and tax_invoices database tables for permanent record keeping with complete audit trail
+  - Added duplicate prevention system preventing regeneration of bills/invoices once created
+  - Implemented bill status checking APIs (/api/farmer-bill/:farmerId/check, /api/tax-invoice/:buyerId/check)
+  - Created comprehensive saving endpoints with proper validation and error handling
+  - Enhanced frontend UI with status displays showing "Already Generated" vs "Ready to Generate" states
+  - Added visual indicators with green/blue color coding and appropriate badges for bill status
+  - Bills/invoices now save complete data including calculations, lot IDs, and metadata for proper audit trail
+  - System prevents accounting duplicates while allowing view/print of previously generated documents
+  - Users see clear status: existing bills show "View Only" mode, new bills show "Generate & Save" option
 
 # User Preferences
 

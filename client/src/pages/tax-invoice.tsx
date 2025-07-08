@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Download, FileText, Printer } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Download, FileText, Printer, Eye, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 // Enhanced Tax Invoice Interface matching backend
 interface TaxInvoice {
@@ -77,13 +80,30 @@ interface Buyer {
 export default function TaxInvoice() {
   const [selectedBuyerId, setSelectedBuyerId] = useState<number | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch all buyers
   const { data: buyers = [], isLoading: buyersLoading } = useQuery<Buyer[]>({
     queryKey: ["/api/buyers"],
   });
 
-  // Fetch tax invoice for selected buyer
+  // Check if tax invoice already exists for selected buyer
+  const { data: invoiceCheck, isLoading: checkLoading } = useQuery({
+    queryKey: ["/api/tax-invoice", selectedBuyerId, "check"],
+    queryFn: async () => {
+      if (!selectedBuyerId) return null;
+      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}/check`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!selectedBuyerId,
+  });
+
+  // Fetch tax invoice for selected buyer (only if exists)
   const { data: taxInvoice, isLoading: invoiceLoading, error } = useQuery<TaxInvoice>({
     queryKey: ["/api/tax-invoice", selectedBuyerId],
     queryFn: async () => {
@@ -96,7 +116,31 @@ export default function TaxInvoice() {
       }
       return response.json();
     },
-    enabled: !!selectedBuyerId,
+    enabled: !!selectedBuyerId && invoiceCheck?.exists,
+  });
+
+  // Generate new tax invoice
+  const generateInvoiceMutation = useMutation({
+    mutationFn: async (buyerId: number) => {
+      return await apiRequest(`/api/tax-invoice/${buyerId}`, {
+        method: "POST",
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: "Tax invoice generated and saved successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId, "check"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate tax invoice",
+        variant: "destructive",
+      });
+    },
   });
 
   const formatCurrency = (amount: number | undefined | null) => {
@@ -400,6 +444,48 @@ export default function TaxInvoice() {
         </CardContent>
       </Card>
 
+      {/* Invoice Status Display */}
+      {selectedBuyerId && invoiceCheck && (
+        <Card className={invoiceCheck.exists ? "border-green-500" : "border-blue-500"}>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              {invoiceCheck.exists ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <div>
+                    <p className="font-medium text-green-700">Invoice Already Generated</p>
+                    <p className="text-sm text-muted-foreground">
+                      Tax invoice was created on {new Date(invoiceCheck.invoice?.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="ml-auto">
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Only
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-blue-700">Ready to Generate</p>
+                    <p className="text-sm text-muted-foreground">
+                      No tax invoice exists for this buyer yet
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => generateInvoiceMutation.mutate(selectedBuyerId)}
+                    disabled={generateInvoiceMutation.isPending}
+                    className="ml-auto"
+                  >
+                    {generateInvoiceMutation.isPending ? "Generating..." : "Generate Invoice"}
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {error && (
         <Card className="border-destructive">
           <CardContent className="pt-6">
@@ -410,15 +496,17 @@ export default function TaxInvoice() {
         </Card>
       )}
 
-      {invoiceLoading && selectedBuyerId && (
+      {(invoiceLoading || checkLoading) && selectedBuyerId && (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center">Generating tax invoice...</div>
+            <div className="text-center">
+              {checkLoading ? "Checking invoice status..." : "Loading invoice..."}
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {taxInvoice && (
+      {taxInvoice && invoiceCheck?.exists && (
         <div className="space-y-6">
           {/* Invoice Actions */}
           <Card>
