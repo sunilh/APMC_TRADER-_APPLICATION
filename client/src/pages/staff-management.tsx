@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, InsertUser } from "@shared/schema";
 import { useLocation } from "wouter";
-import { VoiceInput } from "@/components/voice-input";
+import { UnifiedInput } from "@/components/ui/unified-input";
 
 const staffFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -243,14 +243,13 @@ export default function StaffManagement() {
                     <FormItem>
                       <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                          <Input {...field} placeholder="Enter username" className="flex-1" />
-                          <VoiceInput
-                            onResult={(value) => handleVoiceInput('username', value)}
-                            placeholder="Voice input"
-                            type="text"
-                          />
-                        </div>
+                        <UnifiedInput
+                          {...field}
+                          placeholder="Enter username"
+                          type="text"
+                          voiceType="text"
+                          required
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -266,14 +265,13 @@ export default function StaffManagement() {
                         {editingUser ? "New Password (leave empty to keep current)" : "Password"}
                       </FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                          <Input {...field} type="password" placeholder="Enter password" className="flex-1" />
-                          <VoiceInput
-                            onResult={(value) => handleVoiceInput('password', value)}
-                            placeholder="Voice input"
-                            type="text"
-                          />
-                        </div>
+                        <UnifiedInput
+                          {...field}
+                          type="password"
+                          placeholder="Enter password"
+                          voiceType="text"
+                          required
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -287,14 +285,12 @@ export default function StaffManagement() {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                          <Input {...field} placeholder="Enter full name" className="flex-1" />
-                          <VoiceInput
-                            onResult={(value) => handleVoiceInput('name', value)}
-                            placeholder="Voice input"
-                            type="text"
-                          />
-                        </div>
+                        <UnifiedInput
+                          {...field}
+                          placeholder="Enter full name"
+                          type="text"
+                          voiceType="text"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -308,14 +304,12 @@ export default function StaffManagement() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
-                          <Input {...field} type="email" placeholder="Enter email" className="flex-1" />
-                          <VoiceInput
-                            onResult={(value) => handleVoiceInput('email', value)}
-                            placeholder="Voice input"
-                            type="text"
-                          />
-                        </div>
+                        <UnifiedInput
+                          {...field}
+                          type="email"
+                          placeholder="Enter email"
+                          voiceType="email"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

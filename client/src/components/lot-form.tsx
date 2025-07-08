@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { VoiceInput } from "@/components/voice-input";
+import { UnifiedInput } from "@/components/ui/unified-input";
 import { insertLotSchema, type Farmer, type InsertLot } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -148,21 +148,14 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="numberOfBags">{t('lot.numberOfBags')} *</Label>
-          <div className="flex space-x-2">
-            <Input
-              id="numberOfBags"
-              type="number"
-              min="1"
-              {...form.register("numberOfBags", { valueAsNumber: true })}
-              placeholder={t('lot.numberOfBagsPlaceholder')}
-              className="flex-1"
-            />
-            <VoiceInput
-              onResult={(value) => handleVoiceInput('numberOfBags', value)}
-              placeholder={t('lot.numberOfBags')}
-              type="number"
-            />
-          </div>
+          <UnifiedInput
+            {...form.register("numberOfBags", { valueAsNumber: true })}
+            type="number"
+            voiceType="number"
+            min="1"
+            placeholder={t('lot.numberOfBagsPlaceholder')}
+            required
+          />
           {form.formState.errors.numberOfBags && (
             <p className="text-sm text-destructive">
               {form.formState.errors.numberOfBags.message}
@@ -172,23 +165,16 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="vehicleRent">{t('lot.vehicleRent')}</Label>
-          <div className="flex space-x-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-              <Input
-                id="vehicleRent"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register("vehicleRent")}
-                placeholder="0.00"
-                className="pl-8"
-              />
-            </div>
-            <VoiceInput
-              onResult={(value) => handleVoiceInput('vehicleRent', value)}
-              placeholder={t('lot.vehicleRent')}
-              type="currency"
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10">₹</span>
+            <UnifiedInput
+              {...form.register("vehicleRent")}
+              type="number"
+              voiceType="currency"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              className="pl-8"
             />
           </div>
           {form.formState.errors.vehicleRent && (
@@ -200,23 +186,16 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="advance">{t('lot.advance')}</Label>
-          <div className="flex space-x-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-              <Input
-                id="advance"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register("advance")}
-                placeholder="0.00"
-                className="pl-8"
-              />
-            </div>
-            <VoiceInput
-              onResult={(value) => handleVoiceInput('advance', value)}
-              placeholder={t('lot.advance')}
-              type="currency"
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10">₹</span>
+            <UnifiedInput
+              {...form.register("advance")}
+              type="number"
+              voiceType="currency"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              className="pl-8"
             />
           </div>
           {form.formState.errors.advance && (
@@ -228,39 +207,21 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="varietyGrade">{t('lot.varietyGrade')} *</Label>
-          <div className="flex space-x-2">
-            <Select
-              value={form.watch("varietyGrade")}
-              onValueChange={(value) => form.setValue("varietyGrade", value)}
-            >
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder={t('lot.selectVariety')} />
-              </SelectTrigger>
-              <SelectContent>
-                {varietyOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <VoiceInput
-              onResult={(value) => {
-                // Match voice input to variety options
-                const lowerValue = value.toLowerCase();
-                const matchedOption = varietyOptions.find(option => 
-                  option.label.toLowerCase().includes(lowerValue) ||
-                  option.value.toLowerCase().includes(lowerValue)
-                );
-                if (matchedOption) {
-                  form.setValue("varietyGrade", matchedOption.value);
-                } else {
-                  form.setValue("varietyGrade", value);
-                }
-              }}
-              placeholder={t('lot.varietyGrade')}
-            />
-          </div>
+          <Select
+            value={form.watch("varietyGrade")}
+            onValueChange={(value) => form.setValue("varietyGrade", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t('lot.selectVariety')} />
+            </SelectTrigger>
+            <SelectContent>
+              {varietyOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {form.formState.errors.varietyGrade && (
             <p className="text-sm text-destructive">
               {form.formState.errors.varietyGrade.message}

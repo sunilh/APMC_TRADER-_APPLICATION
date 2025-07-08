@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
-import { VoiceInput } from "@/components/voice-input";
+import { UnifiedInput } from "@/components/ui/unified-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,11 +266,12 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Company Name</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter company name"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -285,11 +286,12 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Contact Person</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter contact person name"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -304,11 +306,12 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Mobile Number</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter mobile number"
                               type="tel"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="phone"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -323,11 +326,11 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter address"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -342,11 +345,11 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>PAN Number</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter PAN number"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -361,11 +364,11 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>GST Number</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter GST number"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -380,11 +383,11 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>HSN Code</FormLabel>
                           <FormControl>
-                            <VoiceInput
+                            <UnifiedInput
                               {...field}
                               placeholder="Enter HSN code"
                               type="text"
-                              onResult={(text) => field.onChange(text)}
+                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
