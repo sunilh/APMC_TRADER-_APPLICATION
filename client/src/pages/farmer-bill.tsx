@@ -471,11 +471,16 @@ export default function FarmerBill() {
                   <div>
                     <p className="font-medium text-green-700">Bill Already Generated</p>
                     <p className="text-sm text-muted-foreground">
-                      Farmer bill was created on {new Date(billCheck.bill?.created_at).toLocaleDateString()}
+                      Farmer bill was created on {new Date(billCheck.bill?.createdAt || billCheck.bill?.created_at).toLocaleDateString()}
                     </p>
                     <p className="text-sm font-medium">
                       Patti Number: {billCheck.bill?.pattiNumber}
                     </p>
+                    {existingBill?.metadata && (
+                      <p className="text-xs text-muted-foreground">
+                        Created by: {existingBill.metadata.createdBy} • {existingBill.metadata.totalLots} lots included
+                      </p>
+                    )}
                   </div>
                   <Badge variant="secondary" className="ml-auto">
                     <Eye className="h-3 w-3 mr-1" />
@@ -544,6 +549,28 @@ export default function FarmerBill() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Data Integrity Alert - Show if saved bill data differs from current calculations */}
+      {billCheck?.exists && existingBill && selectedFarmer && enrichedFarmerLots.length > 0 && (
+        (() => {
+          const savedTotal = parseFloat(existingBill.totalAmount);
+          const currentTotal = totalAmount;
+          const hasDiscrepancy = Math.abs(savedTotal - currentTotal) > 0.01; // Allow for small rounding differences
+          
+          if (hasDiscrepancy) {
+            return (
+              <Alert className="border-yellow-500 bg-yellow-50">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  <strong>Data Change Detected:</strong> The saved bill shows ₹{savedTotal.toFixed(2)} but current calculations show ₹{currentTotal.toFixed(2)}. 
+                  This may be due to changes in lot data since the bill was generated. The saved bill remains the official record for accounting purposes.
+                </AlertDescription>
+              </Alert>
+            );
+          }
+          return null;
+        })()
       )}
 
       {/* Billing Form - Shows when farmer is selected */}

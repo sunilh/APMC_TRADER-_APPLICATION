@@ -228,7 +228,20 @@ export function registerRoutes(app: Express): Server {
       const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
                              billData.advance + billData.commission + billData.other;
 
-      // Save bill to database
+      // Enhanced validation before saving
+      if (!pattiNumber || !billData || !lotIds || lotIds.length === 0) {
+        return res.status(400).json({ 
+          message: "Missing required data: pattiNumber, billData, or lotIds" 
+        });
+      }
+
+      if (!billData.totalAmount || billData.totalAmount <= 0) {
+        return res.status(400).json({ 
+          message: "Invalid total amount for bill generation" 
+        });
+      }
+
+      // Save bill to database with creator tracking
       const savedBill = await db.insert(farmerBills).values({
         pattiNumber: pattiNumber,
         farmerId: farmerId,
@@ -245,6 +258,7 @@ export function registerRoutes(app: Express): Server {
         totalBags: billData.totalBags,
         totalWeight: billData.totalWeight.toString(),
         lotIds: JSON.stringify(lotIds),
+        createdBy: req.user.id,
       }).returning();
 
       res.json({ 
@@ -258,22 +272,103 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get farmer bill (for viewing previously generated)
+  // Get farmer bill (for viewing previously generated) with enhanced data
   app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
 
-      const savedBill = await db.select()
+      // Get the saved bill with creator information
+      const savedBillResult = await db.select({
+        id: farmerBills.id,
+        pattiNumber: farmerBills.pattiNumber,
+        farmerId: farmerBills.farmerId,
+        tenantId: farmerBills.tenantId,
+        totalAmount: farmerBills.totalAmount,
+        hamali: farmerBills.hamali,
+        vehicleRent: farmerBills.vehicleRent,
+        emptyBagCharges: farmerBills.emptyBagCharges,
+        advance: farmerBills.advance,
+        commission: farmerBills.commission,
+        otherCharges: farmerBills.otherCharges,
+        totalDeductions: farmerBills.totalDeductions,
+        netPayable: farmerBills.netPayable,
+        totalBags: farmerBills.totalBags,
+        totalWeight: farmerBills.totalWeight,
+        lotIds: farmerBills.lotIds,
+        createdAt: farmerBills.createdAt,
+        createdBy: farmerBills.createdBy,
+        // Join with user to get creator details
+        creatorName: users.fullName,
+        creatorUsername: users.username
+      })
         .from(farmerBills)
+        .leftJoin(users, eq(farmerBills.createdBy, users.id))
         .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
         .limit(1);
 
-      if (savedBill.length === 0) {
+      if (savedBillResult.length === 0) {
         return res.status(404).json({ message: "No farmer bill found for this farmer" });
       }
 
-      res.json(savedBill[0]);
+      const savedBill = savedBillResult[0];
+
+      // Get associated lots and farmer data for the saved bill
+      const lotIds = JSON.parse(savedBill.lotIds || '[]');
+      let associatedLots = [];
+      
+      if (lotIds.length > 0) {
+        const lotsData = await db.select({
+          lotId: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerId: lots.farmerId,
+          varietyGrade: lots.varietyGrade,
+          grade: lots.grade,
+          numberOfBags: lots.numberOfBags,
+          lotPrice: lots.lotPrice,
+          vehicleRent: lots.vehicleRent,
+          advance: lots.advance,
+          unloadHamali: lots.unloadHamali,
+          status: lots.status,
+          createdAt: lots.createdAt,
+          farmerName: farmers.name,
+          farmerMobile: farmers.mobile,
+          farmerPlace: farmers.place
+        })
+          .from(lots)
+          .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+          .where(and(
+            inArray(lots.id, lotIds),
+            eq(lots.tenantId, tenantId)
+          ));
+
+        associatedLots = lotsData;
+      }
+
+      // Get bags data for weight verification
+      const bagsData = await db.select()
+        .from(bags)
+        .where(and(
+          inArray(bags.lotId, lotIds),
+          eq(bags.tenantId, tenantId)
+        ));
+
+      const enrichedBill = {
+        ...savedBill,
+        associatedLots,
+        bagWeights: bagsData,
+        metadata: {
+          createdBy: savedBill.creatorName || savedBill.creatorUsername || 'Unknown',
+          createdAt: savedBill.createdAt,
+          totalLots: associatedLots.length,
+          dataIntegrity: {
+            lotDataAvailable: associatedLots.length === lotIds.length,
+            bagDataAvailable: bagsData.length > 0
+          }
+        }
+      };
+
+      res.json(enrichedBill);
     } catch (error) {
       console.error("Error retrieving farmer bill:", error);
       res.status(500).json({ message: "Failed to retrieve farmer bill" });
@@ -326,7 +421,20 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "No completed lots found for this buyer" });
       }
 
-      // Save invoice to database
+      // Enhanced validation before saving
+      if (!taxInvoice.invoiceNumber || !taxInvoice.buyer || !taxInvoice.items || taxInvoice.items.length === 0) {
+        return res.status(400).json({ 
+          message: "Missing required invoice data: invoice number, buyer information, or items" 
+        });
+      }
+
+      if (!taxInvoice.calculations.totalAmount || taxInvoice.calculations.totalAmount <= 0) {
+        return res.status(400).json({ 
+          message: "Invalid total amount for invoice generation" 
+        });
+      }
+
+      // Save invoice to database with creator tracking
       const savedInvoice = await db.insert(taxInvoices).values({
         invoiceNumber: taxInvoice.invoiceNumber,
         buyerId: buyerId,
@@ -346,6 +454,7 @@ export function registerRoutes(app: Express): Server {
         totalWeight: taxInvoice.items.reduce((sum, item) => sum + item.weightKg, 0).toString(),
         lotIds: JSON.stringify(taxInvoice.items.map(item => item.lotNo)),
         invoiceData: JSON.stringify(taxInvoice),
+        createdBy: req.user.id,
       }).returning();
 
       res.json({ 

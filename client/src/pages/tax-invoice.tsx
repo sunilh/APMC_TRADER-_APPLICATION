@@ -455,7 +455,10 @@ export default function TaxInvoice() {
                   <div>
                     <p className="font-medium text-green-700">Invoice Already Generated</p>
                     <p className="text-sm text-muted-foreground">
-                      Tax invoice was created on {new Date(invoiceCheck.invoice?.created_at).toLocaleDateString()}
+                      Tax invoice was created on {new Date(invoiceCheck.invoice?.createdAt || invoiceCheck.invoice?.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm font-medium">
+                      Invoice No: {invoiceCheck.invoice?.invoiceNumber}
                     </p>
                   </div>
                   <Badge variant="secondary" className="ml-auto">
@@ -506,6 +509,7 @@ export default function TaxInvoice() {
         </Card>
       )}
 
+      {/* Enhanced Tax Invoice Display with Data Integrity Check */}
       {taxInvoice && invoiceCheck?.exists && (
         <div className="space-y-6">
           {/* Invoice Actions */}
