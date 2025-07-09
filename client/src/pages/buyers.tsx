@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,6 +130,22 @@ export default function Buyers() {
     mode: "onChange",
   });
 
+  // Update form when editing buyer changes
+  useEffect(() => {
+    if (editingBuyer) {
+      console.log("useEffect: Updating form with buyer data:", editingBuyer);
+      form.reset({
+        name: editingBuyer.name,
+        contactPerson: editingBuyer.contactPerson || "",
+        mobile: editingBuyer.mobile || "",
+        address: editingBuyer.address || "",
+        panNumber: editingBuyer.panNumber || "",
+        gstNumber: editingBuyer.gstNumber || "",
+        hsnCode: editingBuyer.hsnCode || "1001",
+      });
+    }
+  }, [editingBuyer, form]);
+
   const createMutation = useMutation({
     mutationFn: async (data: InsertBuyer) =>
       apiRequest("POST", "/api/buyers", data),
@@ -185,15 +201,19 @@ export default function Buyers() {
     console.log("PAN Number:", buyer.panNumber);
     console.log("GST Number:", buyer.gstNumber);
     setEditingBuyer(buyer);
-    form.reset({
+    
+    const formData = {
       name: buyer.name,
       contactPerson: buyer.contactPerson || "",
       mobile: buyer.mobile || "",
       address: buyer.address || "",
       panNumber: buyer.panNumber || "",
       gstNumber: buyer.gstNumber || "",
-      hsnCode: buyer.hsnCode,
-    });
+      hsnCode: buyer.hsnCode || "1001",
+    };
+    
+    console.log("Form data being set:", formData);
+    form.reset(formData);
     setIsDialogOpen(true);
   };
 
