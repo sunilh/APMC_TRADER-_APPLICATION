@@ -234,29 +234,26 @@ export default function Buyers() {
               <Search className="h-5 w-5" />
               Buyers Management & Purchase Tracking
             </CardTitle>
+            <Button
+              onClick={() => {
+                setEditingBuyer(null);
+                form.reset({
+                  name: "",
+                  contactPerson: "",
+                  mobile: "",
+                  address: "",
+                  panNumber: "",
+                  gstNumber: "",
+                  hsnCode: "1001",
+                });
+                setIsDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Buyer
+            </Button>
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={(e) => {
-                    console.log("Button clicked, setting states...");
-                    e.preventDefault();
-                    setEditingBuyer(null);
-                    form.reset({
-                      name: "",
-                      contactPerson: "",
-                      mobile: "",
-                      address: "",
-                      panNumber: "",
-                      gstNumber: "",
-                      hsnCode: "1001",
-                    });
-                    console.log("Dialog should open, isDialogOpen:", isDialogOpen);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Buyer
-                </Button>
-              </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
