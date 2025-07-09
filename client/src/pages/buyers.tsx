@@ -79,10 +79,7 @@ export default function Buyers() {
   // Payment update mutation
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ lotId, data }: { lotId: number; data: any }) => {
-      return apiRequest(`/api/lots/${lotId}/payment`, {
-        method: 'PATCH',
-        body: data,
-      });
+      return apiRequest("PATCH", `/api/lots/${lotId}/payment`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'] });
@@ -136,7 +133,7 @@ export default function Buyers() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertBuyer) =>
-      apiRequest("/api/buyers", { method: "POST", body: data }),
+      apiRequest("POST", "/api/buyers", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       setIsDialogOpen(false);
@@ -151,7 +148,7 @@ export default function Buyers() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: InsertBuyer) =>
-      apiRequest(`/api/buyers/${editingBuyer?.id}`, { method: "PATCH", body: data }),
+      apiRequest("PATCH", `/api/buyers/${editingBuyer?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       setIsDialogOpen(false);
@@ -166,7 +163,7 @@ export default function Buyers() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) =>
-      apiRequest(`/api/buyers/${id}`, { method: "DELETE" }),
+      apiRequest("DELETE", `/api/buyers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       toast({ title: "Success", description: "Buyer deleted successfully" });
