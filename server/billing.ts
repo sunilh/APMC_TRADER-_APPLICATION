@@ -532,7 +532,10 @@ export async function generateTaxInvoice(
         )
       );
 
-    console.log(`Found ${completedLots.length} completed lots for buyer ${buyerId}`);
+    console.log(`Found ${completedLots.length} completed lots for buyer ${buyerId}:`);
+    completedLots.forEach(lot => {
+      console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id})`);
+    });
     if (completedLots.length === 0) {
       return null;
     }
