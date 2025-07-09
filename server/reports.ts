@@ -18,9 +18,6 @@ export interface GstReportData {
   totalWeight: number;
   totalWeightQuintals: number;
   basicAmount: number;
-  packaging: number;
-  weighingCharges: number;
-  commission: number;
   sgstAmount: number;
   cgstAmount: number;
   totalGstAmount: number;
@@ -52,9 +49,6 @@ export interface DetailedGstReport {
     weight: number;
     weightQuintals: number;
     basicAmount: number;
-    packaging: number;
-    weighingCharges: number;
-    commission: number;
     sgstAmount: number;
     cgstAmount: number;
     totalGstAmount: number;
@@ -321,9 +315,6 @@ export async function generateGstReport(
   const settings = tenant.settings as any || {};
   const sgstRate = parseFloat(settings.sgstRate || "2.5") / 100;
   const cgstRate = parseFloat(settings.cgstRate || "2.5") / 100;
-  const packagingRate = parseFloat(settings.packagingPerBag || "5");
-  const weighingRate = parseFloat(settings.weighingFeePerBag || "2");
-  const commissionRate = parseFloat(settings.apmcCommissionPercentage || "3") / 100;
 
   // Get completed lots within date range
   const completedLots = await db
@@ -343,9 +334,6 @@ export async function generateGstReport(
   const transactions = [];
   let totalWeight = 0;
   let totalBasicAmount = 0;
-  let totalPackaging = 0;
-  let totalWeighingCharges = 0;
-  let totalCommission = 0;
   let totalSgstAmount = 0;
   let totalCgstAmount = 0;
 
@@ -361,17 +349,11 @@ export async function generateGstReport(
     const lotPrice = parseFloat(lot.lotPrice || "0");
     const basicAmount = lotWeightQuintals * lotPrice;
 
-    // Calculate charges
-    const packaging = lotBags.length * packagingRate;
-    const weighingCharges = lotBags.length * weighingRate;
-    const commission = basicAmount * commissionRate;
-    
-    // Calculate GST only
-    const taxableAmount = basicAmount + packaging + weighingCharges + commission;
-    const sgstAmount = taxableAmount * sgstRate;
-    const cgstAmount = taxableAmount * cgstRate;
+    // Calculate GST only (on basic amount)
+    const sgstAmount = basicAmount * sgstRate;
+    const cgstAmount = basicAmount * cgstRate;
     const totalGstAmount = sgstAmount + cgstAmount;
-    const totalAmount = taxableAmount + totalGstAmount;
+    const totalAmount = basicAmount + totalGstAmount;
 
     transactions.push({
       date: lot.createdAt?.toISOString().split('T')[0] || '',
@@ -381,9 +363,6 @@ export async function generateGstReport(
       weight: lotWeight,
       weightQuintals: lotWeightQuintals,
       basicAmount,
-      packaging,
-      weighingCharges,
-      commission,
       sgstAmount,
       cgstAmount,
       totalGstAmount,
@@ -393,9 +372,6 @@ export async function generateGstReport(
     // Add to totals
     totalWeight += lotWeight;
     totalBasicAmount += basicAmount;
-    totalPackaging += packaging;
-    totalWeighingCharges += weighingCharges;
-    totalCommission += commission;
     totalSgstAmount += sgstAmount;
     totalCgstAmount += cgstAmount;
   }
@@ -406,13 +382,10 @@ export async function generateGstReport(
     totalWeight,
     totalWeightQuintals: totalWeight / 100,
     basicAmount: totalBasicAmount,
-    packaging: totalPackaging,
-    weighingCharges: totalWeighingCharges,
-    commission: totalCommission,
     sgstAmount: totalSgstAmount,
     cgstAmount: totalCgstAmount,
     totalGstAmount: totalSgstAmount + totalCgstAmount,
-    totalAmount: totalBasicAmount + totalPackaging + totalWeighingCharges + totalCommission + totalSgstAmount + totalCgstAmount
+    totalAmount: totalBasicAmount + totalSgstAmount + totalCgstAmount
   };
 
   return {

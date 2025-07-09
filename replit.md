@@ -368,6 +368,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Successfully tested multi-buyer invoice generation for LOT0011 with proper bag allocation calculations
   - System now generates accurate invoices: NASHIPUDI TRADERS (₹37,717), basava traders (₹48,490), MANALI TRADERS (₹43,104)
   - Tax invoice system fully functional with authentic data integration and proper audit trail
+- July 9, 2025: Split tax reports into separate CESS and GST reporting systems
+  - Created separate backend APIs: /api/reports/cess and /api/reports/gst for dedicated reporting
+  - Built dedicated CESS Reports page showing only CESS calculations (0.6% on basic amount)
+  - Built dedicated GST Reports page showing only GST fields (SGST 2.5%, CGST 2.5%) on basic amount
+  - Updated navigation menu with separate "CESS Reports" and "GST Reports" menu items
+  - Removed packaging, weighing charges, and commission fields from GST reports as requested
+  - Each reporting system has its own summary cards, detailed transaction tables, and CSV download functionality
 
 # User Preferences
 

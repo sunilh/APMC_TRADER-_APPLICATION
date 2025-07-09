@@ -15,9 +15,6 @@ interface GstReportData {
   totalWeight: number;
   totalWeightQuintals: number;
   basicAmount: number;
-  packaging: number;
-  weighingCharges: number;
-  commission: number;
   sgstAmount: number;
   cgstAmount: number;
   totalGstAmount: number;
@@ -34,9 +31,6 @@ interface DetailedGstReport {
     weight: number;
     weightQuintals: number;
     basicAmount: number;
-    packaging: number;
-    weighingCharges: number;
-    commission: number;
     sgstAmount: number;
     cgstAmount: number;
     totalGstAmount: number;
@@ -88,7 +82,7 @@ export default function GstReports() {
     
     const csvContent = [
       // Header
-      ['Date', 'Lot Number', 'Weight (kg)', 'Weight (quintals)', 'Basic Amount', 'Packaging', 'Weighing Charges', 'Commission', 'SGST', 'CGST', 'Total GST', 'Total Amount'],
+      ['Date', 'Lot Number', 'Weight (kg)', 'Weight (quintals)', 'Basic Amount', 'SGST', 'CGST', 'Total GST', 'Total Amount'],
       // Transactions
       ...gstReport.transactions.map(t => [
         t.date,
@@ -96,9 +90,6 @@ export default function GstReports() {
         t.weight.toFixed(2),
         t.weightQuintals.toFixed(2),
         t.basicAmount.toFixed(2),
-        t.packaging.toFixed(2),
-        t.weighingCharges.toFixed(2),
-        t.commission.toFixed(2),
         t.sgstAmount.toFixed(2),
         t.cgstAmount.toFixed(2),
         t.totalGstAmount.toFixed(2),
@@ -277,18 +268,7 @@ export default function GstReports() {
                           <span>Basic Amount:</span>
                           <span className="font-semibold">{formatCurrency(gstReport.summary.basicAmount)}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Packaging:</span>
-                          <span className="font-semibold">{formatCurrency(gstReport.summary.packaging)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Weighing Charges:</span>
-                          <span className="font-semibold">{formatCurrency(gstReport.summary.weighingCharges)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Commission:</span>
-                          <span className="font-semibold">{formatCurrency(gstReport.summary.commission)}</span>
-                        </div>
+
                         <div className="border-t pt-2">
                           <div className="flex justify-between text-blue-600">
                             <span>SGST @ 2.5%:</span>
@@ -324,9 +304,6 @@ export default function GstReports() {
                           <TableHead>Weight (kg)</TableHead>
                           <TableHead>Weight (quintals)</TableHead>
                           <TableHead>Basic Amount</TableHead>
-                          <TableHead>Packaging</TableHead>
-                          <TableHead>Weighing</TableHead>
-                          <TableHead>Commission</TableHead>
                           <TableHead>SGST</TableHead>
                           <TableHead>CGST</TableHead>
                           <TableHead>Total GST</TableHead>
@@ -341,9 +318,6 @@ export default function GstReports() {
                             <TableCell>{transaction.weight.toFixed(2)}</TableCell>
                             <TableCell>{transaction.weightQuintals.toFixed(2)}</TableCell>
                             <TableCell>{formatCurrency(transaction.basicAmount)}</TableCell>
-                            <TableCell>{formatCurrency(transaction.packaging)}</TableCell>
-                            <TableCell>{formatCurrency(transaction.weighingCharges)}</TableCell>
-                            <TableCell>{formatCurrency(transaction.commission)}</TableCell>
                             <TableCell className="text-blue-600">{formatCurrency(transaction.sgstAmount)}</TableCell>
                             <TableCell className="text-blue-600">{formatCurrency(transaction.cgstAmount)}</TableCell>
                             <TableCell className="text-blue-600 font-semibold">{formatCurrency(transaction.totalGstAmount)}</TableCell>
