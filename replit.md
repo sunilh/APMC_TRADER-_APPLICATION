@@ -355,6 +355,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced report layout with separate sections for active and completed lots with color-coded status badges
   - Added comprehensive totals including total bags count and detailed financial information per lot
   - Print system now processes all lots data with flexible filtering while page displays only active lots for daily operations
+- July 9, 2025: Fixed PDF format and VoiceInput errors
+  - Restored PDF to old simple APMC format as requested by user
+  - Fixed mobile number display issue in PDF - now shows actual mobile number instead of trader name
+  - Updated PDF templates to use separate traderMobile field for clear data handling
+  - Fixed VoiceInput error in buyers page by replacing with UnifiedInput component
+  - PDF maintains old simple format with proper trader name in header and mobile number in Mobile field
 
 # User Preferences
 

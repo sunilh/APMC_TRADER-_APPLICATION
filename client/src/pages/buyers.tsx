@@ -602,7 +602,7 @@ export default function Buyers() {
 
               <div>
                 <Label>Amount Paid</Label>
-                <VoiceInput
+                <UnifiedInput
                   value={paymentForm.amountPaid}
                   placeholder="Enter amount paid"
                   type="currency"
