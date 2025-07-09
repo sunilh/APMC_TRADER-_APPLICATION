@@ -417,12 +417,13 @@ export function registerRoutes(app: Express): Server {
       }
 
       console.log(`Generating tax invoice for buyer ${buyerId}, tenant ${tenantId}`);
-      const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
-      
-      console.log("Tax invoice generation result:", taxInvoice ? "Success" : "Failed");
-      if (!taxInvoice) {
-        return res.status(404).json({ message: "No completed lots found for this buyer" });
-      }
+      try {
+        const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
+        
+        console.log("Tax invoice generation result:", taxInvoice ? "Success" : "Failed");
+        if (!taxInvoice) {
+          return res.status(404).json({ message: "No completed lots found for this buyer" });
+        }
 
       // Enhanced validation before saving
       if (!taxInvoice.invoiceNumber || !taxInvoice.buyer || !taxInvoice.items || taxInvoice.items.length === 0) {
@@ -465,6 +466,10 @@ export function registerRoutes(app: Express): Server {
         invoiceId: savedInvoice[0].id,
         invoice: taxInvoice
       });
+      } catch (error) {
+        console.error("Error in tax invoice generation process:", error);
+        res.status(500).json({ message: "Failed to generate tax invoice", error: error.message });
+      }
     } catch (error) {
       console.error("Error generating tax invoice:", error);
       res.status(500).json({ message: "Failed to generate tax invoice" });
