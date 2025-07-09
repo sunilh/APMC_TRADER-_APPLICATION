@@ -117,7 +117,7 @@ export default function Buyers() {
   };
 
   const form = useForm<InsertBuyer>({
-    resolver: zodResolver(insertBuyerSchema),
+    resolver: zodResolver(insertBuyerSchema.omit({ tenantId: true })),
     defaultValues: {
       name: "",
       contactPerson: "",
@@ -125,7 +125,7 @@ export default function Buyers() {
       address: "",
       panNumber: "",
       gstNumber: "",
-      hsnCode: "",
+      hsnCode: "1001", // Default HSN code for agricultural products
     },
     mode: "onChange",
   });
@@ -237,7 +237,9 @@ export default function Buyers() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
-                  onClick={() => {
+                  onClick={(e) => {
+                    console.log("Button clicked, setting states...");
+                    e.preventDefault();
                     setEditingBuyer(null);
                     form.reset({
                       name: "",
@@ -246,8 +248,9 @@ export default function Buyers() {
                       address: "",
                       panNumber: "",
                       gstNumber: "",
-                      hsnCode: "",
+                      hsnCode: "1001",
                     });
+                    console.log("Dialog should open, isDialogOpen:", isDialogOpen);
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
