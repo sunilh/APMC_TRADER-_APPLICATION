@@ -6,7 +6,7 @@ import {
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql, gte, lt, isNotNull, or } from "drizzle-orm";
+import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
