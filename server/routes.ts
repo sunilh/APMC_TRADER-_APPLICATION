@@ -14,11 +14,12 @@ import {
   lots,
   farmers,
   buyers,
+  users,
   farmerBills,
   taxInvoices,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, or, ilike, isNull, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
