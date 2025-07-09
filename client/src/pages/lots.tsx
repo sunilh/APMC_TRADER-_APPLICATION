@@ -51,7 +51,7 @@ export default function Lots() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: lots, isLoading } = useQuery<Lot[]>({
+  const { data: allLots, isLoading } = useQuery<Lot[]>({
     queryKey: ["/api/lots", searchTerm],
     queryFn: async () => {
       const url = searchTerm
@@ -62,6 +62,9 @@ export default function Lots() {
       return response.json();
     },
   });
+
+  // Filter only active lots
+  const lots = allLots?.filter(lot => lot.status === "active") || [];
 
   const { data: tenant } = useQuery({
     queryKey: ["/api/tenant"],
@@ -96,6 +99,97 @@ export default function Lots() {
 
   const handleCompleteLot = (lotId: number) => {
     completeLotMutation.mutate(lotId);
+  };
+
+  const handlePrintActiveLots = () => {
+    const printContent = `
+      <html>
+        <head>
+          <title>Active Lots Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { text-align: center; color: #333; margin-bottom: 30px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .date { font-size: 14px; color: #666; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f8f9fa; font-weight: bold; }
+            .text-center { text-align: center; }
+            .no-data { text-align: center; padding: 40px; color: #666; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Active Lots Report</h1>
+            <div class="date">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+            <div class="date">Trader: ${tenant?.name || 'N/A'}</div>
+          </div>
+          
+          ${lots && lots.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>Lot Number</th>
+                  <th>Farmer Details</th>
+                  <th>Bags & Variety</th>
+                  <th>Financial Details</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lots.map(lot => `
+                  <tr>
+                    <td><strong>${lot.lotNumber}</strong></td>
+                    <td>
+                      <strong>${lot.farmer.name}</strong><br>
+                      ${lot.farmer.mobile}<br>
+                      ${lot.farmer.place}
+                    </td>
+                    <td>
+                      <strong>${lot.numberOfBags} bags</strong><br>
+                      ${lot.varietyGrade}
+                    </td>
+                    <td>
+                      Vehicle Rent: ₹${lot.vehicleRent}<br>
+                      Advance: ₹${lot.advance}<br>
+                      Unload Hamali: ₹${lot.unloadHamali}<br>
+                      ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
+                    </td>
+                    <td>
+                      <span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                        ${lot.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <div style="margin-top: 30px; text-align: center; font-size: 14px; color: #666;">
+              Total Active Lots: ${lots.length}
+            </div>
+          ` : `
+            <div class="no-data">
+              <h3>No Active Lots Found</h3>
+              <p>All lots have been completed or no lots exist.</p>
+            </div>
+          `}
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+      };
+    }
   };
 
   const handlePrintAllLots = async () => {
@@ -163,35 +257,58 @@ export default function Lots() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Lot Management
+            Active Lots Management
           </h1>
+          
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-blue-900">Active Lots Overview</h3>
+                <p className="text-blue-700">Showing only active (incomplete) lots that need attention</p>
+              </div>
+              <div className="text-2xl font-bold text-blue-900">
+                {lots?.length || 0} Active Lots
+              </div>
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
-                placeholder="Search lots by lot number, farmer name..."
+                placeholder="Search active lots by lot number, farmer name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-full sm:w-80"
               />
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Lot
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Lot</DialogTitle>
-                </DialogHeader>
-                <LotForm onSuccess={() => setIsDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={handlePrintActiveLots}
+                className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print Active Lots
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary hover:bg-primary/90">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Lot
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Lot</DialogTitle>
+                  </DialogHeader>
+                  <LotForm onSuccess={() => setIsDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 
@@ -313,12 +430,12 @@ export default function Lots() {
                         </div>
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            No lots found
+                            No active lots found
                           </h3>
                           <p className="text-gray-500 mt-1">
                             {searchTerm
-                              ? "Try adjusting your search terms"
-                              : "Get started by creating your first lot"}
+                              ? "No active lots match your search criteria"
+                              : "All lots have been completed or no lots exist. Create a new lot to get started."}
                           </p>
                         </div>
                         {!searchTerm && (
@@ -338,17 +455,7 @@ export default function Lots() {
             </table>
           </div>
 
-          {/* Print All Lots Button */}
-          <div className="flex justify-end px-6 py-4 border-t border-gray-200">
-            <Button
-              className="bg-secondary hover:bg-secondary/90"
-              onClick={handlePrintAllLots}
-              disabled={lots?.length === 0}
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Print All Lots
-            </Button>
-          </div>
+
         </Card>
       </div>
     </div>
