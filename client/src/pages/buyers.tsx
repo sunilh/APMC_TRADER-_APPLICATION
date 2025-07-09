@@ -240,7 +240,15 @@ export default function Buyers() {
                 <Button
                   onClick={() => {
                     setEditingBuyer(null);
-                    form.reset();
+                    form.reset({
+                      name: "",
+                      contactPerson: "",
+                      mobile: "",
+                      address: "",
+                      panNumber: "",
+                      gstNumber: "",
+                      hsnCode: "",
+                    });
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
