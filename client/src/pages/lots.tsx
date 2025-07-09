@@ -124,7 +124,16 @@ export default function Lots() {
     completeLotMutation.mutate(lotId);
   };
 
-  const handlePrintAllLots = () => {
+  const handlePrintAllLots = async () => {
+    if (!allLots || !tenant) {
+      toast({
+        title: "Error",
+        description: "Unable to print - missing data",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Filter lots based on selected criteria
     let filteredLots = allLots || [];
     
@@ -144,165 +153,41 @@ export default function Lots() {
         return startMatch && endMatch;
       });
     }
-    
-    // Group lots by status for better organization
-    const activeLots = filteredLots.filter(lot => lot.status === "active");
-    const completedLots = filteredLots.filter(lot => lot.status === "completed");
-    const printContent = `
-      <html>
-        <head>
-          <title>Lots Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-            h1 { text-align: center; color: #333; margin-bottom: 30px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .date { font-size: 14px; color: #666; margin: 5px 0; }
-            .summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-            .summary-item { text-align: center; }
-            .summary-number { font-size: 24px; font-weight: bold; color: #333; }
-            .summary-label { color: #666; margin-top: 5px; }
-            .section-title { font-size: 16px; font-weight: bold; margin: 25px 0 10px 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
-            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 11px; }
-            th { background-color: #f8f9fa; font-weight: bold; }
-            .status-active { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
-            .status-completed { background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
-            .no-data { text-align: center; padding: 40px; color: #666; }
-            @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Lots Report - ${printType.charAt(0).toUpperCase() + printType.slice(1)} Lots</h1>
-            <div class="date">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
-            <div class="date">Trader: ${tenant?.name || 'N/A'}</div>
-            ${printStartDate || printEndDate ? `
-              <div class="date">Date Range: ${printStartDate || 'Start'} to ${printEndDate || 'End'}</div>
-            ` : ''}
-          </div>
-          
-          <div class="summary">
-            <div class="summary-item">
-              <div class="summary-number">${filteredLots.length}</div>
-              <div class="summary-label">Total Lots</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-number">${activeLots.length}</div>
-              <div class="summary-label">Active Lots</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-number">${completedLots.length}</div>
-              <div class="summary-label">Completed Lots</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-number">${filteredLots.reduce((sum, lot) => sum + parseInt(lot.numberOfBags), 0)}</div>
-              <div class="summary-label">Total Bags</div>
-            </div>
-          </div>
-          
-          ${filteredLots.length > 0 ? `
-            ${activeLots.length > 0 ? `
-              <div class="section-title">Active Lots (${activeLots.length})</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Lot Number</th>
-                    <th>Farmer Details</th>
-                    <th>Bags & Variety</th>
-                    <th>Financial Details</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${activeLots.map(lot => `
-                    <tr>
-                      <td><strong>${lot.lotNumber}</strong></td>
-                      <td>
-                        <strong>${lot.farmer.name}</strong><br>
-                        ${lot.farmer.mobile}<br>
-                        ${lot.farmer.place}
-                      </td>
-                      <td>
-                        <strong>${lot.numberOfBags} bags</strong><br>
-                        ${lot.varietyGrade}
-                      </td>
-                      <td>
-                        Vehicle: ₹${lot.vehicleRent}<br>
-                        Advance: ₹${lot.advance}<br>
-                        Hamali: ₹${lot.unloadHamali}<br>
-                        ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
-                      </td>
-                      <td>
-                        <span class="status-active">ACTIVE</span>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : ''}
-            
-            ${completedLots.length > 0 ? `
-              <div class="section-title">Completed Lots (${completedLots.length})</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Lot Number</th>
-                    <th>Farmer Details</th>
-                    <th>Bags & Variety</th>
-                    <th>Financial Details</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${completedLots.map(lot => `
-                    <tr>
-                      <td><strong>${lot.lotNumber}</strong></td>
-                      <td>
-                        <strong>${lot.farmer.name}</strong><br>
-                        ${lot.farmer.mobile}<br>
-                        ${lot.farmer.place}
-                      </td>
-                      <td>
-                        <strong>${lot.numberOfBags} bags</strong><br>
-                        ${lot.varietyGrade}
-                      </td>
-                      <td>
-                        Vehicle: ₹${lot.vehicleRent}<br>
-                        Advance: ₹${lot.advance}<br>
-                        Hamali: ₹${lot.unloadHamali}<br>
-                        ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
-                      </td>
-                      <td>
-                        <span class="status-completed">COMPLETED</span>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : ''}
-          ` : `
-            <div class="no-data">
-              <h3>No Lots Found</h3>
-              <p>No lots match the selected criteria.</p>
-            </div>
-          `}
-        </body>
-      </html>
-    `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
-      };
+    const sortedLots = [...filteredLots].sort((a, b) => {
+      const lotA = parseInt(a.lotNumber.replace(/\D/g, ""), 10) || 0;
+      const lotB = parseInt(b.lotNumber.replace(/\D/g, ""), 10) || 0;
+      return lotA - lotB;
+    });
+
+    const apmcData = {
+      place: tenant.place || tenant.name,
+      traderName: tenant.name,
+      traderCode: tenant.apmcCode,
+      traderAddress: `${tenant.address || tenant.name} - Trader Code: ${tenant.apmcCode}`,
+      date: formatDateForAPMC(new Date()),
+      lots: sortedLots.map((lot) => ({
+        lotNumber: lot.lotNumber,
+        farmerName: lot.farmer.name,
+        place: lot.farmer.place,
+        numberOfBags: lot.numberOfBags,
+      })),
+    };
+
+    try {
+      await generateAPMCPDF(apmcData);
+      toast({
+        title: "Success",
+        description: `${printType} lots printed successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     }
-    
+
     // Close the print dialog
     setIsPrintDialogOpen(false);
   };
