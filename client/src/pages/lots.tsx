@@ -163,6 +163,7 @@ export default function Lots() {
     const apmcData = {
       place: tenant.place || tenant.name,
       traderName: tenant.name,
+      traderMobile: tenant.mobileNumber || "N/A",
       traderCode: tenant.apmcCode,
       traderAddress: `${tenant.address || tenant.name} - Trader Code: ${tenant.apmcCode}`,
       date: formatDateForAPMC(new Date()),
