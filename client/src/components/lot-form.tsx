@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UnifiedInput } from "@/components/ui/unified-input";
 import { insertLotSchema, type Farmer, type InsertLot } from "@shared/schema";
+import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,9 +26,12 @@ export function LotForm({ onSuccess }: LotFormProps) {
   const [farmerSearch, setFarmerSearch] = useState("");
 
   const form = useForm<Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>>({
-    resolver: zodResolver(insertLotSchema.omit({ lotNumber: true, tenantId: true, lotPrice: true })),
+    resolver: zodResolver(insertLotSchema.omit({ lotNumber: true, tenantId: true, lotPrice: true }).extend({
+      farmerId: z.number().min(1, "Please select a farmer"),
+      varietyGrade: z.string().min(1, "Please select variety/grade"),
+    })),
     defaultValues: {
-      farmerId: 0,
+      farmerId: undefined as any,
       numberOfBags: 1,
       vehicleRent: "0",
       advance: "0",
@@ -91,6 +95,22 @@ export function LotForm({ onSuccess }: LotFormProps) {
   });
 
   const onSubmit = (data: Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>) => {
+    if (!data.farmerId || data.farmerId === 0) {
+      toast({
+        title: t('messages.error'),
+        description: "Please select a farmer",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!data.varietyGrade) {
+      toast({
+        title: t('messages.error'),
+        description: "Please select variety/grade",
+        variant: "destructive",
+      });
+      return;
+    }
     createMutation.mutate(data);
   };
 
@@ -135,7 +155,11 @@ export function LotForm({ onSuccess }: LotFormProps) {
             </div>
             <Select
               value={form.watch("farmerId")?.toString() || ""}
-              onValueChange={(value) => form.setValue("farmerId", parseInt(value))}
+              onValueChange={(value) => {
+                if (value && value !== "loading" && value !== "no-results") {
+                  form.setValue("farmerId", parseInt(value));
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder={farmersLoading ? "Loading farmers..." : t('lot.selectFarmer')} />
