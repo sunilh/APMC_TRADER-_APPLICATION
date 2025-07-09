@@ -341,6 +341,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Corrected apiRequest function calls in farmer-form.tsx and farmer-form-new.tsx 
   - Fixed parameter order from (url, method, data) to (method, url, data) to match apiRequest function signature
   - Farmer creation form now works properly with all voice input features functional
+- July 9, 2025: Fixed farmer search functionality and lot form VoiceInput error
+  - Implemented comprehensive farmer search across name, mobile, place, bank name, and account holder name
+  - Added proper SQL query construction with LIKE operations for case-insensitive search
+  - Fixed database query construction to prevent double WHERE clause errors
+  - Resolved VoiceInput component error in lot form by replacing with UnifiedInput component
+  - Farmer search now works properly in both API and frontend with real-time filtering
 
 # User Preferences
 

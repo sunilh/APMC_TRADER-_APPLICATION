@@ -246,10 +246,12 @@ export function LotForm({ onSuccess }: LotFormProps) {
                 className="pl-8"
               />
             </div>
-            <VoiceInput
-              onResult={(value) => handleVoiceInput('unloadHamali', value)}
+            <UnifiedInput
+              value=""
+              onChange={(e) => handleVoiceInput('unloadHamali', e.target.value)}
+              voiceType="currency"
               placeholder={t('lot.unloadHamali')}
-              type="currency"
+              className="w-16"
             />
           </div>
           <p className="text-xs text-gray-500">{t('lot.unloadHamaliNote')}</p>
