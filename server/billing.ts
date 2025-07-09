@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { lots, bags, farmers, tenants, buyers, lotBuyers } from "@shared/schema";
+import { lots, bags, farmers, tenants, buyers, lotBuyers, taxInvoices } from "@shared/schema";
 import { eq, and, between, sql } from "drizzle-orm";
 
 export interface FarmerDayBill {
@@ -520,7 +520,30 @@ export async function generateTaxInvoice(
       return null;
     }
 
-    // Get completed lots for this buyer (check both direct assignment and lot_buyers table)
+    // Get today's date range
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Get existing tax invoices for this buyer to exclude already processed lots
+    const existingInvoices = await db
+      .select({ lotIds: taxInvoices.lotIds })
+      .from(taxInvoices)
+      .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+
+    const processedLotNumbers = new Set();
+    existingInvoices.forEach(invoice => {
+      if (invoice.lotIds) {
+        const lotIds = JSON.parse(invoice.lotIds);
+        lotIds.forEach((lotNumber: string) => processedLotNumbers.add(lotNumber));
+      }
+    });
+
+    console.log("Already processed lot numbers:", Array.from(processedLotNumbers));
+
+    // Get completed lots for this buyer from today only (check both direct assignment and lot_buyers table)
     const directLots = await db
       .select()
       .from(lots)
@@ -528,7 +551,8 @@ export async function generateTaxInvoice(
         and(
           eq(lots.buyerId, buyerId),
           eq(lots.tenantId, tenantId),
-          eq(lots.status, "completed")
+          eq(lots.status, "completed"),
+          between(lots.createdAt, startOfDay, endOfDay)
         )
       );
 
@@ -555,11 +579,16 @@ export async function generateTaxInvoice(
         and(
           eq(lotBuyers.buyerId, buyerId),
           eq(lotBuyers.tenantId, tenantId),
-          eq(lots.status, "completed")
+          eq(lots.status, "completed"),
+          between(lots.createdAt, startOfDay, endOfDay)
         )
       );
 
-    const completedLots = [...directLots, ...lotBuyerAssignments];
+    // Filter out lots that are already processed
+    const filteredDirectLots = directLots.filter(lot => !processedLotNumbers.has(lot.lotNumber));
+    const filteredLotBuyerAssignments = lotBuyerAssignments.filter(lot => !processedLotNumbers.has(lot.lotNumber));
+    
+    const completedLots = [...filteredDirectLots, ...filteredLotBuyerAssignments];
 
     console.log(`Direct lots found: ${directLots.length}`);
     console.log(`Lot-buyer assignments found: ${lotBuyerAssignments.length}`);
@@ -652,7 +681,6 @@ export async function generateTaxInvoice(
     const totalAmount = taxableAmount + totalGst;
 
     // Generate invoice number
-    const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
     const invoiceNumber = `INV-${dateStr}-${String(buyerId).padStart(3, '0')}`;
 
