@@ -561,9 +561,11 @@ export async function generateTaxInvoice(
 
     const completedLots = [...directLots, ...lotBuyerAssignments];
 
-    console.log(`Found ${completedLots.length} completed lots for buyer ${buyerId}:`);
+    console.log(`Direct lots found: ${directLots.length}`);
+    console.log(`Lot-buyer assignments found: ${lotBuyerAssignments.length}`);
+    console.log(`Total completed lots for buyer ${buyerId}: ${completedLots.length}`);
     completedLots.forEach(lot => {
-      console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id})`);
+      console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id}) - BagAllocation:`, lot.bagAllocation ? 'Yes' : 'No');
     });
     if (completedLots.length === 0) {
       return null;
