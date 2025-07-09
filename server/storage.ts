@@ -6,7 +6,7 @@ import {
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql, gte, lt, isNotNull } from "drizzle-orm";
+import { eq, and, desc, count, sql, gte, lt, isNotNull, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -192,13 +192,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFarmersByTenant(tenantId: number, search?: string): Promise<Farmer[]> {
-    let query = db.select().from(farmers).where(eq(farmers.tenantId, tenantId));
-    
-    if (search) {
-      // Add search functionality here if needed
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim().toLowerCase()}%`;
+      return await db.select().from(farmers)
+        .where(
+          and(
+            eq(farmers.tenantId, tenantId),
+            or(
+              sql`LOWER(${farmers.name}) LIKE ${searchTerm}`,
+              sql`LOWER(${farmers.mobile}) LIKE ${searchTerm}`,
+              sql`LOWER(${farmers.place}) LIKE ${searchTerm}`,
+              sql`LOWER(${farmers.nameAsInBank}) LIKE ${searchTerm}`,
+              sql`LOWER(${farmers.bankName}) LIKE ${searchTerm}`
+            )
+          )
+        )
+        .orderBy(desc(farmers.createdAt));
     }
     
-    return await query.orderBy(desc(farmers.createdAt));
+    return await db.select().from(farmers)
+      .where(eq(farmers.tenantId, tenantId))
+      .orderBy(desc(farmers.createdAt));
   }
 
   async createFarmer(farmer: InsertFarmer): Promise<Farmer> {
