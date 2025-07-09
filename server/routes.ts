@@ -421,6 +421,13 @@ export function registerRoutes(app: Express): Server {
         const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
         
         console.log("Tax invoice generation result:", taxInvoice ? "Success" : "Failed");
+        if (taxInvoice) {
+          console.log("Tax invoice details:", {
+            invoiceNumber: taxInvoice.invoiceNumber,
+            itemsCount: taxInvoice.items.length,
+            totalAmount: taxInvoice.calculations.totalAmount
+          });
+        }
         if (!taxInvoice) {
           return res.status(404).json({ message: "No completed lots found for this buyer" });
         }
