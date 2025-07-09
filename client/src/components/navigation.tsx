@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +14,30 @@ export function Navigation() {
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['Manage', 'Bills', 'Reports']));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      let shouldCloseAll = true;
+      
+      // Check if click is inside any dropdown
+      for (const [groupName, ref] of Object.entries(dropdownRefs.current)) {
+        if (ref && ref.contains(event.target as Node)) {
+          shouldCloseAll = false;
+          break;
+        }
+      }
+      
+      if (shouldCloseAll) {
+        setExpandedGroups(new Set());
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navigation = [
     { name: t('nav.dashboard'), href: '/', icon: Home, type: 'single' },
@@ -130,7 +153,15 @@ export function Navigation() {
           const groupActive = isGroupActive(item.items);
 
           return (
-            <div key={item.name} className={mobile ? 'space-y-1' : 'relative'}>
+            <div 
+              key={item.name} 
+              className={mobile ? 'space-y-1' : 'relative'}
+              ref={(el) => {
+                if (!mobile) {
+                  dropdownRefs.current[item.name] = el;
+                }
+              }}
+            >
               <Button
                 variant="ghost"
                 onClick={() => toggleGroup(item.name)}
@@ -154,7 +185,7 @@ export function Navigation() {
                 <div className={`
                   ${mobile 
                     ? 'ml-4 space-y-1' 
-                    : 'absolute top-full left-0 bg-white shadow-lg border rounded-md py-2 min-w-[160px] z-50'
+                    : 'absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg border rounded-md py-2 min-w-[160px] z-50'
                   }
                 `}>
                   {item.items.map((subItem: any) => {
@@ -165,7 +196,13 @@ export function Navigation() {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
-                        onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+                        onClick={() => {
+                          if (mobile) {
+                            setMobileMenuOpen(false);
+                          } else {
+                            setExpandedGroups(new Set()); // Close dropdown after click
+                          }
+                        }}
                       >
                         <Button
                           variant="ghost"
@@ -173,7 +210,7 @@ export function Navigation() {
                             ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
                             ${subActive 
                               ? 'text-primary bg-primary/10' 
-                              : 'text-gray-600 hover:text-gray-900'
+                              : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
                             }
                           `}
                         >

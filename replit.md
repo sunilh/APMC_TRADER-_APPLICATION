@@ -375,6 +375,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Updated navigation menu with separate "CESS Reports" and "GST Reports" menu items
   - Removed packaging, weighing charges, and commission fields from GST reports as requested
   - Each reporting system has its own summary cards, detailed transaction tables, and CSV download functionality
+- July 9, 2025: Redesigned navigation with smart grouped menu structure
+  - Created organized navigation groups: Dashboard, Manage (Farmers/Buyers/Staff), Operations (Lots), Bills (Farmer Bill/Tax Invoice), Reports (CESS/GST), Settings
+  - Implemented expandable dropdown menus with proper click-outside functionality to close dropdowns
+  - Added visual dropdown indicators and smooth transitions for better user experience
+  - Bills consolidated as main menu item containing both Farmer Bill and Tax Invoice options
+  - Entity management grouped under "Manage" for Farmers, Buyers, and Staff functions
 
 # User Preferences
 
