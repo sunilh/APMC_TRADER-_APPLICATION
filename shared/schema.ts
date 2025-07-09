@@ -473,19 +473,6 @@ export const expenses = pgTable("expenses", {
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: integer("created_by").references(() => users.id),
 });
-  sgst: decimal("sgst", { precision: 10, scale: 2 }).default('0'),
-  cgst: decimal("cgst", { precision: 10, scale: 2 }).default('0'),
-  igst: decimal("igst", { precision: 10, scale: 2 }).default('0'),
-  totalGst: decimal("total_gst", { precision: 10, scale: 2 }).default('0'),
-  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
-  totalBags: integer("total_bags").notNull(),
-  totalWeight: decimal("total_weight", { precision: 10, scale: 2 }).notNull(),
-  lotIds: jsonb("lot_ids").notNull(), // Store array of lot IDs included in this invoice
-  invoiceData: jsonb("invoice_data").notNull(), // Store complete invoice details
-  status: text("status").default("generated"), // generated, sent, paid, cancelled
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 // Insert schemas for new tables
 export const insertFarmerBillSchema = createInsertSchema(farmerBills).omit({
