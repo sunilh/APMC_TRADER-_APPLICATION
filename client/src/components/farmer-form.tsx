@@ -46,9 +46,9 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
   const mutation = useMutation({
     mutationFn: async (data: InsertFarmer) => {
       if (farmer) {
-        return apiRequest(`/api/farmers/${farmer.id}`, "PATCH", data);
+        return apiRequest("PATCH", `/api/farmers/${farmer.id}`, data);
       } else {
-        return apiRequest("/api/farmers", "POST", data);
+        return apiRequest("POST", "/api/farmers", data);
       }
     },
     onSuccess: () => {

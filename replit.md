@@ -336,6 +336,11 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added comprehensive error handling and validation for all bill generation and saving operations
   - Implemented data consistency alerts when saved bill data differs from current lot calculations
   - System maintains accounting integrity while providing transparency about any underlying data changes
+- July 9, 2025: Fixed farmer creation API parameter order issue
+  - Resolved "Failed to execute fetch on Window: /api/farmers is not a valid HTTP method" error
+  - Corrected apiRequest function calls in farmer-form.tsx and farmer-form-new.tsx 
+  - Fixed parameter order from (url, method, data) to (method, url, data) to match apiRequest function signature
+  - Farmer creation form now works properly with all voice input features functional
 
 # User Preferences
 
