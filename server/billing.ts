@@ -496,12 +496,15 @@ export async function generateTaxInvoice(
   tenantId: number
 ): Promise<TaxInvoice | null> {
   try {
+    console.log(`Starting tax invoice generation for buyer ${buyerId}, tenant ${tenantId}`);
+    
     // Get buyer details
     const [buyer] = await db
       .select()
       .from(buyers)
       .where(and(eq(buyers.id, buyerId), eq(buyers.tenantId, tenantId)));
 
+    console.log("Buyer found:", buyer ? buyer.name : "No buyer found");
     if (!buyer) {
       return null;
     }
@@ -512,6 +515,7 @@ export async function generateTaxInvoice(
       .from(tenants)
       .where(eq(tenants.id, tenantId));
 
+    console.log("Tenant found:", tenant ? tenant.name : "No tenant found");
     if (!tenant) {
       return null;
     }
@@ -528,6 +532,7 @@ export async function generateTaxInvoice(
         )
       );
 
+    console.log(`Found ${completedLots.length} completed lots for buyer ${buyerId}`);
     if (completedLots.length === 0) {
       return null;
     }
