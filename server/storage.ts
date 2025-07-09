@@ -39,6 +39,7 @@ export interface IStorage {
   // Lot management
   getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined>;
   getLotsByTenant(tenantId: number, search?: string, date?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
+  getAllLotsByTenant(tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
   createLot(lot: InsertLot): Promise<Lot>;
   updateLot(id: number, lot: Partial<InsertLot>, tenantId: number): Promise<Lot>;
   deleteLot(id: number, tenantId: number): Promise<void>;
@@ -288,6 +289,27 @@ export class DatabaseStorage implements IStorage {
     .leftJoin(farmers, eq(lots.farmerId, farmers.id))
     .leftJoin(buyers, eq(lots.buyerId, buyers.id))
     .where(whereConditions)
+    .orderBy(desc(lots.createdAt));
+
+    return results
+      .filter(result => result.farmer !== null)
+      .map(result => ({
+        ...result.lot,
+        farmer: result.farmer,
+        buyer: result.buyer || undefined,
+      }));
+  }
+
+  async getAllLotsByTenant(tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]> {
+    const results = await db.select({
+      lot: lots,
+      farmer: farmers,
+      buyer: buyers,
+    })
+    .from(lots)
+    .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+    .leftJoin(buyers, eq(lots.buyerId, buyers.id))
+    .where(eq(lots.tenantId, tenantId))
     .orderBy(desc(lots.createdAt));
 
     return results

@@ -689,7 +689,7 @@ export function registerRoutes(app: Express): Server {
       console.log("Lot creation request body:", req.body); // Debug log
       
       // Generate lot number
-      const existingLots = await storage.getLotsByTenant(req.user.tenantId);
+      const existingLots = await storage.getAllLotsByTenant(req.user.tenantId);
       const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, "0")}`;
 
       const validatedData = insertLotSchema.parse({
@@ -750,7 +750,7 @@ export function registerRoutes(app: Express): Server {
     async (req, res) => {
       try {
         // Get all bags for the tenant by fetching all lots first
-        const lots = await storage.getLotsByTenant(req.user.tenantId);
+        const lots = await storage.getAllLotsByTenant(req.user.tenantId);
         const allBags = [];
         
         for (const lot of lots) {
