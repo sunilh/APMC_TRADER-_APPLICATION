@@ -347,6 +347,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Fixed database query construction to prevent double WHERE clause errors
   - Resolved VoiceInput component error in lot form by replacing with UnifiedInput component
   - Farmer search now works properly in both API and frontend with real-time filtering
+- July 9, 2025: Enhanced lot printing system with comprehensive filtering and date selection
+  - Modified lots page to show only active lots by default while maintaining all lots data for printing
+  - Created advanced print dialog with three options: All Lots, Active Only, or Completed Only
+  - Added date range filtering with start and end date pickers for custom reporting periods
+  - Implemented professional PDF report with summary statistics showing total, active, and completed lot counts
+  - Enhanced report layout with separate sections for active and completed lots with color-coded status badges
+  - Added comprehensive totals including total bags count and detailed financial information per lot
+  - Print system now processes all lots data with flexible filtering while page displays only active lots for daily operations
 
 # User Preferences
 

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +15,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Plus,
   Search,
   Package,
   CheckCircle,
   Printer,
+  Calendar,
+  Filter,
 } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -46,9 +54,24 @@ interface Lot {
   };
 }
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "active":
+      return "bg-yellow-100 text-yellow-800";
+    case "completed":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
 export default function Lots() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [printStartDate, setPrintStartDate] = useState("");
+  const [printEndDate, setPrintEndDate] = useState("");
+  const [printType, setPrintType] = useState<"all" | "active" | "completed">("all");
   const { toast } = useToast();
 
   const { data: allLots, isLoading } = useQuery<Lot[]>({
@@ -101,20 +124,49 @@ export default function Lots() {
     completeLotMutation.mutate(lotId);
   };
 
-  const handlePrintActiveLots = () => {
+  const handlePrintAllLots = () => {
+    // Filter lots based on selected criteria
+    let filteredLots = allLots || [];
+    
+    // Filter by status
+    if (printType === "active") {
+      filteredLots = filteredLots.filter(lot => lot.status === "active");
+    } else if (printType === "completed") {
+      filteredLots = filteredLots.filter(lot => lot.status === "completed");
+    }
+    
+    // Filter by date range
+    if (printStartDate || printEndDate) {
+      filteredLots = filteredLots.filter(lot => {
+        const lotDate = new Date(lot.createdAt || Date.now()).toISOString().split('T')[0];
+        const startMatch = !printStartDate || lotDate >= printStartDate;
+        const endMatch = !printEndDate || lotDate <= printEndDate;
+        return startMatch && endMatch;
+      });
+    }
+    
+    // Group lots by status for better organization
+    const activeLots = filteredLots.filter(lot => lot.status === "active");
+    const completedLots = filteredLots.filter(lot => lot.status === "completed");
     const printContent = `
       <html>
         <head>
-          <title>Active Lots Report</title>
+          <title>Lots Report</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
             h1 { text-align: center; color: #333; margin-bottom: 30px; }
             .header { text-align: center; margin-bottom: 20px; }
-            .date { font-size: 14px; color: #666; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .date { font-size: 14px; color: #666; margin: 5px 0; }
+            .summary { display: flex; justify-content: space-around; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+            .summary-item { text-align: center; }
+            .summary-number { font-size: 24px; font-weight: bold; color: #333; }
+            .summary-label { color: #666; margin-top: 5px; }
+            .section-title { font-size: 16px; font-weight: bold; margin: 25px 0 10px 0; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 11px; }
             th { background-color: #f8f9fa; font-weight: bold; }
-            .text-center { text-align: center; }
+            .status-active { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+            .status-completed { background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
             .no-data { text-align: center; padding: 40px; color: #666; }
             @media print {
               body { margin: 0; }
@@ -124,57 +176,117 @@ export default function Lots() {
         </head>
         <body>
           <div class="header">
-            <h1>Active Lots Report</h1>
+            <h1>Lots Report - ${printType.charAt(0).toUpperCase() + printType.slice(1)} Lots</h1>
             <div class="date">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
             <div class="date">Trader: ${tenant?.name || 'N/A'}</div>
+            ${printStartDate || printEndDate ? `
+              <div class="date">Date Range: ${printStartDate || 'Start'} to ${printEndDate || 'End'}</div>
+            ` : ''}
           </div>
           
-          ${lots && lots.length > 0 ? `
-            <table>
-              <thead>
-                <tr>
-                  <th>Lot Number</th>
-                  <th>Farmer Details</th>
-                  <th>Bags & Variety</th>
-                  <th>Financial Details</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${lots.map(lot => `
-                  <tr>
-                    <td><strong>${lot.lotNumber}</strong></td>
-                    <td>
-                      <strong>${lot.farmer.name}</strong><br>
-                      ${lot.farmer.mobile}<br>
-                      ${lot.farmer.place}
-                    </td>
-                    <td>
-                      <strong>${lot.numberOfBags} bags</strong><br>
-                      ${lot.varietyGrade}
-                    </td>
-                    <td>
-                      Vehicle Rent: ₹${lot.vehicleRent}<br>
-                      Advance: ₹${lot.advance}<br>
-                      Unload Hamali: ₹${lot.unloadHamali}<br>
-                      ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
-                    </td>
-                    <td>
-                      <span style="background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
-                        ${lot.status.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            <div style="margin-top: 30px; text-align: center; font-size: 14px; color: #666;">
-              Total Active Lots: ${lots.length}
+          <div class="summary">
+            <div class="summary-item">
+              <div class="summary-number">${filteredLots.length}</div>
+              <div class="summary-label">Total Lots</div>
             </div>
+            <div class="summary-item">
+              <div class="summary-number">${activeLots.length}</div>
+              <div class="summary-label">Active Lots</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-number">${completedLots.length}</div>
+              <div class="summary-label">Completed Lots</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-number">${filteredLots.reduce((sum, lot) => sum + parseInt(lot.numberOfBags), 0)}</div>
+              <div class="summary-label">Total Bags</div>
+            </div>
+          </div>
+          
+          ${filteredLots.length > 0 ? `
+            ${activeLots.length > 0 ? `
+              <div class="section-title">Active Lots (${activeLots.length})</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lot Number</th>
+                    <th>Farmer Details</th>
+                    <th>Bags & Variety</th>
+                    <th>Financial Details</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${activeLots.map(lot => `
+                    <tr>
+                      <td><strong>${lot.lotNumber}</strong></td>
+                      <td>
+                        <strong>${lot.farmer.name}</strong><br>
+                        ${lot.farmer.mobile}<br>
+                        ${lot.farmer.place}
+                      </td>
+                      <td>
+                        <strong>${lot.numberOfBags} bags</strong><br>
+                        ${lot.varietyGrade}
+                      </td>
+                      <td>
+                        Vehicle: ₹${lot.vehicleRent}<br>
+                        Advance: ₹${lot.advance}<br>
+                        Hamali: ₹${lot.unloadHamali}<br>
+                        ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
+                      </td>
+                      <td>
+                        <span class="status-active">ACTIVE</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+            
+            ${completedLots.length > 0 ? `
+              <div class="section-title">Completed Lots (${completedLots.length})</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Lot Number</th>
+                    <th>Farmer Details</th>
+                    <th>Bags & Variety</th>
+                    <th>Financial Details</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${completedLots.map(lot => `
+                    <tr>
+                      <td><strong>${lot.lotNumber}</strong></td>
+                      <td>
+                        <strong>${lot.farmer.name}</strong><br>
+                        ${lot.farmer.mobile}<br>
+                        ${lot.farmer.place}
+                      </td>
+                      <td>
+                        <strong>${lot.numberOfBags} bags</strong><br>
+                        ${lot.varietyGrade}
+                      </td>
+                      <td>
+                        Vehicle: ₹${lot.vehicleRent}<br>
+                        Advance: ₹${lot.advance}<br>
+                        Hamali: ₹${lot.unloadHamali}<br>
+                        ${lot.lotPrice ? `Price: ₹${lot.lotPrice}` : 'Price: Not Set'}
+                      </td>
+                      <td>
+                        <span class="status-completed">COMPLETED</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
           ` : `
             <div class="no-data">
-              <h3>No Active Lots Found</h3>
-              <p>All lots have been completed or no lots exist.</p>
+              <h3>No Lots Found</h3>
+              <p>No lots match the selected criteria.</p>
             </div>
           `}
         </body>
@@ -190,65 +302,12 @@ export default function Lots() {
         printWindow.close();
       };
     }
+    
+    // Close the print dialog
+    setIsPrintDialogOpen(false);
   };
 
-  const handlePrintAllLots = async () => {
-    if (!lots || !tenant) {
-      toast({
-        title: "Error",
-        description: "Unable to print - missing data",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    const sortedLots = [...lots].sort((a, b) => {
-      const lotA = parseInt(a.lotNumber.replace(/\D/g, ""), 10) || 0;
-      const lotB = parseInt(b.lotNumber.replace(/\D/g, ""), 10) || 0;
-      return lotA - lotB;
-    });
-
-    const apmcData = {
-      place: tenant.place || tenant.name, // Use tenant place or name as fallback
-      traderName: tenant.mobileNumber, // Use mobile number instead of trader name
-      traderCode: tenant.apmcCode,
-      traderAddress: `${tenant.address || tenant.mobileNumber} - Trader Code: ${tenant.apmcCode}`, // Include trader code in address
-      date: formatDateForAPMC(new Date()),
-      lots: sortedLots.map((lot) => ({
-        lotNumber: lot.lotNumber,
-        farmerName: lot.farmer.name,
-        place: lot.farmer.place,
-        numberOfBags: lot.numberOfBags,
-      })),
-    };
-
-    try {
-      await generateAPMCPDF(apmcData);
-      toast({
-        title: "Success",
-        description: "All lots printed successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -285,14 +344,105 @@ export default function Lots() {
             </div>
 
             <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={handlePrintActiveLots}
-                className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Print Active Lots
-              </Button>
+              <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print Lots Report
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Print Lots Report</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="printType">Report Type</Label>
+                      <div className="mt-2 space-y-2">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="printType"
+                            value="all"
+                            checked={printType === "all"}
+                            onChange={(e) => setPrintType(e.target.value as any)}
+                            className="w-4 h-4"
+                          />
+                          <span>All Lots (Active + Completed)</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="printType"
+                            value="active"
+                            checked={printType === "active"}
+                            onChange={(e) => setPrintType(e.target.value as any)}
+                            className="w-4 h-4"
+                          />
+                          <span>Active Lots Only</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="printType"
+                            value="completed"
+                            checked={printType === "completed"}
+                            onChange={(e) => setPrintType(e.target.value as any)}
+                            className="w-4 h-4"
+                          />
+                          <span>Completed Lots Only</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="dateRange">Date Range (Optional)</Label>
+                      <div className="mt-2 space-y-2">
+                        <div>
+                          <Label htmlFor="startDate" className="text-sm">Start Date</Label>
+                          <Input
+                            id="startDate"
+                            type="date"
+                            value={printStartDate}
+                            onChange={(e) => setPrintStartDate(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="endDate" className="text-sm">End Date</Label>
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={printEndDate}
+                            onChange={(e) => setPrintEndDate(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        onClick={handlePrintAllLots}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Generate Report
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsPrintDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
