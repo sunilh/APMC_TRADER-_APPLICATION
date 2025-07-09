@@ -122,9 +122,7 @@ export default function TaxInvoice() {
   // Generate new tax invoice
   const generateInvoiceMutation = useMutation({
     mutationFn: async (buyerId: number) => {
-      return await apiRequest(`/api/tax-invoice/${buyerId}`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/tax-invoice/${buyerId}`, {});
     },
     onSuccess: (data) => {
       toast({
