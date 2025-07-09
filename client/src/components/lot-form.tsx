@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
-import { Search } from "lucide-react";
+import { Search, Check } from "lucide-react";
 
 interface LotFormProps {
   onSuccess?: () => void;
@@ -24,6 +24,10 @@ export function LotForm({ onSuccess }: LotFormProps) {
   const { toast } = useToast();
   const { t } = useI18n();
   const [farmerSearch, setFarmerSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>>({
     resolver: zodResolver(insertLotSchema.omit({ lotNumber: true, tenantId: true, lotPrice: true }).extend({
@@ -51,6 +55,19 @@ export function LotForm({ onSuccess }: LotFormProps) {
     return () => clearTimeout(timer);
   }, [farmerSearch]);
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const { data: farmers, isLoading: farmersLoading } = useQuery<Farmer[]>({
     queryKey: ["/api/farmers", debouncedFarmerSearch],
     queryFn: async () => {
@@ -64,6 +81,23 @@ export function LotForm({ onSuccess }: LotFormProps) {
     staleTime: 30000, // Cache for 30 seconds
     enabled: debouncedFarmerSearch.length === 0 || debouncedFarmerSearch.length >= 2, // Only search when 2+ chars or show all
   });
+
+  const handleFarmerSelect = (farmer: Farmer) => {
+    setSelectedFarmer(farmer);
+    setFarmerSearch(farmer.name);
+    setShowDropdown(false);
+    form.setValue("farmerId", farmer.id);
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFarmerSearch(value);
+    setShowDropdown(value.length >= 2);
+    if (value !== selectedFarmer?.name) {
+      setSelectedFarmer(null);
+      form.setValue("farmerId", undefined as any);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>) => {
@@ -82,6 +116,9 @@ export function LotForm({ onSuccess }: LotFormProps) {
         description: t('lot.created'),
       });
       form.reset();
+      setSelectedFarmer(null);
+      setFarmerSearch("");
+      setShowDropdown(false);
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -143,52 +180,76 @@ export function LotForm({ onSuccess }: LotFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="farmerId">{t('lot.farmer')} *</Label>
-          <div className="space-y-2">
+          <div className="relative">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder={t('lot.searchFarmer')}
+                ref={searchInputRef}
+                placeholder="Search farmers by name, mobile, or place..."
                 value={farmerSearch}
-                onChange={(e) => setFarmerSearch(e.target.value)}
-                className="pl-10"
+                onChange={handleSearchInputChange}
+                onFocus={() => farmerSearch.length >= 2 && setShowDropdown(true)}
+                className={`pl-10 pr-10 ${selectedFarmer ? 'border-green-500' : ''}`}
               />
+              {selectedFarmer && (
+                <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 h-4 w-4" />
+              )}
             </div>
-            <Select
-              value={form.watch("farmerId")?.toString() || ""}
-              onValueChange={(value) => {
-                if (value && value !== "loading" && value !== "no-results") {
-                  form.setValue("farmerId", parseInt(value));
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={farmersLoading ? "Loading farmers..." : t('lot.selectFarmer')} />
-              </SelectTrigger>
-              <SelectContent>
+            
+            {showDropdown && farmerSearch.length >= 2 && (
+              <div
+                ref={dropdownRef}
+                className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+              >
                 {farmersLoading ? (
-                  <SelectItem value="loading" disabled>Loading farmers...</SelectItem>
+                  <div className="p-3 text-center text-gray-500">
+                    <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full mr-2"></div>
+                    Loading farmers...
+                  </div>
                 ) : farmers && farmers.length > 0 ? (
                   farmers.map((farmer) => (
-                    <SelectItem key={farmer.id} value={farmer.id.toString()}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{farmer.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {farmer.mobile} • {farmer.place}
-                        </span>
+                    <div
+                      key={farmer.id}
+                      onClick={() => handleFarmerSelect(farmer)}
+                      className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium text-gray-900">{farmer.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {farmer.mobile} • {farmer.place}
+                          </div>
+                          {farmer.bankName && (
+                            <div className="text-xs text-gray-400">
+                              Bank: {farmer.bankName}
+                            </div>
+                          )}
+                        </div>
+                        {selectedFarmer?.id === farmer.id && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
                       </div>
-                    </SelectItem>
+                    </div>
                   ))
                 ) : (
-                  <SelectItem value="no-results" disabled>
-                    {farmerSearch.length >= 2 ? "No farmers found" : "Type 2+ chars to search"}
-                  </SelectItem>
+                  <div className="p-3 text-center text-gray-500">
+                    No farmers found for "{farmerSearch}"
+                  </div>
                 )}
-              </SelectContent>
-            </Select>
+              </div>
+            )}
           </div>
+          
+          {selectedFarmer && (
+            <div className="p-2 bg-green-50 border border-green-200 rounded text-sm">
+              <span className="text-green-800 font-medium">Selected: </span>
+              <span className="text-green-700">{selectedFarmer.name} ({selectedFarmer.mobile})</span>
+            </div>
+          )}
+          
           {form.formState.errors.farmerId && (
             <p className="text-sm text-destructive">
-              {t('lot.farmerRequired')}
+              Please select a farmer from the dropdown
             </p>
           )}
         </div>
