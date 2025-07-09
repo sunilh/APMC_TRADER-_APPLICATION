@@ -181,6 +181,9 @@ export default function Buyers() {
   };
 
   const handleEdit = (buyer: Buyer) => {
+    console.log("Editing buyer:", buyer);
+    console.log("PAN Number:", buyer.panNumber);
+    console.log("GST Number:", buyer.gstNumber);
     setEditingBuyer(buyer);
     form.reset({
       name: buyer.name,
