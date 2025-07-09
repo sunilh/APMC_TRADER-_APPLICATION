@@ -350,6 +350,131 @@ export const taxInvoices = pgTable("tax_invoices", {
   cess: decimal("cess", { precision: 10, scale: 2 }).default('0'),
   sgst: decimal("sgst", { precision: 10, scale: 2 }).default('0'),
   cgst: decimal("cgst", { precision: 10, scale: 2 }).default('0'),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  lotIds: jsonb("lot_ids").notNull(), // Store array of lot IDs included in this invoice
+  status: text("status").default("generated"), // generated, paid, cancelled
+  paymentStatus: text("payment_status").default("pending"), // pending, partial, paid
+  amountPaid: decimal("amount_paid", { precision: 12, scale: 2 }).default('0'),
+  paymentDate: timestamp("payment_date"),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Accounting ledger for complete financial tracking
+export const accountingLedger = pgTable("accounting_ledger", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  transactionType: text("transaction_type").notNull(), // 'sale', 'purchase', 'payment_received', 'payment_made', 'expense', 'income'
+  entityType: text("entity_type").notNull(), // 'farmer', 'buyer', 'expense', 'income'
+  entityId: integer("entity_id"), // farmer_id, buyer_id, etc.
+  referenceType: text("reference_type"), // 'farmer_bill', 'tax_invoice', 'manual_entry'
+  referenceId: integer("reference_id"), // bill_id, invoice_id, etc.
+  debitAmount: decimal("debit_amount", { precision: 12, scale: 2 }).default('0'),
+  creditAmount: decimal("credit_amount", { precision: 12, scale: 2 }).default('0'),
+  description: text("description").notNull(),
+  accountHead: text("account_head").notNull(), // 'sales', 'purchases', 'accounts_receivable', 'accounts_payable', 'commission_income', 'expenses'
+  fiscalYear: text("fiscal_year").notNull(),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+}, (table) => [
+  index("idx_ledger_tenant_date").on(table.tenantId, table.transactionDate),
+  index("idx_ledger_account_head").on(table.accountHead),
+  index("idx_ledger_fiscal_year").on(table.fiscalYear),
+]);
+
+// Bank transactions tracking
+export const bankTransactions = pgTable("bank_transactions", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  transactionType: text("transaction_type").notNull(), // 'deposit', 'withdrawal', 'transfer'
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  bankAccount: text("bank_account").notNull(),
+  referenceNumber: text("reference_number"),
+  description: text("description").notNull(),
+  entityType: text("entity_type"), // 'farmer', 'buyer', 'expense'
+  entityId: integer("entity_id"),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+}, (table) => [
+  index("idx_bank_tenant_date").on(table.tenantId, table.transactionDate),
+]);
+
+// Final accounts summary per fiscal year
+export const finalAccounts = pgTable("final_accounts", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  fiscalYear: text("fiscal_year").notNull(),
+  
+  // Profit & Loss Account
+  totalSales: decimal("total_sales", { precision: 15, scale: 2 }).default('0'),
+  totalPurchases: decimal("total_purchases", { precision: 15, scale: 2 }).default('0'),
+  grossProfit: decimal("gross_profit", { precision: 15, scale: 2 }).default('0'),
+  commissionIncome: decimal("commission_income", { precision: 12, scale: 2 }).default('0'),
+  serviceCharges: decimal("service_charges", { precision: 12, scale: 2 }).default('0'),
+  otherIncome: decimal("other_income", { precision: 12, scale: 2 }).default('0'),
+  totalIncome: decimal("total_income", { precision: 15, scale: 2 }).default('0'),
+  
+  operatingExpenses: decimal("operating_expenses", { precision: 12, scale: 2 }).default('0'),
+  bankCharges: decimal("bank_charges", { precision: 10, scale: 2 }).default('0'),
+  otherExpenses: decimal("other_expenses", { precision: 12, scale: 2 }).default('0'),
+  totalExpenses: decimal("total_expenses", { precision: 15, scale: 2 }).default('0'),
+  netProfit: decimal("net_profit", { precision: 15, scale: 2 }).default('0'),
+  
+  // Balance Sheet
+  cash: decimal("cash", { precision: 12, scale: 2 }).default('0'),
+  bankBalance: decimal("bank_balance", { precision: 12, scale: 2 }).default('0'),
+  accountsReceivable: decimal("accounts_receivable", { precision: 12, scale: 2 }).default('0'),
+  totalAssets: decimal("total_assets", { precision: 15, scale: 2 }).default('0'),
+  
+  accountsPayable: decimal("accounts_payable", { precision: 12, scale: 2 }).default('0'),
+  taxLiabilities: decimal("tax_liabilities", { precision: 12, scale: 2 }).default('0'),
+  totalLiabilities: decimal("total_liabilities", { precision: 15, scale: 2 }).default('0'),
+  netWorth: decimal("net_worth", { precision: 15, scale: 2 }).default('0'),
+  
+  // Tax Information
+  gstPayable: decimal("gst_payable", { precision: 12, scale: 2 }).default('0'),
+  cessPayable: decimal("cess_payable", { precision: 12, scale: 2 }).default('0'),
+  
+  periodStartDate: timestamp("period_start_date").notNull(),
+  periodEndDate: timestamp("period_end_date").notNull(),
+  status: text("status").default("draft"), // draft, finalized, audited
+  finalizedAt: timestamp("finalized_at"),
+  finalizedBy: integer("finalized_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("idx_final_accounts_tenant_year").on(table.tenantId, table.fiscalYear),
+]);
+
+// Expense categories for better tracking
+export const expenseCategories = pgTable("expense_categories", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  categoryName: text("category_name").notNull(),
+  description: text("description"),
+  accountHead: text("account_head").notNull(), // maps to accounting_ledger.account_head
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Manual expenses tracking
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  categoryId: integer("category_id").references(() => expenseCategories.id).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  receiptNumber: text("receipt_number"),
+  vendorName: text("vendor_name"),
+  expenseDate: timestamp("expense_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+});
+  sgst: decimal("sgst", { precision: 10, scale: 2 }).default('0'),
+  cgst: decimal("cgst", { precision: 10, scale: 2 }).default('0'),
   igst: decimal("igst", { precision: 10, scale: 2 }).default('0'),
   totalGst: decimal("total_gst", { precision: 10, scale: 2 }).default('0'),
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
