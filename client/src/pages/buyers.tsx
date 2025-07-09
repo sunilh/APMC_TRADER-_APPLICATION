@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
-import { UnifiedInput } from "@/components/ui/unified-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,11 +270,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Company Name</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter company name"
                               type="text"
-                              voiceType="text"
                               required
                             />
                           </FormControl>
@@ -291,11 +289,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Contact Person</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter contact person name"
                               type="text"
-                              voiceType="text"
                               required
                             />
                           </FormControl>
@@ -311,11 +308,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Mobile Number</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter mobile number"
                               type="tel"
-                              voiceType="phone"
                               required
                             />
                           </FormControl>
@@ -331,11 +327,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter address"
                               type="text"
-                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -350,11 +345,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>PAN Number</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter PAN number"
                               type="text"
-                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -369,11 +363,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>GST Number</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter GST number"
                               type="text"
-                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
@@ -388,11 +381,10 @@ export default function Buyers() {
                         <FormItem>
                           <FormLabel>HSN Code</FormLabel>
                           <FormControl>
-                            <UnifiedInput
+                            <Input
                               {...field}
                               placeholder="Enter HSN code"
                               type="text"
-                              voiceType="text"
                             />
                           </FormControl>
                           <FormMessage />
