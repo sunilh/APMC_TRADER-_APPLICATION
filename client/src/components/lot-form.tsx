@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,20 +36,34 @@ export function LotForm({ onSuccess }: LotFormProps) {
     },
   });
 
-  const { data: farmers } = useQuery<Farmer[]>({
-    queryKey: ["/api/farmers", farmerSearch],
+  // Debounced farmer search query
+  const [debouncedFarmerSearch, setDebouncedFarmerSearch] = useState("");
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFarmerSearch(farmerSearch);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [farmerSearch]);
+
+  const { data: farmers, isLoading: farmersLoading } = useQuery<Farmer[]>({
+    queryKey: ["/api/farmers", debouncedFarmerSearch],
     queryFn: async () => {
-      const url = farmerSearch 
-        ? `/api/farmers?search=${encodeURIComponent(farmerSearch)}`
+      const url = debouncedFarmerSearch && debouncedFarmerSearch.trim()
+        ? `/api/farmers?search=${encodeURIComponent(debouncedFarmerSearch.trim())}`
         : "/api/farmers";
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch farmers");
       return response.json();
     },
+    staleTime: 30000, // Cache for 30 seconds
+    enabled: debouncedFarmerSearch.length === 0 || debouncedFarmerSearch.length >= 2, // Only search when 2+ chars or show all
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>) => {
+      console.log("Creating lot with data:", data); // Debug log
       const response = await apiRequest("POST", "/api/lots", {
         ...data,
         tenantId: user?.tenantId,
@@ -67,6 +81,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
       onSuccess?.();
     },
     onError: (error: Error) => {
+      console.error("Lot creation error:", error); // Debug log
       toast({
         title: t('messages.error'),
         description: error.message,
@@ -123,19 +138,27 @@ export function LotForm({ onSuccess }: LotFormProps) {
               onValueChange={(value) => form.setValue("farmerId", parseInt(value))}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t('lot.selectFarmer')} />
+                <SelectValue placeholder={farmersLoading ? "Loading farmers..." : t('lot.selectFarmer')} />
               </SelectTrigger>
               <SelectContent>
-                {farmers?.map((farmer) => (
-                  <SelectItem key={farmer.id} value={farmer.id.toString()}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{farmer.name}</span>
-                      <span className="text-sm text-gray-500">
-                        {farmer.mobile} • {farmer.place}
-                      </span>
-                    </div>
+                {farmersLoading ? (
+                  <SelectItem value="" disabled>Loading farmers...</SelectItem>
+                ) : farmers && farmers.length > 0 ? (
+                  farmers.map((farmer) => (
+                    <SelectItem key={farmer.id} value={farmer.id.toString()}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{farmer.name}</span>
+                        <span className="text-sm text-gray-500">
+                          {farmer.mobile} • {farmer.place}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    {farmerSearch.length >= 2 ? "No farmers found" : "Type 2+ chars to search"}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>

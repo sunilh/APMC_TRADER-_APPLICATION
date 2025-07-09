@@ -685,6 +685,8 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
+      console.log("Lot creation request body:", req.body); // Debug log
+      
       // Generate lot number
       const existingLots = await storage.getLotsByTenant(req.user.tenantId);
       const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, "0")}`;
@@ -695,12 +697,16 @@ export function registerRoutes(app: Express): Server {
         tenantId: req.user.tenantId,
       });
 
+      console.log("Validated lot data:", validatedData); // Debug log
+
       const lot = await storage.createLot(validatedData);
       await createAuditLog(req, "create", "lot", lot.id, null, lot);
 
       res.status(201).json(lot);
     } catch (error) {
+      console.error("Lot creation backend error:", error); // Debug log
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors); // Debug log
         return res
           .status(400)
           .json({ message: "Validation error", errors: error.errors });
