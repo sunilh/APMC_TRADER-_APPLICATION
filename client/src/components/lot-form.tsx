@@ -142,7 +142,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {farmersLoading ? (
-                  <SelectItem value="" disabled>Loading farmers...</SelectItem>
+                  <SelectItem value="loading" disabled>Loading farmers...</SelectItem>
                 ) : farmers && farmers.length > 0 ? (
                   farmers.map((farmer) => (
                     <SelectItem key={farmer.id} value={farmer.id.toString()}>
@@ -155,7 +155,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-results" disabled>
                     {farmerSearch.length >= 2 ? "No farmers found" : "Type 2+ chars to search"}
                   </SelectItem>
                 )}
