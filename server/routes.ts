@@ -4,7 +4,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills, generateTaxInvoice } from "./billing";
-import { generateTaxReport, getDateRange } from "./reports";
+import { generateTaxReport, generateCessReport, generateGstReport, getDateRange } from "./reports";
 import {
   insertFarmerSchema,
   insertLotSchema,
@@ -1593,6 +1593,82 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error generating tax report:', error);
       res.status(500).json({ message: 'Failed to generate tax report' });
+    }
+  });
+
+  // CESS Reports endpoint
+  app.get("/api/reports/cess", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { 
+        reportType = 'daily', 
+        startDate, 
+        endDate,
+        customStartDate,
+        customEndDate 
+      } = req.query;
+
+      let dateRange;
+      
+      if (reportType === 'custom' && customStartDate && customEndDate) {
+        dateRange = {
+          startDate: new Date(customStartDate as string),
+          endDate: new Date(customEndDate as string)
+        };
+      } else {
+        const baseDate = startDate ? new Date(startDate as string) : new Date();
+        dateRange = getDateRange(reportType as any, baseDate);
+      }
+
+      const report = await generateCessReport(
+        tenantId,
+        dateRange.startDate,
+        dateRange.endDate,
+        reportType as any
+      );
+
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating CESS report:', error);
+      res.status(500).json({ message: 'Failed to generate CESS report' });
+    }
+  });
+
+  // GST Reports endpoint
+  app.get("/api/reports/gst", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { 
+        reportType = 'daily', 
+        startDate, 
+        endDate,
+        customStartDate,
+        customEndDate 
+      } = req.query;
+
+      let dateRange;
+      
+      if (reportType === 'custom' && customStartDate && customEndDate) {
+        dateRange = {
+          startDate: new Date(customStartDate as string),
+          endDate: new Date(customEndDate as string)
+        };
+      } else {
+        const baseDate = startDate ? new Date(startDate as string) : new Date();
+        dateRange = getDateRange(reportType as any, baseDate);
+      }
+
+      const report = await generateGstReport(
+        tenantId,
+        dateRange.startDate,
+        dateRange.endDate,
+        reportType as any
+      );
+
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating GST report:', error);
+      res.status(500).json({ message: 'Failed to generate GST report' });
     }
   });
 

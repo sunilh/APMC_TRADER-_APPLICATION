@@ -24,7 +24,8 @@ export function Navigation() {
 
     { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
     { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
-    { name: 'Tax Reports', href: '/tax-reports', icon: BarChart3 },
+    { name: 'CESS Reports', href: '/cess-reports', icon: BarChart3 },
+    { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 

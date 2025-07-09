@@ -2,6 +2,67 @@ import { db } from "./db";
 import { lots, bags, tenants } from "@shared/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 
+export interface CessReportData {
+  period: string;
+  totalTransactions: number;
+  totalWeight: number;
+  totalWeightQuintals: number;
+  basicAmount: number;
+  cessAmount: number;
+  totalAmount: number;
+}
+
+export interface GstReportData {
+  period: string;
+  totalTransactions: number;
+  totalWeight: number;
+  totalWeightQuintals: number;
+  basicAmount: number;
+  packaging: number;
+  weighingCharges: number;
+  commission: number;
+  sgstAmount: number;
+  cgstAmount: number;
+  totalGstAmount: number;
+  totalAmount: number;
+}
+
+export interface DetailedCessReport {
+  summary: CessReportData;
+  transactions: Array<{
+    date: string;
+    lotNumber: string;
+    farmerName: string;
+    buyerName: string;
+    weight: number;
+    weightQuintals: number;
+    basicAmount: number;
+    cessAmount: number;
+    totalAmount: number;
+  }>;
+}
+
+export interface DetailedGstReport {
+  summary: GstReportData;
+  transactions: Array<{
+    date: string;
+    lotNumber: string;
+    farmerName: string;
+    buyerName: string;
+    weight: number;
+    weightQuintals: number;
+    basicAmount: number;
+    packaging: number;
+    weighingCharges: number;
+    commission: number;
+    sgstAmount: number;
+    cgstAmount: number;
+    totalGstAmount: number;
+    totalAmount: number;
+  }>;
+}
+
+// Legacy interface for backward compatibility
 export interface TaxReportData {
   period: string;
   totalTransactions: number;
@@ -148,6 +209,210 @@ export async function generateTaxReport(
     cgstAmount: totalCgstAmount,
     totalTaxAmount: totalCessAmount + totalSgstAmount + totalCgstAmount,
     totalAmount: totalBasicAmount + totalPackaging + totalWeighingCharges + totalCommission + totalCessAmount + totalSgstAmount + totalCgstAmount
+  };
+
+  return {
+    summary,
+    transactions
+  };
+}
+
+export async function generateCessReport(
+  tenantId: number,
+  startDate: Date,
+  endDate: Date,
+  reportType: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+): Promise<DetailedCessReport> {
+  
+  // Get tenant settings for tax rates
+  const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId));
+  if (!tenant) {
+    throw new Error("Tenant not found");
+  }
+
+  // Parse settings from JSON field
+  const settings = tenant.settings as any || {};
+  const cessRate = parseFloat(settings.cessRate || "0.6") / 100;
+
+  // Get completed lots within date range
+  const completedLots = await db
+    .select({
+      lot: lots,
+    })
+    .from(lots)
+    .where(
+      and(
+        eq(lots.tenantId, tenantId),
+        eq(lots.status, "completed"),
+        gte(lots.createdAt, startDate),
+        lte(lots.createdAt, endDate)
+      )
+    );
+
+  const transactions = [];
+  let totalWeight = 0;
+  let totalBasicAmount = 0;
+  let totalCessAmount = 0;
+
+  for (const { lot } of completedLots) {
+    // Get bags for this lot
+    const lotBags = await db
+      .select()
+      .from(bags)
+      .where(eq(bags.lotId, lot.id));
+
+    const lotWeight = lotBags.reduce((sum, bag) => sum + parseFloat(bag.weight), 0);
+    const lotWeightQuintals = lotWeight / 100;
+    const lotPrice = parseFloat(lot.lotPrice || "0");
+    const basicAmount = lotWeightQuintals * lotPrice;
+    
+    // Calculate CESS only
+    const cessAmount = basicAmount * cessRate;
+    const totalAmount = basicAmount + cessAmount;
+
+    transactions.push({
+      date: lot.createdAt?.toISOString().split('T')[0] || '',
+      lotNumber: lot.lotNumber || '',
+      farmerName: "Farmer", // Will be populated with actual farmer data
+      buyerName: "Buyer",   // Will be populated with actual buyer data
+      weight: lotWeight,
+      weightQuintals: lotWeightQuintals,
+      basicAmount,
+      cessAmount,
+      totalAmount
+    });
+
+    // Add to totals
+    totalWeight += lotWeight;
+    totalBasicAmount += basicAmount;
+    totalCessAmount += cessAmount;
+  }
+
+  const summary: CessReportData = {
+    period: `${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`,
+    totalTransactions: transactions.length,
+    totalWeight,
+    totalWeightQuintals: totalWeight / 100,
+    basicAmount: totalBasicAmount,
+    cessAmount: totalCessAmount,
+    totalAmount: totalBasicAmount + totalCessAmount
+  };
+
+  return {
+    summary,
+    transactions
+  };
+}
+
+export async function generateGstReport(
+  tenantId: number,
+  startDate: Date,
+  endDate: Date,
+  reportType: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+): Promise<DetailedGstReport> {
+  
+  // Get tenant settings for tax rates
+  const [tenant] = await db.select().from(tenants).where(eq(tenants.id, tenantId));
+  if (!tenant) {
+    throw new Error("Tenant not found");
+  }
+
+  // Parse settings from JSON field
+  const settings = tenant.settings as any || {};
+  const sgstRate = parseFloat(settings.sgstRate || "2.5") / 100;
+  const cgstRate = parseFloat(settings.cgstRate || "2.5") / 100;
+  const packagingRate = parseFloat(settings.packagingPerBag || "5");
+  const weighingRate = parseFloat(settings.weighingFeePerBag || "2");
+  const commissionRate = parseFloat(settings.apmcCommissionPercentage || "3") / 100;
+
+  // Get completed lots within date range
+  const completedLots = await db
+    .select({
+      lot: lots,
+    })
+    .from(lots)
+    .where(
+      and(
+        eq(lots.tenantId, tenantId),
+        eq(lots.status, "completed"),
+        gte(lots.createdAt, startDate),
+        lte(lots.createdAt, endDate)
+      )
+    );
+
+  const transactions = [];
+  let totalWeight = 0;
+  let totalBasicAmount = 0;
+  let totalPackaging = 0;
+  let totalWeighingCharges = 0;
+  let totalCommission = 0;
+  let totalSgstAmount = 0;
+  let totalCgstAmount = 0;
+
+  for (const { lot } of completedLots) {
+    // Get bags for this lot
+    const lotBags = await db
+      .select()
+      .from(bags)
+      .where(eq(bags.lotId, lot.id));
+
+    const lotWeight = lotBags.reduce((sum, bag) => sum + parseFloat(bag.weight), 0);
+    const lotWeightQuintals = lotWeight / 100;
+    const lotPrice = parseFloat(lot.lotPrice || "0");
+    const basicAmount = lotWeightQuintals * lotPrice;
+
+    // Calculate charges
+    const packaging = lotBags.length * packagingRate;
+    const weighingCharges = lotBags.length * weighingRate;
+    const commission = basicAmount * commissionRate;
+    
+    // Calculate GST only
+    const taxableAmount = basicAmount + packaging + weighingCharges + commission;
+    const sgstAmount = taxableAmount * sgstRate;
+    const cgstAmount = taxableAmount * cgstRate;
+    const totalGstAmount = sgstAmount + cgstAmount;
+    const totalAmount = taxableAmount + totalGstAmount;
+
+    transactions.push({
+      date: lot.createdAt?.toISOString().split('T')[0] || '',
+      lotNumber: lot.lotNumber || '',
+      farmerName: "Farmer", // Will be populated with actual farmer data
+      buyerName: "Buyer",   // Will be populated with actual buyer data
+      weight: lotWeight,
+      weightQuintals: lotWeightQuintals,
+      basicAmount,
+      packaging,
+      weighingCharges,
+      commission,
+      sgstAmount,
+      cgstAmount,
+      totalGstAmount,
+      totalAmount
+    });
+
+    // Add to totals
+    totalWeight += lotWeight;
+    totalBasicAmount += basicAmount;
+    totalPackaging += packaging;
+    totalWeighingCharges += weighingCharges;
+    totalCommission += commission;
+    totalSgstAmount += sgstAmount;
+    totalCgstAmount += cgstAmount;
+  }
+
+  const summary: GstReportData = {
+    period: `${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`,
+    totalTransactions: transactions.length,
+    totalWeight,
+    totalWeightQuintals: totalWeight / 100,
+    basicAmount: totalBasicAmount,
+    packaging: totalPackaging,
+    weighingCharges: totalWeighingCharges,
+    commission: totalCommission,
+    sgstAmount: totalSgstAmount,
+    cgstAmount: totalCgstAmount,
+    totalGstAmount: totalSgstAmount + totalCgstAmount,
+    totalAmount: totalBasicAmount + totalPackaging + totalWeighingCharges + totalCommission + totalSgstAmount + totalCgstAmount
   };
 
   return {

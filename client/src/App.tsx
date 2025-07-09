@@ -16,7 +16,8 @@ import Buyers from "@/pages/buyers";
 
 import TaxInvoice from "@/pages/tax-invoice";
 import FarmerBill from "@/pages/farmer-bill";
-import TaxReports from "@/pages/tax-reports";
+import CessReports from "@/pages/cess-reports";
+import GstReports from "@/pages/gst-reports";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -34,7 +35,8 @@ function Router() {
 
       <ProtectedRoute path="/tax-invoice" component={TaxInvoice} />
       <ProtectedRoute path="/farmer-bill" component={FarmerBill} />
-      <ProtectedRoute path="/tax-reports" component={TaxReports} />
+      <ProtectedRoute path="/cess-reports" component={CessReports} />
+      <ProtectedRoute path="/gst-reports" component={GstReports} />
 
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
