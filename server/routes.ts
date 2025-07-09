@@ -849,9 +849,12 @@ export function registerRoutes(app: Express): Server {
   // Buyer routes
   app.get("/api/buyers", requireAuth, requireTenant, async (req, res) => {
     try {
+      console.log(`Fetching buyers for tenant: ${req.user.tenantId}`);
       const buyers = await storage.getBuyersByTenant(req.user.tenantId);
+      console.log(`Found ${buyers.length} buyers:`, buyers.map(b => ({ id: b.id, name: b.name })));
       res.json(buyers);
     } catch (error) {
+      console.error("Error fetching buyers:", error);
       res.status(500).json({ message: "Failed to fetch buyers" });
     }
   });
