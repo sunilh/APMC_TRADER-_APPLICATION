@@ -341,25 +341,16 @@ export function LotForm({ onSuccess }: LotFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="unloadHamali">{t('lot.unloadHamali')}</Label>
-          <div className="flex space-x-2">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-              <Input
-                id="unloadHamali"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register("unloadHamali")}
-                placeholder="0.00"
-                className="pl-8"
-              />
-            </div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 z-10">₹</span>
             <UnifiedInput
-              value=""
-              onChange={(e) => handleVoiceInput('unloadHamali', e.target.value)}
+              {...form.register("unloadHamali")}
+              type="number"
               voiceType="currency"
-              placeholder={t('lot.unloadHamali')}
-              className="w-16"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              className="pl-8"
             />
           </div>
           <p className="text-xs text-gray-500">{t('lot.unloadHamaliNote')}</p>
