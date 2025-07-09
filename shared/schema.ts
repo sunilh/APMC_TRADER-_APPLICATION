@@ -134,6 +134,20 @@ export const bagEntryDrafts = pgTable("bag_entry_drafts", {
 }));
 
 // Audit logs for tracking all operations
+// Junction table for lot-buyer relationships (multiple buyers per lot)
+export const lotBuyers = pgTable("lot_buyers", {
+  id: serial("id").primaryKey(),
+  lotId: integer("lot_id").notNull().references(() => lots.id, { onDelete: "cascade" }),
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id, { onDelete: "cascade" }),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  bagAllocation: jsonb("bag_allocation"), // Store which specific bags belong to this buyer
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_lot_buyers_lot_id").on(table.lotId),
+  index("idx_lot_buyers_buyer_id").on(table.buyerId),
+  index("idx_lot_buyers_tenant_id").on(table.tenantId),
+]);
+
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
@@ -294,6 +308,8 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type Patti = typeof pattis.$inferSelect;
 export type InsertPatti = z.infer<typeof insertPattiSchema>;
+export type LotBuyer = typeof lotBuyers.$inferSelect;
+export type InsertLotBuyer = typeof lotBuyers.$inferInsert;
 
 // Farmer Bill tracking table
 export const farmerBills = pgTable("farmer_bills", {

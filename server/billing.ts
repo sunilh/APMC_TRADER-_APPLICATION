@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { lots, bags, farmers, tenants, buyers } from "@shared/schema";
+import { lots, bags, farmers, tenants, buyers, lotBuyers } from "@shared/schema";
 import { eq, and, between, sql } from "drizzle-orm";
 
 export interface FarmerDayBill {
@@ -520,8 +520,8 @@ export async function generateTaxInvoice(
       return null;
     }
 
-    // Get completed lots for this buyer
-    const completedLots = await db
+    // Get completed lots for this buyer (check both direct assignment and lot_buyers table)
+    const directLots = await db
       .select()
       .from(lots)
       .where(
@@ -531,6 +531,35 @@ export async function generateTaxInvoice(
           eq(lots.status, "completed")
         )
       );
+
+    const lotBuyerAssignments = await db
+      .select({
+        id: lots.id,
+        lotNumber: lots.lotNumber,
+        farmerId: lots.farmerId,
+        tenantId: lots.tenantId,
+        buyerId: lotBuyers.buyerId,
+        status: lots.status,
+        lotPrice: lots.lotPrice,
+        varietyGrade: lots.varietyGrade,
+        numberOfBags: lots.numberOfBags,
+        vehicleRent: lots.vehicleRent,
+        advance: lots.advance,
+        createdAt: lots.createdAt,
+        updatedAt: lots.updatedAt,
+        bagAllocation: lotBuyers.bagAllocation,
+      })
+      .from(lotBuyers)
+      .leftJoin(lots, eq(lotBuyers.lotId, lots.id))
+      .where(
+        and(
+          eq(lotBuyers.buyerId, buyerId),
+          eq(lotBuyers.tenantId, tenantId),
+          eq(lots.status, "completed")
+        )
+      );
+
+    const completedLots = [...directLots, ...lotBuyerAssignments];
 
     console.log(`Found ${completedLots.length} completed lots for buyer ${buyerId}:`);
     completedLots.forEach(lot => {
@@ -546,17 +575,29 @@ export async function generateTaxInvoice(
     let subTotal = 0;
 
     for (const lot of completedLots) {
-      const bagDetails = await db
-        .select({
-          bagCount: sql<number>`COUNT(*)`,
-          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
-        })
-        .from(bags)
-        .where(eq(bags.lotId, lot.id));
+      let bagDetails, weightKg, bagCount;
 
-      const bagData = bagDetails[0];
-      const weightKg = Number(bagData.totalWeight);
-      const bagCount = Number(bagData.bagCount);
+      // Check if this is a lot_buyers assignment with specific bag allocation
+      if (lot.bagAllocation) {
+        const allocation = lot.bagAllocation as any;
+        const allocatedBags = allocation.bags || [];
+        bagCount = allocatedBags.length;
+        weightKg = allocatedBags.reduce((sum: number, bag: any) => sum + (bag.weight || 0), 0);
+      } else {
+        // Regular lot assignment - get all bags
+        const bagData = await db
+          .select({
+            bagCount: sql<number>`COUNT(*)`,
+            totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+          })
+          .from(bags)
+          .where(eq(bags.lotId, lot.id));
+
+        const data = bagData[0];
+        weightKg = Number(data.totalWeight);
+        bagCount = Number(data.bagCount);
+      }
+
       const lotPrice = Number(lot.lotPrice) || 0;
       const amountInRupees = (weightKg / 100) * lotPrice;
 
