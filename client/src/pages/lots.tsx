@@ -67,6 +67,7 @@ const getStatusColor = (status: string) => {
 
 export default function Lots() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Today's date
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [printStartDate, setPrintStartDate] = useState("");
@@ -75,19 +76,21 @@ export default function Lots() {
   const { toast } = useToast();
 
   const { data: allLots, isLoading } = useQuery<Lot[]>({
-    queryKey: ["/api/lots", searchTerm],
+    queryKey: ["/api/lots", searchTerm, selectedDate],
     queryFn: async () => {
-      const url = searchTerm
-        ? `/api/lots?search=${encodeURIComponent(searchTerm)}`
-        : "/api/lots";
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("search", searchTerm);
+      if (selectedDate) params.append("date", selectedDate);
+      
+      const url = `/api/lots${params.toString() ? `?${params.toString()}` : ""}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch lots");
       return response.json();
     },
   });
 
-  // Filter only active lots
-  const lots = allLots?.filter(lot => lot.status === "active") || [];
+  // Show both active and completed lots from selected date
+  const lots = allLots || [];
 
   const { data: tenant } = useQuery({
     queryKey: ["/api/tenant"],
@@ -202,31 +205,47 @@ export default function Lots() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Active Lots Management
+            Daily Lots Management
           </h1>
           
           <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium text-blue-900">Active Lots Overview</h3>
-                <p className="text-blue-700">Showing only active (incomplete) lots that need attention</p>
+                <h3 className="text-lg font-medium text-blue-900">Daily Lots Overview</h3>
+                <p className="text-blue-700">
+                  Showing lots for {new Date(selectedDate).toLocaleDateString('en-IN')} - 
+                  Active: {lots?.filter(lot => lot.status === 'active').length || 0}, 
+                  Completed: {lots?.filter(lot => lot.status === 'completed').length || 0}
+                </p>
               </div>
               <div className="text-2xl font-bold text-blue-900">
-                {lots?.length || 0} Active Lots
+                {lots?.length || 0} Total Lots
               </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search active lots by lot number, farmer name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full sm:w-80"
-              />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Search lots by lot number, farmer name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full sm:w-72"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-400" />
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">

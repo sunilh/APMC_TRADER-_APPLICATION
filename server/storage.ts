@@ -38,7 +38,7 @@ export interface IStorage {
 
   // Lot management
   getLot(id: number, tenantId: number): Promise<(Lot & { farmer: Farmer; buyer?: Buyer }) | undefined>;
-  getLotsByTenant(tenantId: number, search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
+  getLotsByTenant(tenantId: number, search?: string, date?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]>;
   createLot(lot: InsertLot): Promise<Lot>;
   updateLot(id: number, lot: Partial<InsertLot>, tenantId: number): Promise<Lot>;
   deleteLot(id: number, tenantId: number): Promise<void>;
@@ -252,7 +252,33 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getLotsByTenant(tenantId: number, search?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]> {
+  async getLotsByTenant(tenantId: number, search?: string, date?: string): Promise<(Lot & { farmer: Farmer; buyer?: Buyer })[]> {
+    let whereConditions = eq(lots.tenantId, tenantId);
+
+    // Add date filtering - if no date provided, default to today
+    if (date) {
+      const targetDate = new Date(date);
+      const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+      
+      whereConditions = and(
+        whereConditions,
+        gte(lots.createdAt, startOfDay),
+        lte(lots.createdAt, endOfDay)
+      );
+    } else {
+      // Default to today's lots
+      const today = new Date();
+      const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+      
+      whereConditions = and(
+        whereConditions,
+        gte(lots.createdAt, startOfToday),
+        lte(lots.createdAt, endOfToday)
+      );
+    }
+
     const results = await db.select({
       lot: lots,
       farmer: farmers,
@@ -261,7 +287,7 @@ export class DatabaseStorage implements IStorage {
     .from(lots)
     .leftJoin(farmers, eq(lots.farmerId, farmers.id))
     .leftJoin(buyers, eq(lots.buyerId, buyers.id))
-    .where(eq(lots.tenantId, tenantId))
+    .where(whereConditions)
     .orderBy(desc(lots.createdAt));
 
     return results

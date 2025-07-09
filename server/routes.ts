@@ -657,10 +657,11 @@ export function registerRoutes(app: Express): Server {
   // Lot routes
   app.get("/api/lots", requireAuth, requireTenant, async (req, res) => {
     try {
-      const { search } = req.query;
+      const { search, date } = req.query;
       const lots = await storage.getLotsByTenant(
         req.user.tenantId,
         search as string,
+        date as string,
       );
       res.json(lots);
     } catch (error) {
