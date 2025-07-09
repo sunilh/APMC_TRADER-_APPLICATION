@@ -599,11 +599,11 @@ export default function Buyers() {
 
               <div>
                 <Label>Amount Paid</Label>
-                <UnifiedInput
+                <Input
                   value={paymentForm.amountPaid}
                   placeholder="Enter amount paid"
-                  type="currency"
-                  onResult={(text) => setPaymentForm({ ...paymentForm, amountPaid: text })}
+                  type="number"
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amountPaid: e.target.value })}
                 />
               </div>
 
