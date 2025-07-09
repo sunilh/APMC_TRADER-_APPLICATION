@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2, Receipt, FileText, Search, BarChart3 } from "lucide-react";
+import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2, Receipt, FileText, Search, BarChart3, FolderOpen, Briefcase, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -14,25 +14,42 @@ export function Navigation() {
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['Manage', 'Bills', 'Reports']));
 
   const navigation = [
-    { name: t('nav.dashboard'), href: '/', icon: Home },
-    { name: t('nav.farmers'), href: '/farmers', icon: Users },
-    { name: t('nav.lots'), href: '/lots', icon: Package },
-    { name: 'Buyers', href: '/buyers', icon: Users },
-    ...(user?.role === 'admin' ? [{ name: 'Staff', href: '/staff', icon: Users }] : []),
-
-    { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
-    { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
-    { name: 'CESS Reports', href: '/cess-reports', icon: BarChart3 },
-    { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
-    { name: t('nav.settings'), href: '/settings', icon: Settings },
+    { name: t('nav.dashboard'), href: '/', icon: Home, type: 'single' },
+    
+    // Manage Group
+    { name: 'Manage', type: 'group', icon: FolderOpen, items: [
+      { name: t('nav.farmers'), href: '/farmers', icon: Users },
+      { name: 'Buyers', href: '/buyers', icon: Users },
+      ...(user?.role === 'admin' ? [{ name: 'Staff', href: '/staff', icon: Users }] : []),
+    ]},
+    
+    // Operations Group
+    { name: 'Operations', type: 'group', icon: Briefcase, items: [
+      { name: t('nav.lots'), href: '/lots', icon: Package },
+    ]},
+    
+    // Bills Group
+    { name: 'Bills', type: 'group', icon: Receipt, items: [
+      { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
+      { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
+    ]},
+    
+    // Reports Group
+    { name: 'Reports', type: 'group', icon: BarChart3, items: [
+      { name: 'CESS Reports', href: '/cess-reports', icon: BarChart3 },
+      { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
+    ]},
+    
+    { name: t('nav.settings'), href: '/settings', icon: Settings, type: 'single' },
   ];
 
   // Add tenant onboarding for super admins
   const superAdminNavigation = [
     ...navigation,
-    { name: 'Create Tenant', href: '/tenant-onboarding', icon: Building2 },
+    { name: 'Create Tenant', href: '/tenant-onboarding', icon: Building2, type: 'single' },
   ];
 
   const handleLogout = () => {
@@ -55,37 +72,126 @@ export function Navigation() {
     return location.startsWith(href);
   };
 
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupName)) {
+        newSet.delete(groupName);
+      } else {
+        newSet.add(groupName);
+      }
+      return newSet;
+    });
+  };
+
+  const isGroupExpanded = (groupName: string) => expandedGroups.has(groupName);
+
+  const isGroupActive = (items: any[]) => {
+    return items.some(item => item.href && isActive(item.href));
+  };
+
   const currentNavigation = (user?.role === 'super_admin' && user?.tenantId === null) ? superAdminNavigation : navigation;
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
-    <>
-      {currentNavigation.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.href);
-        
-        return (
-          <Link
-            key={item.name}
-            href={item.href}
-            onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
-          >
-            <Button
-              variant="ghost"
-              className={`
-                ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
-                ${active 
-                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                  : 'text-gray-600 hover:text-gray-900'
-                }
-              `}
+    <div className={`${mobile ? 'space-y-1' : 'space-x-1 flex'}`}>
+      {currentNavigation.map((item: any) => {
+        // Single item (not grouped)
+        if (item.type === 'single') {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
             >
-              <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
-              {item.name}
-            </Button>
-          </Link>
-        );
+              <Button
+                variant="ghost"
+                className={`
+                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
+                  ${active 
+                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+                {item.name}
+              </Button>
+            </Link>
+          );
+        }
+
+        // Grouped items
+        if (item.type === 'group') {
+          const Icon = item.icon;
+          const expanded = isGroupExpanded(item.name);
+          const groupActive = isGroupActive(item.items);
+
+          return (
+            <div key={item.name} className={mobile ? 'space-y-1' : 'relative'}>
+              <Button
+                variant="ghost"
+                onClick={() => toggleGroup(item.name)}
+                className={`
+                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
+                  ${groupActive 
+                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+                {item.name}
+                <div className={`transition-transform ml-1 ${expanded ? 'rotate-90' : ''}`}>
+                  ▶
+                </div>
+              </Button>
+
+              {/* Submenu */}
+              {expanded && (
+                <div className={`
+                  ${mobile 
+                    ? 'ml-4 space-y-1' 
+                    : 'absolute top-full left-0 bg-white shadow-lg border rounded-md py-2 min-w-[160px] z-50'
+                  }
+                `}>
+                  {item.items.map((subItem: any) => {
+                    const SubIcon = subItem.icon;
+                    const subActive = isActive(subItem.href);
+
+                    return (
+                      <Link
+                        key={subItem.name}
+                        href={subItem.href}
+                        onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+                      >
+                        <Button
+                          variant="ghost"
+                          className={`
+                            ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
+                            ${subActive 
+                              ? 'text-primary bg-primary/10' 
+                              : 'text-gray-600 hover:text-gray-900'
+                            }
+                          `}
+                        >
+                          <SubIcon className="h-4 w-4 mr-2" />
+                          {subItem.name}
+                        </Button>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        return null;
       })}
-    </>
+    </div>
   );
 
   return (
@@ -105,7 +211,7 @@ export function Navigation() {
             </Link>
             
             {/* Desktop navigation */}
-            <div className="hidden md:ml-8 md:flex md:space-x-2">
+            <div className="hidden md:ml-8 md:flex md:items-center">
               <NavLinks />
             </div>
           </div>
