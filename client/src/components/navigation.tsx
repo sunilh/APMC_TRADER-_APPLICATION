@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
 export function Navigation() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -83,8 +83,14 @@ export function Navigation() {
   };
 
   const handleNavigation = (href: string) => {
-    console.log('Navigating to:', href);
-    window.location.href = href;
+    console.log('🔥 Navigation clicked! Href:', href);
+    console.log('🔥 Current location:', window.location.href);
+    try {
+      window.location.href = href;
+      console.log('🔥 Navigation successful');
+    } catch (error) {
+      console.error('🔥 Navigation error:', error);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -135,8 +141,10 @@ export function Navigation() {
             <Button
               key={item.name}
               variant="ghost"
-              onClick={() => {
-                console.log('Navigation clicked:', item.name, item.href);
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔥 Button clicked:', item.name, item.href);
                 handleNavigation(item.href);
                 if (mobile) setMobileMenuOpen(false);
               }}
@@ -204,8 +212,10 @@ export function Navigation() {
                       <Button
                         key={subItem.name}
                         variant="ghost"
-                        onClick={() => {
-                          console.log('Sub-navigation clicked:', subItem.name, subItem.href);
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('🔥 Sub-menu clicked:', subItem.name, subItem.href);
                           handleNavigation(subItem.href);
                           if (mobile) {
                             setMobileMenuOpen(false);
