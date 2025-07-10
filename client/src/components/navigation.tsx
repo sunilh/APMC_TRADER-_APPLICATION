@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
 export function Navigation() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -82,6 +82,11 @@ export function Navigation() {
     logoutMutation.mutate();
   };
 
+  const handleNavigation = (href: string) => {
+    console.log('Navigating to:', href);
+    window.location.href = href;
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -127,25 +132,25 @@ export function Navigation() {
           const active = isActive(item.href);
           
           return (
-            <Link
+            <Button
               key={item.name}
-              href={item.href}
-              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+              variant="ghost"
+              onClick={() => {
+                console.log('Navigation clicked:', item.name, item.href);
+                handleNavigation(item.href);
+                if (mobile) setMobileMenuOpen(false);
+              }}
+              className={`
+                ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
+                ${active 
+                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                  : 'text-gray-600 hover:text-gray-900'
+                }
+              `}
             >
-              <Button
-                variant="ghost"
-                className={`
-                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
-                  ${active 
-                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                    : 'text-gray-600 hover:text-gray-900'
-                  }
-                `}
-              >
-                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
-                {item.name}
-              </Button>
-            </Link>
+              <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+              {item.name}
+            </Button>
           );
         }
 
@@ -196,31 +201,29 @@ export function Navigation() {
                     const subActive = isActive(subItem.href);
 
                     return (
-                      <Link
+                      <Button
                         key={subItem.name}
-                        href={subItem.href}
+                        variant="ghost"
                         onClick={() => {
+                          console.log('Sub-navigation clicked:', subItem.name, subItem.href);
+                          handleNavigation(subItem.href);
                           if (mobile) {
                             setMobileMenuOpen(false);
                           } else {
                             setExpandedGroups(new Set()); // Close dropdown after click
                           }
                         }}
+                        className={`
+                          ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
+                          ${subActive 
+                            ? 'text-primary bg-primary/10' 
+                            : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                          }
+                        `}
                       >
-                        <Button
-                          variant="ghost"
-                          className={`
-                            ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
-                            ${subActive 
-                              ? 'text-primary bg-primary/10' 
-                              : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-                            }
-                          `}
-                        >
-                          <SubIcon className="h-4 w-4 mr-2" />
-                          {subItem.name}
-                        </Button>
-                      </Link>
+                        <SubIcon className="h-4 w-4 mr-2" />
+                        {subItem.name}
+                      </Button>
                     );
                   })}
                 </div>
