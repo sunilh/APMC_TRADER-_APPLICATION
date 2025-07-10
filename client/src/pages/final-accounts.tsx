@@ -58,6 +58,9 @@ export default function FinalAccounts() {
   const [paymentDialog, setPaymentDialog] = useState<{ type: 'received' | 'made', open: boolean }>({ type: 'received', open: false });
   const [expenseDialog, setExpenseDialog] = useState(false);
 
+  // Simple test to ensure component loads
+  console.log("Final Accounts component is loading...");
+
   // Get current fiscal year
   const { data: fiscalYearData } = useQuery({
     queryKey: ["/api/accounting/fiscal-year"],
@@ -200,6 +203,7 @@ export default function FinalAccounts() {
   if (finalAccountsLoading) {
     return (
       <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">Final Accounts - Loading...</h2>
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -215,6 +219,7 @@ export default function FinalAccounts() {
   if (finalAccountsError) {
     return (
       <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">Final Accounts - Setup Required</h2>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -234,6 +239,13 @@ export default function FinalAccounts() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Debug Info */}
+      <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <h3 className="font-semibold text-green-800">✓ Final Accounts Page Loaded Successfully!</h3>
+        <p className="text-green-700">Current Fiscal Year: {currentFiscalYear}</p>
+        <p className="text-green-700">Data loaded: {finalAccounts ? 'Yes' : 'No'}</p>
+      </div>
+      
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
