@@ -138,15 +138,15 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
-              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
               className={`
                 inline-flex items-center ${mobile ? 'w-full justify-start' : 'px-3 py-2'} 
-                rounded-md text-sm font-medium transition-colors
+                rounded-md text-sm font-medium transition-colors cursor-pointer
                 ${active 
                   ? 'text-primary bg-primary/10 border-b-2 border-primary' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }
               `}
+              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
             >
               <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
               {item.name}
@@ -208,6 +208,14 @@ export function Navigation() {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
+                        className={`
+                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-2' : 'w-full justify-start px-4 py-2'}
+                          rounded-md text-sm font-medium transition-colors cursor-pointer
+                          ${subActive 
+                            ? 'text-primary bg-primary/10' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
+                          }
+                        `}
                         onClick={() => {
                           if (mobile) {
                             setMobileMenuOpen(false);
@@ -215,14 +223,6 @@ export function Navigation() {
                             setExpandedGroups(new Set()); // Close dropdown after click
                           }
                         }}
-                        className={`
-                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-2' : 'w-full justify-start px-4 py-2'}
-                          rounded-md text-sm font-medium transition-colors
-                          ${subActive 
-                            ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
-                          }
-                        `}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
                         {subItem.name}

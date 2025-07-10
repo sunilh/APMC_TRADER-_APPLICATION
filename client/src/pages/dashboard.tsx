@@ -63,29 +63,7 @@ export default function Dashboard() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Debug Test */}
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-          <h3 className="font-bold mb-2">Navigation Test:</h3>
-          <div className="space-x-2">
-            <Link href="/settings">
-              <Button variant="outline" size="sm">Test Settings Link</Button>
-            </Link>
-            <Link href="/final-accounts">
-              <Button variant="outline" size="sm">Test Final Accounts Link</Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                console.log("Direct navigation to /settings");
-                window.location.href = "/settings";
-              }}
-            >
-              Direct Settings
-            </Button>
-          </div>
-        </div>
-        
+
         {/* Dashboard Overview */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
