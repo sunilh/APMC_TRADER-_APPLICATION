@@ -145,6 +145,7 @@ export function Navigation() {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('🔥 Button clicked:', item.name, item.href);
+                alert(`Navigating to: ${item.name} (${item.href})`); // Visual confirmation
                 handleNavigation(item.href);
                 if (mobile) setMobileMenuOpen(false);
               }}
@@ -158,6 +159,7 @@ export function Navigation() {
             >
               <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
               {item.name}
+              {item.name === 'Final Accounts' && <span className="ml-1 text-xs bg-red-500 text-white px-1 rounded">TEST</span>}
             </Button>
           );
         }
@@ -180,7 +182,11 @@ export function Navigation() {
             >
               <Button
                 variant="ghost"
-                onClick={() => toggleGroup(item.name)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🔥 Group clicked:', item.name);
+                  toggleGroup(item.name);
+                }}
                 className={`
                   ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
                   ${groupActive 
@@ -308,11 +314,15 @@ export function Navigation() {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <Settings className="h-4 w-4 mr-2" />
-                      {t('nav.settings')}
-                    </Link>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('🔥 Settings clicked from user menu');
+                      handleNavigation('/settings');
+                    }}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    {t('nav.settings')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
