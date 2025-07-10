@@ -135,27 +135,25 @@ export function Navigation() {
           const active = isActive(item.href);
           
           return (
-            <Button
+            <Link
               key={item.name}
-              variant="ghost"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Button clicked:', item.name, item.href);
-                handleNavigation(item.href);
-                if (mobile) setMobileMenuOpen(false);
-              }}
-              className={`
-                ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
-                ${active 
-                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                  : 'text-gray-600 hover:text-gray-900'
-                }
-              `}
+              href={item.href}
             >
-              <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
-              {item.name}
-            </Button>
+              <Button
+                variant="ghost"
+                onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+                className={`
+                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
+                  ${active 
+                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+                {item.name}
+              </Button>
+            </Link>
           );
         }
 
@@ -210,31 +208,31 @@ export function Navigation() {
                     const subActive = isActive(subItem.href);
 
                     return (
-                      <Button
+                      <Link
                         key={subItem.name}
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Sub-menu clicked:', subItem.name, subItem.href);
-                          handleNavigation(subItem.href);
-                          if (mobile) {
-                            setMobileMenuOpen(false);
-                          } else {
-                            setExpandedGroups(new Set()); // Close dropdown after click
-                          }
-                        }}
-                        className={`
-                          ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
-                          ${subActive 
-                            ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-                          }
-                        `}
+                        href={subItem.href}
                       >
-                        <SubIcon className="h-4 w-4 mr-2" />
-                        {subItem.name}
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            if (mobile) {
+                              setMobileMenuOpen(false);
+                            } else {
+                              setExpandedGroups(new Set()); // Close dropdown after click
+                            }
+                          }}
+                          className={`
+                            ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
+                            ${subActive 
+                              ? 'text-primary bg-primary/10' 
+                              : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                            }
+                          `}
+                        >
+                          <SubIcon className="h-4 w-4 mr-2" />
+                          {subItem.name}
+                        </Button>
+                      </Link>
                     );
                   })}
                 </div>
@@ -309,15 +307,11 @@ export function Navigation() {
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log('Settings clicked from user menu');
-                      handleNavigation('/settings');
-                    }}
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    {t('nav.settings')}
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings className="h-4 w-4 mr-2" />
+                      {t('nav.settings')}
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
