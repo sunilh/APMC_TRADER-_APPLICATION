@@ -66,6 +66,9 @@ export function Navigation() {
       { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
     ]},
     
+    // Final Accounts
+    { name: 'Final Accounts', href: '/final-accounts', icon: IndianRupee, type: 'single' },
+    
     { name: t('nav.settings'), href: '/settings', icon: Settings, type: 'single' },
   ];
 

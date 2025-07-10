@@ -6,6 +6,20 @@ import bcrypt from "bcrypt";
 import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills, generateTaxInvoice } from "./billing";
 import { generateTaxReport, generateCessReport, generateGstReport, getDateRange } from "./reports";
 import {
+  generateProfitLossReport,
+  generateBalanceSheet, 
+  generateCashFlowReport,
+  analyzeProfitabilityByFarmer,
+  analyzeProfitabilityByBuyer,
+  calculateGSTLiability,
+  generateFinalAccounts,
+  recordPaymentReceived,
+  recordPaymentMade,
+  recordFarmerBillTransaction,
+  recordTaxInvoiceTransaction,
+  getCurrentFiscalYear
+} from "./accounting";
+import {
   insertFarmerSchema,
   insertLotSchema,
   insertBagSchema,
@@ -17,6 +31,10 @@ import {
   users,
   farmerBills,
   taxInvoices,
+  accountingLedger,
+  bankTransactions,
+  expenseCategories,
+  expenses,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
@@ -116,6 +134,241 @@ export function registerRoutes(app: Express): Server {
       }
     },
   );
+
+  // Final Accounts & Accounting API Endpoints
+  
+  // Get final accounts for fiscal year
+  app.get("/api/accounting/final-accounts/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const finalAccounts = await generateFinalAccounts(req.user.tenantId, fiscalYear);
+      res.json(finalAccounts);
+    } catch (error) {
+      console.error("Error generating final accounts:", error);
+      res.status(500).json({ message: "Failed to generate final accounts" });
+    }
+  });
+
+  // Get P&L report
+  app.get("/api/accounting/profit-loss/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const profitLoss = await generateProfitLossReport(req.user.tenantId, fiscalYear);
+      res.json(profitLoss);
+    } catch (error) {
+      console.error("Error generating P&L report:", error);
+      res.status(500).json({ message: "Failed to generate P&L report" });
+    }
+  });
+
+  // Get balance sheet
+  app.get("/api/accounting/balance-sheet/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const balanceSheet = await generateBalanceSheet(req.user.tenantId, fiscalYear);
+      res.json(balanceSheet);
+    } catch (error) {
+      console.error("Error generating balance sheet:", error);
+      res.status(500).json({ message: "Failed to generate balance sheet" });
+    }
+  });
+
+  // Get cash flow report
+  app.get("/api/accounting/cash-flow/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const cashFlow = await generateCashFlowReport(req.user.tenantId, fiscalYear);
+      res.json(cashFlow);
+    } catch (error) {
+      console.error("Error generating cash flow report:", error);
+      res.status(500).json({ message: "Failed to generate cash flow report" });
+    }
+  });
+
+  // Get farmer profitability analysis
+  app.get("/api/accounting/profitability/farmers/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const profitability = await analyzeProfitabilityByFarmer(req.user.tenantId, fiscalYear);
+      res.json(profitability);
+    } catch (error) {
+      console.error("Error analyzing farmer profitability:", error);
+      res.status(500).json({ message: "Failed to analyze farmer profitability" });
+    }
+  });
+
+  // Get buyer profitability analysis
+  app.get("/api/accounting/profitability/buyers/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const profitability = await analyzeProfitabilityByBuyer(req.user.tenantId, fiscalYear);
+      res.json(profitability);
+    } catch (error) {
+      console.error("Error analyzing buyer profitability:", error);
+      res.status(500).json({ message: "Failed to analyze buyer profitability" });
+    }
+  });
+
+  // Get GST liability
+  app.get("/api/accounting/gst-liability/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear;
+      const gstLiability = await calculateGSTLiability(req.user.tenantId, fiscalYear);
+      res.json(gstLiability);
+    } catch (error) {
+      console.error("Error calculating GST liability:", error);
+      res.status(500).json({ message: "Failed to calculate GST liability" });
+    }
+  });
+
+  // Get current fiscal year
+  app.get("/api/accounting/fiscal-year", requireAuth, async (req: any, res) => {
+    try {
+      const fiscalYear = getCurrentFiscalYear();
+      res.json({ fiscalYear });
+    } catch (error) {
+      console.error("Error getting fiscal year:", error);
+      res.status(500).json({ message: "Failed to get fiscal year" });
+    }
+  });
+
+  // Record payment received
+  app.post("/api/accounting/payment-received", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { buyerId, amount, paymentMethod, referenceNumber } = req.body;
+      await recordPaymentReceived(
+        parseInt(buyerId),
+        parseFloat(amount),
+        paymentMethod,
+        referenceNumber,
+        req.user.tenantId,
+        req.user.id
+      );
+      res.json({ message: "Payment received recorded successfully" });
+    } catch (error) {
+      console.error("Error recording payment received:", error);
+      res.status(500).json({ message: "Failed to record payment received" });
+    }
+  });
+
+  // Record payment made
+  app.post("/api/accounting/payment-made", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { farmerId, amount, paymentMethod, referenceNumber } = req.body;
+      await recordPaymentMade(
+        parseInt(farmerId),
+        parseFloat(amount),
+        paymentMethod,
+        referenceNumber,
+        req.user.tenantId,
+        req.user.id
+      );
+      res.json({ message: "Payment made recorded successfully" });
+    } catch (error) {
+      console.error("Error recording payment made:", error);
+      res.status(500).json({ message: "Failed to record payment made" });
+    }
+  });
+
+  // Get expense categories
+  app.get("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const categories = await db
+        .select()
+        .from(expenseCategories)
+        .where(eq(expenseCategories.tenantId, req.user.tenantId))
+        .orderBy(expenseCategories.name);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching expense categories:", error);
+      res.status(500).json({ message: "Failed to fetch expense categories" });
+    }
+  });
+
+  // Add expense
+  app.post("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { categoryId, amount, description, expenseDate, paymentMethod, receiptNumber } = req.body;
+      const [expense] = await db
+        .insert(expenses)
+        .values({
+          categoryId: parseInt(categoryId),
+          tenantId: req.user.tenantId,
+          amount: parseFloat(amount).toString(),
+          description,
+          expenseDate: new Date(expenseDate),
+          paymentMethod,
+          receiptNumber,
+          createdBy: req.user.id,
+        })
+        .returning();
+      res.json({ message: "Expense recorded successfully", expenseId: expense.id });
+    } catch (error) {
+      console.error("Error recording expense:", error);
+      res.status(500).json({ message: "Failed to record expense" });
+    }
+  });
+
+  // Get expenses
+  app.get("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { categoryId } = req.query;
+      const tenantId = req.user.tenantId;
+
+      let query = db
+        .select()
+        .from(expenses)
+        .where(eq(expenses.tenantId, tenantId))
+        .orderBy(desc(expenses.expenseDate));
+
+      if (categoryId) {
+        query = query.where(and(
+          eq(expenses.tenantId, tenantId),
+          eq(expenses.categoryId, parseInt(categoryId as string))
+        ));
+      }
+
+      const expensesList = await query;
+      res.json(expensesList);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      res.status(500).json({ message: 'Failed to fetch expenses' });
+    }
+  });
+
+  // Get recent ledger entries
+  app.get("/api/accounting/ledger", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const entries = await db
+        .select()
+        .from(accountingLedger)
+        .where(eq(accountingLedger.tenantId, req.user.tenantId))
+        .orderBy(desc(accountingLedger.transactionDate))
+        .limit(limit);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching ledger entries:", error);
+      res.status(500).json({ message: "Failed to fetch ledger entries" });
+    }
+  });
+
+  // Get bank transactions
+  app.get("/api/accounting/bank-transactions", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const transactions = await db
+        .select()
+        .from(bankTransactions)
+        .where(eq(bankTransactions.tenantId, req.user.tenantId))
+        .orderBy(desc(bankTransactions.createdAt))
+        .limit(limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching bank transactions:", error);
+      res.status(500).json({ message: "Failed to fetch bank transactions" });
+    }
+  });
 
   // Billing routes
   app.get(
@@ -261,6 +514,21 @@ export function registerRoutes(app: Express): Server {
         lotIds: JSON.stringify(lotIds),
         createdBy: req.user.id,
       }).returning();
+
+      // Record accounting transactions for farmer bill
+      try {
+        await recordFarmerBillTransaction(
+          savedBill[0].id,
+          farmerId,
+          parseFloat(totalAmount.toString()),
+          parseFloat(billData.commission.toString()),
+          tenantId,
+          req.user.id
+        );
+      } catch (accountingError) {
+        console.error("Error recording accounting transaction:", accountingError);
+        // Continue with response even if accounting fails
+      }
 
       res.json({ 
         message: "Farmer bill generated and saved successfully",
@@ -467,6 +735,23 @@ export function registerRoutes(app: Express): Server {
         invoiceData: JSON.stringify(taxInvoice),
         createdBy: req.user.id,
       }).returning();
+
+      // Record accounting transactions for tax invoice
+      try {
+        await recordTaxInvoiceTransaction(
+          savedInvoice[0].id,
+          buyerId,
+          taxInvoice.calculations.basicAmount,
+          taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + 
+          taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission,
+          taxInvoice.calculations.totalAmount,
+          tenantId,
+          req.user.id
+        );
+      } catch (accountingError) {
+        console.error("Error recording accounting transaction:", accountingError);
+        // Continue with response even if accounting fails
+      }
 
       res.json({ 
         message: "Tax invoice generated and saved successfully",
@@ -1669,6 +1954,348 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error generating GST report:', error);
       res.status(500).json({ message: 'Failed to generate GST report' });
+    }
+  });
+
+  // =================================
+  // FINAL ACCOUNTS & ACCOUNTING SYSTEM API ENDPOINTS
+  // =================================
+
+  // Get current fiscal year
+  app.get("/api/accounting/fiscal-year", requireAuth, requireTenant, async (req, res) => {
+    try {
+      const currentFiscalYear = getCurrentFiscalYear();
+      res.json({ fiscalYear: currentFiscalYear });
+    } catch (error) {
+      console.error('Error getting fiscal year:', error);
+      res.status(500).json({ message: 'Failed to get fiscal year' });
+    }
+  });
+
+  // Generate Profit & Loss Report
+  app.get("/api/accounting/profit-loss", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const report = await generateProfitLossReport(tenantId, fiscalYear);
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating P&L report:', error);
+      res.status(500).json({ message: 'Failed to generate profit & loss report' });
+    }
+  });
+
+  // Generate Balance Sheet
+  app.get("/api/accounting/balance-sheet", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const report = await generateBalanceSheet(tenantId, fiscalYear);
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating balance sheet:', error);
+      res.status(500).json({ message: 'Failed to generate balance sheet' });
+    }
+  });
+
+  // Generate Cash Flow Report
+  app.get("/api/accounting/cash-flow", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const report = await generateCashFlowReport(tenantId, fiscalYear);
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating cash flow report:', error);
+      res.status(500).json({ message: 'Failed to generate cash flow report' });
+    }
+  });
+
+  // Generate Final Accounts (comprehensive)
+  app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const accounts = await generateFinalAccounts(tenantId, fiscalYear);
+      res.json(accounts);
+    } catch (error) {
+      console.error('Error generating final accounts:', error);
+      res.status(500).json({ message: 'Failed to generate final accounts' });
+    }
+  });
+
+  // Profitability Analysis by Farmer
+  app.get("/api/accounting/profitability/farmers", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const analysis = await analyzeProfitabilityByFarmer(tenantId, fiscalYear);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error analyzing farmer profitability:', error);
+      res.status(500).json({ message: 'Failed to analyze farmer profitability' });
+    }
+  });
+
+  // Profitability Analysis by Buyer
+  app.get("/api/accounting/profitability/buyers", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const analysis = await analyzeProfitabilityByBuyer(tenantId, fiscalYear);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error analyzing buyer profitability:', error);
+      res.status(500).json({ message: 'Failed to analyze buyer profitability' });
+    }
+  });
+
+  // GST Liability Calculation
+  app.get("/api/accounting/gst-liability", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear } = req.query;
+      
+      const liability = await calculateGSTLiability(tenantId, fiscalYear);
+      res.json(liability);
+    } catch (error) {
+      console.error('Error calculating GST liability:', error);
+      res.status(500).json({ message: 'Failed to calculate GST liability' });
+    }
+  });
+
+  // Record Payment Received from Buyer
+  app.post("/api/accounting/payment-received", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const userId = req.user.id;
+      const { buyerId, amount, paymentMethod, referenceNumber } = req.body;
+      
+      await recordPaymentReceived(
+        parseInt(buyerId),
+        parseFloat(amount),
+        paymentMethod,
+        referenceNumber,
+        tenantId,
+        userId
+      );
+      
+      await createAuditLog(req, "payment_received", "buyer", parseInt(buyerId), null, req.body);
+      res.json({ message: "Payment received recorded successfully" });
+    } catch (error) {
+      console.error('Error recording payment received:', error);
+      res.status(500).json({ message: 'Failed to record payment received' });
+    }
+  });
+
+  // Record Payment Made to Farmer
+  app.post("/api/accounting/payment-made", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const userId = req.user.id;
+      const { farmerId, amount, paymentMethod, referenceNumber } = req.body;
+      
+      await recordPaymentMade(
+        parseInt(farmerId),
+        parseFloat(amount),
+        paymentMethod,
+        referenceNumber,
+        tenantId,
+        userId
+      );
+      
+      await createAuditLog(req, "payment_made", "farmer", parseInt(farmerId), null, req.body);
+      res.json({ message: "Payment made recorded successfully" });
+    } catch (error) {
+      console.error('Error recording payment made:', error);
+      res.status(500).json({ message: 'Failed to record payment made' });
+    }
+  });
+
+  // Get accounting ledger entries (for audit and review)
+  app.get("/api/accounting/ledger", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { fiscalYear, accountHead, entityType, limit = 100 } = req.query;
+      
+      let query = db
+        .select()
+        .from(accountingLedger)
+        .where(eq(accountingLedger.tenantId, tenantId))
+        .orderBy(desc(accountingLedger.transactionDate))
+        .limit(parseInt(limit as string));
+
+      if (fiscalYear) {
+        query = query.where(and(
+          eq(accountingLedger.tenantId, tenantId),
+          eq(accountingLedger.fiscalYear, fiscalYear as string)
+        ));
+      }
+
+      if (accountHead) {
+        query = query.where(and(
+          eq(accountingLedger.tenantId, tenantId),
+          eq(accountingLedger.accountHead, accountHead as string)
+        ));
+      }
+
+      if (entityType) {
+        query = query.where(and(
+          eq(accountingLedger.tenantId, tenantId),
+          eq(accountingLedger.entityType, entityType as string)
+        ));
+      }
+
+      const entries = await query;
+      res.json(entries);
+    } catch (error) {
+      console.error('Error fetching ledger entries:', error);
+      res.status(500).json({ message: 'Failed to fetch ledger entries' });
+    }
+  });
+
+  // Get bank transactions
+  app.get("/api/accounting/bank-transactions", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { limit = 50 } = req.query;
+      
+      const transactions = await db
+        .select()
+        .from(bankTransactions)
+        .where(eq(bankTransactions.tenantId, tenantId))
+        .orderBy(desc(bankTransactions.createdAt))
+        .limit(parseInt(limit as string));
+
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error fetching bank transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch bank transactions' });
+    }
+  });
+
+  // Add expense category
+  app.post("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { name, description } = req.body;
+      
+      const category = await db.insert(expenseCategories).values({
+        tenantId,
+        name,
+        description,
+      }).returning();
+
+      await createAuditLog(req, "create", "expense_category", category[0].id, null, category[0]);
+      res.status(201).json(category[0]);
+    } catch (error) {
+      console.error('Error creating expense category:', error);
+      res.status(500).json({ message: 'Failed to create expense category' });
+    }
+  });
+
+  // Get expense categories
+  app.get("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      
+      const categories = await db
+        .select()
+        .from(expenseCategories)
+        .where(eq(expenseCategories.tenantId, tenantId))
+        .orderBy(expenseCategories.name);
+
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching expense categories:', error);
+      res.status(500).json({ message: 'Failed to fetch expense categories' });
+    }
+  });
+
+  // Add expense
+  app.post("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const userId = req.user.id;
+      const { categoryId, amount, description, expenseDate, paymentMethod, receiptNumber } = req.body;
+      
+      const expense = await db.insert(expenses).values({
+        tenantId,
+        categoryId: parseInt(categoryId),
+        amount: amount.toString(),
+        description,
+        expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+        paymentMethod,
+        receiptNumber,
+        createdBy: userId,
+      }).returning();
+
+      // Record in accounting ledger
+      await recordTransaction(
+        tenantId,
+        'expense',
+        'expense',
+        expense[0].id,
+        'manual_entry',
+        expense[0].id,
+        parseFloat(amount),
+        0,
+        description || 'Business expense',
+        'expenses',
+        userId,
+        expense[0].expenseDate
+      );
+
+      await createAuditLog(req, "create", "expense", expense[0].id, null, expense[0]);
+      res.status(201).json(expense[0]);
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      res.status(500).json({ message: 'Failed to create expense' });
+    }
+  });
+
+  // Get expenses
+  app.get("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { limit = 50, categoryId } = req.query;
+      
+      let query = db
+        .select({
+          id: expenses.id,
+          categoryId: expenses.categoryId,
+          categoryName: expenseCategories.name,
+          amount: expenses.amount,
+          description: expenses.description,
+          expenseDate: expenses.expenseDate,
+          paymentMethod: expenses.paymentMethod,
+          receiptNumber: expenses.receiptNumber,
+          createdAt: expenses.createdAt,
+        })
+        .from(expenses)
+        .leftJoin(expenseCategories, eq(expenses.categoryId, expenseCategories.id))
+        .where(eq(expenses.tenantId, tenantId))
+        .orderBy(desc(expenses.expenseDate))
+        .limit(parseInt(limit as string));
+
+      if (categoryId) {
+        query = query.where(and(
+          eq(expenses.tenantId, tenantId),
+          eq(expenses.categoryId, parseInt(categoryId as string))
+        ));
+      }
+
+      const expensesList = await query;
+      res.json(expensesList);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      res.status(500).json({ message: 'Failed to fetch expenses' });
     }
   });
 
