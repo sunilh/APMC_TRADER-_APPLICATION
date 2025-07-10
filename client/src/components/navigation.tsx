@@ -83,14 +83,11 @@ export function Navigation() {
   };
 
   const handleNavigation = (href: string) => {
-    console.log('🔥 Navigation clicked! Href:', href);
-    console.log('🔥 Current location:', window.location.href);
-    try {
-      window.location.href = href;
-      console.log('🔥 Navigation successful');
-    } catch (error) {
-      console.error('🔥 Navigation error:', error);
-    }
+    console.log('Navigation to:', href);
+    // Use history.pushState for client-side navigation without full page reload
+    window.history.pushState({}, '', href);
+    // Trigger popstate event to notify wouter of the navigation
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   const getInitials = (name: string) => {
@@ -144,8 +141,7 @@ export function Navigation() {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔥 Button clicked:', item.name, item.href);
-                alert(`Navigating to: ${item.name} (${item.href})`); // Visual confirmation
+                console.log('Button clicked:', item.name, item.href);
                 handleNavigation(item.href);
                 if (mobile) setMobileMenuOpen(false);
               }}
@@ -159,7 +155,6 @@ export function Navigation() {
             >
               <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
               {item.name}
-              {item.name === 'Final Accounts' && <span className="ml-1 text-xs bg-red-500 text-white px-1 rounded">TEST</span>}
             </Button>
           );
         }
@@ -184,7 +179,7 @@ export function Navigation() {
                 variant="ghost"
                 onClick={(e) => {
                   e.preventDefault();
-                  console.log('🔥 Group clicked:', item.name);
+                  console.log('Group clicked:', item.name);
                   toggleGroup(item.name);
                 }}
                 className={`
@@ -221,7 +216,7 @@ export function Navigation() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('🔥 Sub-menu clicked:', subItem.name, subItem.href);
+                          console.log('Sub-menu clicked:', subItem.name, subItem.href);
                           handleNavigation(subItem.href);
                           if (mobile) {
                             setMobileMenuOpen(false);
@@ -255,10 +250,6 @@ export function Navigation() {
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      {/* DEBUG: Navigation component is loading */}
-      <div className="bg-red-500 text-white text-center py-1 text-sm">
-        🔥 NAVIGATION DEBUG: Component loaded - Final Accounts should be visible below
-      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and brand */}
@@ -274,8 +265,7 @@ export function Navigation() {
             </Link>
             
             {/* Desktop navigation */}
-            <div className="hidden md:ml-8 md:flex md:items-center bg-yellow-100 p-2 rounded">
-              <div className="text-xs text-red-600 mr-2">DEBUG NAV:</div>
+            <div className="hidden md:ml-8 md:flex md:items-center">
               <NavLinks />
             </div>
           </div>
@@ -322,7 +312,7 @@ export function Navigation() {
                   <DropdownMenuItem 
                     onClick={(e) => {
                       e.preventDefault();
-                      console.log('🔥 Settings clicked from user menu');
+                      console.log('Settings clicked from user menu');
                       handleNavigation('/settings');
                     }}
                   >
