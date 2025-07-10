@@ -255,6 +255,10 @@ export function Navigation() {
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      {/* DEBUG: Navigation component is loading */}
+      <div className="bg-red-500 text-white text-center py-1 text-sm">
+        🔥 NAVIGATION DEBUG: Component loaded - Final Accounts should be visible below
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and brand */}
@@ -270,7 +274,8 @@ export function Navigation() {
             </Link>
             
             {/* Desktop navigation */}
-            <div className="hidden md:ml-8 md:flex md:items-center">
+            <div className="hidden md:ml-8 md:flex md:items-center bg-yellow-100 p-2 rounded">
+              <div className="text-xs text-red-600 mr-2">DEBUG NAV:</div>
               <NavLinks />
             </div>
           </div>
