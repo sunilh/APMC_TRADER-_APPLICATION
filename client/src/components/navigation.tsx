@@ -138,21 +138,18 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+              className={`
+                inline-flex items-center ${mobile ? 'w-full justify-start' : 'px-3 py-2'} 
+                rounded-md text-sm font-medium transition-colors
+                ${active 
+                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }
+              `}
             >
-              <Button
-                variant="ghost"
-                onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
-                className={`
-                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
-                  ${active 
-                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                    : 'text-gray-600 hover:text-gray-900'
-                  }
-                `}
-              >
-                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
-                {item.name}
-              </Button>
+              <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+              {item.name}
             </Link>
           );
         }
@@ -211,27 +208,24 @@ export function Navigation() {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
+                        onClick={() => {
+                          if (mobile) {
+                            setMobileMenuOpen(false);
+                          } else {
+                            setExpandedGroups(new Set()); // Close dropdown after click
+                          }
+                        }}
+                        className={`
+                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-2' : 'w-full justify-start px-4 py-2'}
+                          rounded-md text-sm font-medium transition-colors
+                          ${subActive 
+                            ? 'text-primary bg-primary/10' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
+                          }
+                        `}
                       >
-                        <Button
-                          variant="ghost"
-                          onClick={() => {
-                            if (mobile) {
-                              setMobileMenuOpen(false);
-                            } else {
-                              setExpandedGroups(new Set()); // Close dropdown after click
-                            }
-                          }}
-                          className={`
-                            ${mobile ? 'w-full justify-start text-sm' : 'w-full justify-start px-4 py-2'}
-                            ${subActive 
-                              ? 'text-primary bg-primary/10' 
-                              : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-                            }
-                          `}
-                        >
-                          <SubIcon className="h-4 w-4 mr-2" />
-                          {subItem.name}
-                        </Button>
+                        <SubIcon className="h-4 w-4 mr-2" />
+                        {subItem.name}
                       </Link>
                     );
                   })}
@@ -308,7 +302,7 @@ export function Navigation() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">
+                    <Link href="/settings" className="flex items-center">
                       <Settings className="h-4 w-4 mr-2" />
                       {t('nav.settings')}
                     </Link>
