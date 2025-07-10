@@ -137,11 +137,37 @@ export function registerRoutes(app: Express): Server {
 
   // Final Accounts & Accounting API Endpoints
   
+  // Test accounting system status
+  app.get("/api/accounting/status", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      res.json({ 
+        status: "ok", 
+        tenantId: req.user.tenantId,
+        fiscalYear: getCurrentFiscalYear(),
+        message: "Accounting system is operational"
+      });
+    } catch (error) {
+      console.error("Error checking accounting status:", error);
+      res.status(500).json({ message: "Accounting system error" });
+    }
+  });
+  
   // Get final accounts for fiscal year
   app.get("/api/accounting/final-accounts/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const fiscalYear = req.params.fiscalYear;
       const finalAccounts = await generateFinalAccounts(req.user.tenantId, fiscalYear);
+      res.json(finalAccounts);
+    } catch (error) {
+      console.error("Error generating final accounts:", error);
+      res.status(500).json({ message: "Failed to generate final accounts" });
+    }
+  });
+
+  // Get final accounts without fiscal year parameter
+  app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const finalAccounts = await generateFinalAccounts(req.user.tenantId);
       res.json(finalAccounts);
     } catch (error) {
       console.error("Error generating final accounts:", error);

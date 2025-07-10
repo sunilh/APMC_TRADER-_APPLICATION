@@ -67,9 +67,10 @@ export default function FinalAccounts() {
   const currentFiscalYear = fiscalYearData?.fiscalYear || "2024-25";
 
   // Get final accounts data
-  const { data: finalAccounts, isLoading: finalAccountsLoading } = useQuery({
+  const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
     queryKey: ["/api/accounting/final-accounts", selectedFiscalYear || currentFiscalYear],
     enabled: !!(selectedFiscalYear || currentFiscalYear),
+    retry: 1,
   });
 
   // Get profitability analysis
@@ -207,6 +208,26 @@ export default function FinalAccounts() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (finalAccountsError) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Setting up Final Accounts</h3>
+              <p className="text-muted-foreground mb-4">
+                The accounting system is being initialized. Please wait a moment.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
