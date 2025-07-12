@@ -32,6 +32,7 @@ import {
   bags,
   farmerBills,
   taxInvoices,
+  tenants,
   accountingLedger,
   bankTransactions,
   expenseCategories,
