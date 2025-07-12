@@ -444,16 +444,24 @@ export default function FarmerBill() {
                                 </div>
                               </div>
                               
-                              <Button
-                                onClick={() => {
-                                  window.open('/farmer-bill', '_blank');
-                                }}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Bill
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => downloadFarmerBillPDF(billCheck.bill)}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download PDF
+                                </Button>
+                                <Button
+                                  onClick={() => printFarmerBill(billCheck.bill)}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Printer className="h-4 w-4 mr-2" />
+                                  Print
+                                </Button>
+                              </div>
                             </CardContent>
                           </Card>
                         </div>
