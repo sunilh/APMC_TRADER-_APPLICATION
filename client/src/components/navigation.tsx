@@ -66,10 +66,11 @@ export function Navigation() {
       { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
     ]},
     
-    // Final Accounts
-    { name: 'Final Accounts', href: '/final-accounts', icon: IndianRupee, type: 'single' },
-    
-    { name: t('nav.settings'), href: '/settings', icon: Settings, type: 'single' },
+    // Account Group
+    { name: 'Account', type: 'group', icon: Settings, items: [
+      { name: 'Final Accounts', href: '/final-accounts', icon: IndianRupee },
+      { name: t('nav.settings'), href: '/settings', icon: Settings },
+    ]},
   ];
 
   // Add tenant onboarding for super admins
