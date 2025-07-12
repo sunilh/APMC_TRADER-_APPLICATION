@@ -29,6 +29,7 @@ import {
   farmers,
   buyers,
   users,
+  bags,
   farmerBills,
   taxInvoices,
   accountingLedger,
