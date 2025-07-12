@@ -588,13 +588,13 @@ export function registerRoutes(app: Express): Server {
                   .limit(1);
                 
                 if (lot) {
-                  const bags = await db
+                  const lotBags = await db
                     .select()
                     .from(bags)
                     .where(and(eq(bags.lotId, lotId), eq(bags.tenantId, tenantId)))
                     .orderBy(bags.bagNumber);
                   
-                  return { ...lot, bags };
+                  return { ...lot, bags: lotBags };
                 }
                 return null;
               })
