@@ -539,17 +539,17 @@ export async function analyzeProfitabilityByFarmer(tenantId: number, fiscalYear?
     .select({
       farmerId: farmers.id,
       farmerName: farmers.name,
-      totalPurchases: sum(sql<number>`CASE WHEN al.account_head = 'purchases' THEN CAST(al.debit_amount AS DECIMAL) ELSE 0 END`),
-      totalSales: sum(sql<number>`CASE WHEN al.account_head = 'sales' AND al.entity_type = 'farmer' THEN CAST(al.credit_amount AS DECIMAL) ELSE 0 END`),
-      commission: sum(sql<number>`CASE WHEN al.account_head = 'commission_income' THEN CAST(al.credit_amount AS DECIMAL) ELSE 0 END`),
+      totalPurchases: sum(sql<number>`CASE WHEN account_head = 'purchases' THEN CAST(debit_amount AS DECIMAL) ELSE 0 END`),
+      totalSales: sum(sql<number>`CASE WHEN account_head = 'sales' AND entity_type = 'farmer' THEN CAST(credit_amount AS DECIMAL) ELSE 0 END`),
+      commission: sum(sql<number>`CASE WHEN account_head = 'commission_income' THEN CAST(credit_amount AS DECIMAL) ELSE 0 END`),
     })
-    .from(accountingLedger.as('al'))
-    .innerJoin(farmers, eq(farmers.id, sql<number>`al.entity_id`))
+    .from(accountingLedger)
+    .innerJoin(farmers, eq(farmers.id, accountingLedger.entityId))
     .where(
       and(
-        eq(sql<number>`al.tenant_id`, tenantId),
-        eq(sql<string>`al.entity_type`, 'farmer'),
-        between(sql<Date>`al.transaction_date`, startDate, endDate)
+        eq(accountingLedger.tenantId, tenantId),
+        eq(accountingLedger.entityType, 'farmer'),
+        between(accountingLedger.transactionDate, startDate, endDate)
       )
     )
     .groupBy(farmers.id, farmers.name);
@@ -571,16 +571,16 @@ export async function analyzeProfitabilityByBuyer(tenantId: number, fiscalYear?:
     .select({
       buyerId: buyers.id,
       buyerName: buyers.name,
-      totalSales: sum(sql<number>`CASE WHEN al.account_head = 'sales' THEN CAST(al.credit_amount AS DECIMAL) ELSE 0 END`),
-      serviceCharges: sum(sql<number>`CASE WHEN al.account_head = 'service_charges' THEN CAST(al.credit_amount AS DECIMAL) ELSE 0 END`),
+      totalSales: sum(sql<number>`CASE WHEN account_head = 'sales' THEN CAST(credit_amount AS DECIMAL) ELSE 0 END`),
+      serviceCharges: sum(sql<number>`CASE WHEN account_head = 'service_charges' THEN CAST(credit_amount AS DECIMAL) ELSE 0 END`),
     })
-    .from(accountingLedger.as('al'))
-    .innerJoin(buyers, eq(buyers.id, sql<number>`al.entity_id`))
+    .from(accountingLedger)
+    .innerJoin(buyers, eq(buyers.id, accountingLedger.entityId))
     .where(
       and(
-        eq(sql<number>`al.tenant_id`, tenantId),
-        eq(sql<string>`al.entity_type`, 'buyer'),
-        between(sql<Date>`al.transaction_date`, startDate, endDate)
+        eq(accountingLedger.tenantId, tenantId),
+        eq(accountingLedger.entityType, 'buyer'),
+        between(accountingLedger.transactionDate, startDate, endDate)
       )
     )
     .groupBy(buyers.id, buyers.name);
