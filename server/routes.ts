@@ -531,17 +531,40 @@ export function registerRoutes(app: Express): Server {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
 
-      // Find the farmer bill record
-      const [bill] = await db
-        .select()
+      // Get the saved bill with creator information
+      const savedBillResult = await db.select({
+        id: farmerBills.id,
+        pattiNumber: farmerBills.pattiNumber,
+        farmerId: farmerBills.farmerId,
+        tenantId: farmerBills.tenantId,
+        totalAmount: farmerBills.totalAmount,
+        hamali: farmerBills.hamali,
+        vehicleRent: farmerBills.vehicleRent,
+        emptyBagCharges: farmerBills.emptyBagCharges,
+        advance: farmerBills.advance,
+        commission: farmerBills.commission,
+        otherCharges: farmerBills.otherCharges,
+        totalDeductions: farmerBills.totalDeductions,
+        netPayable: farmerBills.netPayable,
+        totalBags: farmerBills.totalBags,
+        totalWeight: farmerBills.totalWeight,
+        lotIds: farmerBills.lotIds,
+        createdAt: farmerBills.createdAt,
+        createdBy: farmerBills.createdBy,
+        // Join with user to get creator details
+        creatorName: users.fullName,
+        creatorUsername: users.username
+      })
         .from(farmerBills)
+        .leftJoin(users, eq(farmerBills.createdBy, users.id))
         .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
-        .orderBy(desc(farmerBills.createdAt))
         .limit(1);
 
-      if (!bill) {
-        return res.status(404).json({ message: "Farmer bill not found" });
+      if (savedBillResult.length === 0) {
+        return res.status(404).json({ message: "No farmer bill found for this farmer" });
       }
+
+      const savedBill = savedBillResult[0];
 
       // Get farmer details with bank information
       const [farmer] = await db
@@ -557,46 +580,41 @@ export function registerRoutes(app: Express): Server {
         .where(eq(tenants.id, tenantId))
         .limit(1);
 
-      // Get lot details if lot IDs are available
+      // Get associated lots
+      const lotIds = JSON.parse(savedBill.lotIds || '[]');
       let lotsData = [];
-      if (bill.lotIds) {
-        const lotIds = Array.isArray(bill.lotIds) ? bill.lotIds : JSON.parse(bill.lotIds);
-        if (lotIds.length > 0) {
-          lotsData = await db
-            .select({
-              id: lots.id,
-              lotNumber: lots.lotNumber,
-              numberOfBags: lots.numberOfBags,
-              totalWeight: lots.totalWeight,
-              pricePerQuintal: lots.lotPrice,
-              varietyGrade: lots.varietyGrade,
-              grade: lots.grade
-            })
-            .from(lots)
-            .where(and(
-              inArray(lots.id, lotIds),
-              eq(lots.tenantId, tenantId)
-            ));
-        }
+      
+      if (lotIds.length > 0) {
+        lotsData = await db.select({
+          lotId: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerId: lots.farmerId,
+          varietyGrade: lots.varietyGrade,
+          grade: lots.grade,
+          numberOfBags: lots.numberOfBags,
+          totalWeight: lots.totalWeight,
+          pricePerQuintal: lots.lotPrice,
+          vehicleRent: lots.vehicleRent,
+          advance: lots.advance,
+          unloadHamali: lots.unloadHamali,
+          status: lots.status,
+          createdAt: lots.createdAt
+        })
+          .from(lots)
+          .where(and(
+            inArray(lots.id, lotIds),
+            eq(lots.tenantId, tenantId)
+          ));
       }
 
-      // Parse the bill data and return with comprehensive farmer info
-      const billData = typeof bill.billData === 'string' 
-        ? JSON.parse(bill.billData) 
-        : bill.billData;
-
       res.json({
-        ...billData,
+        ...savedBill,
         farmerName: farmer?.name || 'N/A',
         farmerMobile: farmer?.mobile || 'N/A',
         farmerPlace: farmer?.place || 'N/A',
         bankName: farmer?.bankName || 'N/A',
         accountNumber: farmer?.accountNumber || 'N/A',
         tenantName: tenant?.name || 'AGRICULTURAL TRADING COMPANY',
-        pattiNumber: bill.pattiNumber,
-        totalAmount: bill.totalAmount,
-        netPayable: bill.netPayable,
-        createdAt: bill.createdAt,
         lots: lotsData
       });
     } catch (error) {
