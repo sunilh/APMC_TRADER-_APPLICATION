@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navigation } from "@/components/navigation";
-import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle } from "lucide-react";
+import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle, Building2 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -46,12 +46,58 @@ interface Lot {
 export default function Dashboard() {
   const { user } = useAuth();
 
+  // SuperAdmin Dashboard - no tenant-specific queries
+  if (user?.role === 'super_admin') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
+              <p className="text-muted-foreground mt-2">
+                Welcome, {user.fullName || user.username}! Manage tenant organizations here.
+              </p>
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Tenant Management</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Create and manage APMC organizations
+                      </p>
+                    </div>
+                    <Building2 className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="mt-4">
+                    <Link href="/tenant-onboarding">
+                      <Button className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create New Tenant
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular tenant user dashboard with stats
   const { data: stats = { totalFarmers: 0, activeLots: 0, totalBagsToday: 0, revenueToday: 0 }, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+    enabled: user?.role !== 'super_admin', // Only fetch for tenant users
   });
 
   const { data: lots = [], isLoading: lotsLoading } = useQuery<Lot[]>({
     queryKey: ["/api/lots"],
+    enabled: user?.role !== 'super_admin', // Only fetch for tenant users
   });
 
   const { data: lotCompletion = [], isLoading: completionLoading } = useQuery<LotCompletionStat[]>({

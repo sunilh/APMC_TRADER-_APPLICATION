@@ -39,7 +39,8 @@ export function Navigation() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const navigation = [
+  // Regular tenant user navigation (with grouped tabs)
+  const tenantNavigation = [
     { name: t('nav.dashboard'), href: '/', icon: Home, type: 'single' },
     
     // Manage Group
@@ -73,9 +74,8 @@ export function Navigation() {
     ]},
   ];
 
-  // Add tenant onboarding for super admins
+  // Simple navigation for superadmin (no grouped tabs, no tenant-specific features)
   const superAdminNavigation = [
-    ...navigation,
     { name: 'Create Tenant', href: '/tenant-onboarding', icon: Building2, type: 'single' },
   ];
 
@@ -125,7 +125,7 @@ export function Navigation() {
     return items.some(item => item.href && isActive(item.href));
   };
 
-  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : navigation;
+  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : tenantNavigation;
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={`${mobile ? 'space-y-1' : 'space-x-1 flex'}`}>
