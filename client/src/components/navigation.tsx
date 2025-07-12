@@ -124,7 +124,7 @@ export function Navigation() {
     return items.some(item => item.href && isActive(item.href));
   };
 
-  const currentNavigation = (user?.role === 'super_admin' && user?.tenantId === null) ? superAdminNavigation : navigation;
+  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : navigation;
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={`${mobile ? 'space-y-1' : 'space-x-1 flex'}`}>
