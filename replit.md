@@ -400,3 +400,4 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
 
 Preferred communication style: Simple, everyday language.
 Farmer bill format: Original APMC format - compact and simple layout preferred over detailed modern format.
+Farmer bill must match uploaded HTML format exactly: bilingual (English/Kannada) headers, company name, farmer details with bank info, lot table with bags/weight/rate/amount, payment summary with all deductions, signature sections.

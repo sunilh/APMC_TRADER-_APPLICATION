@@ -185,7 +185,7 @@ export default function FarmerBill() {
 
   const selectedFarmer = farmers.find(f => f.id === parseInt(selectedFarmerId));
 
-  // Function to download farmer bill as PDF (Original APMC Format - Compact)
+  // Function to download farmer bill as PDF (Exact format as shown in uploaded HTML)
   const downloadFarmerBillPDF = async (bill: FarmerBillRecord) => {
     try {
       const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
@@ -198,54 +198,113 @@ export default function FarmerBill() {
       
       const billDetails = await response.json();
       
-      // Create and download PDF
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF();
+      // Generate HTML format matching uploaded example
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Farmer Bill - ${billDetails.farmerName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 14px; line-height: 1.4; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+            .section { margin: 15px 0; }
+            .farmer-info { margin: 15px 0; }
+            .lot-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            .lot-table th, .lot-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+            .lot-table th { background-color: #f0f0f0; font-weight: bold; }
+            .summary { margin: 20px 0; }
+            .total-row { font-weight: bold; background-color: #f9f9f9; }
+            .signature { margin-top: 40px; display: flex; justify-content: space-between; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${billDetails.tenantName || 'AGRICULTURAL TRADING COMPANY'}</h1>
+            <p><strong>FARMER PAYMENT BILL / ರೈತ ಪಾವತಿ ಬಿಲ್</strong></p>
+            <p>Date: ${formatDate(bill.createdAt)} | Patti No: ${bill.pattiNumber}</p>
+          </div>
+          
+          <div class="farmer-info">
+            <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
+            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'}</p>
+            <p><strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'}</p>
+            <p><strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
+          </div>
+
+          <table class="lot-table">
+            <thead>
+              <tr>
+                <th>Lot No / ಲಾಟ್ ಸಂ</th>
+                <th>Bags / ಚೀಲಗಳು</th>
+                <th>Weight (kg) / ತೂಕ</th>
+                <th>Rate/Quintal / ದರ</th>
+                <th>Amount / ಮೊತ್ತ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${billDetails.lots ? billDetails.lots.map(lot => `
+                <tr>
+                  <td>${lot.lotNumber}</td>
+                  <td>${lot.numberOfBags}</td>
+                  <td>${lot.totalWeight}</td>
+                  <td>${formatCurrency(lot.pricePerQuintal || 0)}</td>
+                  <td>${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}</td>
+                </tr>
+              `).join('') : ''}
+              <tr class="total-row">
+                <td><strong>Total / ಒಟ್ಟು</strong></td>
+                <td><strong>${bill.totalBags}</strong></td>
+                <td><strong>${bill.totalWeight}</strong></td>
+                <td>-</td>
+                <td><strong>${formatCurrency(bill.totalAmount)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary">
+            <h3>Payment Summary / ಪಾವತಿ ಸಾರಾಂಶ</h3>
+            <table class="lot-table">
+              <tr><td>Gross Amount / ಒಟ್ಟು ಮೊತ್ತ</td><td>${formatCurrency(bill.totalAmount)}</td></tr>
+              <tr><td>Less: Hamali / ಕಡಿಮೆ: ಹಮಾಲಿ</td><td>-${formatCurrency(billDetails.hamali || 0)}</td></tr>
+              <tr><td>Less: Vehicle Rent / ಕಡಿಮೆ: ವಾಹನ ಬಾಡಿಗೆ</td><td>-${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
+              <tr><td>Less: Empty Bags / ಕಡಿಮೆ: ಖಾಲಿ ಚೀಲಗಳು</td><td>-${formatCurrency(billDetails.emptyBagCharges || 0)}</td></tr>
+              <tr><td>Less: Advance / ಕಡಿಮೆ: ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</td><td>-${formatCurrency(billDetails.advance || 0)}</td></tr>
+              <tr><td>Less: Commission (3%) / ಕಡಿಮೆ: ಕಮಿಷನ್</td><td>-${formatCurrency(billDetails.commission || 0)}</td></tr>
+              <tr><td>Less: Other / ಕಡಿಮೆ: ಇತರೆ</td><td>-${formatCurrency(billDetails.other || 0)}</td></tr>
+              <tr class="total-row"><td><strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
+            </table>
+          </div>
+
+          <div class="signature">
+            <div>
+              <p>_____________________</p>
+              <p>Trader Signature / ವ್ಯಾಪಾರಿ ಸಹಿ</p>
+            </div>
+            <div>
+              <p>_____________________</p>
+              <p>Date / ದಿನಾಂಕ</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
       
-      // Compact APMC Header
-      pdf.setFontSize(14);
-      pdf.text('APMC FARMER RECEIPT', 105, 15, { align: 'center' });
-      
-      pdf.setFontSize(10);
-      pdf.text(`Patti: ${bill.pattiNumber}`, 20, 25);
-      pdf.text(`Date: ${formatDate(bill.createdAt)}`, 150, 25);
-      
-      // Farmer info - compact
-      pdf.text(`Farmer: ${billDetails.farmerName || 'N/A'}`, 20, 35);
-      pdf.text(`Mobile: ${billDetails.farmerMobile || 'N/A'}`, 120, 35);
-      
-      // Lot summary - compact table format
-      pdf.text('Lots Summary:', 20, 45);
-      pdf.text(`Bags: ${bill.totalBags}`, 20, 52);
-      pdf.text(`Weight: ${bill.totalWeight}kg`, 80, 52);
-      
-      // Amount breakdown - compact
-      let y = 65;
-      pdf.text(`Gross Amount: ${formatCurrency(bill.totalAmount)}`, 20, y);
-      y += 8;
-      pdf.text(`Less: Hamali: ${formatCurrency(billDetails.hamali || 0)}`, 25, y);
-      y += 6;
-      pdf.text(`Vehicle Rent: ${formatCurrency(billDetails.vehicleRent || 0)}`, 25, y);
-      y += 6;
-      pdf.text(`Advance: ${formatCurrency(billDetails.advance || 0)}`, 25, y);
-      y += 6;
-      pdf.text(`Commission: ${formatCurrency(billDetails.commission || 0)}`, 25, y);
-      y += 10;
-      
-      // Net payable - highlighted
-      pdf.setFontSize(12);
-      pdf.text(`NET PAYABLE: ${formatCurrency(bill.netPayable)}`, 20, y);
-      
-      // Footer
-      pdf.setFontSize(8);
-      pdf.text('Farmer Signature: ________________', 20, y + 20);
-      pdf.text('Office Use: ________________', 120, y + 20);
-      
-      pdf.save(`farmer-receipt-${bill.pattiNumber}.pdf`);
+      const blob = new Blob([printContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `farmer-bill-${billDetails.farmerName}-${formatDate(bill.createdAt)}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast({
         title: "Success",
-        description: "Receipt downloaded successfully!",
+        description: "Farmer bill downloaded successfully!",
       });
     } catch (error) {
       console.error("Error downloading PDF:", error);
@@ -257,7 +316,7 @@ export default function FarmerBill() {
     }
   };
 
-  // Function to print farmer bill (Original APMC Format - Compact)
+  // Function to print farmer bill (Exact format as shown in uploaded HTML)
   const printFarmerBill = async (bill: FarmerBillRecord) => {
     try {
       const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
@@ -274,46 +333,90 @@ export default function FarmerBill() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>APMC Receipt - ${bill.pattiNumber}</title>
+          <meta charset="utf-8">
+          <title>Farmer Bill - ${billDetails.farmerName}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 15px; font-size: 12px; }
-            .header { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px; }
-            .info { display: flex; justify-content: space-between; margin-bottom: 10px; }
-            .farmer { margin-bottom: 15px; }
-            .amounts { width: 100%; border-collapse: collapse; }
-            .amounts td { padding: 3px 8px; border-bottom: 1px dotted #666; }
-            .total { font-weight: bold; border-top: 2px solid #000; background: #f0f0f0; }
-            .footer { margin-top: 15px; display: flex; justify-content: space-between; }
-            @media print { body { margin: 5px; } }
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 14px; line-height: 1.4; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+            .section { margin: 15px 0; }
+            .farmer-info { margin: 15px 0; }
+            .lot-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            .lot-table th, .lot-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+            .lot-table th { background-color: #f0f0f0; font-weight: bold; }
+            .summary { margin: 20px 0; }
+            .total-row { font-weight: bold; background-color: #f9f9f9; }
+            .signature { margin-top: 40px; display: flex; justify-content: space-between; }
           </style>
         </head>
         <body>
           <div class="header">
-            <h3 style="margin: 0;">APMC FARMER RECEIPT</h3>
+            <h1>${billDetails.tenantName || 'AGRICULTURAL TRADING COMPANY'}</h1>
+            <p><strong>FARMER PAYMENT BILL / ರೈತ ಪಾವತಿ ಬಿಲ್</strong></p>
+            <p>Date: ${formatDate(bill.createdAt)} | Patti No: ${bill.pattiNumber}</p>
           </div>
           
-          <div class="info">
-            <span><strong>Patti:</strong> ${bill.pattiNumber}</span>
-            <span><strong>Date:</strong> ${formatDate(bill.createdAt)}</span>
+          <div class="farmer-info">
+            <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
+            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'}</p>
+            <p><strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'}</p>
+            <p><strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
           </div>
-          
-          <div class="farmer">
-            <div><strong>Farmer:</strong> ${billDetails.farmerName || 'N/A'}</div>
-            <div><strong>Mobile:</strong> ${billDetails.farmerMobile || 'N/A'} | <strong>Bags:</strong> ${bill.totalBags} | <strong>Weight:</strong> ${bill.totalWeight}kg</div>
-          </div>
-          
-          <table class="amounts">
-            <tr><td>Gross Amount</td><td style="text-align: right;">${formatCurrency(bill.totalAmount)}</td></tr>
-            <tr><td>Less: Hamali</td><td style="text-align: right;">${formatCurrency(billDetails.hamali || 0)}</td></tr>
-            <tr><td>Less: Vehicle Rent</td><td style="text-align: right;">${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
-            <tr><td>Less: Advance</td><td style="text-align: right;">${formatCurrency(billDetails.advance || 0)}</td></tr>
-            <tr><td>Less: Commission</td><td style="text-align: right;">${formatCurrency(billDetails.commission || 0)}</td></tr>
-            <tr class="total"><td><strong>NET PAYABLE</strong></td><td style="text-align: right;"><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
+
+          <table class="lot-table">
+            <thead>
+              <tr>
+                <th>Lot No / ಲಾಟ್ ಸಂ</th>
+                <th>Bags / ಚೀಲಗಳು</th>
+                <th>Weight (kg) / ತೂಕ</th>
+                <th>Rate/Quintal / ದರ</th>
+                <th>Amount / ಮೊತ್ತ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${billDetails.lots ? billDetails.lots.map(lot => `
+                <tr>
+                  <td>${lot.lotNumber}</td>
+                  <td>${lot.numberOfBags}</td>
+                  <td>${lot.totalWeight}</td>
+                  <td>${formatCurrency(lot.pricePerQuintal || 0)}</td>
+                  <td>${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}</td>
+                </tr>
+              `).join('') : ''}
+              <tr class="total-row">
+                <td><strong>Total / ಒಟ್ಟು</strong></td>
+                <td><strong>${bill.totalBags}</strong></td>
+                <td><strong>${bill.totalWeight}</strong></td>
+                <td>-</td>
+                <td><strong>${formatCurrency(bill.totalAmount)}</strong></td>
+              </tr>
+            </tbody>
           </table>
-          
-          <div class="footer">
-            <span>Farmer Signature: ________________</span>
-            <span>Office Use: ________________</span>
+
+          <div class="summary">
+            <h3>Payment Summary / ಪಾವತಿ ಸಾರಾಂಶ</h3>
+            <table class="lot-table">
+              <tr><td>Gross Amount / ಒಟ್ಟು ಮೊತ್ತ</td><td>${formatCurrency(bill.totalAmount)}</td></tr>
+              <tr><td>Less: Hamali / ಕಡಿಮೆ: ಹಮಾಲಿ</td><td>-${formatCurrency(billDetails.hamali || 0)}</td></tr>
+              <tr><td>Less: Vehicle Rent / ಕಡಿಮೆ: ವಾಹನ ಬಾಡಿಗೆ</td><td>-${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
+              <tr><td>Less: Empty Bags / ಕಡಿಮೆ: ಖಾಲಿ ಚೀಲಗಳು</td><td>-${formatCurrency(billDetails.emptyBagCharges || 0)}</td></tr>
+              <tr><td>Less: Advance / ಕಡಿಮೆ: ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</td><td>-${formatCurrency(billDetails.advance || 0)}</td></tr>
+              <tr><td>Less: Commission (3%) / ಕಡಿಮೆ: ಕಮಿಷನ್</td><td>-${formatCurrency(billDetails.commission || 0)}</td></tr>
+              <tr><td>Less: Other / ಕಡಿಮೆ: ಇತರೆ</td><td>-${formatCurrency(billDetails.other || 0)}</td></tr>
+              <tr class="total-row"><td><strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
+            </table>
+          </div>
+
+          <div class="signature">
+            <div>
+              <p>_____________________</p>
+              <p>Trader Signature / ವ್ಯಾಪಾರಿ ಸಹಿ</p>
+            </div>
+            <div>
+              <p>_____________________</p>
+              <p>Date / ದಿನಾಂಕ</p>
+            </div>
           </div>
           
           <script>

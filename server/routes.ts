@@ -542,14 +542,44 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Farmer bill not found" });
       }
 
-      // Get farmer details
+      // Get farmer details with bank information
       const [farmer] = await db
         .select()
         .from(farmers)
         .where(and(eq(farmers.id, farmerId), eq(farmers.tenantId, tenantId)))
         .limit(1);
 
-      // Parse the bill data and return with farmer info
+      // Get tenant details for company name
+      const [tenant] = await db
+        .select()
+        .from(tenants)
+        .where(eq(tenants.id, tenantId))
+        .limit(1);
+
+      // Get lot details if lot IDs are available
+      let lotsData = [];
+      if (bill.lotIds) {
+        const lotIds = Array.isArray(bill.lotIds) ? bill.lotIds : JSON.parse(bill.lotIds);
+        if (lotIds.length > 0) {
+          lotsData = await db
+            .select({
+              id: lots.id,
+              lotNumber: lots.lotNumber,
+              numberOfBags: lots.numberOfBags,
+              totalWeight: lots.totalWeight,
+              pricePerQuintal: lots.lotPrice,
+              varietyGrade: lots.varietyGrade,
+              grade: lots.grade
+            })
+            .from(lots)
+            .where(and(
+              inArray(lots.id, lotIds),
+              eq(lots.tenantId, tenantId)
+            ));
+        }
+      }
+
+      // Parse the bill data and return with comprehensive farmer info
       const billData = typeof bill.billData === 'string' 
         ? JSON.parse(bill.billData) 
         : bill.billData;
@@ -558,10 +588,15 @@ export function registerRoutes(app: Express): Server {
         ...billData,
         farmerName: farmer?.name || 'N/A',
         farmerMobile: farmer?.mobile || 'N/A',
+        farmerPlace: farmer?.place || 'N/A',
+        bankName: farmer?.bankName || 'N/A',
+        accountNumber: farmer?.accountNumber || 'N/A',
+        tenantName: tenant?.name || 'AGRICULTURAL TRADING COMPANY',
         pattiNumber: bill.pattiNumber,
         totalAmount: bill.totalAmount,
         netPayable: bill.netPayable,
-        createdAt: bill.createdAt
+        createdAt: bill.createdAt,
+        lots: lotsData
       });
     } catch (error) {
       console.error("Error fetching farmer bill data:", error);
