@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { Navigation } from "@/components/navigation";
 
 // Format currency values
 const formatCurrency = (amount: number | string) => {
@@ -53,6 +55,32 @@ const formatPercentage = (value: number) => {
 };
 
 export default function FinalAccounts() {
+  // Add authentication check
+  const { user } = useAuth();
+  
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Authentication Required</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Please log in to access Final Accounts.</p>
+              <Button 
+                onClick={() => window.location.href = '/auth'} 
+                className="mt-4 w-full"
+              >
+                Go to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
   const { toast } = useToast();
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>("");
   const [paymentDialog, setPaymentDialog] = useState<{ type: 'received' | 'made', open: boolean }>({ type: 'received', open: false });
