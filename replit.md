@@ -381,6 +381,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added visual dropdown indicators and smooth transitions for better user experience
   - Bills consolidated as main menu item containing both Farmer Bill and Tax Invoice options
   - Entity management grouped under "Manage" for Farmers, Buyers, and Staff functions
+- July 12, 2025: Ongoing navigation authentication issues
+  - Navigation menu structure works correctly with wouter Link components
+  - Settings page navigation: line 72 in navigation.tsx links to '/settings' 
+  - Final Accounts navigation: line 70 in navigation.tsx links to '/final-accounts'
+  - Routing configured correctly in App.tsx (lines 44-45)
+  - Core issue: Session authentication not persisting between page navigations despite PostgreSQL session store
+  - Server restarts clear memory sessions even with database store enabled
+  - API endpoints require authentication but browser sessions don't maintain properly
 
 # User Preferences
 
