@@ -72,6 +72,11 @@ export default function Settings() {
 function SettingsContent() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("gst");
+  
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+    retry: false,
+  });
 
   // Initialize form hook at the top level - never conditionally
   const gstForm = useForm<GSTSettings>({
@@ -98,6 +103,48 @@ function SettingsContent() {
       return response.json();
     },
   });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: Partial<TenantSettings>) => {
+      await apiRequest("PUT", "/api/settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Success",
+        description: "Settings updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update form when settings data loads - MUST be before any early returns
+  useEffect(() => {
+    if (settings) {
+      gstForm.reset({
+        sgst: settings.gstSettings.sgst,
+        cgst: settings.gstSettings.cgst,
+        cess: settings.gstSettings.cess,
+        unloadHamali: settings.gstSettings.unloadHamali,
+        packaging: settings.gstSettings.packaging || 5,
+        packagingWeight: settings.gstSettings.packagingWeight || 0,
+        weighingFee: settings.gstSettings.weighingFee || 2,
+        apmcCommission: settings.gstSettings.apmcCommission || 2,
+      });
+    }
+  }, [settings, gstForm]);
+
+  const onGSTSubmit = (data: GSTSettings) => {
+    updateSettingsMutation.mutate({
+      gstSettings: data,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -127,47 +174,7 @@ function SettingsContent() {
     );
   }
 
-  // Update form when settings data loads
-  useEffect(() => {
-    if (settings) {
-      gstForm.reset({
-        sgst: settings.gstSettings.sgst,
-        cgst: settings.gstSettings.cgst,
-        cess: settings.gstSettings.cess,
-        unloadHamali: settings.gstSettings.unloadHamali,
-        packaging: settings.gstSettings.packaging || 5,
-        packagingWeight: settings.gstSettings.packagingWeight || 0,
-        weighingFee: settings.gstSettings.weighingFee || 2,
-        apmcCommission: settings.gstSettings.apmcCommission || 2,
-      });
-    }
-  }, [settings, gstForm]);
 
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: Partial<TenantSettings>) => {
-      await apiRequest("PUT", "/api/settings", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({
-        title: "Success",
-        description: "Settings updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onGSTSubmit = (data: GSTSettings) => {
-    updateSettingsMutation.mutate({
-      gstSettings: data,
-    });
-  };
 
   // Only show settings if user is admin or super admin
   if (user?.role !== 'admin' && user?.role !== 'super_admin') {
