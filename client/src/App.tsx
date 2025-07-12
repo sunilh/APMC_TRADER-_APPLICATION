@@ -27,21 +27,20 @@ import StaffManagement from "@/pages/staff-management";
 function Router() {
   return (
     <Switch>
+      <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntryNew} />
       <ProtectedRoute path="/buyers" component={Buyers} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
-
       <ProtectedRoute path="/tax-invoice" component={TaxInvoice} />
       <ProtectedRoute path="/farmer-bill" component={FarmerBill} />
       <ProtectedRoute path="/cess-reports" component={CessReports} />
       <ProtectedRoute path="/gst-reports" component={GstReports} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/final-accounts" component={FinalAccounts} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/final-accounts" component={FinalAccounts} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
-      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );

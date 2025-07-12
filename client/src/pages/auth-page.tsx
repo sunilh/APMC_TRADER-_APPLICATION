@@ -55,7 +55,7 @@ export default function AuthPage() {
 
   // Redirect if already authenticated - moved after all hooks
   if (user) {
-    setLocation("/");
+    setTimeout(() => setLocation("/"), 0);
     return null;
   }
 

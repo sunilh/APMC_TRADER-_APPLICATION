@@ -14,8 +14,6 @@ export function ProtectedRoute({
   return (
     <Route path={path}>
       {() => {
-        console.log('ProtectedRoute - path:', path, 'user:', user?.username, 'loading:', isLoading);
-        
         if (isLoading) {
           return (
             <div className="flex items-center justify-center min-h-screen">
@@ -25,11 +23,9 @@ export function ProtectedRoute({
         }
 
         if (!user) {
-          console.log('No user, redirecting to auth');
           return <Redirect to="/auth" />;
         }
 
-        console.log('User authenticated, rendering component');
         return <Component />;
       }}
     </Route>
