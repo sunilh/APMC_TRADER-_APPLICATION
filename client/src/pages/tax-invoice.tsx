@@ -205,6 +205,149 @@ export default function TaxInvoice() {
 
   const selectedBuyer = buyers.find(b => b.id === selectedBuyerId);
 
+  // Function to download tax invoice as PDF
+  const downloadTaxInvoicePDF = async (invoice: InvoiceRecord) => {
+    try {
+      const response = await fetch(`/api/tax-invoice-data/${invoice.id}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch invoice details");
+      }
+      
+      const invoiceData = await response.json();
+      
+      // Create and download PDF
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF();
+      
+      // Header
+      pdf.setFontSize(16);
+      pdf.text('TAX INVOICE', 105, 20, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.text(`Invoice Number: ${invoice.invoiceNumber}`, 20, 35);
+      pdf.text(`Date: ${formatDate(invoice.invoiceDate)}`, 150, 35);
+      
+      // Seller and buyer details
+      pdf.text('Seller Details:', 20, 50);
+      pdf.text(`${invoiceData.seller?.companyName || 'N/A'}`, 20, 60);
+      pdf.text(`GSTIN: ${invoiceData.seller?.gstin || 'N/A'}`, 20, 70);
+      
+      pdf.text('Buyer Details:', 20, 85);
+      pdf.text(`${invoiceData.buyer?.companyName || 'N/A'}`, 20, 95);
+      pdf.text(`GSTIN: ${invoiceData.buyer?.gstin || 'N/A'}`, 20, 105);
+      
+      // Invoice summary
+      let yPos = 120;
+      pdf.text('Invoice Summary:', 20, yPos);
+      yPos += 15;
+      
+      pdf.text(`Basic Amount: ${formatCurrency(invoice.basicAmount)}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Total Bags: ${invoice.totalBags}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Total Weight: ${invoice.totalWeight} kg`, 20, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(14);
+      pdf.text(`Total Amount: ${formatCurrency(invoice.totalAmount)}`, 20, yPos);
+      
+      pdf.save(`tax-invoice-${invoice.invoiceNumber}.pdf`);
+      
+      toast({
+        title: "Success",
+        description: "Invoice PDF downloaded successfully!",
+      });
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to print tax invoice
+  const printTaxInvoice = async (invoice: InvoiceRecord) => {
+    try {
+      const response = await fetch(`/api/tax-invoice-data/${invoice.id}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch invoice details");
+      }
+      
+      const invoiceData = await response.json();
+      
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Tax Invoice - ${invoice.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .details { margin-bottom: 20px; }
+            .summary { border-collapse: collapse; width: 100%; }
+            .summary th, .summary td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .summary th { background-color: #f2f2f2; }
+            .total { font-weight: bold; background-color: #e8f5e8; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>TAX INVOICE</h2>
+            <p>Invoice Number: ${invoice.invoiceNumber} | Date: ${formatDate(invoice.invoiceDate)}</p>
+          </div>
+          
+          <div class="details">
+            <h3>Seller Details:</h3>
+            <p><strong>Company:</strong> ${invoiceData.seller?.companyName || 'N/A'}</p>
+            <p><strong>GSTIN:</strong> ${invoiceData.seller?.gstin || 'N/A'}</p>
+            
+            <h3>Buyer Details:</h3>
+            <p><strong>Company:</strong> ${invoiceData.buyer?.companyName || 'N/A'}</p>
+            <p><strong>GSTIN:</strong> ${invoiceData.buyer?.gstin || 'N/A'}</p>
+          </div>
+          
+          <table class="summary">
+            <tr><th>Description</th><th>Details</th></tr>
+            <tr><td>Invoice Number</td><td>${invoice.invoiceNumber}</td></tr>
+            <tr><td>Basic Amount</td><td>${formatCurrency(invoice.basicAmount)}</td></tr>
+            <tr><td>Total Bags</td><td>${invoice.totalBags}</td></tr>
+            <tr><td>Total Weight</td><td>${invoice.totalWeight} kg</td></tr>
+            <tr class="total"><td><strong>Total Amount</strong></td><td><strong>${formatCurrency(invoice.totalAmount)}</strong></td></tr>
+          </table>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 100);
+            }
+          </script>
+        </body>
+        </html>
+      `;
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+      }
+    } catch (error) {
+      console.error("Error printing invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to print invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   const generatePrintableInvoice = () => {
     if (!taxInvoice) return;
 
@@ -550,10 +693,81 @@ export default function TaxInvoice() {
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
-                                    <Button variant="outline" size="sm">
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button variant="outline" size="sm">
+                                            <Eye className="h-4 w-4 mr-1" />
+                                            View
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                          <DialogHeader>
+                                            <DialogTitle>Tax Invoice - {invoice.invoiceNumber}</DialogTitle>
+                                          </DialogHeader>
+                                          <div className="space-y-4">
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                              <div>
+                                                <span className="font-medium">Invoice Number:</span>
+                                                <div>{invoice.invoiceNumber}</div>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium">Date:</span>
+                                                <div>{formatDate(invoice.invoiceDate)}</div>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium">Basic Amount:</span>
+                                                <div className="font-bold text-green-600">
+                                                  {formatCurrency(invoice.basicAmount)}
+                                                </div>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium">Total Amount:</span>
+                                                <div className="font-bold text-blue-600">
+                                                  {formatCurrency(invoice.totalAmount)}
+                                                </div>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium">Total Bags:</span>
+                                                <div>{invoice.totalBags}</div>
+                                              </div>
+                                              <div>
+                                                <span className="font-medium">Total Weight:</span>
+                                                <div>{parseFloat(invoice.totalWeight).toFixed(2)} kg</div>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="flex justify-center gap-2">
+                                              <Button
+                                                onClick={() => downloadTaxInvoicePDF(invoice)}
+                                                variant="outline"
+                                                size="sm"
+                                              >
+                                                <Download className="h-4 w-4 mr-2" />
+                                                Download PDF
+                                              </Button>
+                                              <Button
+                                                onClick={() => printTaxInvoice(invoice)}
+                                                variant="outline"
+                                                size="sm"
+                                              >
+                                                <Printer className="h-4 w-4 mr-2" />
+                                                Print
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                      
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => downloadTaxInvoicePDF(invoice)}
+                                      >
+                                        <Download className="h-4 w-4 mr-1" />
+                                        Download
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Eye, CheckCircle, AlertCircle, Plus, History, FileText } from "lucide-react";
+import { Download, Eye, CheckCircle, AlertCircle, Plus, History, FileText, Printer } from "lucide-react";
 import { VoiceInput } from "@/components/voice-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -184,6 +184,147 @@ export default function FarmerBill() {
   };
 
   const selectedFarmer = farmers.find(f => f.id === parseInt(selectedFarmerId));
+
+  // Function to download farmer bill as PDF
+  const downloadFarmerBillPDF = async (bill: FarmerBillRecord) => {
+    try {
+      const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch bill details");
+      }
+      
+      const billDetails = await response.json();
+      
+      // Create and download PDF
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF();
+      
+      // Header
+      pdf.setFontSize(16);
+      pdf.text('FARMER PAYMENT BILL', 105, 20, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.text(`Patti Number: ${bill.pattiNumber}`, 20, 35);
+      pdf.text(`Date: ${formatDate(bill.createdAt)}`, 150, 35);
+      
+      // Farmer details
+      pdf.text('Farmer Details:', 20, 50);
+      pdf.text(`Name: ${billDetails.farmerName || 'N/A'}`, 20, 60);
+      pdf.text(`Mobile: ${billDetails.farmerMobile || 'N/A'}`, 20, 70);
+      
+      // Bill summary
+      let yPos = 90;
+      pdf.text('Bill Summary:', 20, yPos);
+      yPos += 15;
+      
+      pdf.text(`Total Amount: ${formatCurrency(bill.totalAmount)}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Less: Hamali: ${formatCurrency(billDetails.hamali || 0)}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Less: Vehicle Rent: ${formatCurrency(billDetails.vehicleRent || 0)}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Less: Advance: ${formatCurrency(billDetails.advance || 0)}`, 20, yPos);
+      yPos += 10;
+      pdf.text(`Less: Commission: ${formatCurrency(billDetails.commission || 0)}`, 20, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(14);
+      pdf.text(`Net Payable: ${formatCurrency(bill.netPayable)}`, 20, yPos);
+      
+      pdf.save(`farmer-bill-${bill.pattiNumber}.pdf`);
+      
+      toast({
+        title: "Success",
+        description: "Bill PDF downloaded successfully!",
+      });
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to download PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to print farmer bill
+  const printFarmerBill = async (bill: FarmerBillRecord) => {
+    try {
+      const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch bill details");
+      }
+      
+      const billDetails = await response.json();
+      
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Farmer Bill - ${bill.pattiNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .details { margin-bottom: 20px; }
+            .summary { border-collapse: collapse; width: 100%; }
+            .summary th, .summary td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .summary th { background-color: #f2f2f2; }
+            .total { font-weight: bold; background-color: #e8f5e8; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>FARMER PAYMENT BILL</h2>
+            <p>Patti Number: ${bill.pattiNumber} | Date: ${formatDate(bill.createdAt)}</p>
+          </div>
+          
+          <div class="details">
+            <h3>Farmer Details:</h3>
+            <p><strong>Name:</strong> ${billDetails.farmerName || 'N/A'}</p>
+            <p><strong>Mobile:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+            <p><strong>Total Bags:</strong> ${bill.totalBags}</p>
+          </div>
+          
+          <table class="summary">
+            <tr><th>Description</th><th>Amount</th></tr>
+            <tr><td>Total Amount</td><td>${formatCurrency(bill.totalAmount)}</td></tr>
+            <tr><td>Less: Hamali</td><td>${formatCurrency(billDetails.hamali || 0)}</td></tr>
+            <tr><td>Less: Vehicle Rent</td><td>${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
+            <tr><td>Less: Advance</td><td>${formatCurrency(billDetails.advance || 0)}</td></tr>
+            <tr><td>Less: Commission</td><td>${formatCurrency(billDetails.commission || 0)}</td></tr>
+            <tr class="total"><td><strong>Net Payable</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
+          </table>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 100);
+            }
+          </script>
+        </body>
+        </html>
+      `;
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+      }
+    } catch (error) {
+      console.error("Error printing bill:", error);
+      toast({
+        title: "Error",
+        description: "Failed to print bill",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (farmersLoading) {
     return (
@@ -575,16 +716,22 @@ export default function FarmerBill() {
                                             </div>
                                           </div>
                                           
-                                          <div className="text-center">
+                                          <div className="flex justify-center gap-2">
                                             <Button
-                                              onClick={() => {
-                                                window.open(`/farmer-bill?billId=${bill.id}`, '_blank');
-                                              }}
+                                              onClick={() => downloadFarmerBillPDF(bill)}
                                               variant="outline"
                                               size="sm"
                                             >
                                               <Download className="h-4 w-4 mr-2" />
-                                              Download Bill
+                                              Download PDF
+                                            </Button>
+                                            <Button
+                                              onClick={() => printFarmerBill(bill)}
+                                              variant="outline"
+                                              size="sm"
+                                            >
+                                              <Printer className="h-4 w-4 mr-2" />
+                                              Print
                                             </Button>
                                           </div>
                                         </div>

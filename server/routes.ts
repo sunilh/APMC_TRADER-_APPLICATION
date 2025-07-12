@@ -524,6 +524,51 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get farmer bill details by farmer ID for download/view
+  app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+
+      // Find the farmer bill record
+      const [bill] = await db
+        .select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .orderBy(desc(farmerBills.createdAt))
+        .limit(1);
+
+      if (!bill) {
+        return res.status(404).json({ message: "Farmer bill not found" });
+      }
+
+      // Get farmer details
+      const [farmer] = await db
+        .select()
+        .from(farmers)
+        .where(and(eq(farmers.id, farmerId), eq(farmers.tenantId, tenantId)))
+        .limit(1);
+
+      // Parse the bill data and return with farmer info
+      const billData = typeof bill.billData === 'string' 
+        ? JSON.parse(bill.billData) 
+        : bill.billData;
+
+      res.json({
+        ...billData,
+        farmerName: farmer?.name || 'N/A',
+        farmerMobile: farmer?.mobile || 'N/A',
+        pattiNumber: bill.pattiNumber,
+        totalAmount: bill.totalAmount,
+        netPayable: bill.netPayable,
+        createdAt: bill.createdAt
+      });
+    } catch (error) {
+      console.error("Error fetching farmer bill data:", error);
+      res.status(500).json({ message: "Failed to fetch farmer bill data" });
+    }
+  });
+
   // Check if farmer bill already exists
   app.get("/api/farmer-bill/:farmerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
@@ -887,6 +932,35 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error retrieving tax invoice:", error);
       res.status(500).json({ message: "Failed to retrieve tax invoice" });
+    }
+  });
+
+  // Get tax invoice details by invoice ID for download/view  
+  app.get("/api/tax-invoice-data/:invoiceId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const invoiceId = parseInt(req.params.invoiceId);
+      const tenantId = req.user.tenantId;
+
+      // Find the tax invoice record
+      const [invoice] = await db
+        .select()
+        .from(taxInvoices)
+        .where(and(eq(taxInvoices.id, invoiceId), eq(taxInvoices.tenantId, tenantId)))
+        .limit(1);
+
+      if (!invoice) {
+        return res.status(404).json({ message: "Tax invoice not found" });
+      }
+
+      // Parse the invoice data and return
+      const invoiceData = typeof invoice.invoiceData === 'string' 
+        ? JSON.parse(invoice.invoiceData) 
+        : invoice.invoiceData;
+
+      res.json(invoiceData);
+    } catch (error) {
+      console.error("Error fetching tax invoice data:", error);
+      res.status(500).json({ message: "Failed to fetch tax invoice data" });
     }
   });
 
