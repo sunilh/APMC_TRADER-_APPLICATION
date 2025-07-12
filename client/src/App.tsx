@@ -40,7 +40,8 @@ function Router() {
       <ProtectedRoute path="/gst-reports" component={GstReports} />
       <ProtectedRoute path="/final-accounts" component={FinalAccounts} />
 
-      <ProtectedRoute path="/settings" component={Settings} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/final-accounts" component={FinalAccounts} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
