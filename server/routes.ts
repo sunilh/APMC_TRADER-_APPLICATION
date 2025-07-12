@@ -158,8 +158,8 @@ export function registerRoutes(app: Express): Server {
   // Get final accounts for fiscal year
   app.get("/api/accounting/final-accounts/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const fiscalYear = req.params.fiscalYear;
-      const finalAccounts = await generateFinalAccounts(req.user.tenantId, fiscalYear);
+      const fiscalYear = req.params.fiscalYear || getCurrentFiscalYear();
+      const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
       res.json(finalAccounts);
     } catch (error) {
       console.error("Error generating final accounts:", error);
