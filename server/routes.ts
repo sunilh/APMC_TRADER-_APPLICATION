@@ -803,6 +803,7 @@ export function registerRoutes(app: Express): Server {
       const savedInvoice = await db.select()
         .from(taxInvoices)
         .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
+        .orderBy(desc(taxInvoices.createdAt))
         .limit(1);
 
       if (savedInvoice.length === 0) {
@@ -813,6 +814,74 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error retrieving tax invoice:", error);
       res.status(500).json({ message: "Failed to retrieve tax invoice" });
+    }
+  });
+
+  // Get all tax invoices for a buyer with date range filtering
+  app.get("/api/tax-invoices/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const buyerId = parseInt(req.params.buyerId);
+      const tenantId = req.user.tenantId;
+      const { startDate, endDate } = req.query;
+
+      let query = db.select()
+        .from(taxInvoices)
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+
+      // Add date filtering if provided
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        
+        query = query.where(and(
+          eq(taxInvoices.buyerId, buyerId),
+          eq(taxInvoices.tenantId, tenantId),
+          gte(taxInvoices.invoiceDate, start),
+          lte(taxInvoices.invoiceDate, end)
+        ));
+      }
+
+      const invoices = await query.orderBy(desc(taxInvoices.invoiceDate));
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error retrieving tax invoices:", error);
+      res.status(500).json({ message: "Failed to retrieve tax invoices" });
+    }
+  });
+
+  // Get all farmer bills for a farmer with date range filtering  
+  app.get("/api/farmer-bills/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+      const { startDate, endDate } = req.query;
+
+      let query = db.select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)));
+
+      // Add date filtering if provided
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        
+        query = query.where(and(
+          eq(farmerBills.farmerId, farmerId),
+          eq(farmerBills.tenantId, tenantId),
+          gte(farmerBills.createdAt, start),
+          lte(farmerBills.createdAt, end)
+        ));
+      }
+
+      const bills = await query.orderBy(desc(farmerBills.createdAt));
+      res.json(bills);
+    } catch (error) {
+      console.error("Error retrieving farmer bills:", error);
+      res.status(500).json({ message: "Failed to retrieve farmer bills" });
     }
   });
 
@@ -1014,9 +1083,25 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Lot creation request body:", req.body); // Debug log
       
-      // Generate lot number
-      const existingLots = await storage.getAllLotsByTenant(req.user.tenantId);
-      const lotNumber = `LOT${String(existingLots.length + 1).padStart(4, "0")}`;
+      // Generate daily lot number (starts from 1 each day)
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Get today's lots for this tenant
+      const todaysLots = await db.select()
+        .from(lots)
+        .where(and(
+          eq(lots.tenantId, req.user.tenantId),
+          gte(lots.createdAt, startOfDay),
+          lte(lots.createdAt, endOfDay)
+        ));
+        
+      const dailySequence = todaysLots.length + 1;
+      const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+      const lotNumber = `LOT${dateStr}-${String(dailySequence).padStart(3, "0")}`;
 
       const validatedData = insertLotSchema.parse({
         ...req.body,
