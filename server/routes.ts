@@ -38,6 +38,7 @@ import {
   expenseCategories,
   expenses,
 } from "@shared/schema";
+import { getSimpleFinalAccounts } from "./finalAccountsSimple";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -169,7 +170,8 @@ export function registerRoutes(app: Express): Server {
   // Get final accounts without fiscal year parameter
   app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const finalAccounts = await generateFinalAccounts(req.user.tenantId);
+      const fiscalYear = getCurrentFiscalYear();
+      const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
       res.json(finalAccounts);
     } catch (error) {
       console.error("Error generating final accounts:", error);
@@ -301,12 +303,12 @@ export function registerRoutes(app: Express): Server {
   // Get expense categories
   app.get("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const categories = await db
-        .select()
-        .from(expenseCategories)
-        .where(eq(expenseCategories.tenantId, req.user.tenantId))
-        .orderBy(expenseCategories.name);
-      res.json(categories);
+      const categories = await db.execute(sql`
+        SELECT * FROM expense_categories 
+        WHERE tenant_id = ${req.user.tenantId} 
+        ORDER BY name
+      `);
+      res.json(categories.rows);
     } catch (error) {
       console.error("Error fetching expense categories:", error);
       res.status(500).json({ message: "Failed to fetch expense categories" });
@@ -385,13 +387,13 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/bank-transactions", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
-      const transactions = await db
-        .select()
-        .from(bankTransactions)
-        .where(eq(bankTransactions.tenantId, req.user.tenantId))
-        .orderBy(desc(bankTransactions.createdAt))
-        .limit(limit);
-      res.json(transactions);
+      const transactions = await db.execute(sql`
+        SELECT * FROM bank_transactions 
+        WHERE tenant_id = ${req.user.tenantId} 
+        ORDER BY created_at DESC 
+        LIMIT ${limit}
+      `);
+      res.json(transactions.rows);
     } catch (error) {
       console.error("Error fetching bank transactions:", error);
       res.status(500).json({ message: "Failed to fetch bank transactions" });
