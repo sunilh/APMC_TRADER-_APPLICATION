@@ -25,6 +25,11 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || "development-secret-key",
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: false, // Set to false for HTTP in development
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    },
     // Use default memory store instead of PostgreSQL store to fix session issues
     // store: storage.sessionStore,
   };
