@@ -47,11 +47,19 @@ export default function Settings() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("gst");
 
-  const { data: settings, isLoading } = useQuery<TenantSettings>({
+  console.log('Settings page - user:', user?.username, 'authenticated:', !!user);
+
+  const { data: settings, isLoading, error } = useQuery<TenantSettings>({
     queryKey: ["/api/settings"],
     queryFn: async () => {
+      console.log('Fetching settings...');
       const response = await fetch("/api/settings", { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch settings");
+      console.log('Settings response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Settings fetch error:', errorText);
+        throw new Error(`Failed to fetch settings: ${response.status} ${errorText}`);
+      }
       return response.json();
     },
   });
