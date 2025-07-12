@@ -185,7 +185,7 @@ export default function FarmerBill() {
 
   const selectedFarmer = farmers.find(f => f.id === parseInt(selectedFarmerId));
 
-  // Function to download farmer bill as PDF
+  // Function to download farmer bill as PDF (Original APMC Format - Compact)
   const downloadFarmerBillPDF = async (bill: FarmerBillRecord) => {
     try {
       const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
@@ -202,43 +202,50 @@ export default function FarmerBill() {
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF();
       
-      // Header
-      pdf.setFontSize(16);
-      pdf.text('FARMER PAYMENT BILL', 105, 20, { align: 'center' });
-      
-      pdf.setFontSize(12);
-      pdf.text(`Patti Number: ${bill.pattiNumber}`, 20, 35);
-      pdf.text(`Date: ${formatDate(bill.createdAt)}`, 150, 35);
-      
-      // Farmer details
-      pdf.text('Farmer Details:', 20, 50);
-      pdf.text(`Name: ${billDetails.farmerName || 'N/A'}`, 20, 60);
-      pdf.text(`Mobile: ${billDetails.farmerMobile || 'N/A'}`, 20, 70);
-      
-      // Bill summary
-      let yPos = 90;
-      pdf.text('Bill Summary:', 20, yPos);
-      yPos += 15;
-      
-      pdf.text(`Total Amount: ${formatCurrency(bill.totalAmount)}`, 20, yPos);
-      yPos += 10;
-      pdf.text(`Less: Hamali: ${formatCurrency(billDetails.hamali || 0)}`, 20, yPos);
-      yPos += 10;
-      pdf.text(`Less: Vehicle Rent: ${formatCurrency(billDetails.vehicleRent || 0)}`, 20, yPos);
-      yPos += 10;
-      pdf.text(`Less: Advance: ${formatCurrency(billDetails.advance || 0)}`, 20, yPos);
-      yPos += 10;
-      pdf.text(`Less: Commission: ${formatCurrency(billDetails.commission || 0)}`, 20, yPos);
-      yPos += 15;
-      
+      // Compact APMC Header
       pdf.setFontSize(14);
-      pdf.text(`Net Payable: ${formatCurrency(bill.netPayable)}`, 20, yPos);
+      pdf.text('APMC FARMER RECEIPT', 105, 15, { align: 'center' });
       
-      pdf.save(`farmer-bill-${bill.pattiNumber}.pdf`);
+      pdf.setFontSize(10);
+      pdf.text(`Patti: ${bill.pattiNumber}`, 20, 25);
+      pdf.text(`Date: ${formatDate(bill.createdAt)}`, 150, 25);
+      
+      // Farmer info - compact
+      pdf.text(`Farmer: ${billDetails.farmerName || 'N/A'}`, 20, 35);
+      pdf.text(`Mobile: ${billDetails.farmerMobile || 'N/A'}`, 120, 35);
+      
+      // Lot summary - compact table format
+      pdf.text('Lots Summary:', 20, 45);
+      pdf.text(`Bags: ${bill.totalBags}`, 20, 52);
+      pdf.text(`Weight: ${bill.totalWeight}kg`, 80, 52);
+      
+      // Amount breakdown - compact
+      let y = 65;
+      pdf.text(`Gross Amount: ${formatCurrency(bill.totalAmount)}`, 20, y);
+      y += 8;
+      pdf.text(`Less: Hamali: ${formatCurrency(billDetails.hamali || 0)}`, 25, y);
+      y += 6;
+      pdf.text(`Vehicle Rent: ${formatCurrency(billDetails.vehicleRent || 0)}`, 25, y);
+      y += 6;
+      pdf.text(`Advance: ${formatCurrency(billDetails.advance || 0)}`, 25, y);
+      y += 6;
+      pdf.text(`Commission: ${formatCurrency(billDetails.commission || 0)}`, 25, y);
+      y += 10;
+      
+      // Net payable - highlighted
+      pdf.setFontSize(12);
+      pdf.text(`NET PAYABLE: ${formatCurrency(bill.netPayable)}`, 20, y);
+      
+      // Footer
+      pdf.setFontSize(8);
+      pdf.text('Farmer Signature: ________________', 20, y + 20);
+      pdf.text('Office Use: ________________', 120, y + 20);
+      
+      pdf.save(`farmer-receipt-${bill.pattiNumber}.pdf`);
       
       toast({
         title: "Success",
-        description: "Bill PDF downloaded successfully!",
+        description: "Receipt downloaded successfully!",
       });
     } catch (error) {
       console.error("Error downloading PDF:", error);
@@ -250,7 +257,7 @@ export default function FarmerBill() {
     }
   };
 
-  // Function to print farmer bill
+  // Function to print farmer bill (Original APMC Format - Compact)
   const printFarmerBill = async (bill: FarmerBillRecord) => {
     try {
       const response = await fetch(`/api/farmer-bill/${bill.farmerId}`, {
@@ -267,39 +274,47 @@ export default function FarmerBill() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Farmer Bill - ${bill.pattiNumber}</title>
+          <title>APMC Receipt - ${bill.pattiNumber}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .details { margin-bottom: 20px; }
-            .summary { border-collapse: collapse; width: 100%; }
-            .summary th, .summary td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            .summary th { background-color: #f2f2f2; }
-            .total { font-weight: bold; background-color: #e8f5e8; }
+            body { font-family: Arial, sans-serif; margin: 15px; font-size: 12px; }
+            .header { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+            .info { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            .farmer { margin-bottom: 15px; }
+            .amounts { width: 100%; border-collapse: collapse; }
+            .amounts td { padding: 3px 8px; border-bottom: 1px dotted #666; }
+            .total { font-weight: bold; border-top: 2px solid #000; background: #f0f0f0; }
+            .footer { margin-top: 15px; display: flex; justify-content: space-between; }
+            @media print { body { margin: 5px; } }
           </style>
         </head>
         <body>
           <div class="header">
-            <h2>FARMER PAYMENT BILL</h2>
-            <p>Patti Number: ${bill.pattiNumber} | Date: ${formatDate(bill.createdAt)}</p>
+            <h3 style="margin: 0;">APMC FARMER RECEIPT</h3>
           </div>
           
-          <div class="details">
-            <h3>Farmer Details:</h3>
-            <p><strong>Name:</strong> ${billDetails.farmerName || 'N/A'}</p>
-            <p><strong>Mobile:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
-            <p><strong>Total Bags:</strong> ${bill.totalBags}</p>
+          <div class="info">
+            <span><strong>Patti:</strong> ${bill.pattiNumber}</span>
+            <span><strong>Date:</strong> ${formatDate(bill.createdAt)}</span>
           </div>
           
-          <table class="summary">
-            <tr><th>Description</th><th>Amount</th></tr>
-            <tr><td>Total Amount</td><td>${formatCurrency(bill.totalAmount)}</td></tr>
-            <tr><td>Less: Hamali</td><td>${formatCurrency(billDetails.hamali || 0)}</td></tr>
-            <tr><td>Less: Vehicle Rent</td><td>${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
-            <tr><td>Less: Advance</td><td>${formatCurrency(billDetails.advance || 0)}</td></tr>
-            <tr><td>Less: Commission</td><td>${formatCurrency(billDetails.commission || 0)}</td></tr>
-            <tr class="total"><td><strong>Net Payable</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
+          <div class="farmer">
+            <div><strong>Farmer:</strong> ${billDetails.farmerName || 'N/A'}</div>
+            <div><strong>Mobile:</strong> ${billDetails.farmerMobile || 'N/A'} | <strong>Bags:</strong> ${bill.totalBags} | <strong>Weight:</strong> ${bill.totalWeight}kg</div>
+          </div>
+          
+          <table class="amounts">
+            <tr><td>Gross Amount</td><td style="text-align: right;">${formatCurrency(bill.totalAmount)}</td></tr>
+            <tr><td>Less: Hamali</td><td style="text-align: right;">${formatCurrency(billDetails.hamali || 0)}</td></tr>
+            <tr><td>Less: Vehicle Rent</td><td style="text-align: right;">${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
+            <tr><td>Less: Advance</td><td style="text-align: right;">${formatCurrency(billDetails.advance || 0)}</td></tr>
+            <tr><td>Less: Commission</td><td style="text-align: right;">${formatCurrency(billDetails.commission || 0)}</td></tr>
+            <tr class="total"><td><strong>NET PAYABLE</strong></td><td style="text-align: right;"><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
           </table>
+          
+          <div class="footer">
+            <span>Farmer Signature: ________________</span>
+            <span>Office Use: ________________</span>
+          </div>
           
           <script>
             window.onload = function() {

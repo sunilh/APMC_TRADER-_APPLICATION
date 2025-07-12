@@ -399,3 +399,4 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Farmer bill format: Original APMC format - compact and simple layout preferred over detailed modern format.
