@@ -31,6 +31,7 @@ import {
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 import { generateAPMCPDF, formatDateForAPMC } from "@/lib/pdf-generator";
 
 interface Lot {
@@ -203,6 +204,7 @@ export default function Lots() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackToDashboard />
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
             Daily Lots Management

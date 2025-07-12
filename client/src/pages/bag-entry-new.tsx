@@ -18,6 +18,7 @@ import {
 import { ArrowLeft, Save, Users, Package } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 import type { Lot, Bag, Buyer } from "@shared/schema";
 
 interface LotWithDetails extends Lot {
@@ -441,6 +442,7 @@ export default function BagEntryNew() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackToDashboard />
         <div className="mb-6">
           <Button
             variant="ghost"

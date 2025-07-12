@@ -34,6 +34,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Navigation } from "@/components/navigation";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 
 // Format currency values
 const formatCurrency = (amount: number | string) => {
@@ -244,16 +245,20 @@ export default function FinalAccounts() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Debug Info */}
-      <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <h3 className="font-semibold text-green-800">✓ Final Accounts Page Loaded Successfully!</h3>
-        <p className="text-green-700">Current Fiscal Year: {currentFiscalYear}</p>
-        <p className="text-green-700">Data loaded: {finalAccounts ? 'Yes' : 'No'}</p>
-      </div>
-      
-      {/* Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="p-6 space-y-6">
+        <BackToDashboard />
+        
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <h3 className="font-semibold text-green-800">✓ Final Accounts Page Loaded Successfully!</h3>
+          <p className="text-green-700">Current Fiscal Year: {currentFiscalYear}</p>
+          <p className="text-green-700">Data loaded: {finalAccounts ? 'Yes' : 'No'}</p>
+        </div>
+        
+        {/* Header */}
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Final Accounts</h1>
           <p className="text-muted-foreground">
@@ -1023,6 +1028,7 @@ export default function FinalAccounts() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

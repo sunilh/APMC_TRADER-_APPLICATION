@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, FileText, Download, Printer, User, Building, Phone, MapPin } from "lucide-react";
 import { useI18n, formatDate, formatCurrency } from "@/lib/i18n";
 import { VoiceInput } from "@/components/voice-input";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 
 interface BuyerBill {
   buyerId: number;
@@ -343,6 +344,7 @@ export default function BuyerBilling() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

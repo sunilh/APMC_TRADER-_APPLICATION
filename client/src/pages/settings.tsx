@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ export default function Settings() {
       <Navigation />
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          <BackToDashboard />
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
               <SettingsIcon className="h-8 w-8 mr-3 text-primary" />

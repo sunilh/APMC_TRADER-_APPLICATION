@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 import type { Farmer } from "@shared/schema";
 
 export default function Farmers() {
@@ -70,6 +71,7 @@ export default function Farmers() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackToDashboard />
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Farmer Management</h1>
           
