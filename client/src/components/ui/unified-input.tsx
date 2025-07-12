@@ -148,7 +148,8 @@ export const UnifiedInput = forwardRef<HTMLInputElement, UnifiedInputProps>(
         .replace(/dot/gi, '.');
     };
 
-    const showVoiceButton = enableVoice && isSupported && !props.disabled;
+    // Always show voice button for better UX, disable if not supported
+    const showVoiceButton = enableVoice && !props.disabled;
 
     return (
       <div className="relative w-full">
@@ -172,12 +173,14 @@ export const UnifiedInput = forwardRef<HTMLInputElement, UnifiedInputProps>(
             variant="ghost"
             size="sm"
             onClick={handleVoiceClick}
+            disabled={!isSupported}
             className={cn(
               "absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0",
               "hover:bg-gray-100 focus:ring-2 focus:ring-gray-200",
               "transition-all duration-200 ease-in-out",
               isListening && "bg-red-100 text-red-600 hover:bg-red-200",
-              voiceProcessing && "bg-green-100 text-green-600"
+              voiceProcessing && "bg-green-100 text-green-600",
+              !isSupported && "opacity-50 cursor-not-allowed"
             )}
           >
             {voiceProcessing ? (
@@ -188,6 +191,13 @@ export const UnifiedInput = forwardRef<HTMLInputElement, UnifiedInputProps>(
               <Mic className="h-4 w-4" />
             )}
           </Button>
+        )}
+        
+        {/* Debug indicator when voice button is hidden */}
+        {!showVoiceButton && (
+          <div className="absolute -bottom-6 left-0 text-xs text-gray-500">
+            Voice disabled: enableVoice={enableVoice?.toString()}, disabled={props.disabled?.toString()}
+          </div>
         )}
         
         {/* Status Indicators */}
