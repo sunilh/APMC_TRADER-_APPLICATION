@@ -147,7 +147,10 @@ export function Navigation() {
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }
               `}
-              onClick={mobile ? () => setMobileMenuOpen(false) : undefined}
+              onClick={(e) => {
+                console.log('Single item clicked:', item.href);
+                if (mobile) setMobileMenuOpen(false);
+              }}
             >
               <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
               {item.name}
