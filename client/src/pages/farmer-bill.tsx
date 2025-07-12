@@ -419,6 +419,115 @@ export default function FarmerBill() {
             </div>
           </div>
           
+          <!-- Back Side - Individual Bag Weights -->
+          <div class="page-break"></div>
+          
+          <div class="header">
+            <h1>${billDetails.tenantName}</h1>
+            <h2>BAG WEIGHT DETAILS / ಚೀಲ ತೂಕ ವಿವರಗಳು</h2>
+            <div class="farmer-info">
+              <p><strong>Farmer:</strong> ${billDetails.farmerName} | <strong>Patti No:</strong> ${billDetails.pattiNumber}</p>
+              <p><strong>Date:</strong> ${new Date(billDetails.createdAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          ${billDetails.lots ? billDetails.lots.map(lot => `
+            <div class="lot-section">
+              <h3>Lot ${lot.lotNumber} - ${lot.varietyGrade} (${lot.grade})</h3>
+              <p><strong>Total Bags:</strong> ${lot.numberOfBags} | <strong>Total Weight:</strong> ${lot.totalWeight} kg</p>
+              
+              <div class="bag-grid">
+                ${lot.bags && lot.bags.length > 0 ? lot.bags.map(bag => `
+                  <div class="bag-card">
+                    <div class="bag-number">B${bag.bagNumber}</div>
+                    <div class="bag-weight">${bag.weight}kg</div>
+                  </div>
+                `).join('') : Array.from({length: lot.numberOfBags}, (_, i) => `
+                  <div class="bag-card">
+                    <div class="bag-number">B${i + 1}</div>
+                    <div class="bag-weight">--</div>
+                  </div>
+                `).join('')}
+              </div>
+              
+              <div class="lot-summary">
+                <strong>Rate:</strong> ₹${formatCurrency(lot.pricePerQuintal || 0)}/quintal | 
+                <strong>Amount:</strong> ₹${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}
+              </div>
+            </div>
+          `).join('') : ''}
+          
+          <style>
+            .page-break {
+              page-break-before: always;
+              margin-top: 40px;
+            }
+            
+            .lot-section {
+              margin-bottom: 25px;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 15px;
+            }
+            
+            .lot-section h3 {
+              color: #2563eb;
+              margin-bottom: 8px;
+              font-size: 16px;
+            }
+            
+            .bag-grid {
+              display: grid;
+              grid-template-columns: repeat(10, 1fr);
+              gap: 4px;
+              margin: 12px 0;
+            }
+            
+            .bag-card {
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              padding: 4px 2px;
+              text-align: center;
+              background: #f8f9fa;
+              font-size: 9px;
+            }
+            
+            .bag-number {
+              font-weight: bold;
+              color: #1f2937;
+              margin-bottom: 1px;
+            }
+            
+            .bag-weight {
+              color: #059669;
+              font-weight: 600;
+            }
+            
+            .lot-summary {
+              background: #e5f3ff;
+              padding: 6px;
+              border-radius: 3px;
+              font-size: 11px;
+              margin-top: 8px;
+            }
+            
+            @media print {
+              .bag-grid {
+                grid-template-columns: repeat(12, 1fr);
+                gap: 3px;
+              }
+              
+              .bag-card {
+                padding: 3px 1px;
+                font-size: 8px;
+              }
+              
+              .lot-section {
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+              }
+            }
+          </style>
+          
           <script>
             window.onload = function() {
               window.print();

@@ -561,15 +561,46 @@ export function registerRoutes(app: Express): Server {
       let lotsData = [];
       if (bill.lotIds) {
         try {
-          const lotIds = JSON.parse(bill.lotIds || '[]');
+          // Handle different lotIds formats
+          let lotIds = [];
+          if (typeof bill.lotIds === 'string') {
+            // Try to parse as JSON, fallback to simple string handling
+            if (bill.lotIds.startsWith('[')) {
+              lotIds = JSON.parse(bill.lotIds);
+            } else if (bill.lotIds.includes(',')) {
+              lotIds = bill.lotIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            } else {
+              const id = parseInt(bill.lotIds);
+              if (!isNaN(id)) lotIds = [id];
+            }
+          } else if (Array.isArray(bill.lotIds)) {
+            lotIds = bill.lotIds;
+          }
+          
           if (lotIds.length > 0) {
-            lotsData = await db
-              .select()
-              .from(lots)
-              .where(and(
-                inArray(lots.id, lotIds),
-                eq(lots.tenantId, tenantId)
-              ));
+            // Get lots with their bags
+            const lotsWithBags = await Promise.all(
+              lotIds.map(async (lotId) => {
+                const [lot] = await db
+                  .select()
+                  .from(lots)
+                  .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)))
+                  .limit(1);
+                
+                if (lot) {
+                  const bags = await db
+                    .select()
+                    .from(bags)
+                    .where(and(eq(bags.lotId, lotId), eq(bags.tenantId, tenantId)))
+                    .orderBy(bags.bagNumber);
+                  
+                  return { ...lot, bags };
+                }
+                return null;
+              })
+            );
+            
+            lotsData = lotsWithBags.filter(lot => lot !== null);
           }
         } catch (parseError) {
           console.error("Error parsing lot IDs:", parseError);
