@@ -47,26 +47,69 @@ export default function Settings() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("gst");
 
-  console.log('Settings page - user:', user?.username, 'authenticated:', !!user);
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <SettingsIcon className="h-8 w-8 mr-3 text-primary" />
+              Settings
+            </h1>
+            <p className="mt-2 text-gray-600">Configure your APMC trading settings</p>
+          </div>
 
-  // Show a loading state and then content regardless of authentication
-  // The settings data fetch will handle authentication errors
+          <SettingsContent />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsContent() {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("gst");
 
   const { data: settings, isLoading, error } = useQuery<TenantSettings>({
     queryKey: ["/api/settings"],
     retry: 1,
     queryFn: async () => {
-      console.log('Fetching settings...');
       const response = await fetch("/api/settings", { credentials: "include" });
-      console.log('Settings response status:', response.status);
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Settings fetch error:', errorText);
-        throw new Error(`Failed to fetch settings: ${response.status} ${errorText}`);
+        throw new Error(`Failed to fetch settings: ${response.status}`);
       }
       return response.json();
     },
   });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading settings...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-red-600">Authentication Required</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">Please log in to access settings.</p>
+          <Button 
+            onClick={() => window.location.href = '/auth'} 
+            className="mt-4 w-full"
+          >
+            Go to Login
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const gstForm = useForm<GSTSettings>({
     resolver: zodResolver(gstSettingsSchema),
