@@ -73,6 +73,20 @@ function SettingsContent() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("gst");
 
+  // Initialize form hook at the top level - never conditionally
+  const gstForm = useForm<GSTSettings>({
+    resolver: zodResolver(gstSettingsSchema),
+    defaultValues: {
+      sgst: 2.5,
+      cgst: 2.5,
+      cess: 0.6,
+      unloadHamali: 3,
+      packaging: 5,
+      weighingFee: 2,
+      apmcCommission: 2,
+    },
+  });
+
   const { data: settings, isLoading, error } = useQuery<TenantSettings>({
     queryKey: ["/api/settings"],
     retry: 1,
@@ -112,19 +126,6 @@ function SettingsContent() {
       </Card>
     );
   }
-
-  const gstForm = useForm<GSTSettings>({
-    resolver: zodResolver(gstSettingsSchema),
-    defaultValues: {
-      sgst: 2.5,
-      cgst: 2.5,
-      cess: 0.6,
-      unloadHamali: 3,
-      packaging: 5,
-      weighingFee: 2,
-      apmcCommission: 2,
-    },
-  });
 
   // Update form when settings data loads
   useEffect(() => {
