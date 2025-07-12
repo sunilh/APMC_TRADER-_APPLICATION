@@ -477,24 +477,25 @@ export default function FarmerBill() {
             
             .bag-grid {
               display: grid;
-              grid-template-columns: repeat(10, 1fr);
-              gap: 4px;
-              margin: 12px 0;
+              grid-template-columns: repeat(25, 1fr);
+              gap: 2px;
+              margin: 8px 0;
             }
             
             .bag-card {
               border: 1px solid #ccc;
-              border-radius: 4px;
-              padding: 4px 2px;
+              border-radius: 2px;
+              padding: 2px 1px;
               text-align: center;
               background: #f8f9fa;
-              font-size: 9px;
+              font-size: 7px;
+              line-height: 1.1;
             }
             
             .bag-number {
               font-weight: bold;
               color: #1f2937;
-              margin-bottom: 1px;
+              margin-bottom: 0px;
             }
             
             .bag-weight {
@@ -504,26 +505,50 @@ export default function FarmerBill() {
             
             .lot-summary {
               background: #e5f3ff;
-              padding: 6px;
-              border-radius: 3px;
-              font-size: 11px;
-              margin-top: 8px;
+              padding: 4px;
+              border-radius: 2px;
+              font-size: 10px;
+              margin-top: 6px;
+            }
+            
+            .lot-section {
+              margin-bottom: 15px;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 10px;
+            }
+            
+            .lot-section h3 {
+              color: #2563eb;
+              margin-bottom: 6px;
+              font-size: 14px;
             }
             
             @media print {
               .bag-grid {
-                grid-template-columns: repeat(12, 1fr);
-                gap: 3px;
+                grid-template-columns: repeat(50, 1fr);
+                gap: 1px;
               }
               
               .bag-card {
-                padding: 3px 1px;
-                font-size: 8px;
+                padding: 1px;
+                font-size: 6px;
+                border-radius: 1px;
               }
               
               .lot-section {
-                margin-bottom: 20px;
-                padding-bottom: 12px;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+              }
+              
+              .lot-section h3 {
+                font-size: 12px;
+                margin-bottom: 4px;
+              }
+              
+              .lot-summary {
+                padding: 2px;
+                font-size: 8px;
+                margin-top: 4px;
               }
             }
           </style>
