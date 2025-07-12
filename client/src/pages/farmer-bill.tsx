@@ -127,6 +127,53 @@ export default function FarmerBill() {
     enabled: !!selectedFarmerId && activeTab === "generate",
   });
 
+  // Generate farmer bill mutation
+  const generateBillMutation = useMutation({
+    mutationFn: async (data: { 
+      farmerId: number; 
+      pattiNumber: string; 
+      billData: any; 
+      lotIds: number[] 
+    }) => {
+      return apiRequest("POST", `/api/farmer-bill/${data.farmerId}`, {
+        pattiNumber: data.pattiNumber,
+        billData: data.billData,
+        lotIds: data.lotIds,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Farmer bill generated and saved successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/farmer-bill"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/farmer-bills"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate farmer bill",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Fetch farmer's completed lots for bill generation (all dates)
+  const { data: farmerLots = [], isLoading: lotsLoading } = useQuery({
+    queryKey: ["/api/farmer", selectedFarmerId, "completed-lots"],
+    queryFn: async () => {
+      if (!selectedFarmerId) return [];
+      const response = await fetch(`/api/farmer/${selectedFarmerId}/completed-lots`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!selectedFarmerId && activeTab === "generate" && !billCheck?.exists,
+  });
+
   const formatCurrency = (amount: number | string) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -263,14 +310,138 @@ export default function FarmerBill() {
                             </AlertDescription>
                           </Alert>
                           
-                          <div className="text-sm text-gray-600">
-                            <p>To generate a farmer bill:</p>
-                            <ol className="list-decimal list-inside mt-2 space-y-1">
-                              <li>Ensure the farmer has completed lots with proper bag entries</li>
-                              <li>Set appropriate deduction amounts (hamali, vehicle rent, etc.)</li>
-                              <li>Click "Generate & Save Bill" to create the farmer payment document</li>
-                            </ol>
-                          </div>
+                          {lotsLoading ? (
+                            <Alert>
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription>Loading farmer lots...</AlertDescription>
+                            </Alert>
+                          ) : farmerLots.length > 0 ? (
+                            <div className="space-y-4">
+                              <div className="text-sm text-gray-600">
+                                <p className="font-medium">Completed lots for {selectedFarmer?.name}:</p>
+                                <ul className="mt-2 space-y-1">
+                                  {farmerLots.map((lot: any) => (
+                                    <li key={lot.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                      <span>{lot.lotNumber}</span>
+                                      <span className="text-green-600 font-medium">
+                                        {lot.actualBagCount || lot.numberOfBags} bags • {lot.totalWeight?.toFixed(1)}kg • ₹{parseFloat(lot.lotPrice || 0).toLocaleString()}/quintal
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <Card>
+                                <CardHeader>
+                                  <CardTitle className="text-lg">Bill Configuration</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <Label htmlFor="patti-number">Patti Number</Label>
+                                      <Input
+                                        id="patti-number"
+                                        value={pattiNumber}
+                                        onChange={(e) => setPattiNumber(e.target.value)}
+                                        placeholder="Auto-generated if empty"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="hamali">Hamali (₹)</Label>
+                                      <Input
+                                        id="hamali"
+                                        type="number"
+                                        value={billData.hamali}
+                                        onChange={(e) => setBillData(prev => ({ 
+                                          ...prev, 
+                                          hamali: parseFloat(e.target.value) || 0 
+                                        }))}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="vehicle-rent">Vehicle Rent (₹)</Label>
+                                      <Input
+                                        id="vehicle-rent"
+                                        type="number"
+                                        value={billData.vehicleRent}
+                                        onChange={(e) => setBillData(prev => ({ 
+                                          ...prev, 
+                                          vehicleRent: parseFloat(e.target.value) || 0 
+                                        }))}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="advance">Advance (₹)</Label>
+                                      <Input
+                                        id="advance"
+                                        type="number"
+                                        value={billData.advance}
+                                        onChange={(e) => setBillData(prev => ({ 
+                                          ...prev, 
+                                          advance: parseFloat(e.target.value) || 0 
+                                        }))}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <Button
+                                    onClick={() => {
+                                      if (!selectedFarmerId || farmerLots.length === 0) {
+                                        toast({
+                                          title: "Error",
+                                          description: "Please select a farmer with completed lots.",
+                                          variant: "destructive",
+                                        });
+                                        return;
+                                      }
+
+                                      let finalPattiNumber = pattiNumber;
+                                      if (!finalPattiNumber) {
+                                        finalPattiNumber = generatePattiNumber();
+                                        setPattiNumber(finalPattiNumber);
+                                      }
+
+                                      const lotIds = farmerLots.map((lot: any) => lot.id);
+                                      const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
+                                      const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + (lot.totalWeight || 0), 0);
+                                      const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
+                                        const weight = lot.totalWeight || 0;
+                                        const price = parseFloat(lot.lotPrice || 0);
+                                        const quintals = weight / 100; // Convert kg to quintals
+                                        return sum + (quintals * price);
+                                      }, 0);
+
+                                      generateBillMutation.mutate({
+                                        farmerId: parseInt(selectedFarmerId),
+                                        pattiNumber: finalPattiNumber,
+                                        billData: {
+                                          ...billData,
+                                          totalAmount,
+                                          totalBags,
+                                          totalWeight,
+                                        },
+                                        lotIds,
+                                      });
+                                    }}
+                                    disabled={generateBillMutation.isPending || farmerLots.length === 0}
+                                    className="w-full"
+                                  >
+                                    {generateBillMutation.isPending ? "Generating..." : "Generate & Save Bill"}
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-600">
+                              <p>No completed lots found for {selectedFarmer?.name}.</p>
+                              <p className="mt-2">To generate a farmer bill:</p>
+                              <ol className="list-decimal list-inside mt-2 space-y-1">
+                                <li>Create lots for this farmer</li>
+                                <li>Add bags to the lots with proper weights</li>
+                                <li>Complete the lots to make them ready for billing</li>
+                              </ol>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

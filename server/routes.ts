@@ -451,6 +451,78 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Get today's completed lots for a farmer for bill generation
+  app.get("/api/farmer/:farmerId/completed-lots", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+
+      // Get today's date range
+      const today = new Date();
+      const startOfToday = new Date(today);
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date(today);
+      endOfToday.setHours(23, 59, 59, 999);
+
+      // Get only today's completed lots for this farmer with bag weights
+      const completedLots = await db.select({
+        id: lots.id,
+        lotNumber: lots.lotNumber,
+        farmerId: lots.farmerId,
+        numberOfBags: lots.numberOfBags,
+        lotPrice: lots.lotPrice,
+        vehicleRent: lots.vehicleRent,
+        advance: lots.advance,
+        unloadHamali: lots.unloadHamali,
+        varietyGrade: lots.varietyGrade,
+        grade: lots.grade,
+        status: lots.status,
+        createdAt: lots.createdAt,
+      })
+      .from(lots)
+      .where(and(
+        eq(lots.farmerId, farmerId),
+        eq(lots.tenantId, tenantId),
+        eq(lots.status, 'completed'),
+        gte(lots.createdAt, startOfToday),
+        lte(lots.createdAt, endOfToday),
+        sql`${lots.lotPrice} IS NOT NULL AND ${lots.lotPrice} > 0`
+      ))
+      .orderBy(desc(lots.createdAt));
+
+      // Get bag counts and total weights for each lot
+      const lotsWithWeights = [];
+      for (const lot of completedLots) {
+        const bagData = await db.select({
+          totalWeight: sql<number>`COALESCE(SUM(CAST(${bags.weight} AS DECIMAL)), 0)`,
+          bagCount: sql<number>`COUNT(*)`
+        })
+        .from(bags)
+        .where(and(
+          eq(bags.lotId, lot.id),
+          eq(bags.tenantId, tenantId)
+        ));
+
+        const totalWeight = parseFloat(bagData[0]?.totalWeight?.toString() || '0');
+        const bagCount = parseInt(bagData[0]?.bagCount?.toString() || '0');
+
+        // Only include lots that have actual bag weights
+        if (totalWeight > 0 && bagCount > 0) {
+          lotsWithWeights.push({
+            ...lot,
+            totalWeight,
+            actualBagCount: bagCount
+          });
+        }
+      }
+
+      res.json(lotsWithWeights);
+    } catch (error) {
+      console.error("Error fetching farmer completed lots:", error);
+      res.status(500).json({ message: "Failed to fetch farmer completed lots" });
+    }
+  });
+
   // Check if farmer bill already exists
   app.get("/api/farmer-bill/:farmerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
