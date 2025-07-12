@@ -525,90 +525,70 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get farmer bill details by farmer ID for download/view
+  // Get farmer bill details by farmer ID for download/view (simple working version)
   app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
 
-      // Get the saved bill with creator information
-      const savedBillResult = await db.select({
-        id: farmerBills.id,
-        pattiNumber: farmerBills.pattiNumber,
-        farmerId: farmerBills.farmerId,
-        tenantId: farmerBills.tenantId,
-        totalAmount: farmerBills.totalAmount,
-        hamali: farmerBills.hamali,
-        vehicleRent: farmerBills.vehicleRent,
-        emptyBagCharges: farmerBills.emptyBagCharges,
-        advance: farmerBills.advance,
-        commission: farmerBills.commission,
-        otherCharges: farmerBills.otherCharges,
-        totalDeductions: farmerBills.totalDeductions,
-        netPayable: farmerBills.netPayable,
-        totalBags: farmerBills.totalBags,
-        totalWeight: farmerBills.totalWeight,
-        lotIds: farmerBills.lotIds,
-        createdAt: farmerBills.createdAt,
-        createdBy: farmerBills.createdBy,
-        // Join with user to get creator details
-        creatorName: users.fullName,
-        creatorUsername: users.username
-      })
+      // Find the farmer bill record
+      const [bill] = await db
+        .select()
         .from(farmerBills)
-        .leftJoin(users, eq(farmerBills.createdBy, users.id))
         .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .orderBy(desc(farmerBills.createdAt))
         .limit(1);
 
-      if (savedBillResult.length === 0) {
-        return res.status(404).json({ message: "No farmer bill found for this farmer" });
+      if (!bill) {
+        return res.status(404).json({ message: "Farmer bill not found" });
       }
 
-      const savedBill = savedBillResult[0];
-
-      // Get farmer details with bank information
+      // Get farmer details
       const [farmer] = await db
         .select()
         .from(farmers)
         .where(and(eq(farmers.id, farmerId), eq(farmers.tenantId, tenantId)))
         .limit(1);
 
-      // Get tenant details for company name
+      // Get tenant details
       const [tenant] = await db
         .select()
         .from(tenants)
         .where(eq(tenants.id, tenantId))
         .limit(1);
 
-      // Get associated lots
-      const lotIds = JSON.parse(savedBill.lotIds || '[]');
+      // Get basic lot data without complex joins
       let lotsData = [];
-      
-      if (lotIds.length > 0) {
-        lotsData = await db.select({
-          lotId: lots.id,
-          lotNumber: lots.lotNumber,
-          farmerId: lots.farmerId,
-          varietyGrade: lots.varietyGrade,
-          grade: lots.grade,
-          numberOfBags: lots.numberOfBags,
-          totalWeight: lots.totalWeight,
-          pricePerQuintal: lots.lotPrice,
-          vehicleRent: lots.vehicleRent,
-          advance: lots.advance,
-          unloadHamali: lots.unloadHamali,
-          status: lots.status,
-          createdAt: lots.createdAt
-        })
-          .from(lots)
-          .where(and(
-            inArray(lots.id, lotIds),
-            eq(lots.tenantId, tenantId)
-          ));
+      if (bill.lotIds) {
+        try {
+          const lotIds = JSON.parse(bill.lotIds || '[]');
+          if (lotIds.length > 0) {
+            lotsData = await db
+              .select()
+              .from(lots)
+              .where(and(
+                inArray(lots.id, lotIds),
+                eq(lots.tenantId, tenantId)
+              ));
+          }
+        } catch (parseError) {
+          console.error("Error parsing lot IDs:", parseError);
+        }
       }
 
       res.json({
-        ...savedBill,
+        pattiNumber: bill.pattiNumber,
+        totalAmount: bill.totalAmount,
+        netPayable: bill.netPayable,
+        hamali: bill.hamali || '0',
+        vehicleRent: bill.vehicleRent || '0',
+        emptyBagCharges: bill.emptyBagCharges || '0',
+        advance: bill.advance || '0',
+        commission: bill.commission || '0',
+        other: bill.otherCharges || '0',
+        totalBags: bill.totalBags || 0,
+        totalWeight: bill.totalWeight || '0',
+        createdAt: bill.createdAt,
         farmerName: farmer?.name || 'N/A',
         farmerMobile: farmer?.mobile || 'N/A',
         farmerPlace: farmer?.place || 'N/A',
