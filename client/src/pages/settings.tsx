@@ -179,43 +179,29 @@ function SettingsContent() {
   // Only show settings if user is admin or super admin
   if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className="text-center py-12">
-            <CardContent>
-              <h3 className="text-lg font-medium text-gray-900">Access Denied</h3>
-              <p className="text-gray-500 mt-1">
-                You don't have permission to access settings.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Card className="text-center py-12">
+        <CardContent>
+          <h3 className="text-lg font-medium text-gray-900">Access Denied</h3>
+          <p className="text-gray-500 mt-1">
+            You don't have permission to access settings.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your APMC configuration and preferences</p>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-8">
-            <TabsTrigger value="gst" className="flex items-center space-x-2">
-              <Receipt className="h-4 w-4" />
-              <span>GST & Charges</span>
-            </TabsTrigger>
-            <TabsTrigger value="general" className="flex items-center space-x-2">
-              <SettingsIcon className="h-4 w-4" />
-              <span>General</span>
-            </TabsTrigger>
-          </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="mb-8">
+        <TabsTrigger value="gst" className="flex items-center space-x-2">
+          <Receipt className="h-4 w-4" />
+          <span>GST & Charges</span>
+        </TabsTrigger>
+        <TabsTrigger value="general" className="flex items-center space-x-2">
+          <SettingsIcon className="h-4 w-4" />
+          <span>General</span>
+        </TabsTrigger>
+      </TabsList>
 
           <TabsContent value="gst">
             <Card>
@@ -333,7 +319,5 @@ function SettingsContent() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
   );
 }
