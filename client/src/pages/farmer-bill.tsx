@@ -257,7 +257,7 @@ export default function FarmerBill() {
               <tr class="total-row">
                 <td><strong>Total / ಒಟ್ಟು</strong></td>
                 <td><strong>${bill.totalBags}</strong></td>
-                <td><strong>${bill.totalWeight}</strong></td>
+                <td><strong>${parseFloat(bill.totalWeight || '0').toFixed(2)} kg</strong></td>
                 <td>-</td>
                 <td><strong>${formatCurrency(bill.totalAmount)}</strong></td>
               </tr>
@@ -387,7 +387,7 @@ export default function FarmerBill() {
               <tr class="total-row">
                 <td><strong>Total / ಒಟ್ಟು</strong></td>
                 <td><strong>${bill.totalBags}</strong></td>
-                <td><strong>${bill.totalWeight}</strong></td>
+                <td><strong>${parseFloat(bill.totalWeight || '0').toFixed(2)} kg</strong></td>
                 <td>-</td>
                 <td><strong>${formatCurrency(bill.totalAmount)}</strong></td>
               </tr>
