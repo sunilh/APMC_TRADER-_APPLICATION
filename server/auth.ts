@@ -22,10 +22,11 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || "development-secret-key",
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    // Use default memory store instead of PostgreSQL store to fix session issues
+    // store: storage.sessionStore,
   };
 
   app.set("trust proxy", 1);

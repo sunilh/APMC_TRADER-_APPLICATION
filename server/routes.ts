@@ -41,13 +41,6 @@ import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzl
 import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
-  console.log('requireAuth check:', {
-    isAuthenticated: req.isAuthenticated(),
-    hasUser: !!req.user,
-    userId: req.user?.id,
-    sessionID: req.sessionID
-  });
-  
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ message: "Authentication required" });
   }
