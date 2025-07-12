@@ -38,8 +38,6 @@ function Router() {
       <ProtectedRoute path="/farmer-bill" component={FarmerBill} />
       <ProtectedRoute path="/cess-reports" component={CessReports} />
       <ProtectedRoute path="/gst-reports" component={GstReports} />
-      <ProtectedRoute path="/final-accounts" component={FinalAccounts} />
-
       <Route path="/settings" component={Settings} />
       <Route path="/final-accounts" component={FinalAccounts} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />

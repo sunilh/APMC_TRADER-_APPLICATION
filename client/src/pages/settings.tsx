@@ -49,34 +49,11 @@ export default function Settings() {
 
   console.log('Settings page - user:', user?.username, 'authenticated:', !!user);
 
-  // Show login message if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Authentication Required</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Please log in to access settings.</p>
-              <Button 
-                onClick={() => window.location.href = '/auth'} 
-                className="mt-4 w-full"
-              >
-                Go to Login
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Show a loading state and then content regardless of authentication
+  // The settings data fetch will handle authentication errors
 
   const { data: settings, isLoading, error } = useQuery<TenantSettings>({
     queryKey: ["/api/settings"],
-    enabled: !!user, // Only fetch if user is authenticated
     retry: 1,
     queryFn: async () => {
       console.log('Fetching settings...');

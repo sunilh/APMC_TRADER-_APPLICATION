@@ -58,29 +58,7 @@ export default function FinalAccounts() {
   // Add authentication check
   const { user } = useAuth();
   
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Authentication Required</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Please log in to access Final Accounts.</p>
-              <Button 
-                onClick={() => window.location.href = '/auth'} 
-                className="mt-4 w-full"
-              >
-                Go to Login
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Let the page load and handle authentication in the data fetching
   const { toast } = useToast();
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>("");
   const [paymentDialog, setPaymentDialog] = useState<{ type: 'received' | 'made', open: boolean }>({ type: 'received', open: false });
