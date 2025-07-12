@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 
 interface FarmerBillData {
   hamali: number;
@@ -408,6 +409,7 @@ export default function FarmerBill() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Farmer Bill / ರೈತ ಬಿಲ್</h1>

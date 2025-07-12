@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { CalendarIcon, Download, TrendingUp, IndianRupee } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 
 interface GstReportData {
   period: string;
@@ -110,6 +111,7 @@ export default function GstReports() {
 
   return (
     <div className="p-6 space-y-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">GST Reports</h1>
         <div className="flex items-center space-x-3">

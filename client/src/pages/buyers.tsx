@@ -17,6 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Buyer, InsertBuyer } from "@shared/schema";
 import { insertBuyerSchema } from "@shared/schema";
+import { BackToDashboard } from "@/components/back-to-dashboard";
 
 interface BuyerSummary extends Buyer {
   totalLots: number;
@@ -251,6 +252,7 @@ export default function Buyers() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
+        <BackToDashboard />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
