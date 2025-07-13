@@ -114,8 +114,7 @@ export default function InventoryIn() {
   });
 
   const { data: suppliers = [] } = useQuery<Supplier[]>({
-    queryKey: ["/api/suppliers", form.buyerId],
-    enabled: !!form.buyerId
+    queryKey: ["/api/suppliers"]
   });
 
   // Filter suppliers based on search term
@@ -339,9 +338,9 @@ export default function InventoryIn() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Buyer Inventory - Purchase from Traders</h1>
+            <h1 className="text-3xl font-bold">Purchase from Dalals - Add Inventory</h1>
             <p className="text-muted-foreground mt-2">
-              Track purchases from Traders/APMC operators with invoice scanning
+              Select Dalal → Scan their invoice → Add inventory to your stock
             </p>
           </div>
           <BackToDashboard />
@@ -352,13 +351,173 @@ export default function InventoryIn() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Camera className="h-5 w-5" />
-              Invoice OCR Scanner
+              Dalal Invoice Scanner & Inventory Management
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Step 1: Select Dalal/Trader */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-3">Step 1: Select Dalal/Trader (Who you purchased from)</h3>
+              
+              {/* Dalal Selection with Search and Create */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-blue-700">Select Dalal/Trader *</Label>
+                  <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-green-50 hover:bg-green-100 border-green-300 text-green-700 font-medium"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add New Dalal
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Add New Dalal/Trader</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Dalal Name *</Label>
+                          <UnifiedInput
+                            type="text"
+                            value={dalalForm.name}
+                            onChange={(value) => setDalalForm(prev => ({ ...prev, name: value }))}
+                            placeholder="Enter dalal name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Contact Person</Label>
+                          <UnifiedInput
+                            type="text"
+                            value={dalalForm.contactPerson}
+                            onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: value }))}
+                            placeholder="Enter contact person name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Mobile Number</Label>
+                          <UnifiedInput
+                            type="text"
+                            value={dalalForm.mobile}
+                            onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: value }))}
+                            placeholder="Enter mobile number"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>Address</Label>
+                          <UnifiedInput
+                            type="text"
+                            value={dalalForm.address}
+                            onChange={(value) => setDalalForm(prev => ({ ...prev, address: value }))}
+                            placeholder="Enter address"
+                          />
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => {
+                              if (!dalalForm.name) {
+                                toast({ title: "Error", description: "Dalal name is required", variant: "destructive" });
+                                return;
+                              }
+                              // Set a default buyer ID for now - this should come from auth context
+                              setDalalForm(prev => ({ ...prev, buyerId: "9" }));
+                              createDalalMutation.mutate({...dalalForm, buyerId: 9});
+                            }}
+                            disabled={createDalalMutation.isPending}
+                            className="flex-1"
+                          >
+                            {createDalalMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
+                            Add Dalal
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setCreateDalalOpen(false)}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search dalals by name, mobile, or contact person..."
+                      value={dalalSearchTerm}
+                      onChange={(e) => setDalalSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {dalalSearchTerm && filteredSuppliers.length > 0 && (
+                    <div className="border rounded-md max-h-40 overflow-y-auto bg-background">
+                      {filteredSuppliers.map(supplier => (
+                        <div
+                          key={supplier.id}
+                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                          onClick={() => {
+                            setForm(prev => ({ 
+                              ...prev, 
+                              traderName: supplier.name,
+                              traderContact: supplier.mobile || '',
+                              traderAddress: supplier.address || '',
+                              buyerId: supplier.buyerId.toString()
+                            }));
+                            setDalalSearchTerm("");
+                          }}
+                        >
+                          <div className="font-medium">{supplier.name}</div>
+                          {supplier.contactPerson && (
+                            <div className="text-sm text-muted-foreground">
+                              Contact: {supplier.contactPerson}
+                            </div>
+                          )}
+                          {supplier.mobile && (
+                            <div className="text-sm text-muted-foreground">
+                              Mobile: {supplier.mobile}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {dalalSearchTerm && filteredSuppliers.length === 0 && (
+                    <div className="text-center p-4 text-muted-foreground">
+                      No dalals found. Click "Add New Dalal" to create one.
+                    </div>
+                  )}
+                </div>
+                
+                <UnifiedInput
+                  type="text"
+                  value={form.traderName}
+                  onChange={(value) => setForm(prev => ({ ...prev, traderName: value }))}
+                  placeholder="Selected dalal name will appear here"
+                  className="bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Step 2: Your Company Info */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Step 2: Your Company (Buyer)</h3>
               <div>
-                <Label>Select Your Company (Buyer)</Label>
+                <Label>Select Your Company</Label>
                 <Select 
                   value={form.buyerId} 
                   onValueChange={(value) => setForm(prev => ({ ...prev, buyerId: value }))}
@@ -377,34 +536,45 @@ export default function InventoryIn() {
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button
-                onClick={() => cameraInputRef.current?.click()}
-                disabled={!form.buyerId || ocrProcessing}
-                variant="outline"
-                className="flex-1"
-              >
-                {ocrProcessing ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Camera className="h-4 w-4 mr-2" />
-                )}
-                Scan Trader Invoice
-              </Button>
+            {/* Step 3: Scan/Upload Dalal's Invoice */}
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h3 className="font-semibold text-green-800 mb-3">Step 3: Scan/Upload Dalal's Invoice</h3>
+              
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={!form.traderName || ocrProcessing}
+                  variant="outline"
+                  className="flex-1 bg-white hover:bg-gray-50"
+                >
+                  {ocrProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Camera className="h-4 w-4 mr-2" />
+                  )}
+                  Scan Dalal's Invoice
+                </Button>
 
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={!form.buyerId || ocrProcessing}
-                variant="outline"
-                className="flex-1"
-              >
-                {ocrProcessing ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                Upload Trader Invoice
-              </Button>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!form.traderName || ocrProcessing}
+                  variant="outline"
+                  className="flex-1 bg-white hover:bg-gray-50"
+                >
+                  {ocrProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  Upload Dalal's Invoice
+                </Button>
+              </div>
+              
+              {(!form.traderName) && (
+                <p className="text-sm text-green-700 mt-2">
+                  ⚠️ Please select a dalal first to scan their invoice
+                </p>
+              )}
             </div>
 
             <input
@@ -481,174 +651,7 @@ export default function InventoryIn() {
               </div>
             </div>
 
-            {/* Trader Details */}
-            {/* Trader Selection with Search and Create */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Trader/Dalal Name *</Label>
-                <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={!form.buyerId}
-                      className="bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700 font-medium"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Create Dalal
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Create New Dalal/Trader</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Dalal Name *</Label>
-                        <UnifiedInput
-                          type="text"
-                          value={dalalForm.name}
-                          onChange={(value) => setDalalForm(prev => ({ ...prev, name: value }))}
-                          placeholder="Enter dalal name"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label>Contact Person</Label>
-                        <UnifiedInput
-                          type="text"
-                          value={dalalForm.contactPerson}
-                          onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: value }))}
-                          placeholder="Enter contact person name"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label>Mobile Number</Label>
-                        <UnifiedInput
-                          type="text"
-                          value={dalalForm.mobile}
-                          onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: value }))}
-                          placeholder="Enter mobile number"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label>Address</Label>
-                        <UnifiedInput
-                          type="text"
-                          value={dalalForm.address}
-                          onChange={(value) => setDalalForm(prev => ({ ...prev, address: value }))}
-                          placeholder="Enter address"
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={() => {
-                            if (!dalalForm.name) {
-                              toast({ title: "Error", description: "Dalal name is required", variant: "destructive" });
-                              return;
-                            }
-                            createDalalMutation.mutate(dalalForm);
-                          }}
-                          disabled={createDalalMutation.isPending}
-                          className="flex-1"
-                        >
-                          {createDalalMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Create Dalal
-                        </Button>
-                        
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setCreateDalalOpen(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              
-              {form.buyerId && (
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search traders by name, mobile, or contact person..."
-                      value={dalalSearchTerm}
-                      onChange={(e) => setDalalSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  
-                  {dalalSearchTerm && filteredSuppliers.length > 0 && (
-                    <div className="border rounded-md max-h-40 overflow-y-auto bg-background">
-                      {filteredSuppliers.map(supplier => (
-                        <div
-                          key={supplier.id}
-                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                          onClick={() => {
-                            setForm(prev => ({ 
-                              ...prev, 
-                              traderName: supplier.name,
-                              traderContact: supplier.mobile || '',
-                              traderAddress: supplier.address || ''
-                            }));
-                            setDalalSearchTerm("");
-                          }}
-                        >
-                          <div className="font-medium">{supplier.name}</div>
-                          {supplier.contactPerson && (
-                            <div className="text-sm text-muted-foreground">
-                              Contact: {supplier.contactPerson}
-                            </div>
-                          )}
-                          {supplier.mobile && (
-                            <div className="text-sm text-muted-foreground">
-                              Mobile: {supplier.mobile}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <UnifiedInput
-                type="text"
-                value={form.traderName}
-                onChange={(value) => setForm(prev => ({ ...prev, traderName: value }))}
-                placeholder="Enter trader/dalal name or search above"
-              />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Trader Contact</Label>
-                <UnifiedInput
-                  type="tel"
-                  value={form.traderContact || ""}
-                  onChange={(value) => setForm(prev => ({ ...prev, traderContact: value }))}
-                  placeholder="Enter trader contact"
-                />
-              </div>
-              
-              <div>
-                <Label>Trader Address</Label>
-                <UnifiedInput
-                  type="text"
-                  value={form.traderAddress || ""}
-                  onChange={(value) => setForm(prev => ({ ...prev, traderAddress: value }))}
-                  placeholder="Enter trader address"
-                />
-              </div>
-            </div>
 
             {/* Items Table */}
             <div>
