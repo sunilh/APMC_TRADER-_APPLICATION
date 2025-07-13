@@ -154,6 +154,7 @@ export function Navigation() {
               `}
               onClick={(e) => {
                 console.log('Single item clicked:', item.href);
+                setExpandedGroups(new Set()); // Close all dropdowns
                 if (mobile) setMobileMenuOpen(false);
               }}
             >
@@ -184,7 +185,12 @@ export function Navigation() {
                 onClick={(e) => {
                   e.preventDefault();
                   console.log('Group clicked:', item.name);
-                  toggleGroup(item.name);
+                  // Close all other groups and toggle this one
+                  const wasExpanded = isGroupExpanded(item.name);
+                  setExpandedGroups(new Set());
+                  if (!wasExpanded) {
+                    setExpandedGroups(new Set([item.name]));
+                  }
                 }}
                 className={`
                   ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
@@ -226,11 +232,9 @@ export function Navigation() {
                           }
                         `}
                         onClick={() => {
-                          if (mobile) {
-                            setMobileMenuOpen(false);
-                          } else {
-                            setExpandedGroups(new Set()); // Close dropdown after click
-                          }
+                          console.log('Sub item clicked:', subItem.href);
+                          setExpandedGroups(new Set()); // Close all dropdowns
+                          if (mobile) setMobileMenuOpen(false);
                         }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
