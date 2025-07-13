@@ -136,12 +136,13 @@ export default function InventoryIn() {
       return await response.json();
     },
     onSuccess: (data) => {
+      console.log('OCR Response:', data);
       setExtractedData(data);
       populateFormFromOCR(data.extractedData);
       setShowOcrResults(true);
       toast({ 
         title: "OCR Complete", 
-        description: `Text extracted with ${Math.round(data.confidence)}% confidence` 
+        description: `Text extracted with ${Math.round(data.extractedData?.confidence || data.confidence || 0)}% confidence` 
       });
     },
     onError: (error: Error) => {
@@ -219,32 +220,52 @@ export default function InventoryIn() {
   });
 
   const populateFormFromOCR = (data: any) => {
+    console.log('OCR Data received:', data);
+    
     setForm(prev => {
       // Convert date from DD/MM/YYYY to YYYY-MM-DD for HTML date input
       let formattedDate = prev.invoiceDate;
       if (data.invoiceDate) {
-        const dateParts = data.invoiceDate.split('/');
-        if (dateParts.length === 3) {
-          // Convert DD/MM/YYYY to YYYY-MM-DD
-          const day = dateParts[0].padStart(2, '0');
-          const month = dateParts[1].padStart(2, '0');
-          const year = dateParts[2];
-          formattedDate = `${year}-${month}-${day}`;
+        try {
+          const dateParts = data.invoiceDate.split('/');
+          if (dateParts.length === 3) {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            const day = dateParts[0].padStart(2, '0');
+            const month = dateParts[1].padStart(2, '0');
+            const year = dateParts[2].length === 2 ? '20' + dateParts[2] : dateParts[2];
+            formattedDate = `${year}-${month}-${day}`;
+          }
+        } catch (e) {
+          console.warn('Date parsing failed:', e);
         }
       }
       
-      return {
+      // Parse items array properly
+      const parsedItems = data.items && Array.isArray(data.items) ? data.items.map((item: any) => ({
+        itemName: item.itemName || '',
+        itemDescription: item.itemDescription || item.itemName || '',
+        quantity: item.quantity || '',
+        unit: item.unit || 'Kg',
+        ratePerUnit: item.ratePerUnit || '',
+        amount: item.amount || '',
+        hsnCode: item.hsnCode || ''
+      })) : prev.items;
+      
+      const newFormData = {
         ...prev,
         invoiceNumber: data.invoiceNumber || prev.invoiceNumber,
         invoiceDate: formattedDate,
         traderName: data.traderName || prev.traderName,
         traderContact: data.traderContact || prev.traderContact,
         traderAddress: data.traderAddress || prev.traderAddress,
-        totalAmount: data.totalAmount || prev.totalAmount,
-        taxAmount: data.taxAmount || prev.taxAmount,
-        netAmount: data.netAmount || prev.netAmount,
-        items: data.items || prev.items
+        totalAmount: data.totalAmount?.toString() || prev.totalAmount,
+        taxAmount: data.taxAmount?.toString() || prev.taxAmount,
+        netAmount: data.netAmount?.toString() || prev.netAmount,
+        items: parsedItems
       };
+      
+      console.log('Updated form data:', newFormData);
+      return newFormData;
     });
   };
 
