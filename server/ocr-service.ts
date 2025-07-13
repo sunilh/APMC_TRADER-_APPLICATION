@@ -257,30 +257,69 @@ export class OCRService {
         }
       }
 
-      // Extract total amount
-      if (lowerLine.includes('total') && !lowerLine.includes('qty')) {
-        const amountMatch = line.match(/(\d+(?:\.\d{2})?)/);
-        if (amountMatch) {
-          if (lowerLine.includes('gross') || lowerLine.includes('sub')) {
-            extractedData.totalAmount = amountMatch[1];
-          } else if (lowerLine.includes('net') || lowerLine.includes('final')) {
-            extractedData.netAmount = amountMatch[1];
-          } else {
-            extractedData.totalAmount = amountMatch[1];
-          }
+      // Extract Item Total (basic amount before taxes)
+      if (lowerLine.includes('basic') && lowerLine.includes('amount')) {
+        const basicMatch = line.match(/₹?\s*(\d+[,\d]*\.?\d*)/);
+        if (basicMatch) {
+          extractedData.totalAmount = basicMatch[1].replace(/,/g, '');
+          console.log('Found basic amount:', extractedData.totalAmount);
         }
       }
 
-      // Extract tax amount
-      if (lowerLine.includes('tax') || lowerLine.includes('gst')) {
-        const taxMatch = line.match(/(\d+(?:\.\d{2})?)/);
+      // Extract Tax Amount (GST + CESS + other taxes)
+      if (lowerLine.includes('tax') || lowerLine.includes('gst') || lowerLine.includes('total') && lowerLine.includes('tax')) {
+        const taxMatch = line.match(/₹?\s*(\d+[,\d]*\.?\d*)/);
         if (taxMatch) {
-          extractedData.taxAmount = taxMatch[1];
+          extractedData.taxAmount = taxMatch[1].replace(/,/g, '');
+          console.log('Found tax amount:', extractedData.taxAmount);
+        }
+      }
+
+      // Extract Net Amount (final total payable)
+      if ((lowerLine.includes('net') && lowerLine.includes('amount')) || 
+          (lowerLine.includes('total') && lowerLine.includes('amount') && !lowerLine.includes('basic')) ||
+          (lowerLine.includes('final') && lowerLine.includes('amount'))) {
+        const netMatch = line.match(/₹?\s*(\d+[,\d]*\.?\d*)/);
+        if (netMatch) {
+          extractedData.netAmount = netMatch[1].replace(/,/g, '');
+          console.log('Found net amount:', extractedData.netAmount);
+        }
+      }
+
+      // Also look for amounts in different formats
+      if (lowerLine.includes('₹') && !extractedData.netAmount) {
+        // Extract the largest amount as potential net amount
+        const amounts = line.match(/₹\s*(\d+[,\d]*\.?\d*)/g);
+        if (amounts && amounts.length > 0) {
+          const largestAmount = amounts
+            .map(amt => parseFloat(amt.replace(/[₹,\s]/g, '')))
+            .sort((a, b) => b - a)[0];
+          
+          if (largestAmount > 1000) { // Assuming significant amounts
+            extractedData.netAmount = largestAmount.toString();
+            console.log('Found large amount as net:', extractedData.netAmount);
+          }
         }
       }
     }
 
-    // If no net amount found, use total amount
+    // Calculate missing amounts if possible
+    if (extractedData.totalAmount && extractedData.taxAmount && !extractedData.netAmount) {
+      const itemTotal = parseFloat(extractedData.totalAmount);
+      const taxTotal = parseFloat(extractedData.taxAmount);
+      extractedData.netAmount = (itemTotal + taxTotal).toString();
+      console.log('Calculated net amount:', extractedData.netAmount);
+    }
+    
+    // If no tax amount found but have totals, calculate tax
+    if (extractedData.totalAmount && extractedData.netAmount && !extractedData.taxAmount) {
+      const itemTotal = parseFloat(extractedData.totalAmount);
+      const netTotal = parseFloat(extractedData.netAmount);
+      extractedData.taxAmount = (netTotal - itemTotal).toString();
+      console.log('Calculated tax amount:', extractedData.taxAmount);
+    }
+    
+    // Fallback: if no net amount found, use total amount
     if (!extractedData.netAmount && extractedData.totalAmount) {
       extractedData.netAmount = extractedData.totalAmount;
     }
