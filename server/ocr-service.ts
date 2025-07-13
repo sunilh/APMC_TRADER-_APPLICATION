@@ -183,10 +183,28 @@ export class OCRService {
 
     console.log('Parsing OCR text with', lines.length, 'lines');
 
+    // Filter out obvious interface elements
+    const filteredLines = lines.filter(line => {
+      const skipPatterns = [
+        /^(Dashboard|Manage|Operations|Bills|Reports|Account|English)$/i,
+        /^(APMC|Trader|Agricultural|Market)$/i,
+        /^VIRAJ$/i,
+        /^Admin$/i,
+        /mm\/dd\/yyyy/i,
+        /Select buyer/i,
+        /Add Item/i,
+        /^\s*$/, // Empty lines
+      ];
+      
+      return !skipPatterns.some(pattern => pattern.test(line.trim()));
+    });
+
+    console.log('Filtered to', filteredLines.length, 'relevant lines');
+
     let currentSection = 'header';
     
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    for (let i = 0; i < filteredLines.length; i++) {
+      const line = filteredLines[i];
       const lowerLine = line.toLowerCase();
 
       // Extract invoice number - enhanced patterns for PDF invoices
@@ -349,15 +367,31 @@ export class OCRService {
    * Check if line is likely an item row
    */
   private static isLikelyItemRow(line: string): boolean {
+    // Skip interface elements and form labels
+    const skipPatterns = [
+      /^(Item Name|Quantity|Unit|Rate|Amount|Action)$/i,
+      /^\d+\/\d+\/\d+,?\s*\d+:\d+\s*(AM|PM)/i, // Date/time stamps
+      /^Invoice No:/i,
+      /^Mobile:/i,
+      /^GSTIN:/i,
+      /mm\/dd\/yyyy/i,
+      /Select buyer/i,
+      /Add Item/i,
+      /kg\s*$/i, // Just "kg" alone
+      /^\d+$/, // Just numbers alone
+    ];
+    
+    // Skip if matches any skip pattern
+    if (skipPatterns.some(pattern => pattern.test(line.trim()))) {
+      return false;
+    }
+    
     // Look for agricultural product patterns with quintals/bags
     const itemPatterns = [
-      /\b(dry\s*chilli|chilli|chili|pepper|spice|grain|rice|wheat|turmeric|coriander)\b/i,
+      /LOT\d+\s*\|\s*[A-Z\-]+\s*\|/i, // LOT0013 | ARABICA-A |
+      /\b(dry\s*chilli|chilli|chili|pepper|spice|grain|rice|wheat|turmeric|coriander)\b.*\d+/i,
       /\b\d+\.?\d*\s*(quintal|qtl|bags?)\b/i,
-      /\brate.*\d+/i,
-      /\bamount.*\d+/i,
-      /\b\d+\s*bags?\b/i,
-      /LOT\d+/i, // Match lot numbers
-      /ARABICA|ROBUSTA/i, // Coffee varieties
+      /ARABICA|ROBUSTA.*\d+/i, // Coffee varieties with numbers
     ];
     
     return itemPatterns.some(pattern => pattern.test(line));
