@@ -22,6 +22,7 @@ import FinalAccounts from "@/pages/final-accounts";
 import InventoryIn from "@/pages/inventory-in";
 import InvoiceReports from "@/pages/invoice-reports";
 import StockReports from "@/pages/stock-reports";
+import TestReports from "@/pages/test-reports";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -46,6 +47,7 @@ function Router() {
       <ProtectedRoute path="/inventory-in" component={InventoryIn} />
       <ProtectedRoute path="/invoice-reports" component={InvoiceReports} />
       <ProtectedRoute path="/stock-reports" component={StockReports} />
+      <ProtectedRoute path="/test-reports" component={TestReports} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
       <Route component={NotFound} />
     </Switch>

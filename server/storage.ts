@@ -945,7 +945,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(stockMovements.createdAt));
     }
 
-    return await db.select()
+    return await db.select({
+      id: stockMovements.id,
+      stockId: stockMovements.stockId,
+      movementType: stockMovements.movementType,
+      referenceType: stockMovements.referenceType,
+      referenceId: stockMovements.referenceId,
+      quantityChange: stockMovements.quantityChange,
+      balanceAfter: stockMovements.balanceAfter,
+      ratePerUnit: stockMovements.ratePerUnit,
+      totalValue: stockMovements.totalValue,
+      notes: stockMovements.notes,
+      buyerId: stockMovements.buyerId,
+      tenantId: stockMovements.tenantId,
+      createdAt: stockMovements.createdAt,
+      createdBy: stockMovements.createdBy,
+      itemName: sql<string>`'Unknown'`,
+      unit: sql<string>`'Kg'`
+    })
       .from(stockMovements)
       .where(and(...whereConditions))
       .orderBy(desc(stockMovements.createdAt));
