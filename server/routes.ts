@@ -2718,39 +2718,64 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get purchase invoices for a buyer
+  // Get purchase invoices with date range filtering
   app.get("/api/purchase-invoices", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { buyerId } = req.query;
+      const { buyerId, startDate, endDate } = req.query;
 
-      if (!buyerId) {
-        return res.status(400).json({ message: "Buyer ID is required" });
+      if (buyerId) {
+        // Get invoices for specific buyer
+        const invoices = await storage.getPurchaseInvoicesWithDateRange(parseInt(buyerId), tenantId, startDate, endDate);
+        res.json(invoices);
+      } else {
+        // Get all invoices for tenant
+        const invoices = await storage.getAllPurchaseInvoicesWithDateRange(tenantId, startDate, endDate);
+        res.json(invoices);
       }
-
-      const invoices = await storage.getPurchaseInvoices(parseInt(buyerId), tenantId);
-      res.json(invoices);
     } catch (error) {
       console.error('Error fetching purchase invoices:', error);
       res.status(500).json({ message: 'Failed to fetch purchase invoices' });
     }
   });
 
-  // Get stock inventory for a buyer
+  // Get stock inventory with filtering
   app.get("/api/stock-inventory", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { buyerId } = req.query;
+      const { buyerId, includeMovements } = req.query;
 
-      if (!buyerId) {
-        return res.status(400).json({ message: "Buyer ID is required" });
+      if (buyerId) {
+        // Get inventory for specific buyer
+        const inventory = await storage.getStockInventory(parseInt(buyerId), tenantId);
+        res.json(inventory);
+      } else {
+        // Get all inventory for tenant
+        const inventory = await storage.getAllStockInventory(tenantId);
+        res.json(inventory);
       }
-
-      const inventory = await storage.getStockInventory(parseInt(buyerId), tenantId);
-      res.json(inventory);
     } catch (error) {
       console.error('Error fetching stock inventory:', error);
       res.status(500).json({ message: 'Failed to fetch stock inventory' });
+    }
+  });
+
+  // Get stock movements with date range
+  app.get("/api/stock-movements", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId, startDate, endDate, itemName } = req.query;
+
+      const movements = await storage.getStockMovementsWithDateRange(tenantId, {
+        buyerId: buyerId ? parseInt(buyerId) : undefined,
+        startDate,
+        endDate,
+        itemName
+      });
+      res.json(movements);
+    } catch (error) {
+      console.error('Error fetching stock movements:', error);
+      res.status(500).json({ message: 'Failed to fetch stock movements' });
     }
   });
 

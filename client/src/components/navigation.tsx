@@ -57,7 +57,9 @@ export function Navigation() {
     
     // Buyer/Trader Group
     { name: 'Buyer/Trader', type: 'group', icon: Building2, items: [
-      { name: 'Inventory In', href: '/inventory-in', icon: ClipboardList },
+      { name: 'Invoice Processing', href: '/inventory-in', icon: ClipboardList },
+      { name: 'Invoice Reports', href: '/invoice-reports', icon: FileText },
+      { name: 'Stock Reports', href: '/stock-reports', icon: Package },
     ]},
     
     // Bills Group

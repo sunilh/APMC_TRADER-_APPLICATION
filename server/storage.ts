@@ -11,7 +11,7 @@ import {
   type OcrExtractionLog, type InsertOcrExtractionLog, type Supplier, type InsertSupplier
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or } from "drizzle-orm";
+import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or, ilike } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -835,6 +835,120 @@ export class DatabaseStorage implements IStorage {
       .from(suppliers)
       .where(eq(suppliers.tenantId, tenantId))
       .orderBy(suppliers.name);
+  }
+
+  // Enhanced methods with date range filtering
+  async getPurchaseInvoicesWithDateRange(buyerId: number, tenantId: number, startDate?: string, endDate?: string): Promise<PurchaseInvoice[]> {
+    let query = db.select()
+      .from(purchaseInvoices)
+      .where(and(
+        eq(purchaseInvoices.buyerId, buyerId),
+        eq(purchaseInvoices.tenantId, tenantId)
+      ));
+
+    if (startDate) {
+      query = query.where(and(
+        eq(purchaseInvoices.buyerId, buyerId),
+        eq(purchaseInvoices.tenantId, tenantId),
+        gte(purchaseInvoices.invoiceDate, new Date(startDate))
+      ));
+    }
+
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      query = query.where(and(
+        eq(purchaseInvoices.buyerId, buyerId),
+        eq(purchaseInvoices.tenantId, tenantId),
+        startDate ? gte(purchaseInvoices.invoiceDate, new Date(startDate)) : undefined,
+        lte(purchaseInvoices.invoiceDate, endDateTime)
+      ).filter(Boolean));
+    }
+
+    return await query.orderBy(desc(purchaseInvoices.invoiceDate));
+  }
+
+  async getAllPurchaseInvoicesWithDateRange(tenantId: number, startDate?: string, endDate?: string): Promise<PurchaseInvoice[]> {
+    let whereConditions = [eq(purchaseInvoices.tenantId, tenantId)];
+
+    if (startDate) {
+      whereConditions.push(gte(purchaseInvoices.invoiceDate, new Date(startDate)));
+    }
+
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      whereConditions.push(lte(purchaseInvoices.invoiceDate, endDateTime));
+    }
+
+    return await db.select()
+      .from(purchaseInvoices)
+      .where(and(...whereConditions))
+      .orderBy(desc(purchaseInvoices.invoiceDate));
+  }
+
+  async getAllStockInventory(tenantId: number): Promise<StockInventory[]> {
+    return await db.select()
+      .from(stockInventory)
+      .where(eq(stockInventory.tenantId, tenantId))
+      .orderBy(stockInventory.itemName);
+  }
+
+  async getStockMovementsWithDateRange(tenantId: number, filters: {
+    buyerId?: number;
+    startDate?: string;
+    endDate?: string;
+    itemName?: string;
+  }): Promise<StockMovement[]> {
+    let whereConditions = [eq(stockMovements.tenantId, tenantId)];
+
+    if (filters.buyerId) {
+      whereConditions.push(eq(stockMovements.buyerId, filters.buyerId));
+    }
+
+    if (filters.startDate) {
+      whereConditions.push(gte(stockMovements.createdAt, new Date(filters.startDate)));
+    }
+
+    if (filters.endDate) {
+      const endDateTime = new Date(filters.endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      whereConditions.push(lte(stockMovements.createdAt, endDateTime));
+    }
+
+    if (filters.itemName) {
+      // Join with stock inventory to filter by item name
+      return await db.select({
+        id: stockMovements.id,
+        stockId: stockMovements.stockId,
+        movementType: stockMovements.movementType,
+        referenceType: stockMovements.referenceType,
+        referenceId: stockMovements.referenceId,
+        quantityChange: stockMovements.quantityChange,
+        balanceAfter: stockMovements.balanceAfter,
+        ratePerUnit: stockMovements.ratePerUnit,
+        totalValue: stockMovements.totalValue,
+        notes: stockMovements.notes,
+        buyerId: stockMovements.buyerId,
+        tenantId: stockMovements.tenantId,
+        createdAt: stockMovements.createdAt,
+        createdBy: stockMovements.createdBy,
+        itemName: stockInventory.itemName,
+        unit: stockInventory.unit
+      })
+      .from(stockMovements)
+      .innerJoin(stockInventory, eq(stockMovements.stockId, stockInventory.id))
+      .where(and(
+        ...whereConditions,
+        ilike(stockInventory.itemName, `%${filters.itemName}%`)
+      ))
+      .orderBy(desc(stockMovements.createdAt));
+    }
+
+    return await db.select()
+      .from(stockMovements)
+      .where(and(...whereConditions))
+      .orderBy(desc(stockMovements.createdAt));
   }
 
   async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
