@@ -53,7 +53,7 @@ export default function StockReports() {
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
-    buyerId: "",
+    buyerId: "all",
     itemName: ""
   });
 
@@ -69,7 +69,7 @@ export default function StockReports() {
     queryKey: ["/api/stock-inventory", appliedFilters.buyerId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (appliedFilters.buyerId) params.append('buyerId', appliedFilters.buyerId);
+      if (appliedFilters.buyerId && appliedFilters.buyerId !== "all") params.append('buyerId', appliedFilters.buyerId);
       
       const response = await fetch(`/api/stock-inventory?${params}`);
       if (!response.ok) throw new Error('Failed to fetch inventory');
@@ -82,7 +82,7 @@ export default function StockReports() {
     queryKey: ["/api/stock-movements", appliedFilters.buyerId, appliedFilters.startDate, appliedFilters.endDate, appliedFilters.itemName],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (appliedFilters.buyerId) params.append('buyerId', appliedFilters.buyerId);
+      if (appliedFilters.buyerId && appliedFilters.buyerId !== "all") params.append('buyerId', appliedFilters.buyerId);
       if (appliedFilters.startDate) params.append('startDate', appliedFilters.startDate);
       if (appliedFilters.endDate) params.append('endDate', appliedFilters.endDate);
       if (appliedFilters.itemName) params.append('itemName', appliedFilters.itemName);
@@ -98,7 +98,7 @@ export default function StockReports() {
   };
 
   const clearFilters = () => {
-    const emptyFilters = { startDate: "", endDate: "", buyerId: "", itemName: "" };
+    const emptyFilters = { startDate: "", endDate: "", buyerId: "all", itemName: "" };
     setFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
   };
@@ -203,7 +203,7 @@ export default function StockReports() {
                   <SelectValue placeholder="All Buyers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Buyers</SelectItem>
+                  <SelectItem value="all">All Buyers</SelectItem>
                   {buyers.map((buyer) => (
                     <SelectItem key={buyer.id} value={buyer.id.toString()}>
                       {buyer.companyName}

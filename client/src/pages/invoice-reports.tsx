@@ -36,7 +36,7 @@ export default function InvoiceReports() {
   const [filters, setFilters] = useState({
     startDate: "",
     endDate: "",
-    buyerId: ""
+    buyerId: "all"
   });
 
   const [appliedFilters, setAppliedFilters] = useState(filters);
@@ -51,7 +51,7 @@ export default function InvoiceReports() {
     queryKey: ["/api/purchase-invoices", appliedFilters.buyerId, appliedFilters.startDate, appliedFilters.endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (appliedFilters.buyerId) params.append('buyerId', appliedFilters.buyerId);
+      if (appliedFilters.buyerId && appliedFilters.buyerId !== "all") params.append('buyerId', appliedFilters.buyerId);
       if (appliedFilters.startDate) params.append('startDate', appliedFilters.startDate);
       if (appliedFilters.endDate) params.append('endDate', appliedFilters.endDate);
       
@@ -66,7 +66,7 @@ export default function InvoiceReports() {
   };
 
   const clearFilters = () => {
-    const emptyFilters = { startDate: "", endDate: "", buyerId: "" };
+    const emptyFilters = { startDate: "", endDate: "", buyerId: "all" };
     setFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
   };
@@ -148,7 +148,7 @@ export default function InvoiceReports() {
                   <SelectValue placeholder="All Buyers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Buyers</SelectItem>
+                  <SelectItem value="all">All Buyers</SelectItem>
                   {buyers.map((buyer) => (
                     <SelectItem key={buyer.id} value={buyer.id.toString()}>
                       {buyer.companyName}
