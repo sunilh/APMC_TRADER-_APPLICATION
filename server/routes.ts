@@ -2660,17 +2660,7 @@ export function registerRoutes(app: Express): Server {
       // Process OCR
       const ocrResult = await OCRService.processInvoiceImage(imagePath);
 
-      // Log OCR extraction for audit and improvement
-      await storage.createOcrExtractionLog({
-        originalImagePath: imagePath,
-        extractedText: ocrResult.extractedText,
-        extractedData: ocrResult.extractedData,
-        confidenceScore: ocrResult.confidence.toString(),
-        processingTimeMs: ocrResult.processingTime,
-        tenantId,
-        processedBy: req.user.id
-      });
-
+      // Return OCR results
       res.json(ocrResult);
     } catch (error) {
       console.error('OCR processing error:', error);
