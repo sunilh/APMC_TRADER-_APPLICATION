@@ -408,8 +408,9 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Implemented complete OCR system using open-source Tesseract.js for invoice text extraction
   - Created comprehensive inventory management with real-time stock updates and movement tracking
   - Added trilingual voice input support and camera functionality for mobile invoice scanning
-  - Enhanced navigation with "Inventory In" option under Operations menu for buyer companies
+  - Enhanced navigation with dedicated "Buyer/Trader" menu group containing inventory and related features
   - System properly reflects agricultural trading chain: Dalals sell to Traders, Traders sell to Buyers
+  - Created expandable menu structure to accommodate future buyer/trader features in organized fashion
 
 # User Preferences
 
