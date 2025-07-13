@@ -126,7 +126,7 @@ export default function InventoryIn() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('buyerId', form.buyerId);
+      // Remove buyerId requirement since it's not needed for OCR processing
       
       const response = await fetch('/api/ocr/process-invoice', {
         method: 'POST',
@@ -334,9 +334,9 @@ export default function InventoryIn() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Purchase from Dalals - Add Inventory</h1>
+            <h1 className="text-3xl font-bold">Dalal Invoice Management</h1>
             <p className="text-muted-foreground mt-2">
-              Select Dalal → Scan their invoice → Add inventory to your stock
+              Select Dalal → Scan their invoice → Process agricultural trading documents
             </p>
           </div>
           <BackToDashboard />
@@ -353,7 +353,7 @@ export default function InventoryIn() {
           <CardContent className="space-y-4">
             {/* Step 1: Select Dalal/Trader */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-3">Step 1: Select Dalal/Trader (Who you purchased from)</h3>
+              <h3 className="font-semibold text-blue-800 mb-3">Step 1: Select Dalal/Trader (Process their invoice)</h3>
               
               {/* Dalal Selection with Search and Create */}
               <div className="space-y-3">
@@ -377,40 +377,40 @@ export default function InventoryIn() {
                       <div className="space-y-4">
                         <div>
                           <Label>Dalal Name *</Label>
-                          <UnifiedInput
+                          <Input
                             type="text"
                             value={dalalForm.name}
-                            onChange={(value) => setDalalForm(prev => ({ ...prev, name: value }))}
+                            onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
                             placeholder="Enter dalal name"
                           />
                         </div>
                         
                         <div>
                           <Label>Contact Person</Label>
-                          <UnifiedInput
+                          <Input
                             type="text"
                             value={dalalForm.contactPerson}
-                            onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: value }))}
+                            onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
                             placeholder="Enter contact person name"
                           />
                         </div>
                         
                         <div>
                           <Label>Mobile Number</Label>
-                          <UnifiedInput
+                          <Input
                             type="text"
                             value={dalalForm.mobile}
-                            onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: value }))}
+                            onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
                             placeholder="Enter mobile number"
                           />
                         </div>
                         
                         <div>
                           <Label>Address</Label>
-                          <UnifiedInput
+                          <Input
                             type="text"
                             value={dalalForm.address}
-                            onChange={(value) => setDalalForm(prev => ({ ...prev, address: value }))}
+                            onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
                             placeholder="Enter address"
                           />
                         </div>
@@ -498,36 +498,37 @@ export default function InventoryIn() {
                   )}
                 </div>
                 
-                <UnifiedInput
+                <Input
                   type="text"
                   value={form.traderName}
-                  onChange={(value) => setForm(prev => ({ ...prev, traderName: value }))}
+                  onChange={(e) => setForm(prev => ({ ...prev, traderName: e.target.value }))}
                   placeholder="Selected dalal name will appear here"
                   className="bg-white"
                 />
               </div>
             </div>
 
-            {/* Step 2: Your Company Info */}
+            {/* Step 2: Invoice Details */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h3 className="font-semibold text-gray-800 mb-3">Step 2: Your Company (Buyer)</h3>
-              <div>
-                <Label>Select Your Company</Label>
-                <Select 
-                  value={form.buyerId} 
-                  onValueChange={(value) => setForm(prev => ({ ...prev, buyerId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose your company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buyers.map(buyer => (
-                      <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                        {buyer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <h3 className="font-semibold text-gray-800 mb-3">Step 2: Invoice Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Invoice Number</Label>
+                  <Input
+                    type="text"
+                    value={form.invoiceNumber}
+                    onChange={(e) => setForm(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+                    placeholder="Enter invoice number"
+                  />
+                </div>
+                <div>
+                  <Label>Invoice Date</Label>
+                  <Input
+                    type="date"
+                    value={form.invoiceDate}
+                    onChange={(e) => setForm(prev => ({ ...prev, invoiceDate: e.target.value }))}
+                  />
+                </div>
               </div>
             </div>
 
