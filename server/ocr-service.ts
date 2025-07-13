@@ -90,7 +90,8 @@ export class OCRService {
             savePath: this.PROCESSED_DIR,
             format: "png",
             width: 2000,
-            height: 2000
+            height: 2000,
+            quality: 75
           });
           
           const convertResult = await convert(1); // Convert first page
