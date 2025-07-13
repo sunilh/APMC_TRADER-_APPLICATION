@@ -176,7 +176,18 @@ export default function InventoryIn() {
   // Create dalal mutation
   const createDalalMutation = useMutation({
     mutationFn: async (dalalData: any) => {
-      return await apiRequest("POST", "/api/suppliers", dalalData);
+      // Remove empty fields that could cause database errors
+      const cleanData = {
+        name: dalalData.name,
+        contactPerson: dalalData.contactPerson || null,
+        mobile: dalalData.mobile || null,
+        address: dalalData.address || null,
+        email: dalalData.email || null,
+        gstNumber: dalalData.gstNumber || null,
+        panNumber: dalalData.panNumber || null,
+        isActive: true
+      };
+      return await apiRequest("POST", "/api/suppliers", cleanData);
     },
     onSuccess: (newSupplier: Supplier) => {
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });

@@ -619,7 +619,7 @@ export const ocrExtractionLogs = pgTable("ocr_extraction_logs", {
   dateIdx: index("ocr_log_date_idx").on(table.processedAt),
 }));
 
-// Trader master for auto-suggestions (buyer-side view of traders)
+// Trader master for auto-suggestions (dalal/trader records)
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -635,7 +635,7 @@ export const suppliers = pgTable("suppliers", {
   isActive: boolean("is_active").default(true),
   totalPurchases: decimal("total_purchases", { precision: 15, scale: 2 }).default("0"),
   lastPurchaseDate: timestamp("last_purchase_date"),
-  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  buyerId: integer("buyer_id").references(() => buyers.id), // Optional field
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
