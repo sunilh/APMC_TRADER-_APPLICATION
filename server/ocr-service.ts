@@ -183,20 +183,22 @@ export class OCRService {
 
     console.log('Parsing OCR text with', lines.length, 'lines');
 
-    // Check if this looks like a screenshot of web interface
-    const interfaceIndicators = [
-      'Item Name', 'Quantity', 'Unit', 'Rate', 'Amount', 'Action',
-      'mm/dd/yyyy', 'Select buyer', 'Add Item', 'Dashboard',
-      'APMC', 'Trader', 'Agricultural', 'Market', 'VIRAJ', 'Admin'
+    // Check if this looks like a screenshot of web interface (more specific detection)
+    const webInterfaceIndicators = [
+      'Select buyer', 'Add Item', 'mm/dd/yyyy', 'Dashboard',
+      'VIRAJ', 'Admin', 'English', 'Operations', 'Bills', 'Reports'
     ];
     
-    const interfaceMatches = lines.filter(line => 
-      interfaceIndicators.some(indicator => 
+    const tableHeaderPattern = /^(Item Name|Quantity|Unit|Rate|Amount|Action)$/i;
+    
+    const webInterfaceMatches = lines.filter(line => 
+      webInterfaceIndicators.some(indicator => 
         line.trim().toLowerCase().includes(indicator.toLowerCase())
-      )
+      ) || tableHeaderPattern.test(line.trim())
     ).length;
     
-    if (interfaceMatches >= 3) {
+    // Only flag as screenshot if we have clear web interface elements
+    if (webInterfaceMatches >= 4) {
       throw new Error(
         'ERROR: You uploaded a screenshot of the web interface. ' +
         'Please upload the actual PDF invoice from your supplier/dalal instead. ' +
