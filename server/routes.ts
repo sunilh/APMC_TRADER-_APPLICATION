@@ -2653,11 +2653,6 @@ export function registerRoutes(app: Express): Server {
       }
 
       const tenantId = req.user.tenantId;
-      const buyerId = parseInt(req.body.buyerId);
-
-      if (!buyerId) {
-        return res.status(400).json({ message: "Buyer ID is required" });
-      }
 
       // Save uploaded file
       const imagePath = await OCRService.saveUploadedFile(req.file, tenantId);
