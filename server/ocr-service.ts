@@ -189,11 +189,12 @@ export class OCRService {
       const line = lines[i];
       const lowerLine = line.toLowerCase();
 
-      // Extract invoice number
-      if (lowerLine.includes('invoice') && lowerLine.includes('no')) {
-        const invoiceMatch = line.match(/(?:invoice\s*(?:no|number|#)?[:\s]*)([\w\-\/]+)/i);
-        if (invoiceMatch) {
+      // Extract invoice number - enhanced patterns for PDF invoices
+      if (lowerLine.includes('invoice') || lowerLine.includes('inv')) {
+        const invoiceMatch = line.match(/(?:inv[oice]*[\s\-]*(?:no|number)?[:\s]*)([\w\-\/]+)/i);
+        if (invoiceMatch && invoiceMatch[1].length >= 3) {
           extractedData.invoiceNumber = invoiceMatch[1];
+          console.log('Found invoice number:', extractedData.invoiceNumber);
         }
       }
 
@@ -205,10 +206,20 @@ export class OCRService {
         }
       }
 
-      // Extract supplier name (usually at top or after "From:")
-      if (i < 5 && line.length > 3 && !lowerLine.includes('invoice') && !lowerLine.includes('date')) {
+      // Extract seller name (SELLER DETAILS section)
+      if (lowerLine.includes('seller details') || lowerLine.includes('seller:')) {
+        // Next line is likely the seller name
+        if (i + 1 < lines.length && !extractedData.traderName) {
+          extractedData.traderName = lines[i + 1];
+          console.log('Found seller name:', extractedData.traderName);
+        }
+      }
+      
+      // Extract supplier name from early lines if not found
+      if (i < 8 && line.length > 3 && !lowerLine.includes('invoice') && !lowerLine.includes('date') && !lowerLine.includes('buyer')) {
         if (!extractedData.traderName && this.isLikelyBusinessName(line)) {
           extractedData.traderName = line;
+          console.log('Found business name:', extractedData.traderName);
         }
       }
 
@@ -225,11 +236,24 @@ export class OCRService {
         extractedData.traderAddress = line;
       }
 
-      // Extract items table
+      // Extract items from table format (LOT0013, ARABICA A, etc.)
       if (this.isLikelyItemRow(line)) {
         const item = this.parseItemRow(line);
         if (item) {
           extractedData.items.push(item);
+          console.log('Found item:', item);
+        }
+      }
+      
+      // Extract HSN codes for items
+      if (lowerLine.includes('hsn') && i + 1 < lines.length) {
+        const hsnMatch = line.match(/(\d{6,8})/);
+        if (hsnMatch && extractedData.items.length > 0) {
+          // Add HSN to last item if not already present
+          const lastItem = extractedData.items[extractedData.items.length - 1];
+          if (!lastItem.hsnCode) {
+            lastItem.hsnCode = hsnMatch[1];
+          }
         }
       }
 
