@@ -488,7 +488,12 @@ export default function InventoryIn() {
                 <Label>Trader/Dalal Name *</Label>
                 <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={!form.buyerId}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={!form.buyerId}
+                      className="bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700 font-medium"
+                    >
                       <Plus className="h-4 w-4 mr-1" />
                       Create Dalal
                     </Button>
