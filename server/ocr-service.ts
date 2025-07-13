@@ -183,6 +183,12 @@ export class OCRService {
 
     console.log('Parsing OCR text with', lines.length, 'lines');
 
+    // Debug: Log all extracted lines
+    console.log('All extracted lines:');
+    lines.forEach((line, index) => {
+      console.log(`Line ${index + 1}: "${line}"`);
+    });
+
     // Check if this looks like a screenshot of web interface (more specific detection)
     const webInterfaceIndicators = [
       'Select buyer', 'Add Item', 'mm/dd/yyyy', 'Dashboard',
@@ -195,16 +201,19 @@ export class OCRService {
       webInterfaceIndicators.some(indicator => 
         line.trim().toLowerCase().includes(indicator.toLowerCase())
       ) || tableHeaderPattern.test(line.trim())
-    ).length;
+    );
     
-    // Only flag as screenshot if we have clear web interface elements
-    if (webInterfaceMatches >= 4) {
-      throw new Error(
-        'ERROR: You uploaded a screenshot of the web interface. ' +
-        'Please upload the actual PDF invoice from your supplier/dalal instead. ' +
-        'The OCR system needs the original invoice document, not a screenshot of this application.'
-      );
-    }
+    console.log('Web interface matches found:', webInterfaceMatches);
+    console.log('Total web interface matches:', webInterfaceMatches.length);
+    
+    // Temporarily disable screenshot detection for debugging
+    // if (webInterfaceMatches.length >= 4) {
+    //   throw new Error(
+    //     'ERROR: You uploaded a screenshot of the web interface. ' +
+    //     'Please upload the actual PDF invoice from your supplier/dalal instead. ' +
+    //     'The OCR system needs the original invoice document, not a screenshot of this application.'
+    //   );
+    // }
 
     // Filter out obvious interface elements
     const filteredLines = lines.filter(line => {
