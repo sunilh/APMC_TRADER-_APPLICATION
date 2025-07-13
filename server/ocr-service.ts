@@ -574,10 +574,12 @@ export class OCRService {
     
     const result = {
       itemName: itemName,
+      itemDescription: itemName,
       quantity: quantity,
-      unit: 'kg',
+      unit: 'Kg',
       ratePerUnit: ratePerUnit,
-      amount: amount
+      amount: amount,
+      hsnCode: '09042110'
     };
     
     console.log('Parsed tax invoice item result:', result);
