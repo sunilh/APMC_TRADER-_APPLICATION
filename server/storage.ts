@@ -789,13 +789,17 @@ export class DatabaseStorage implements IStorage {
         // Create new stock entry
         await db.insert(stockInventory).values({
           itemName: item.itemName,
-          itemDescription: item.itemDescription,
+          itemDescription: item.itemDescription || '',
           currentQuantity: item.quantity,
           availableQuantity: item.quantity,
+          reservedQuantity: '0',
           unit: item.unit,
           avgPurchaseRate: item.ratePerUnit,
           lastPurchaseRate: item.ratePerUnit,
           lastPurchaseDate: new Date(),
+          minimumStockLevel: '0',
+          hsnCode: item.hsnCode || '',
+          isActive: true,
           buyerId,
           tenantId
         });
