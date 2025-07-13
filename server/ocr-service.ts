@@ -183,6 +183,27 @@ export class OCRService {
 
     console.log('Parsing OCR text with', lines.length, 'lines');
 
+    // Check if this looks like a screenshot of web interface
+    const interfaceIndicators = [
+      'Item Name', 'Quantity', 'Unit', 'Rate', 'Amount', 'Action',
+      'mm/dd/yyyy', 'Select buyer', 'Add Item', 'Dashboard',
+      'APMC', 'Trader', 'Agricultural', 'Market', 'VIRAJ', 'Admin'
+    ];
+    
+    const interfaceMatches = lines.filter(line => 
+      interfaceIndicators.some(indicator => 
+        line.trim().toLowerCase().includes(indicator.toLowerCase())
+      )
+    ).length;
+    
+    if (interfaceMatches >= 3) {
+      throw new Error(
+        'ERROR: You uploaded a screenshot of the web interface. ' +
+        'Please upload the actual PDF invoice from your supplier/dalal instead. ' +
+        'The OCR system needs the original invoice document, not a screenshot of this application.'
+      );
+    }
+
     // Filter out obvious interface elements
     const filteredLines = lines.filter(line => {
       const skipPatterns = [
