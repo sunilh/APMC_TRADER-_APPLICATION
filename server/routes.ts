@@ -38,6 +38,7 @@ import {
   expenseCategories,
   expenses,
   purchaseInvoices,
+  stockInventory,
 } from "@shared/schema";
 import { getSimpleFinalAccounts } from "./finalAccountsSimple";
 import { db } from "./db";
@@ -2776,6 +2777,39 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching stock inventory:', error);
       res.status(500).json({ message: 'Failed to fetch stock inventory' });
+    }
+  });
+
+  // Update minimum stock level for alert system
+  app.put("/api/stock-inventory/:stockId/min-stock", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const stockId = parseInt(req.params.stockId);
+      const { minimumStockLevel } = req.body;
+
+      // Validate minimum stock level
+      if (!minimumStockLevel || parseFloat(minimumStockLevel) < 0) {
+        return res.status(400).json({ message: "Invalid minimum stock level" });
+      }
+
+      // Update minimum stock level
+      const updated = await db.update(stockInventory)
+        .set({ 
+          minimumStockLevel: minimumStockLevel.toString(),
+          lastUpdated: new Date()
+        })
+        .where(and(eq(stockInventory.id, stockId), eq(stockInventory.tenantId, tenantId)))
+        .returning();
+
+      if (updated.length === 0) {
+        return res.status(404).json({ message: "Stock item not found" });
+      }
+
+      await createAuditLog(req, "update", "stock_inventory", stockId, null, { minimumStockLevel });
+      res.json({ message: "Minimum stock level updated successfully", stock: updated[0] });
+    } catch (error) {
+      console.error('Error updating minimum stock level:', error);
+      res.status(500).json({ message: 'Failed to update minimum stock level' });
     }
   });
 

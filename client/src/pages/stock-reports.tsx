@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +60,11 @@ export default function StockReports() {
   });
 
   const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [editingStockId, setEditingStockId] = useState<number | null>(null);
+  const [editingMinStock, setEditingMinStock] = useState("");
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Get buyers for filter dropdown
   const { data: buyers = [] } = useQuery<Buyer[]>({
@@ -101,6 +108,43 @@ export default function StockReports() {
     const emptyFilters = { startDate: "", endDate: "", buyerId: "all", itemName: "" };
     setFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
+  };
+
+  // Mutation to update minimum stock level
+  const updateMinStockMutation = useMutation({
+    mutationFn: async ({ stockId, minStock }: { stockId: number, minStock: string }) => {
+      return await apiRequest("PUT", `/api/stock-inventory/${stockId}/min-stock`, { minimumStockLevel: minStock });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stock-inventory"] });
+      toast({
+        title: "Stock Alert Updated",
+        description: "Minimum stock level has been updated successfully.",
+      });
+      setEditingStockId(null);
+      setEditingMinStock("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update minimum stock level.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const startEditingMinStock = (stockId: number, currentMinStock: string) => {
+    setEditingStockId(stockId);
+    setEditingMinStock(currentMinStock);
+  };
+
+  const handleUpdateMinStock = async (stockId: number) => {
+    if (editingMinStock && parseFloat(editingMinStock) >= 0) {
+      updateMinStockMutation.mutate({ stockId, minStock: editingMinStock });
+    } else {
+      setEditingStockId(null);
+      setEditingMinStock("");
+    }
   };
 
   const downloadInventoryCSV = () => {
@@ -315,7 +359,9 @@ export default function StockReports() {
                         <TableHead>Unit</TableHead>
                         <TableHead className="text-right">Avg Rate</TableHead>
                         <TableHead className="text-right">Stock Value</TableHead>
+                        <TableHead className="text-right">Min Stock</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -332,12 +378,41 @@ export default function StockReports() {
                             <TableCell>{item.unit}</TableCell>
                             <TableCell className="text-right">₹{parseFloat(item.avgPurchaseRate || '0').toLocaleString('en-IN')}</TableCell>
                             <TableCell className="text-right">₹{stockValue.toLocaleString('en-IN')}</TableCell>
+                            <TableCell className="text-right">
+                              {editingStockId === item.id ? (
+                                <Input
+                                  type="number"
+                                  value={editingMinStock}
+                                  onChange={(e) => setEditingMinStock(e.target.value)}
+                                  className="w-20 h-8"
+                                  onBlur={() => handleUpdateMinStock(item.id)}
+                                  onKeyPress={(e) => e.key === 'Enter' && handleUpdateMinStock(item.id)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                                  onClick={() => startEditingMinStock(item.id, item.minimumStockLevel)}
+                                >
+                                  {parseFloat(item.minimumStockLevel).toLocaleString()}
+                                </span>
+                              )}
+                            </TableCell>
                             <TableCell>
                               {isLowStock ? (
                                 <Badge variant="destructive">Low Stock</Badge>
                               ) : (
                                 <Badge variant="secondary">Good</Badge>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => startEditingMinStock(item.id, item.minimumStockLevel)}
+                              >
+                                Edit Alert
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
