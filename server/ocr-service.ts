@@ -2,6 +2,7 @@ import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import path from 'path';
+import pdf2pic from 'pdf2pic';
 
 export interface ExtractedInvoiceData {
   invoiceNumber?: string;
@@ -48,24 +49,87 @@ export class OCRService {
   }
 
   /**
-   * Process uploaded invoice image with OCR
+   * Process uploaded invoice image or PDF with OCR
    */
-  static async processInvoiceImage(imagePath: string): Promise<OCRResult> {
+  static async processInvoiceImage(filePath: string): Promise<OCRResult> {
     const startTime = Date.now();
     
     try {
       await this.initializeDirectories();
 
-      // Preprocess image for better OCR accuracy
-      const processedImagePath = await this.preprocessImage(imagePath);
+      let extractedText = '';
+      let confidence = 0;
+      
+      const fileExt = path.extname(filePath).toLowerCase();
+      
+      if (fileExt === '.pdf') {
+        // Handle PDF files
+        console.log('Processing PDF file...');
+        
+        // First try to extract text directly from PDF
+        try {
+          const dataBuffer = await fs.readFile(filePath);
+          const pdfParse = (await import('pdf-parse')).default;
+          const pdfData = await pdfParse(dataBuffer);
+          
+          if (pdfData.text && pdfData.text.trim().length > 50) {
+            // PDF has extractable text
+            extractedText = pdfData.text;
+            confidence = 95; // High confidence for direct text extraction
+            console.log('Successfully extracted text directly from PDF');
+          } else {
+            throw new Error('PDF has no extractable text, will use OCR');
+          }
+        } catch (textError) {
+          console.log('PDF text extraction failed, converting to image for OCR...');
+          
+          // Convert PDF to image and use OCR
+          const convert = pdf2pic.fromPath(filePath, {
+            density: 300,           // Output resolution (DPI)
+            saveFilename: "page",
+            savePath: this.PROCESSED_DIR,
+            format: "png",
+            width: 2000,
+            height: 2000
+          });
+          
+          const convertResult = await convert(1); // Convert first page
+          const imagePath = convertResult.path;
+          
+          // Preprocess the converted image
+          const processedImagePath = await this.preprocessImage(imagePath);
+          
+          // Extract text using Tesseract
+          const ocrResult = await Tesseract.recognize(processedImagePath, 'eng', {
+            logger: m => console.log(`PDF OCR Progress: ${m.status} ${Math.round(m.progress * 100)}%`)
+          });
+          
+          extractedText = ocrResult.data.text;
+          confidence = ocrResult.data.confidence;
+          
+          // Clean up temporary image files
+          try {
+            await fs.unlink(imagePath);
+            await fs.unlink(processedImagePath);
+          } catch (cleanupError) {
+            console.warn('Failed to clean up temporary files:', cleanupError);
+          }
+        }
+      } else {
+        // Handle image files
+        console.log('Processing image file...');
+        
+        // Preprocess image for better OCR accuracy
+        const processedImagePath = await this.preprocessImage(filePath);
 
-      // Extract text using Tesseract
-      const ocrResult = await Tesseract.recognize(processedImagePath, 'eng', {
-        logger: m => console.log(`OCR Progress: ${m.status} ${Math.round(m.progress * 100)}%`)
-      });
+        // Extract text using Tesseract
+        const ocrResult = await Tesseract.recognize(processedImagePath, 'eng', {
+          logger: m => console.log(`OCR Progress: ${m.status} ${Math.round(m.progress * 100)}%`)
+        });
 
-      const extractedText = ocrResult.data.text;
-      const confidence = ocrResult.data.confidence;
+        extractedText = ocrResult.data.text;
+        confidence = ocrResult.data.confidence;
+      }
 
       // Parse extracted text into structured data
       const extractedData = this.parseInvoiceText(extractedText, confidence);

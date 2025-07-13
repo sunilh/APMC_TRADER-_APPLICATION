@@ -239,8 +239,8 @@ export default function InventoryIn() {
       setOcrProcessing(false);
     } else if (!form.traderName) {
       toast({ 
-        title: "Select Company", 
-        description: "Please select your company before uploading trader invoice",
+        title: "Select Dalal", 
+        description: "Please select a dalal first to process their invoice",
         variant: "destructive" 
       });
     }
@@ -567,7 +567,7 @@ export default function InventoryIn() {
                   ) : (
                     <Upload className="h-4 w-4 mr-2" />
                   )}
-                  Upload Dalal's Invoice
+                  Upload Invoice (Image/PDF)
                 </Button>
               </div>
               
@@ -589,7 +589,7 @@ export default function InventoryIn() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.pdf,application/pdf"
               onChange={handleFileUpload}
               className="hidden"
             />
