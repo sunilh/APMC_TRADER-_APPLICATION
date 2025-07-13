@@ -181,6 +181,8 @@ export class OCRService {
       confidence
     };
 
+    console.log('Parsing OCR text with', lines.length, 'lines');
+
     let currentSection = 'header';
     
     for (let i = 0; i < lines.length; i++) {
