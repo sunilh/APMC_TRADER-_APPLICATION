@@ -2708,7 +2708,7 @@ export function registerRoutes(app: Express): Server {
         createdBy: req.user.id
       }));
 
-      await storage.createStockMovements(stockMovements);
+      // await storage.createStockMovements(stockMovements); // Disabled for now
 
       await createAuditLog(req, "create", "purchase_invoice", invoice.id, null, invoice);
       res.status(201).json({ message: "Invoice saved and stock updated", invoice });

@@ -750,7 +750,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(purchaseInvoices.createdAt));
   }
 
-  async createPurchaseInvoiceItems(items: InsertPurchaseInvoiceItem[]): Promise<PurchaseInvoiceItem[]> {
+  async createPurchaseInvoiceItems(items: any[]): Promise<any[]> {
     return await db.insert(purchaseInvoiceItems).values(items).returning();
   }
 
