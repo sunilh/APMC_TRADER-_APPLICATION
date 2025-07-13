@@ -881,7 +881,19 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(lte(purchaseInvoices.invoiceDate, endDateTime));
     }
 
-    return await db.select()
+    return await db.select({
+      id: purchaseInvoices.id,
+      invoiceNumber: purchaseInvoices.invoiceNumber,
+      invoiceDate: purchaseInvoices.invoiceDate,
+      traderName: purchaseInvoices.traderName,
+      traderContact: purchaseInvoices.traderContact,
+      itemsTotal: purchaseInvoices.totalAmount,
+      taxAmount: purchaseInvoices.taxAmount,
+      netAmount: purchaseInvoices.netAmount,
+      buyerId: purchaseInvoices.buyerId,
+      notes: purchaseInvoices.notes,
+      createdAt: purchaseInvoices.createdAt
+    })
       .from(purchaseInvoices)
       .where(and(...whereConditions))
       .orderBy(desc(purchaseInvoices.invoiceDate));
