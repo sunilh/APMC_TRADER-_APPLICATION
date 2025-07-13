@@ -55,6 +55,7 @@ interface InvoiceItem {
 }
 
 interface InvoiceForm {
+  buyerId?: number;
   invoiceNumber: string;
   invoiceDate: string;
   traderName: string;
@@ -86,6 +87,7 @@ export default function InventoryIn() {
 
   // Form state
   const [form, setForm] = useState<InvoiceForm>({
+    buyerId: 10, // Default buyer ID for dalal invoices
     invoiceNumber: "",
     invoiceDate: new Date().toISOString().split('T')[0],
     traderName: "",
@@ -302,14 +304,21 @@ export default function InventoryIn() {
   const calculateTotals = () => {
     const itemsTotal = form.items.reduce((sum, item) => sum + parseFloat(item.amount || '0'), 0);
     const tax = parseFloat(form.taxAmount || '0');
+    
+    // Use the netAmount from OCR if available (from invoice), otherwise calculate
+    const netTotal = form.netAmount && parseFloat(form.netAmount) > 0 
+      ? parseFloat(form.netAmount) 
+      : itemsTotal + tax;
+    
     return {
       itemsTotal: itemsTotal.toFixed(2),
-      netTotal: (itemsTotal + tax).toFixed(2)
+      netTotal: netTotal.toFixed(2)
     };
   };
 
   const resetForm = () => {
     setForm({
+      buyerId: 10, // Default buyer ID for dalal invoices
       invoiceNumber: "",
       invoiceDate: new Date().toISOString().split('T')[0],
       traderName: "",
@@ -326,13 +335,19 @@ export default function InventoryIn() {
   };
 
   const handleSave = () => {
-    if (!form.buyerId || !form.invoiceNumber || !form.traderName || form.items.length === 0) {
+    // More relaxed validation - only check essential fields
+    if (!form.invoiceNumber || !form.traderName || form.items.length === 0) {
       toast({
-        title: "Validation Error",
-        description: "Please fill company, trader name, invoice number, and add at least one item",
+        title: "Validation Error", 
+        description: "Please fill invoice number, trader name, and add at least one item",
         variant: "destructive"
       });
       return;
+    }
+    
+    // Ensure buyerId is set to 10 if not already set (default buyer for dalal invoices)
+    if (!form.buyerId) {
+      setForm(prev => ({ ...prev, buyerId: 10 }));
     }
 
     const totals = calculateTotals();
