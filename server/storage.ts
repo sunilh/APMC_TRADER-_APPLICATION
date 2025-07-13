@@ -134,6 +134,7 @@ export interface IStorage {
   createStockMovements(movements: any[]): Promise<any[]>;
   createOcrExtractionLog(log: any): Promise<any>;
   getSuppliers(buyerId: number, tenantId: number): Promise<any[]>;
+  getAllSuppliers(tenantId: number): Promise<any[]>;
   createSupplier(supplier: any): Promise<any>;
 
   sessionStore: any;
@@ -807,6 +808,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(suppliers)
       .where(and(eq(suppliers.buyerId, buyerId), eq(suppliers.tenantId, tenantId)))
+      .orderBy(suppliers.name);
+  }
+
+  async getAllSuppliers(tenantId: number): Promise<Supplier[]> {
+    return await db.select()
+      .from(suppliers)
+      .where(eq(suppliers.tenantId, tenantId))
       .orderBy(suppliers.name);
   }
 

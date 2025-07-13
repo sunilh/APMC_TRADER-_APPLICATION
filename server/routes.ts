@@ -2769,17 +2769,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get suppliers for a buyer
+  // Get all suppliers for tenant
   app.get("/api/suppliers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { buyerId } = req.query;
-
-      if (!buyerId) {
-        return res.status(400).json({ message: "Buyer ID is required" });
-      }
-
-      const suppliers = await storage.getSuppliers(parseInt(buyerId), tenantId);
+      
+      const suppliers = await storage.getAllSuppliers(tenantId);
       res.json(suppliers);
     } catch (error) {
       console.error('Error fetching suppliers:', error);

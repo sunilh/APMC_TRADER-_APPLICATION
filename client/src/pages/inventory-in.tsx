@@ -82,10 +82,7 @@ export default function InventoryIn() {
     name: "",
     contactPerson: "",
     mobile: "",
-    email: "",
     address: "",
-    gstNumber: "",
-    panNumber: "",
     buyerId: ""
   });
 
@@ -179,26 +176,25 @@ export default function InventoryIn() {
   // Create dalal mutation
   const createDalalMutation = useMutation({
     mutationFn: async (dalalData: any) => {
-      return await apiRequest("POST", "/api/suppliers", {
-        ...dalalData,
-        buyerId: parseInt(form.buyerId)
-      });
+      return await apiRequest("POST", "/api/suppliers", dalalData);
     },
     onSuccess: (newSupplier: Supplier) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/suppliers", form.buyerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
       setCreateDalalOpen(false);
       setDalalForm({
         name: "",
         contactPerson: "",
         mobile: "",
-        email: "",
         address: "",
-        gstNumber: "",
-        panNumber: "",
         buyerId: ""
       });
       // Auto-select the new dalal in the form
-      setForm(prev => ({ ...prev, traderName: newSupplier.name }));
+      setForm(prev => ({ 
+        ...prev, 
+        traderName: newSupplier.name,
+        traderContact: newSupplier.mobile || '',
+        traderAddress: newSupplier.address || ''
+      }));
       toast({ 
         title: "Success", 
         description: "Dalal created successfully" 
@@ -426,9 +422,8 @@ export default function InventoryIn() {
                                 toast({ title: "Error", description: "Dalal name is required", variant: "destructive" });
                                 return;
                               }
-                              // Set a default buyer ID for now - this should come from auth context
-                              setDalalForm(prev => ({ ...prev, buyerId: "9" }));
-                              createDalalMutation.mutate({...dalalForm, buyerId: 9});
+                              
+                              createDalalMutation.mutate(dalalForm);
                             }}
                             disabled={createDalalMutation.isPending}
                             className="flex-1"
