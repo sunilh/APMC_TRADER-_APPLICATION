@@ -723,8 +723,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Buyer-side inventory management implementation
-  async createPurchaseInvoice(invoice: InsertPurchaseInvoice): Promise<PurchaseInvoice> {
-    const [created] = await db.insert(purchaseInvoices).values(invoice).returning();
+  async createPurchaseInvoice(invoice: any): Promise<PurchaseInvoice> {
+    const [created] = await db.insert(purchaseInvoices).values({
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: new Date(invoice.invoiceDate),
+      traderName: invoice.traderName,
+      traderContact: invoice.traderContact || '',
+      traderAddress: invoice.traderAddress || '',
+      totalAmount: invoice.totalAmount || '0',
+      taxAmount: invoice.taxAmount || '0',
+      netAmount: invoice.netAmount || '0',
+      notes: invoice.notes || '',
+      buyerId: invoice.buyerId || 10,
+      tenantId: invoice.tenantId,
+      paymentStatus: 'pending',
+      ocrProcessed: true,
+      ocrConfidence: 95.0
+    }).returning();
     return created;
   }
 
