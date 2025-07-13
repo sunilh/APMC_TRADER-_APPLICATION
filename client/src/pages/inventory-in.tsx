@@ -64,7 +64,6 @@ interface InvoiceForm {
   taxAmount: string;
   netAmount: string;
   notes?: string;
-  buyerId: string;
   items: InvoiceItem[];
 }
 
@@ -82,8 +81,7 @@ export default function InventoryIn() {
     name: "",
     contactPerson: "",
     mobile: "",
-    address: "",
-    buyerId: ""
+    address: ""
   });
 
   // Form state
@@ -97,7 +95,6 @@ export default function InventoryIn() {
     taxAmount: "0",
     netAmount: "",
     notes: "",
-    buyerId: "",
     items: []
   });
 
@@ -196,8 +193,7 @@ export default function InventoryIn() {
         name: "",
         contactPerson: "",
         mobile: "",
-        address: "",
-        buyerId: ""
+        address: ""
       });
       // Auto-select the new dalal in the form
       setForm(prev => ({ 
@@ -237,11 +233,11 @@ export default function InventoryIn() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && form.buyerId) {
+    if (file && form.traderName) {
       setOcrProcessing(true);
       ocrMutation.mutate(file);
       setOcrProcessing(false);
-    } else if (!form.buyerId) {
+    } else if (!form.traderName) {
       toast({ 
         title: "Select Company", 
         description: "Please select your company before uploading trader invoice",
@@ -308,7 +304,6 @@ export default function InventoryIn() {
       taxAmount: "0",
       netAmount: "",
       notes: "",
-      buyerId: "",
       items: []
     });
     setShowOcrResults(false);
@@ -480,8 +475,7 @@ export default function InventoryIn() {
                               ...prev, 
                               traderName: supplier.name,
                               traderContact: supplier.mobile || '',
-                              traderAddress: supplier.address || '',
-                              buyerId: supplier.buyerId.toString()
+                              traderAddress: supplier.address || ''
                             }));
                             setDalalSearchTerm("");
                           }}
