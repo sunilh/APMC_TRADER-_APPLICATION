@@ -401,6 +401,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Final Accounts uses recorded sales transactions from accounting_ledger table
   - Added matching accounting entries for today's actual lot sales to align both calculations
   - Both systems now show consistent revenue figures: Dashboard ₹3,50,000 matches Final Accounts ₹5,00,000 + ₹16,750 commission
+- July 13, 2025: Completed comprehensive buyer-side inventory OCR system with corrected business model understanding
+  - Fixed fundamental business model misunderstanding: system serves Dalals → Traders → Buyers (not Dalals → Buyers)
+  - Corrected buyer-side inventory to track purchases FROM Traders (APMC operators), not from Dalals
+  - Updated all database schema fields from "dalal_supplier" to "trader" for accurate business representation
+  - Implemented complete OCR system using open-source Tesseract.js for invoice text extraction
+  - Created comprehensive inventory management with real-time stock updates and movement tracking
+  - Added trilingual voice input support and camera functionality for mobile invoice scanning
+  - Enhanced navigation with "Inventory In" option under Operations menu for buyer companies
+  - System properly reflects agricultural trading chain: Dalals sell to Traders, Traders sell to Buyers
 
 # User Preferences
 

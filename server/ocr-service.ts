@@ -6,9 +6,9 @@ import path from 'path';
 export interface ExtractedInvoiceData {
   invoiceNumber?: string;
   invoiceDate?: string;
-  dalalSupplierName?: string;
-  dalalContact?: string;
-  dalalAddress?: string;
+  traderName?: string;
+  traderContact?: string;
+  traderAddress?: string;
   items: Array<{
     itemName: string;
     quantity: string;
@@ -140,8 +140,8 @@ export class OCRService {
 
       // Extract supplier name (usually at top or after "From:")
       if (i < 5 && line.length > 3 && !lowerLine.includes('invoice') && !lowerLine.includes('date')) {
-        if (!extractedData.dalalSupplierName && this.isLikelyBusinessName(line)) {
-          extractedData.dalalSupplierName = line;
+        if (!extractedData.traderName && this.isLikelyBusinessName(line)) {
+          extractedData.traderName = line;
         }
       }
 
@@ -149,13 +149,13 @@ export class OCRService {
       if (lowerLine.includes('mobile') || lowerLine.includes('phone') || lowerLine.includes('contact')) {
         const phoneMatch = line.match(/(\d{10,12})/);
         if (phoneMatch) {
-          extractedData.dalalContact = phoneMatch[1];
+          extractedData.traderContact = phoneMatch[1];
         }
       }
 
       // Extract address (lines with common address words)
-      if (this.isLikelyAddress(lowerLine) && !extractedData.dalalAddress) {
-        extractedData.dalalAddress = line;
+      if (this.isLikelyAddress(lowerLine) && !extractedData.traderAddress) {
+        extractedData.traderAddress = line;
       }
 
       // Extract items table

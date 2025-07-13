@@ -49,9 +49,9 @@ interface InvoiceItem {
 interface InvoiceForm {
   invoiceNumber: string;
   invoiceDate: string;
-  dalalSupplierName: string;
-  dalalContact?: string;
-  dalalAddress?: string;
+  traderName: string;
+  traderContact?: string;
+  traderAddress?: string;
   totalAmount: string;
   taxAmount: string;
   netAmount: string;
@@ -69,9 +69,9 @@ export default function InventoryIn() {
   const [form, setForm] = useState<InvoiceForm>({
     invoiceNumber: "",
     invoiceDate: new Date().toISOString().split('T')[0],
-    dalalSupplierName: "",
-    dalalContact: "",
-    dalalAddress: "",
+    traderName: "",
+    traderContact: "",
+    traderAddress: "",
     totalAmount: "",
     taxAmount: "0",
     netAmount: "",
@@ -151,9 +151,9 @@ export default function InventoryIn() {
       ...prev,
       invoiceNumber: data.invoiceNumber || prev.invoiceNumber,
       invoiceDate: data.invoiceDate || prev.invoiceDate,
-      dalalSupplierName: data.dalalSupplierName || prev.dalalSupplierName,
-      dalalContact: data.dalalContact || prev.dalalContact,
-      dalalAddress: data.dalalAddress || prev.dalalAddress,
+      traderName: data.traderName || prev.traderName,
+      traderContact: data.traderContact || prev.traderContact,
+      traderAddress: data.traderAddress || prev.traderAddress,
       totalAmount: data.totalAmount || prev.totalAmount,
       taxAmount: data.taxAmount || prev.taxAmount,
       netAmount: data.netAmount || prev.netAmount,
@@ -169,8 +169,8 @@ export default function InventoryIn() {
       setOcrProcessing(false);
     } else if (!form.buyerId) {
       toast({ 
-        title: "Select Buyer", 
-        description: "Please select a buyer before uploading invoice",
+        title: "Select Company", 
+        description: "Please select your company before uploading trader invoice",
         variant: "destructive" 
       });
     }
@@ -227,9 +227,9 @@ export default function InventoryIn() {
     setForm({
       invoiceNumber: "",
       invoiceDate: new Date().toISOString().split('T')[0],
-      dalalSupplierName: "",
-      dalalContact: "",
-      dalalAddress: "",
+      traderName: "",
+      traderContact: "",
+      traderAddress: "",
       totalAmount: "",
       taxAmount: "0",
       netAmount: "",
@@ -242,10 +242,10 @@ export default function InventoryIn() {
   };
 
   const handleSave = () => {
-    if (!form.buyerId || !form.invoiceNumber || form.items.length === 0) {
+    if (!form.buyerId || !form.invoiceNumber || !form.traderName || form.items.length === 0) {
       toast({
         title: "Validation Error",
-        description: "Please fill buyer, invoice number, and add at least one item",
+        description: "Please fill company, trader name, invoice number, and add at least one item",
         variant: "destructive"
       });
       return;
@@ -271,9 +271,9 @@ export default function InventoryIn() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Inventory In - Purchase Invoice</h1>
+            <h1 className="text-3xl font-bold">Buyer Inventory - Purchase from Traders</h1>
             <p className="text-muted-foreground mt-2">
-              Add purchase invoices manually or scan with OCR
+              Track purchases from Traders/APMC operators with invoice scanning
             </p>
           </div>
           <BackToDashboard />
@@ -290,13 +290,13 @@ export default function InventoryIn() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Select Buyer First</Label>
+                <Label>Select Your Company (Buyer)</Label>
                 <Select 
                   value={form.buyerId} 
                   onValueChange={(value) => setForm(prev => ({ ...prev, buyerId: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose buyer" />
+                    <SelectValue placeholder="Choose your company" />
                   </SelectTrigger>
                   <SelectContent>
                     {buyers.map(buyer => (
@@ -321,7 +321,7 @@ export default function InventoryIn() {
                 ) : (
                   <Camera className="h-4 w-4 mr-2" />
                 )}
-                Take Photo
+                Scan Trader Invoice
               </Button>
 
               <Button
@@ -335,7 +335,7 @@ export default function InventoryIn() {
                 ) : (
                   <Upload className="h-4 w-4 mr-2" />
                 )}
-                Upload Image
+                Upload Trader Invoice
               </Button>
             </div>
 
@@ -413,35 +413,35 @@ export default function InventoryIn() {
               </div>
             </div>
 
-            {/* Supplier Details */}
+            {/* Trader Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Dalal/Supplier Name *</Label>
+                <Label>Trader/APMC Name *</Label>
                 <UnifiedInput
                   type="text"
-                  value={form.dalalSupplierName}
-                  onChange={(value) => setForm(prev => ({ ...prev, dalalSupplierName: value }))}
-                  placeholder="Enter supplier name"
+                  value={form.traderName}
+                  onChange={(value) => setForm(prev => ({ ...prev, traderName: value }))}
+                  placeholder="Enter trader/APMC name"
                 />
               </div>
 
               <div>
-                <Label>Contact Number</Label>
+                <Label>Trader Contact</Label>
                 <UnifiedInput
                   type="tel"
-                  value={form.dalalContact || ""}
-                  onChange={(value) => setForm(prev => ({ ...prev, dalalContact: value }))}
-                  placeholder="Enter contact number"
+                  value={form.traderContact || ""}
+                  onChange={(value) => setForm(prev => ({ ...prev, traderContact: value }))}
+                  placeholder="Enter trader contact"
                 />
               </div>
             </div>
 
             <div>
-              <Label>Supplier Address</Label>
+              <Label>Trader Address</Label>
               <Textarea
-                value={form.dalalAddress || ""}
-                onChange={(e) => setForm(prev => ({ ...prev, dalalAddress: e.target.value }))}
-                placeholder="Enter supplier address"
+                value={form.traderAddress || ""}
+                onChange={(e) => setForm(prev => ({ ...prev, traderAddress: e.target.value }))}
+                placeholder="Enter trader address"
                 rows={2}
               />
             </div>

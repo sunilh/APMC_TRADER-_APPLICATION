@@ -494,14 +494,14 @@ export const insertTaxInvoiceSchema = createInsertSchema(taxInvoices).omit({
 
 // BUYER-SIDE INVOICE OCR SYSTEM TABLES - Production Grade for 1000+ Tenants
 
-// Purchase invoices from Dalals/Suppliers
+// Purchase invoices from Traders/APMC operators (buyer-side)
 export const purchaseInvoices = pgTable("purchase_invoices", {
   id: serial("id").primaryKey(),
   invoiceNumber: text("invoice_number").notNull(),
   invoiceDate: timestamp("invoice_date").notNull(),
-  dalalSupplierName: text("dalal_supplier_name").notNull(),
-  dalalContact: text("dalal_contact"),
-  dalalAddress: text("dalal_address"),
+  traderName: text("trader_name").notNull(),
+  traderContact: text("trader_contact"),
+  traderAddress: text("trader_address"),
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
   taxAmount: decimal("tax_amount", { precision: 12, scale: 2 }).default("0"),
   netAmount: decimal("net_amount", { precision: 12, scale: 2 }).notNull(),
@@ -520,7 +520,7 @@ export const purchaseInvoices = pgTable("purchase_invoices", {
   buyerIdx: index("purchase_invoice_buyer_idx").on(table.buyerId),
   invoiceNumberIdx: index("purchase_invoice_number_idx").on(table.invoiceNumber),
   dateIdx: index("purchase_invoice_date_idx").on(table.invoiceDate),
-  supplierIdx: index("purchase_invoice_supplier_idx").on(table.dalalSupplierName),
+  traderIdx: index("purchase_invoice_trader_idx").on(table.traderName),
 }));
 
 // Individual items in each purchase invoice
@@ -619,7 +619,7 @@ export const ocrExtractionLogs = pgTable("ocr_extraction_logs", {
   dateIdx: index("ocr_log_date_idx").on(table.processedAt),
 }));
 
-// Supplier/Dalal master for auto-suggestions
+// Trader master for auto-suggestions (buyer-side view of traders)
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -653,7 +653,7 @@ export const insertPurchaseInvoiceSchema = createInsertSchema(purchaseInvoices).
   updatedAt: true,
 }).extend({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
-  dalalSupplierName: z.string().min(1, "Supplier name is required"),
+  traderName: z.string().min(1, "Trader name is required"),
   totalAmount: z.string().min(1, "Total amount is required"),
   netAmount: z.string().min(1, "Net amount is required"),
 });
