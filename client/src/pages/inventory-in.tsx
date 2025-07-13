@@ -217,18 +217,33 @@ export default function InventoryIn() {
   });
 
   const populateFormFromOCR = (data: any) => {
-    setForm(prev => ({
-      ...prev,
-      invoiceNumber: data.invoiceNumber || prev.invoiceNumber,
-      invoiceDate: data.invoiceDate || prev.invoiceDate,
-      traderName: data.traderName || prev.traderName,
-      traderContact: data.traderContact || prev.traderContact,
-      traderAddress: data.traderAddress || prev.traderAddress,
-      totalAmount: data.totalAmount || prev.totalAmount,
-      taxAmount: data.taxAmount || prev.taxAmount,
-      netAmount: data.netAmount || prev.netAmount,
-      items: data.items || prev.items
-    }));
+    setForm(prev => {
+      // Convert date from DD/MM/YYYY to YYYY-MM-DD for HTML date input
+      let formattedDate = prev.invoiceDate;
+      if (data.invoiceDate) {
+        const dateParts = data.invoiceDate.split('/');
+        if (dateParts.length === 3) {
+          // Convert DD/MM/YYYY to YYYY-MM-DD
+          const day = dateParts[0].padStart(2, '0');
+          const month = dateParts[1].padStart(2, '0');
+          const year = dateParts[2];
+          formattedDate = `${year}-${month}-${day}`;
+        }
+      }
+      
+      return {
+        ...prev,
+        invoiceNumber: data.invoiceNumber || prev.invoiceNumber,
+        invoiceDate: formattedDate,
+        traderName: data.traderName || prev.traderName,
+        traderContact: data.traderContact || prev.traderContact,
+        traderAddress: data.traderAddress || prev.traderAddress,
+        totalAmount: data.totalAmount || prev.totalAmount,
+        taxAmount: data.taxAmount || prev.taxAmount,
+        netAmount: data.netAmount || prev.netAmount,
+        items: data.items || prev.items
+      };
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -633,22 +648,14 @@ export default function InventoryIn() {
               </div>
 
               <div>
-                <Label>Buyer</Label>
-                <Select 
-                  value={form.buyerId} 
-                  onValueChange={(value) => setForm(prev => ({ ...prev, buyerId: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select buyer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buyers.map(buyer => (
-                      <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                        {buyer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Seller</Label>
+                <Input
+                  type="text"
+                  value={form.traderName}
+                  onChange={(e) => setForm(prev => ({ ...prev, traderName: e.target.value }))}
+                  placeholder="Seller name from invoice"
+                  className="bg-gray-50"
+                />
               </div>
             </div>
 
