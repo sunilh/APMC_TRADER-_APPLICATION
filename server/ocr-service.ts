@@ -310,19 +310,23 @@ export class OCRService {
    * Check if line is likely an item row
    */
   private static isLikelyItemRow(line: string): boolean {
-    // Look for patterns like: item_name quantity unit rate amount
-    const numberCount = (line.match(/\d+/g) || []).length;
-    const words = line.split(/\s+/);
+    // Look for agricultural product patterns with quintals/bags
+    const itemPatterns = [
+      /\b(dry\s*chilli|chilli|chili|pepper|spice|grain|rice|wheat|turmeric|coriander)\b/i,
+      /\b\d+\.?\d*\s*(quintal|qtl|bags?)\b/i,
+      /\brate.*\d+/i,
+      /\bamount.*\d+/i,
+      /\b\d+\s*bags?\b/i,
+      /LOT\d+/i, // Match lot numbers
+      /ARABICA|ROBUSTA/i, // Coffee varieties
+    ];
     
-    return numberCount >= 2 && 
-           words.length >= 3 && 
-           words.length <= 10 && 
-           !line.toLowerCase().includes('total') &&
-           !line.toLowerCase().includes('subtotal');
+    return itemPatterns.some(pattern => pattern.test(line));
   }
 
   /**
    * Parse item row into structured data
+   * Expected format: "dry chilli - item name, quantity - total weight in quintal, unit - bags, rate - Rate/Qtl"
    */
   private static parseItemRow(line: string): {
     itemName: string;
@@ -331,36 +335,85 @@ export class OCRService {
     ratePerUnit: string;
     amount: string;
   } | null {
-    const parts = line.split(/\s+/);
-    const numbers = line.match(/\d+(?:\.\d+)?/g) || [];
+    console.log('Parsing item line:', line);
     
-    if (numbers.length < 2) return null;
-
-    // Basic parsing - this can be enhanced based on actual invoice formats
-    const quantity = numbers[0];
-    const ratePerUnit = numbers[numbers.length - 2] || numbers[0];
-    const amount = numbers[numbers.length - 1];
+    // Try to extract item name (look for product names)
+    let itemName = 'Unknown Item';
+    const productPatterns = [
+      /\b(dry\s+chilli|chilli|chili|pepper|turmeric|coriander|cumin|cardamom|cloves|black\s+pepper|red\s+chilli|green\s+chilli)\b/i,
+      /\b(rice|wheat|jowar|bajra|ragi|maize|corn)\b/i,
+      /\b(onion|potato|tomato|garlic|ginger)\b/i,
+      /(ARABICA|ROBUSTA)/i,
+      /LOT\d+\s*\|\s*([A-Z\-]+)/i, // Match LOT0013 | ARABICA-A
+    ];
     
-    // Extract item name (non-numeric parts at the beginning)
-    const itemParts = [];
-    for (const part of parts) {
-      if (!/^\d+(\.\d+)?$/.test(part)) {
-        itemParts.push(part);
-      } else {
+    for (const pattern of productPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        itemName = match[1] || match[0];
         break;
       }
     }
     
-    const itemName = itemParts.join(' ') || 'Unknown Item';
-    const unit = this.extractUnit(line) || 'Kg';
-
-    return {
-      itemName,
+    // Extract quantity in quintals from patterns like "5 bags 270 kg"
+    let quantity = '0';
+    const quintalMatch = line.match(/(\d+\.?\d*)\s*(?:quintal|qtl)/i);
+    if (quintalMatch) {
+      quantity = quintalMatch[1];
+    } else {
+      // Try to extract from kg and convert to quintals (1 quintal = 100 kg)
+      const kgMatch = line.match(/(\d+\.?\d*)\s*kg/i);
+      if (kgMatch) {
+        quantity = (parseFloat(kgMatch[1]) / 100).toString();
+      }
+    }
+    
+    // Extract bags count for unit
+    const bagsMatch = line.match(/(\d+)\s*bags?/i);
+    const unit = bagsMatch ? `${bagsMatch[1]} bags` : 'quintals';
+    
+    // Extract rate per quintal - look for currency symbols or "rate"
+    let ratePerUnit = '0';
+    const ratePatterns = [
+      /rate[:\s]*(?:₹|rs\.?|inr)?\s*(\d+[,\d]*\.?\d*)/i,
+      /(\d+[,\d]*\.?\d*)\s*(?:\/|per)\s*(?:quintal|qtl)/i,
+      /₹\s*(\d+[,\d]*\.?\d*)\s*(?:\/|per)/i
+    ];
+    
+    for (const pattern of ratePatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        ratePerUnit = match[1].replace(/,/g, '');
+        break;
+      }
+    }
+    
+    // Extract amount - look for larger numbers that could be total amount
+    let amount = '0';
+    const amountPatterns = [
+      /(?:amount|total)[:\s]*(?:₹|rs\.?|inr)?\s*(\d+[,\d]*\.?\d*)/i,
+      /₹\s*(\d+[,\d]*\.?\d*)(?!\s*(?:\/|per))/,
+      /(\d{4,}\.?\d*)/  // Large numbers (4+ digits)
+    ];
+    
+    for (const pattern of amountPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        amount = match[1].replace(/,/g, '');
+        break;
+      }
+    }
+    
+    const result = {
+      itemName: itemName.trim(),
       quantity,
-      unit,
+      unit: 'quintals', // Always quintals as per specification
       ratePerUnit,
       amount
     };
+    
+    console.log('Parsed item result:', result);
+    return result;
   }
 
   /**
