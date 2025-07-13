@@ -37,6 +37,7 @@ import {
   bankTransactions,
   expenseCategories,
   expenses,
+  purchaseInvoices,
 } from "@shared/schema";
 import { getSimpleFinalAccounts } from "./finalAccountsSimple";
 import { db } from "./db";
@@ -2673,6 +2674,24 @@ export function registerRoutes(app: Express): Server {
     try {
       const tenantId = req.user.tenantId;
       const { items, ...invoiceData } = req.body;
+
+      // Check for duplicate invoice (same seller, date, and invoice number)
+      const existingInvoice = await db.select()
+        .from(purchaseInvoices)
+        .where(and(
+          eq(purchaseInvoices.tenantId, tenantId),
+          eq(purchaseInvoices.invoiceNumber, invoiceData.invoiceNumber),
+          eq(purchaseInvoices.traderName, invoiceData.traderName),
+          eq(purchaseInvoices.invoiceDate, new Date(invoiceData.invoiceDate))
+        ))
+        .limit(1);
+
+      if (existingInvoice.length > 0) {
+        return res.status(400).json({ 
+          message: `Invoice ${invoiceData.invoiceNumber} from ${invoiceData.traderName} on this date already exists. Please check for duplicates.`,
+          existingInvoiceId: existingInvoice[0].id
+        });
+      }
 
       // Create purchase invoice
       const invoice = await storage.createPurchaseInvoice({

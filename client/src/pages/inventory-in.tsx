@@ -666,10 +666,10 @@ export default function InventoryIn() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Invoice Number *</Label>
-                <UnifiedInput
+                <Input
                   type="text"
                   value={form.invoiceNumber}
-                  onChange={(value) => setForm(prev => ({ ...prev, invoiceNumber: value }))}
+                  onChange={(e) => setForm(prev => ({ ...prev, invoiceNumber: e.target.value }))}
                   placeholder="Enter invoice number"
                 />
               </div>
@@ -723,18 +723,18 @@ export default function InventoryIn() {
                     {form.items.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>
-                          <UnifiedInput
+                          <Input
                             type="text"
                             value={item.itemName}
-                            onChange={(value) => updateItem(index, 'itemName', value)}
+                            onChange={(e) => updateItem(index, 'itemName', e.target.value)}
                             placeholder="Item name"
                           />
                         </TableCell>
                         <TableCell>
-                          <UnifiedInput
+                          <Input
                             type="number"
                             value={item.quantity}
-                            onChange={(value) => updateItem(index, 'quantity', value)}
+                            onChange={(e) => updateItem(index, 'quantity', e.target.value)}
                             placeholder="0"
                           />
                         </TableCell>
@@ -755,10 +755,10 @@ export default function InventoryIn() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <UnifiedInput
+                          <Input
                             type="number"
                             value={item.ratePerUnit}
-                            onChange={(value) => updateItem(index, 'ratePerUnit', value)}
+                            onChange={(e) => updateItem(index, 'ratePerUnit', e.target.value)}
                             placeholder="0.00"
                           />
                         </TableCell>
@@ -795,10 +795,10 @@ export default function InventoryIn() {
 
               <div>
                 <Label>Tax Amount</Label>
-                <UnifiedInput
+                <Input
                   type="number"
                   value={form.taxAmount}
-                  onChange={(value) => setForm(prev => ({ ...prev, taxAmount: value }))}
+                  onChange={(e) => setForm(prev => ({ ...prev, taxAmount: e.target.value }))}
                   placeholder="0.00"
                 />
               </div>
