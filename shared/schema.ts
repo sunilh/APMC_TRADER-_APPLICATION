@@ -173,6 +173,8 @@ export const pattis = pgTable("pattis", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
+
 // Relations
 export const tenantRelations = relations(tenants, ({ many }) => ({
   users: many(users),
@@ -290,6 +292,8 @@ export const insertPattiSchema = createInsertSchema(pattis).omit({
   pattiNumber: z.string().min(1, "Patti number is required"),
   description: z.string().optional(),
 });
+
+
 
 // Types
 export type Tenant = typeof tenants.$inferSelect;
