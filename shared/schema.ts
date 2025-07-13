@@ -492,8 +492,216 @@ export const insertTaxInvoiceSchema = createInsertSchema(taxInvoices).omit({
   updatedAt: true,
 });
 
+// BUYER-SIDE INVOICE OCR SYSTEM TABLES - Production Grade for 1000+ Tenants
+
+// Purchase invoices from Dalals/Suppliers
+export const purchaseInvoices = pgTable("purchase_invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull(),
+  invoiceDate: timestamp("invoice_date").notNull(),
+  dalalSupplierName: text("dalal_supplier_name").notNull(),
+  dalalContact: text("dalal_contact"),
+  dalalAddress: text("dalal_address"),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 12, scale: 2 }).default("0"),
+  netAmount: decimal("net_amount", { precision: 12, scale: 2 }).notNull(),
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, paid, partial
+  paymentDate: timestamp("payment_date"),
+  notes: text("notes"),
+  originalImagePath: text("original_image_path"), // Path to stored invoice image
+  ocrProcessed: boolean("ocr_processed").default(false),
+  ocrConfidence: decimal("ocr_confidence", { precision: 5, scale: 2 }), // OCR accuracy percentage
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id), // Which buyer purchased
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  tenantIdx: index("purchase_invoice_tenant_idx").on(table.tenantId),
+  buyerIdx: index("purchase_invoice_buyer_idx").on(table.buyerId),
+  invoiceNumberIdx: index("purchase_invoice_number_idx").on(table.invoiceNumber),
+  dateIdx: index("purchase_invoice_date_idx").on(table.invoiceDate),
+  supplierIdx: index("purchase_invoice_supplier_idx").on(table.dalalSupplierName),
+}));
+
+// Individual items in each purchase invoice
+export const purchaseInvoiceItems = pgTable("purchase_invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").notNull().references(() => purchaseInvoices.id, { onDelete: "cascade" }),
+  itemName: text("item_name").notNull(),
+  itemDescription: text("item_description"),
+  quantity: decimal("quantity", { precision: 12, scale: 3 }).notNull(),
+  unit: text("unit").notNull(), // kg, bags, quintals, etc.
+  ratePerUnit: decimal("rate_per_unit", { precision: 12, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  hsnCode: text("hsn_code"),
+  batchNumber: text("batch_number"),
+  expiryDate: timestamp("expiry_date"),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  invoiceIdx: index("purchase_item_invoice_idx").on(table.invoiceId),
+  tenantIdx: index("purchase_item_tenant_idx").on(table.tenantId),
+  itemNameIdx: index("purchase_item_name_idx").on(table.itemName),
+}));
+
+// Current stock levels for all items
+export const stockInventory = pgTable("stock_inventory", {
+  id: serial("id").primaryKey(),
+  itemName: text("item_name").notNull(),
+  itemDescription: text("item_description"),
+  currentQuantity: decimal("current_quantity", { precision: 12, scale: 3 }).notNull().default("0"),
+  reservedQuantity: decimal("reserved_quantity", { precision: 12, scale: 3 }).notNull().default("0"), // For orders
+  availableQuantity: decimal("available_quantity", { precision: 12, scale: 3 }).notNull().default("0"),
+  unit: text("unit").notNull(),
+  avgPurchaseRate: decimal("avg_purchase_rate", { precision: 12, scale: 2 }), // Weighted average cost
+  lastPurchaseRate: decimal("last_purchase_rate", { precision: 12, scale: 2 }),
+  lastPurchaseDate: timestamp("last_purchase_date"),
+  minimumStockLevel: decimal("minimum_stock_level", { precision: 12, scale: 3 }).default("0"),
+  maximumStockLevel: decimal("maximum_stock_level", { precision: 12, scale: 3 }),
+  reorderPoint: decimal("reorder_point", { precision: 12, scale: 3 }),
+  category: text("category"), // Spices, Grains, etc.
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  tenantBuyerIdx: uniqueIndex("stock_tenant_buyer_item_idx").on(table.tenantId, table.buyerId, table.itemName),
+  tenantIdx: index("stock_tenant_idx").on(table.tenantId),
+  buyerIdx: index("stock_buyer_idx").on(table.buyerId),
+  itemNameIdx: index("stock_item_name_idx").on(table.itemName),
+  lowStockIdx: index("stock_low_stock_idx").on(table.availableQuantity, table.minimumStockLevel),
+}));
+
+// Stock movement tracking (in/out transactions)
+export const stockMovements = pgTable("stock_movements", {
+  id: serial("id").primaryKey(),
+  stockId: integer("stock_id").notNull().references(() => stockInventory.id),
+  movementType: text("movement_type").notNull(), // purchase_in, sale_out, adjustment, return
+  referenceType: text("reference_type").notNull(), // purchase_invoice, sale_order, manual_adjustment
+  referenceId: integer("reference_id"), // ID of the reference document
+  quantityChange: decimal("quantity_change", { precision: 12, scale: 3 }).notNull(), // +ve for in, -ve for out
+  balanceAfter: decimal("balance_after", { precision: 12, scale: 3 }).notNull(),
+  ratePerUnit: decimal("rate_per_unit", { precision: 12, scale: 2 }),
+  totalValue: decimal("total_value", { precision: 12, scale: 2 }),
+  notes: text("notes"),
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: integer("created_by").references(() => users.id),
+}, (table) => ({
+  stockIdx: index("stock_movement_stock_idx").on(table.stockId),
+  tenantIdx: index("stock_movement_tenant_idx").on(table.tenantId),
+  buyerIdx: index("stock_movement_buyer_idx").on(table.buyerId),
+  typeIdx: index("stock_movement_type_idx").on(table.movementType),
+  dateIdx: index("stock_movement_date_idx").on(table.createdAt),
+  referenceIdx: index("stock_movement_reference_idx").on(table.referenceType, table.referenceId),
+}));
+
+// OCR extraction results for audit and improvement
+export const ocrExtractionLogs = pgTable("ocr_extraction_logs", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => purchaseInvoices.id, { onDelete: "cascade" }),
+  originalImagePath: text("original_image_path").notNull(),
+  extractedText: text("extracted_text"), // Full OCR text
+  extractedData: jsonb("extracted_data"), // Structured data extracted
+  confidenceScore: decimal("confidence_score", { precision: 5, scale: 2 }),
+  processingTimeMs: integer("processing_time_ms"),
+  ocrEngine: text("ocr_engine").default("tesseract"), // tesseract, google, aws, etc.
+  errorMessage: text("error_message"),
+  userCorrected: boolean("user_corrected").default(false),
+  correctedData: jsonb("corrected_data"), // User corrections for ML improvement
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  processedAt: timestamp("processed_at").defaultNow(),
+  processedBy: integer("processed_by").references(() => users.id),
+}, (table) => ({
+  invoiceIdx: index("ocr_log_invoice_idx").on(table.invoiceId),
+  tenantIdx: index("ocr_log_tenant_idx").on(table.tenantId),
+  dateIdx: index("ocr_log_date_idx").on(table.processedAt),
+}));
+
+// Supplier/Dalal master for auto-suggestions
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactPerson: text("contact_person"),
+  mobile: text("mobile"),
+  email: text("email"),
+  address: text("address"),
+  gstNumber: text("gst_number"),
+  panNumber: text("pan_number"),
+  bankDetails: jsonb("bank_details"), // Bank account information
+  paymentTerms: text("payment_terms"), // 30 days, COD, etc.
+  rating: decimal("rating", { precision: 3, scale: 2 }), // Supplier rating 1-5
+  isActive: boolean("is_active").default(true),
+  totalPurchases: decimal("total_purchases", { precision: 15, scale: 2 }).default("0"),
+  lastPurchaseDate: timestamp("last_purchase_date"),
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  tenantBuyerIdx: index("supplier_tenant_buyer_idx").on(table.tenantId, table.buyerId),
+  nameIdx: index("supplier_name_idx").on(table.name),
+  mobileIdx: index("supplier_mobile_idx").on(table.mobile),
+  gstIdx: index("supplier_gst_idx").on(table.gstNumber),
+}));
+
+// Insert schemas for buyer-side inventory system
+export const insertPurchaseInvoiceSchema = createInsertSchema(purchaseInvoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  invoiceNumber: z.string().min(1, "Invoice number is required"),
+  dalalSupplierName: z.string().min(1, "Supplier name is required"),
+  totalAmount: z.string().min(1, "Total amount is required"),
+  netAmount: z.string().min(1, "Net amount is required"),
+});
+
+export const insertPurchaseInvoiceItemSchema = createInsertSchema(purchaseInvoiceItems).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  itemName: z.string().min(1, "Item name is required"),
+  quantity: z.string().min(1, "Quantity is required"),
+  unit: z.string().min(1, "Unit is required"),
+  ratePerUnit: z.string().min(1, "Rate per unit is required"),
+  amount: z.string().min(1, "Amount is required"),
+});
+
+export const insertStockInventorySchema = createInsertSchema(stockInventory).omit({
+  id: true,
+  createdAt: true,
+  lastUpdated: true,
+}).extend({
+  itemName: z.string().min(1, "Item name is required"),
+  unit: z.string().min(1, "Unit is required"),
+});
+
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: z.string().min(1, "Supplier name is required"),
+});
+
 // Types for new tables
 export type FarmerBill = typeof farmerBills.$inferSelect;
 export type InsertFarmerBill = typeof farmerBills.$inferInsert;
 export type TaxInvoiceRecord = typeof taxInvoices.$inferSelect;
 export type InsertTaxInvoice = typeof taxInvoices.$inferInsert;
+
+// New buyer-side inventory types
+export type PurchaseInvoice = typeof purchaseInvoices.$inferSelect;
+export type InsertPurchaseInvoice = z.infer<typeof insertPurchaseInvoiceSchema>;
+export type PurchaseInvoiceItem = typeof purchaseInvoiceItems.$inferSelect;
+export type InsertPurchaseInvoiceItem = z.infer<typeof insertPurchaseInvoiceItemSchema>;
+export type StockInventory = typeof stockInventory.$inferSelect;
+export type InsertStockInventory = z.infer<typeof insertStockInventorySchema>;
+export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertStockMovement = typeof stockMovements.$inferInsert;
+export type OcrExtractionLog = typeof ocrExtractionLogs.$inferSelect;
+export type InsertOcrExtractionLog = typeof ocrExtractionLogs.$inferInsert;
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;

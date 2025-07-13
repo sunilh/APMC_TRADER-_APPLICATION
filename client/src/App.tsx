@@ -19,6 +19,7 @@ import FarmerBill from "@/pages/farmer-bill";
 import CessReports from "@/pages/cess-reports";
 import GstReports from "@/pages/gst-reports";
 import FinalAccounts from "@/pages/final-accounts";
+import InventoryIn from "@/pages/inventory-in";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -40,6 +41,7 @@ function Router() {
       <ProtectedRoute path="/gst-reports" component={GstReports} />
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/final-accounts" component={FinalAccounts} />
+      <ProtectedRoute path="/inventory-in" component={InventoryIn} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
       <Route component={NotFound} />
     </Switch>

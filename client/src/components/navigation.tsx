@@ -53,6 +53,7 @@ export function Navigation() {
     // Operations Group
     { name: 'Operations', type: 'group', icon: Briefcase, items: [
       { name: t('nav.lots'), href: '/lots', icon: Package },
+      { name: 'Inventory In', href: '/inventory-in', icon: ClipboardList },
     ]},
     
     // Bills Group

@@ -42,6 +42,23 @@ import { getSimpleFinalAccounts } from "./finalAccountsSimple";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
+import multer from "multer";
+import { OCRService } from "./ocr-service";
+
+// Multer configuration for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated() || !req.user) {
@@ -2621,6 +2638,168 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching expenses:', error);
       res.status(500).json({ message: 'Failed to fetch expenses' });
+    }
+  });
+
+  // =================================
+  // BUYER-SIDE INVENTORY & OCR SYSTEM API ENDPOINTS  
+  // =================================
+
+  // OCR invoice processing endpoint
+  app.post("/api/ocr/process-invoice", requireAuth, requireTenant, upload.single('image'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+
+      const tenantId = req.user.tenantId;
+      const buyerId = parseInt(req.body.buyerId);
+
+      if (!buyerId) {
+        return res.status(400).json({ message: "Buyer ID is required" });
+      }
+
+      // Save uploaded file
+      const imagePath = await OCRService.saveUploadedFile(req.file, tenantId);
+
+      // Process OCR
+      const ocrResult = await OCRService.processInvoiceImage(imagePath);
+
+      // Log OCR extraction for audit and improvement
+      await storage.createOcrExtractionLog({
+        originalImagePath: imagePath,
+        extractedText: ocrResult.extractedText,
+        extractedData: ocrResult.extractedData,
+        confidenceScore: ocrResult.confidence.toString(),
+        processingTimeMs: ocrResult.processingTime,
+        tenantId,
+        processedBy: req.user.id
+      });
+
+      res.json(ocrResult);
+    } catch (error) {
+      console.error('OCR processing error:', error);
+      res.status(500).json({ message: 'OCR processing failed', error: (error as Error).message });
+    }
+  });
+
+  // Create purchase invoice with items and stock update
+  app.post("/api/purchase-invoices", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { items, ...invoiceData } = req.body;
+
+      // Create purchase invoice
+      const invoice = await storage.createPurchaseInvoice({
+        ...invoiceData,
+        buyerId: parseInt(invoiceData.buyerId),
+        tenantId,
+        invoiceDate: new Date(invoiceData.invoiceDate)
+      });
+
+      // Create invoice items
+      const invoiceItems = items.map((item: any) => ({
+        ...item,
+        invoiceId: invoice.id,
+        tenantId
+      }));
+      
+      await storage.createPurchaseInvoiceItems(invoiceItems);
+
+      // Update stock inventory
+      await storage.updateStockInventory(parseInt(invoiceData.buyerId), tenantId, items);
+
+      // Create stock movements for audit trail
+      const stockMovements = items.map((item: any) => ({
+        stockId: null, // Will be updated by storage layer
+        movementType: 'purchase_in',
+        referenceType: 'purchase_invoice',
+        referenceId: invoice.id,
+        quantityChange: item.quantity,
+        ratePerUnit: item.ratePerUnit,
+        totalValue: item.amount,
+        buyerId: parseInt(invoiceData.buyerId),
+        tenantId,
+        createdBy: req.user.id
+      }));
+
+      await storage.createStockMovements(stockMovements);
+
+      await createAuditLog(req, "create", "purchase_invoice", invoice.id, null, invoice);
+      res.status(201).json({ message: "Invoice saved and stock updated", invoice });
+    } catch (error) {
+      console.error('Error creating purchase invoice:', error);
+      res.status(500).json({ message: 'Failed to create purchase invoice', error: (error as Error).message });
+    }
+  });
+
+  // Get purchase invoices for a buyer
+  app.get("/api/purchase-invoices", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId } = req.query;
+
+      if (!buyerId) {
+        return res.status(400).json({ message: "Buyer ID is required" });
+      }
+
+      const invoices = await storage.getPurchaseInvoices(parseInt(buyerId), tenantId);
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching purchase invoices:', error);
+      res.status(500).json({ message: 'Failed to fetch purchase invoices' });
+    }
+  });
+
+  // Get stock inventory for a buyer
+  app.get("/api/stock-inventory", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId } = req.query;
+
+      if (!buyerId) {
+        return res.status(400).json({ message: "Buyer ID is required" });
+      }
+
+      const inventory = await storage.getStockInventory(parseInt(buyerId), tenantId);
+      res.json(inventory);
+    } catch (error) {
+      console.error('Error fetching stock inventory:', error);
+      res.status(500).json({ message: 'Failed to fetch stock inventory' });
+    }
+  });
+
+  // Get suppliers for a buyer
+  app.get("/api/suppliers", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId } = req.query;
+
+      if (!buyerId) {
+        return res.status(400).json({ message: "Buyer ID is required" });
+      }
+
+      const suppliers = await storage.getSuppliers(parseInt(buyerId), tenantId);
+      res.json(suppliers);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      res.status(500).json({ message: 'Failed to fetch suppliers' });
+    }
+  });
+
+  // Create supplier
+  app.post("/api/suppliers", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const supplierData = { ...req.body, tenantId };
+
+      const supplier = await storage.createSupplier(supplierData);
+      await createAuditLog(req, "create", "supplier", supplier.id, null, supplier);
+      
+      res.status(201).json(supplier);
+    } catch (error) {
+      console.error('Error creating supplier:', error);
+      res.status(500).json({ message: 'Failed to create supplier' });
     }
   });
 

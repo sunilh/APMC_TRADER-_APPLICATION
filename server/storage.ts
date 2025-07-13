@@ -1,9 +1,14 @@
 import { 
   users, farmers, lots, bags, buyers, tenants, auditLogs, bagEntryDrafts,
+  purchaseInvoices, purchaseInvoiceItems, stockInventory, stockMovements, 
+  ocrExtractionLogs, suppliers,
   type User, type InsertUser, type Farmer, type InsertFarmer,
   type Lot, type InsertLot, type Bag, type InsertBag,
   type Buyer, type InsertBuyer, type Tenant, type InsertTenant,
-  type AuditLog, type InsertAuditLog
+  type AuditLog, type InsertAuditLog, type PurchaseInvoice, type InsertPurchaseInvoice,
+  type PurchaseInvoiceItem, type InsertPurchaseInvoiceItem, type StockInventory,
+  type InsertStockInventory, type StockMovement, type InsertStockMovement,
+  type OcrExtractionLog, type InsertOcrExtractionLog, type Supplier, type InsertSupplier
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or } from "drizzle-orm";
@@ -119,6 +124,17 @@ export interface IStorage {
   // Patti management methods
   getPattisByTenant(tenantId: number): Promise<any[]>;
   createPatti(patti: { pattiNumber: string; description?: string; tenantId: number }): Promise<any>;
+
+  // Buyer-side inventory management methods
+  createPurchaseInvoice(invoice: any): Promise<any>;
+  getPurchaseInvoices(buyerId: number, tenantId: number): Promise<any[]>;
+  createPurchaseInvoiceItems(items: any[]): Promise<any[]>;
+  updateStockInventory(buyerId: number, tenantId: number, items: any[]): Promise<void>;
+  getStockInventory(buyerId: number, tenantId: number): Promise<any[]>;
+  createStockMovements(movements: any[]): Promise<any[]>;
+  createOcrExtractionLog(log: any): Promise<any>;
+  getSuppliers(buyerId: number, tenantId: number): Promise<any[]>;
+  createSupplier(supplier: any): Promise<any>;
 
   sessionStore: any;
 }
@@ -703,6 +719,100 @@ export class DatabaseStorage implements IStorage {
         eq(lots.id, lotId),
         eq(lots.tenantId, tenantId)
       ));
+  }
+
+  // Buyer-side inventory management implementation
+  async createPurchaseInvoice(invoice: InsertPurchaseInvoice): Promise<PurchaseInvoice> {
+    const [created] = await db.insert(purchaseInvoices).values(invoice).returning();
+    return created;
+  }
+
+  async getPurchaseInvoices(buyerId: number, tenantId: number): Promise<PurchaseInvoice[]> {
+    return await db.select()
+      .from(purchaseInvoices)
+      .where(and(eq(purchaseInvoices.buyerId, buyerId), eq(purchaseInvoices.tenantId, tenantId)))
+      .orderBy(desc(purchaseInvoices.createdAt));
+  }
+
+  async createPurchaseInvoiceItems(items: InsertPurchaseInvoiceItem[]): Promise<PurchaseInvoiceItem[]> {
+    return await db.insert(purchaseInvoiceItems).values(items).returning();
+  }
+
+  async updateStockInventory(buyerId: number, tenantId: number, items: any[]): Promise<void> {
+    for (const item of items) {
+      const existingStock = await db.select()
+        .from(stockInventory)
+        .where(and(
+          eq(stockInventory.buyerId, buyerId),
+          eq(stockInventory.tenantId, tenantId),
+          eq(stockInventory.itemName, item.itemName)
+        ));
+
+      if (existingStock.length > 0) {
+        // Update existing stock
+        const stock = existingStock[0];
+        const newQuantity = parseFloat(stock.currentQuantity) + parseFloat(item.quantity);
+        const newAvailable = parseFloat(stock.availableQuantity) + parseFloat(item.quantity);
+        
+        // Calculate weighted average purchase rate
+        const totalValue = (parseFloat(stock.currentQuantity) * parseFloat(stock.avgPurchaseRate || '0')) + 
+                          (parseFloat(item.quantity) * parseFloat(item.ratePerUnit));
+        const newAvgRate = totalValue / newQuantity;
+
+        await db.update(stockInventory)
+          .set({
+            currentQuantity: newQuantity.toString(),
+            availableQuantity: newAvailable.toString(),
+            avgPurchaseRate: newAvgRate.toString(),
+            lastPurchaseRate: item.ratePerUnit,
+            lastPurchaseDate: new Date(),
+            lastUpdated: new Date()
+          })
+          .where(eq(stockInventory.id, stock.id));
+      } else {
+        // Create new stock entry
+        await db.insert(stockInventory).values({
+          itemName: item.itemName,
+          itemDescription: item.itemDescription,
+          currentQuantity: item.quantity,
+          availableQuantity: item.quantity,
+          unit: item.unit,
+          avgPurchaseRate: item.ratePerUnit,
+          lastPurchaseRate: item.ratePerUnit,
+          lastPurchaseDate: new Date(),
+          buyerId,
+          tenantId
+        });
+      }
+    }
+  }
+
+  async getStockInventory(buyerId: number, tenantId: number): Promise<StockInventory[]> {
+    return await db.select()
+      .from(stockInventory)
+      .where(and(eq(stockInventory.buyerId, buyerId), eq(stockInventory.tenantId, tenantId)))
+      .orderBy(stockInventory.itemName);
+  }
+
+  async createStockMovements(movements: InsertStockMovement[]): Promise<StockMovement[]> {
+    return await db.insert(stockMovements).values(movements).returning();
+  }
+
+  async createOcrExtractionLog(log: InsertOcrExtractionLog): Promise<OcrExtractionLog> {
+    const [created] = await db.insert(ocrExtractionLogs).values(log).returning();
+    return created;
+  }
+
+  async getSuppliers(buyerId: number, tenantId: number): Promise<Supplier[]> {
+    return await db.select()
+      .from(suppliers)
+      .where(and(eq(suppliers.buyerId, buyerId), eq(suppliers.tenantId, tenantId)))
+      .orderBy(suppliers.name);
+  }
+
+  async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
+    const [created] = await db.insert(suppliers).values(supplier).returning();
+    return created;
   }
 }
 
