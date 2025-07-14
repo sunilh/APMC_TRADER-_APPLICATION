@@ -8,13 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -30,14 +23,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Camera, 
   Plus, 
-  Eye, 
   Edit, 
   Trash2, 
-  Search,
   PlusCircle,
   IndianRupee,
   Calendar,
@@ -49,7 +39,6 @@ import {
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BackToDashboard } from "@/components/back-to-dashboard";
-import type { Buyer, BidPrice } from "@shared/schema";
 
 interface DalalLotSummary {
   dalalName: string;
@@ -68,7 +57,7 @@ interface DalalLotSummary {
 }
 
 interface BidForm {
-  buyerId: number;
+  buyerId: string;
   dalalName: string;
   lotNumber: string;
   bidPrice: string;
@@ -79,14 +68,14 @@ interface BidForm {
 export default function BidPrices() {
   const { toast } = useToast();
   const [bidDialog, setBidDialog] = useState(false);
-  const [editingBid, setEditingBid] = useState<BidPrice | null>(null);
+  const [editingBid, setEditingBid] = useState<any>(null);
   const [selectedDalal, setSelectedDalal] = useState<string>("");
   const [searchDalal, setSearchDalal] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const [bidForm, setBidForm] = useState<BidForm>({
-    buyerId: 0,
+    buyerId: "",
     dalalName: "",
     lotNumber: "",
     bidPrice: "",
@@ -113,9 +102,13 @@ export default function BidPrices() {
   // Create bid price mutation
   const createBidMutation = useMutation({
     mutationFn: async (data: BidForm) => {
+      const payload = {
+        ...data,
+        buyerId: parseInt(data.buyerId)
+      };
       const endpoint = editingBid ? `/api/bid-prices/${editingBid.id}` : "/api/bid-prices";
       const method = editingBid ? "PUT" : "POST";
-      return await apiRequest(method, endpoint, data);
+      return await apiRequest(method, endpoint, payload);
     },
     onSuccess: () => {
       toast({
@@ -159,7 +152,7 @@ export default function BidPrices() {
 
   const resetForm = () => {
     setBidForm({
-      buyerId: 0,
+      buyerId: "",
       dalalName: "",
       lotNumber: "",
       bidPrice: "",
@@ -187,7 +180,7 @@ export default function BidPrices() {
   const handleEdit = (bid: any) => {
     setEditingBid(bid);
     setBidForm({
-      buyerId: bid.buyerId || 0,
+      buyerId: bid.buyerId?.toString() || "",
       dalalName: bid.dalalName,
       lotNumber: bid.lotNumber,
       bidPrice: bid.bidPrice,
@@ -284,24 +277,23 @@ export default function BidPrices() {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Buyer Selection */}
+                  {/* Buyer Selection - Simple HTML Select */}
                   <div>
                     <Label htmlFor="buyer">Buyer/Trader *</Label>
-                    <Select
-                      value={bidForm.buyerId > 0 ? bidForm.buyerId.toString() : ""}
-                      onValueChange={(value) => setBidForm(prev => ({ ...prev, buyerId: parseInt(value) }))}
+                    <select
+                      id="buyer"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={bidForm.buyerId}
+                      onChange={(e) => setBidForm(prev => ({ ...prev, buyerId: e.target.value }))}
+                      required
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select buyer/trader" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {buyers.map((buyer: Buyer) => (
-                          <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                            {buyer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">Select buyer/trader</option>
+                      {buyers.map((buyer: any) => (
+                        <option key={buyer.id} value={buyer.id.toString()}>
+                          {buyer.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Dalal Name with Suggestions */}
@@ -464,22 +456,19 @@ export default function BidPrices() {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <Label htmlFor="dalalFilter">Filter by Dalal</Label>
-                <Select
-                  value={selectedDalal || ""}
-                  onValueChange={setSelectedDalal}
+                <select
+                  id="dalalFilter"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedDalal}
+                  onChange={(e) => setSelectedDalal(e.target.value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select dalal to filter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Dalals</SelectItem>
-                    {dalalLots.map((dalal: DalalLotSummary) => (
-                      <SelectItem key={dalal.dalalName} value={dalal.dalalName}>
-                        {dalal.dalalName} ({dalal.totalLots} lots)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">All Dalals</option>
+                  {dalalLots.map((dalal: DalalLotSummary) => (
+                    <option key={dalal.dalalName} value={dalal.dalalName}>
+                      {dalal.dalalName} ({dalal.totalLots} lots)
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div className="flex items-center gap-2 text-sm text-gray-600">
