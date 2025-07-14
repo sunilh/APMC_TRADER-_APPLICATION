@@ -180,7 +180,7 @@ export default function BidPrices() {
       // Auto-select the new dalal in the form
       setBidForm(prev => ({ 
         ...prev, 
-        dalalName: newSupplier.name
+        dalalName: String(newSupplier.name || "")
       }));
       toast({ 
         title: "Success", 
@@ -205,6 +205,13 @@ export default function BidPrices() {
       chiliPhotos: [],
     });
     setSearchDalal("");
+    setCreateDalalOpen(false);
+    setDalalForm({
+      name: "",
+      contactPerson: "",
+      mobile: "",
+      address: ""
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -225,10 +232,10 @@ export default function BidPrices() {
   const handleEdit = (bid: any) => {
     setEditingBid(bid);
     setBidForm({
-      dalalName: bid.dalalName,
-      lotNumber: bid.lotNumber,
-      bidPrice: bid.bidPrice,
-      notes: bid.notes || "",
+      dalalName: String(bid.dalalName || ""),
+      lotNumber: String(bid.lotNumber || ""),
+      bidPrice: String(bid.bidPrice || ""),
+      notes: String(bid.notes || ""),
       chiliPhotos: bid.chiliPhotos || [],
     });
     setBidDialog(true);
@@ -266,7 +273,7 @@ export default function BidPrices() {
   const handleDalalSuggestionSelect = (dalal: any) => {
     setBidForm(prev => ({
       ...prev,
-      dalalName: dalal.name
+      dalalName: String(dalal.name || "")
     }));
     setSearchDalal("");
   };
@@ -341,10 +348,10 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="dalalName"
                         placeholder="Enter or search dalal name"
-                        value={bidForm.dalalName}
+                        value={bidForm.dalalName || ""}
                         onChange={(value) => {
-                          setBidForm(prev => ({ ...prev, dalalName: value }));
-                          setSearchDalal(value);
+                          setBidForm(prev => ({ ...prev, dalalName: String(value) }));
+                          setSearchDalal(String(value));
                         }}
                         required
                       />
@@ -372,7 +379,7 @@ export default function BidPrices() {
                                     type="button"
                                     size="sm"
                                     onClick={() => {
-                                      setDalalForm(prev => ({ ...prev, name: searchDalal }));
+                                      setDalalForm(prev => ({ ...prev, name: String(searchDalal) }));
                                       setCreateDalalOpen(true);
                                     }}
                                     className="w-full"
@@ -396,8 +403,8 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="lotNumber"
                         placeholder="Enter lot number"
-                        value={bidForm.lotNumber}
-                        onChange={(value) => setBidForm(prev => ({ ...prev, lotNumber: value }))}
+                        value={bidForm.lotNumber || ""}
+                        onChange={(value) => setBidForm(prev => ({ ...prev, lotNumber: String(value) }))}
                         required
                       />
                     </div>
@@ -408,8 +415,8 @@ export default function BidPrices() {
                         type="number"
                         step="0.01"
                         placeholder="Enter bid price"
-                        value={bidForm.bidPrice}
-                        onChange={(value) => setBidForm(prev => ({ ...prev, bidPrice: value }))}
+                        value={bidForm.bidPrice || ""}
+                        onChange={(value) => setBidForm(prev => ({ ...prev, bidPrice: String(value) }))}
                         required
                       />
                     </div>
@@ -423,8 +430,8 @@ export default function BidPrices() {
                     <Textarea
                       id="notes"
                       placeholder="Enter any additional notes"
-                      value={bidForm.notes}
-                      onChange={(e) => setBidForm(prev => ({ ...prev, notes: e.target.value }))}
+                      value={bidForm.notes || ""}
+                      onChange={(e) => setBidForm(prev => ({ ...prev, notes: String(e.target.value) }))}
                       rows={3}
                     />
                   </div>
