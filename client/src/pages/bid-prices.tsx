@@ -40,7 +40,10 @@ import {
   Image,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -99,7 +102,10 @@ export default function BidPrices() {
     open: false,
     photos: [] as any[],
     currentIndex: 0,
-    lotInfo: { dalalName: "", lotNumber: "" }
+    lotInfo: { dalalName: "", lotNumber: "" },
+    zoom: 1,
+    panX: 0,
+    panY: 0
   });
 
 
@@ -369,6 +375,39 @@ export default function BidPrices() {
     setBidForm(prev => ({
       ...prev,
       chiliPhotos: prev.chiliPhotos.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Photo zoom functions
+  const handleZoomIn = () => {
+    setPhotoViewer(prev => ({
+      ...prev,
+      zoom: Math.min(prev.zoom * 1.5, 5) // Max zoom 5x
+    }));
+  };
+
+  const handleZoomOut = () => {
+    setPhotoViewer(prev => ({
+      ...prev,
+      zoom: Math.max(prev.zoom / 1.5, 0.5) // Min zoom 0.5x
+    }));
+  };
+
+  const resetZoom = () => {
+    setPhotoViewer(prev => ({
+      ...prev,
+      zoom: 1,
+      panX: 0,
+      panY: 0
+    }));
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setPhotoViewer(prev => ({
+      ...prev,
+      zoom: Math.max(0.5, Math.min(5, prev.zoom * delta))
     }));
   };
 
@@ -816,17 +855,74 @@ export default function BidPrices() {
                 
                 {photoViewer.photos.length > 0 && (
                   <div className="relative">
-                    {/* Main Photo Display */}
-                    <div className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px]">
+                    {/* Zoom Controls */}
+                    <div className="absolute top-2 right-2 z-10 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleZoomIn}
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleZoomOut}
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={resetZoom}
+                        title="Reset Zoom"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      <div className="bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm">
+                        {Math.round(photoViewer.zoom * 100)}%
+                      </div>
+                    </div>
+
+                    {/* Main Photo Display with Zoom */}
+                    <div 
+                      className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px] overflow-hidden cursor-grab active:cursor-grabbing"
+                      onWheel={handleWheel}
+                      style={{ touchAction: 'none' }}
+                    >
                       <img
                         src={`/${photoViewer.photos[photoViewer.currentIndex]?.url || ''}`}
                         alt={`Photo ${photoViewer.currentIndex + 1}`}
-                        className="max-w-full max-h-[400px] object-contain rounded-lg"
+                        className="rounded-lg select-none"
+                        style={{
+                          transform: `scale(${photoViewer.zoom}) translate(${photoViewer.panX}px, ${photoViewer.panY}px)`,
+                          transformOrigin: 'center center',
+                          transition: photoViewer.zoom === 1 ? 'transform 0.2s ease' : 'none',
+                          maxWidth: '100%',
+                          maxHeight: '400px',
+                          objectFit: 'contain'
+                        }}
                         onError={(e) => {
                           console.error('Image failed to load:', photoViewer.photos[photoViewer.currentIndex]?.url);
                           e.currentTarget.src = '/placeholder-image.png';
                         }}
+                        onDoubleClick={() => {
+                          if (photoViewer.zoom === 1) {
+                            handleZoomIn();
+                            handleZoomIn(); // Double zoom on double-click
+                          } else {
+                            resetZoom();
+                          }
+                        }}
+                        draggable={false}
                       />
+                    </div>
+                    
+                    {/* Zoom Instructions */}
+                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                      Scroll wheel to zoom • Double-click to zoom in/reset • Drag zoom buttons
                     </div>
                     
                     {/* Navigation Buttons */}
@@ -835,10 +931,13 @@ export default function BidPrices() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10"
                           onClick={() => setPhotoViewer(prev => ({
                             ...prev,
-                            currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : prev.photos.length - 1
+                            currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : prev.photos.length - 1,
+                            zoom: 1, // Reset zoom when changing photos
+                            panX: 0,
+                            panY: 0
                           }))}
                         >
                           <ChevronLeft className="h-4 w-4" />
@@ -847,10 +946,13 @@ export default function BidPrices() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10"
                           onClick={() => setPhotoViewer(prev => ({
                             ...prev,
-                            currentIndex: prev.currentIndex < prev.photos.length - 1 ? prev.currentIndex + 1 : 0
+                            currentIndex: prev.currentIndex < prev.photos.length - 1 ? prev.currentIndex + 1 : 0,
+                            zoom: 1, // Reset zoom when changing photos
+                            panX: 0,
+                            panY: 0
                           }))}
                         >
                           <ChevronRight className="h-4 w-4" />
@@ -892,7 +994,13 @@ export default function BidPrices() {
                         {photoViewer.photos.map((photo, index) => (
                           <button
                             key={index}
-                            onClick={() => setPhotoViewer(prev => ({ ...prev, currentIndex: index }))}
+                            onClick={() => setPhotoViewer(prev => ({ 
+                              ...prev, 
+                              currentIndex: index,
+                              zoom: 1, // Reset zoom when changing photos
+                              panX: 0,
+                              panY: 0
+                            }))}
                             className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${
                               index === photoViewer.currentIndex ? 'border-blue-500' : 'border-gray-300'
                             }`}
