@@ -148,17 +148,24 @@ export function Navigation() {
               key={item.name}
               href={item.href}
               className={`
-                inline-flex items-center ${mobile ? 'w-full justify-start' : 'px-3 py-2'} 
+                inline-flex items-center ${mobile ? 'w-full justify-start py-3 px-2 touch-manipulation' : 'px-3 py-2'} 
                 rounded-md text-sm font-medium transition-colors cursor-pointer
                 ${active 
                   ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
                 }
               `}
               onClick={(e) => {
                 console.log('Single item clicked:', item.href);
                 setExpandedGroups(new Set()); // Close all dropdowns
                 if (mobile) setMobileMenuOpen(false);
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                console.log('Touch end on single item:', item.href);
+                if (mobile) {
+                  setTimeout(() => setMobileMenuOpen(false), 100);
+                }
               }}
             >
               <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
@@ -187,6 +194,7 @@ export function Navigation() {
                 variant="ghost"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   console.log('Group clicked:', item.name);
                   // Close all other groups and toggle this one
                   const wasExpanded = isGroupExpanded(item.name);
@@ -195,8 +203,17 @@ export function Navigation() {
                     setExpandedGroups(new Set([item.name]));
                   }
                 }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const wasExpanded = isGroupExpanded(item.name);
+                  setExpandedGroups(new Set());
+                  if (!wasExpanded) {
+                    setExpandedGroups(new Set([item.name]));
+                  }
+                }}
                 className={`
-                  ${mobile ? 'w-full justify-start' : 'px-3 py-2'}
+                  ${mobile ? 'w-full justify-start touch-manipulation active:bg-gray-100' : 'px-3 py-2'}
                   ${groupActive 
                     ? 'text-primary bg-primary/10 border-b-2 border-primary' 
                     : 'text-gray-600 hover:text-gray-900'
@@ -227,17 +244,25 @@ export function Navigation() {
                         key={subItem.name}
                         href={subItem.href}
                         className={`
-                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-2' : 'w-full justify-start px-4 py-2'}
+                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-3 px-2 touch-manipulation' : 'w-full justify-start px-4 py-2'}
                           rounded-md text-sm font-medium transition-colors cursor-pointer
                           ${subActive 
                             ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white active:bg-gray-200'
                           }
                         `}
-                        onClick={() => {
+                        onClick={(e) => {
                           console.log('Sub item clicked:', subItem.href);
                           setExpandedGroups(new Set()); // Close all dropdowns
                           if (mobile) setMobileMenuOpen(false);
+                        }}
+                        onTouchEnd={(e) => {
+                          e.stopPropagation();
+                          console.log('Touch end on sub item:', subItem.href);
+                          setExpandedGroups(new Set());
+                          if (mobile) {
+                            setTimeout(() => setMobileMenuOpen(false), 100);
+                          }
                         }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
@@ -339,16 +364,34 @@ export function Navigation() {
             <div className="md:hidden">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="touch-manipulation">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-64">
-                  <div className="flex flex-col space-y-4 mt-8">
-                    <NavLinks mobile />
+                <SheetContent side="right" className="w-80 z-[100] max-h-screen overflow-y-auto">
+                  <div className="flex flex-col space-y-4 mt-8 pb-8">
+                    {/* User info */}
+                    {user && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-secondary text-white text-sm">
+                            {getInitials(user.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                          <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                        </div>
+                      </div>
+                    )}
                     
-                    <div className="border-t pt-4">
-                      <div className="flex items-center space-x-2 mb-4">
+                    {/* Navigation Links */}
+                    <div className="space-y-2">
+                      <NavLinks mobile />
+                    </div>
+                    
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex items-center space-x-2">
                         <Globe className="h-4 w-4 text-gray-400" />
                         <Select value={language} onValueChange={setLanguage}>
                           <SelectTrigger className="w-full">
@@ -366,7 +409,7 @@ export function Navigation() {
                         <Button
                           variant="ghost"
                           onClick={handleLogout}
-                          className="w-full justify-start text-red-600 hover:text-red-600"
+                          className="w-full justify-start text-red-600 hover:text-red-600 touch-manipulation py-3"
                         >
                           <LogOut className="h-4 w-4 mr-2" />
                           {t('auth.logout')}

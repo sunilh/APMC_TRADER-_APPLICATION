@@ -61,6 +61,31 @@
   body {
     @apply font-inter antialiased bg-background text-foreground;
   }
+  
+  /* Mobile touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Improve mobile menu visibility */
+  .mobile-menu-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Better mobile dropdown spacing */
+  .mobile-dropdown {
+    padding: 0.5rem 0;
+  }
+  
+  .mobile-dropdown-item {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
 }
 
 /* Custom animations for voice input */
