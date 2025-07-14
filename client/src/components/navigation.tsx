@@ -151,10 +151,21 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
-              onClick={() => {
-                console.log('Mobile single item clicked:', item.href);
+              onClick={(e) => {
+                console.log('=== MOBILE SINGLE NAVIGATION DEBUG ===');
+                console.log('Single item clicked:', item.name);
+                console.log('Target href:', item.href);
+                console.log('Event type:', e.type);
+                console.log('Current URL:', window.location.href);
                 setExpandedGroups(new Set());
                 setMobileMenuOpen(false);
+                console.log('Menu closed, navigation should proceed...');
+              }}
+              onTouchStart={() => {
+                console.log('Touch start on mobile single item:', item.name);
+              }}
+              onTouchEnd={() => {
+                console.log('Touch end on mobile single item:', item.name);
               }}
               className={`
                 inline-flex items-center w-full justify-start py-3 px-2 touch-manipulation
@@ -260,10 +271,21 @@ export function Navigation() {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
-                        onClick={() => {
-                          console.log('Mobile sub item clicked:', subItem.href);
+                        onClick={(e) => {
+                          console.log('=== MOBILE NAVIGATION DEBUG ===');
+                          console.log('Sub item clicked:', subItem.name);
+                          console.log('Target href:', subItem.href);
+                          console.log('Event type:', e.type);
+                          console.log('Current URL:', window.location.href);
                           setExpandedGroups(new Set());
                           setMobileMenuOpen(false);
+                          console.log('Menu closed, navigation should proceed...');
+                        }}
+                        onTouchStart={() => {
+                          console.log('Touch start on mobile sub item:', subItem.name);
+                        }}
+                        onTouchEnd={() => {
+                          console.log('Touch end on mobile sub item:', subItem.name);
                         }}
                         className={`
                           inline-flex items-center w-full justify-start text-sm py-3 px-2 touch-manipulation
