@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import * as fs from 'fs';
+import * as path from 'path';
 import bcrypt from "bcrypt";
 import { generateFarmerDayBill, getFarmerDayBills, generateBuyerDayBill, getBuyerDayBills, generateTaxInvoice } from "./billing";
 import { generateTaxReport, generateCessReport, generateGstReport, getDateRange } from "./reports";
@@ -2983,12 +2985,10 @@ export function registerRoutes(app: Express): Server {
         const filePath = `uploads/bid-photos/${filename}`;
         
         // Create directory if it doesn't exist
-        const fs = require('fs').promises;
-        const path = require('path');
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
         
         // Save file
-        await fs.writeFile(filePath, file.buffer);
+        await fs.promises.writeFile(filePath, file.buffer);
         
         // Store photo with metadata
         const photoMetadata = {
