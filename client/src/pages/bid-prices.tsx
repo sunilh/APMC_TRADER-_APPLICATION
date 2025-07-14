@@ -381,6 +381,7 @@ export default function BidPrices() {
   // Photo zoom and pan functions
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState(0);
 
   const handleZoomIn = () => {
     setPhotoViewer(prev => ({
@@ -416,6 +417,7 @@ export default function BidPrices() {
     }));
   };
 
+  // Mouse events for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     if (photoViewer.zoom > 1) {
       setIsDragging(true);
@@ -435,6 +437,61 @@ export default function BidPrices() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  // Touch events for mobile
+  const getTouchDistance = (touches: TouchList) => {
+    if (touches.length < 2) return 0;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) + 
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch to zoom start
+      const distance = getTouchDistance(e.touches);
+      setLastTouchDistance(distance);
+    } else if (e.touches.length === 1 && photoViewer.zoom > 1) {
+      // Single touch pan start
+      setIsDragging(true);
+      const touch = e.touches[0];
+      setDragStart({ x: touch.clientX - photoViewer.panX, y: touch.clientY - photoViewer.panY });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 2) {
+      // Pinch to zoom
+      const distance = getTouchDistance(e.touches);
+      if (lastTouchDistance > 0) {
+        const scale = distance / lastTouchDistance;
+        const newZoom = Math.max(0.5, Math.min(5, photoViewer.zoom * scale));
+        setPhotoViewer(prev => ({
+          ...prev,
+          zoom: newZoom
+        }));
+      }
+      setLastTouchDistance(distance);
+    } else if (e.touches.length === 1 && isDragging && photoViewer.zoom > 1) {
+      // Single touch pan
+      const touch = e.touches[0];
+      setPhotoViewer(prev => ({
+        ...prev,
+        panX: touch.clientX - dragStart.x,
+        panY: touch.clientY - dragStart.y
+      }));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setLastTouchDistance(0);
   };
 
   const handleDalalSuggestionSelect = (dalal: any) => {
@@ -922,6 +979,9 @@ export default function BidPrices() {
                       onMouseMove={handleMouseMove}
                       onMouseUp={handleMouseUp}
                       onMouseLeave={handleMouseUp}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                       style={{ touchAction: 'none' }}
                     >
                       <img
@@ -955,7 +1015,12 @@ export default function BidPrices() {
                     
                     {/* Zoom Instructions */}
                     <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded max-w-xs">
-                      Scroll wheel to zoom • Double-click to zoom in/reset • Drag to pan when zoomed
+                      <div className="hidden md:block">
+                        Scroll wheel to zoom • Double-click to zoom in/reset • Drag to pan when zoomed
+                      </div>
+                      <div className="block md:hidden">
+                        Pinch to zoom • Double-tap to zoom • Touch and drag to pan when zoomed
+                      </div>
                     </div>
                     
                     {/* Navigation Buttons */}
