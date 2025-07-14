@@ -276,6 +276,7 @@ export default function BidPrices() {
 
   const handleDalalSuggestionSelect = (dalal: any) => {
     const dalalName = String(dalal.name || "");
+    console.log("Selecting dalal - name:", dalalName);
     setBidForm(prev => ({
       ...prev,
       dalalName: dalalName
@@ -333,7 +334,11 @@ export default function BidPrices() {
             <BackToDashboard />
             <Dialog open={bidDialog} onOpenChange={setBidDialog}>
               <DialogTrigger asChild>
-                <Button onClick={() => { resetForm(); setEditingBid(null); }}>
+                <Button onClick={() => { 
+                  resetForm(); 
+                  setEditingBid(null);
+                  console.log("Reset form - bidForm.dalalName:", bidForm.dalalName);
+                }}>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   New Bid
                 </Button>
@@ -353,9 +358,10 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="dalalName"
                         placeholder="Enter or search dalal name"
-                        value={bidForm.dalalName || ""}
+                        value={String(bidForm.dalalName || "")}
                         onChange={(value) => {
-                          const stringValue = String(value);
+                          const stringValue = String(value || "");
+                          console.log("Input onChange - stringValue:", stringValue);
                           setBidForm(prev => ({ ...prev, dalalName: stringValue }));
                           setSearchDalal(stringValue);
                         }}
