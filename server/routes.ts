@@ -2957,17 +2957,17 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { buyerId, dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
+      const { dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
       
-      // Validate required fields
-      if (!buyerId || !dalalName || !lotNumber || !bidPrice) {
+      // Validate required fields (removed buyerId requirement)
+      if (!dalalName || !lotNumber || !bidPrice) {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
       const [newBid] = await db
         .insert(bidPrices)
         .values({
-          buyerId: parseInt(buyerId),
+          buyerId: null, // No buyer required for bid prices
           dalalName,
           lotNumber,
           bidPrice,

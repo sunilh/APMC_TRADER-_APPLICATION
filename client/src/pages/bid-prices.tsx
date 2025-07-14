@@ -58,7 +58,6 @@ interface DalalLotSummary {
 }
 
 interface BidForm {
-  buyerId: string;
   dalalName: string;
   lotNumber: string;
   bidPrice: string;
@@ -82,7 +81,6 @@ export default function BidPrices() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const [bidForm, setBidForm] = useState<BidForm>({
-    buyerId: "",
     dalalName: "",
     lotNumber: "",
     bidPrice: "",
@@ -90,10 +88,7 @@ export default function BidPrices() {
     chiliPhotos: [],
   });
 
-  // Fetch buyers for selection
-  const { data: buyers = [] } = useQuery({
-    queryKey: ["/api/buyers"],
-  });
+
 
   // Fetch all dalals with their lots
   const { data: dalalLots = [], isLoading: loadingDalals } = useQuery({
@@ -109,13 +104,9 @@ export default function BidPrices() {
   // Create bid price mutation
   const createBidMutation = useMutation({
     mutationFn: async (data: BidForm) => {
-      const payload = {
-        ...data,
-        buyerId: parseInt(data.buyerId)
-      };
       const endpoint = editingBid ? `/api/bid-prices/${editingBid.id}` : "/api/bid-prices";
       const method = editingBid ? "PUT" : "POST";
-      return await apiRequest(method, endpoint, payload);
+      return await apiRequest(method, endpoint, data);
     },
     onSuccess: () => {
       toast({
@@ -183,7 +174,6 @@ export default function BidPrices() {
 
   const resetForm = () => {
     setBidForm({
-      buyerId: "",
       dalalName: "",
       lotNumber: "",
       bidPrice: "",
@@ -196,7 +186,7 @@ export default function BidPrices() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!bidForm.buyerId || !bidForm.dalalName || !bidForm.lotNumber || !bidForm.bidPrice) {
+    if (!bidForm.dalalName || !bidForm.lotNumber || !bidForm.bidPrice) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -211,7 +201,6 @@ export default function BidPrices() {
   const handleEdit = (bid: any) => {
     setEditingBid(bid);
     setBidForm({
-      buyerId: bid.buyerId?.toString() || "",
       dalalName: bid.dalalName,
       lotNumber: bid.lotNumber,
       bidPrice: bid.bidPrice,
@@ -326,25 +315,6 @@ export default function BidPrices() {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Buyer Selection - Simple HTML Select */}
-                  <div>
-                    <Label htmlFor="buyer">Buyer/Trader *</Label>
-                    <select
-                      id="buyer"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={bidForm.buyerId}
-                      onChange={(e) => setBidForm(prev => ({ ...prev, buyerId: e.target.value }))}
-                      required
-                    >
-                      <option value="">Select buyer/trader</option>
-                      {buyers.map((buyer: any) => (
-                        <option key={buyer.id} value={buyer.id.toString()}>
-                          {buyer.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   {/* Dalal Name with Suggestions */}
                   <div className="space-y-2">
                     <Label htmlFor="dalalName">Dalal Name *</Label>
