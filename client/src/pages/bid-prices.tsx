@@ -97,7 +97,10 @@ export default function BidPrices() {
 
   // Fetch dalal suggestions from suppliers
   const { data: dalalSuggestions = [] } = useQuery({
-    queryKey: ["/api/suppliers", searchDalal],
+    queryKey: ["/api/suppliers"],
+    select: (data) => data?.filter((supplier: any) => 
+      supplier.name.toLowerCase().includes(searchDalal.toLowerCase())
+    ) || [],
     enabled: searchDalal.length > 0,
   });
 
