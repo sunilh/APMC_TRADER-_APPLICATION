@@ -2889,6 +2889,7 @@ export function registerRoutes(app: Express): Server {
         const lots = await db
           .select({
             id: bidPrices.id,
+            supplierId: bidPrices.supplierId,
             lotNumber: bidPrices.lotNumber,
             bidPrice: bidPrices.bidPrice,
             buyerName: buyers.name,
@@ -2964,10 +2965,23 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Missing required fields" });
       }
       
+      // Find supplier ID by dalal name
+      const supplier = await db
+        .select({ id: suppliers.id })
+        .from(suppliers)
+        .where(
+          and(
+            eq(suppliers.name, dalalName),
+            eq(suppliers.tenantId, tenantId)
+          )
+        )
+        .limit(1);
+
       const [newBid] = await db
         .insert(bidPrices)
         .values({
           buyerId: null, // No buyer required for bid prices
+          supplierId: supplier[0]?.id || null, // Link to supplier if found
           dalalName,
           lotNumber,
           bidPrice,

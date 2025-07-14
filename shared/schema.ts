@@ -713,7 +713,8 @@ export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 // Bid Prices table for buyers/traders bidding at dalal shops
 export const bidPrices = pgTable("bid_prices", {
   id: serial("id").primaryKey(),
-  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  buyerId: integer("buyer_id").references(() => buyers.id), // Made optional
+  supplierId: integer("supplier_id").references(() => suppliers.id), // Add supplier reference
   dalalName: text("dalal_name").notNull(),
   lotNumber: text("lot_number").notNull(),
   bidPrice: decimal("bid_price", { precision: 10, scale: 2 }).notNull(),
@@ -724,6 +725,7 @@ export const bidPrices = pgTable("bid_prices", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   buyerIdx: index("bid_buyer_idx").on(table.buyerId),
+  supplierIdx: index("bid_supplier_idx").on(table.supplierId),
   tenantIdx: index("bid_tenant_idx").on(table.tenantId),
   dalalIdx: index("bid_dalal_idx").on(table.dalalName),
 }));
