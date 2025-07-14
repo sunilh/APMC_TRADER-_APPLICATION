@@ -615,42 +615,42 @@ export default function BidPrices() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="dalalName">Dalal Name *</Label>
-                      <UnifiedInput
+                      <Input
                         id="dalalName"
                         placeholder="Enter dalal name"
                         value={dalalForm.name || ""}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, name: String(value) }))}
+                        onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
                         required
                       />
                     </div>
                     
                     <div>
                       <Label htmlFor="contactPerson">Contact Person</Label>
-                      <UnifiedInput
+                      <Input
                         id="contactPerson"
                         placeholder="Enter contact person name"
                         value={dalalForm.contactPerson || ""}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: String(value) }))}
+                        onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
                       />
                     </div>
                     
                     <div>
                       <Label htmlFor="mobile">Mobile Number</Label>
-                      <UnifiedInput
+                      <Input
                         id="mobile"
                         placeholder="Enter mobile number"
                         value={dalalForm.mobile || ""}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: String(value) }))}
+                        onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
                       />
                     </div>
                     
                     <div>
                       <Label htmlFor="address">Address</Label>
-                      <UnifiedInput
+                      <Input
                         id="address"
                         placeholder="Enter address"
                         value={dalalForm.address || ""}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, address: String(value) }))}
+                        onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
                       />
                     </div>
                   </div>
