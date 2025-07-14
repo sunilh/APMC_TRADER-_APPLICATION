@@ -151,30 +151,22 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
-              onClick={(e) => {
-                console.log('=== MOBILE SINGLE NAVIGATION DEBUG ===');
-                console.log('Single item clicked:', item.name);
-                console.log('Target href:', item.href);
-                console.log('Event type:', e.type);
-                console.log('Current URL:', window.location.href);
+              onClick={() => {
                 setExpandedGroups(new Set());
                 setMobileMenuOpen(false);
-                console.log('Menu closed, navigation should proceed...');
-              }}
-              onTouchStart={() => {
-                console.log('Touch start on mobile single item:', item.name);
-              }}
-              onTouchEnd={() => {
-                console.log('Touch end on mobile single item:', item.name);
               }}
               className={`
-                inline-flex items-center w-full justify-start py-3 px-2 touch-manipulation
+                inline-flex items-center w-full justify-start py-3 px-2
                 rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
                 ${active 
                   ? 'text-primary bg-primary/10 border-b-2 border-primary' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
                 }
               `}
+              style={{
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
+              }}
             >
               <Icon className="h-4 w-4 mr-2" />
               {item.name}
@@ -271,30 +263,22 @@ export function Navigation() {
                       <Link
                         key={subItem.name}
                         href={subItem.href}
-                        onClick={(e) => {
-                          console.log('=== MOBILE NAVIGATION DEBUG ===');
-                          console.log('Sub item clicked:', subItem.name);
-                          console.log('Target href:', subItem.href);
-                          console.log('Event type:', e.type);
-                          console.log('Current URL:', window.location.href);
+                        onClick={() => {
                           setExpandedGroups(new Set());
                           setMobileMenuOpen(false);
-                          console.log('Menu closed, navigation should proceed...');
-                        }}
-                        onTouchStart={() => {
-                          console.log('Touch start on mobile sub item:', subItem.name);
-                        }}
-                        onTouchEnd={() => {
-                          console.log('Touch end on mobile sub item:', subItem.name);
                         }}
                         className={`
-                          inline-flex items-center w-full justify-start text-sm py-3 px-2 touch-manipulation
+                          inline-flex items-center w-full justify-start text-sm py-3 px-2
                           rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
                           ${subActive 
                             ? 'text-primary bg-primary/10' 
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
                           }
                         `}
+                        style={{
+                          touchAction: 'manipulation',
+                          WebkitTapHighlightColor: 'transparent'
+                        }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
                         {subItem.name}
