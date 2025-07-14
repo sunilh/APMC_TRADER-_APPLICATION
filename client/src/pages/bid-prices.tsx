@@ -220,6 +220,7 @@ export default function BidPrices() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!bidForm.dalalName || !bidForm.lotNumber || !bidForm.bidPrice) {
       toast({
@@ -343,7 +344,13 @@ export default function BidPrices() {
   };
 
   const handleCameraFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     await handleFileUpload(e.target.files);
+    // Clear the input value to allow same file to be selected again
+    if (e.target) {
+      e.target.value = '';
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -630,7 +637,15 @@ export default function BidPrices() {
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files)}
+                      onChange={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFileUpload(e.target.files);
+                        // Clear the input value to allow same file to be selected again
+                        if (e.target) {
+                          e.target.value = '';
+                        }
+                      }}
                     />
                     
                     <input
