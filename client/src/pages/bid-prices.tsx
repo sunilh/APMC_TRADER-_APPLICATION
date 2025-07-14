@@ -288,7 +288,7 @@ export default function BidPrices() {
                   <div>
                     <Label htmlFor="buyer">Buyer/Trader *</Label>
                     <Select
-                      value={bidForm.buyerId.toString()}
+                      value={bidForm.buyerId > 0 ? bidForm.buyerId.toString() : ""}
                       onValueChange={(value) => setBidForm(prev => ({ ...prev, buyerId: parseInt(value) }))}
                     >
                       <SelectTrigger>
@@ -465,7 +465,7 @@ export default function BidPrices() {
               <div className="flex-1">
                 <Label htmlFor="dalalFilter">Filter by Dalal</Label>
                 <Select
-                  value={selectedDalal}
+                  value={selectedDalal || ""}
                   onValueChange={setSelectedDalal}
                 >
                   <SelectTrigger>
