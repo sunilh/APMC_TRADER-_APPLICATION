@@ -35,7 +35,8 @@ import {
   MapPin,
   Phone,
   Users,
-  Package
+  Package,
+  Loader2
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -214,13 +215,7 @@ export default function BidPrices() {
       chiliPhotos: [],
     });
     setSearchDalal("");
-    setCreateDalalOpen(false);
-    setDalalForm({
-      name: "",
-      contactPerson: "",
-      mobile: "",
-      address: ""
-    });
+    setEditingBid(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -241,11 +236,11 @@ export default function BidPrices() {
   const handleEdit = (bid: any) => {
     setEditingBid(bid);
     setBidForm({
-      dalalName: String(bid.dalalName || ""),
-      lotNumber: String(bid.lotNumber || ""),
-      bidPrice: String(bid.bidPrice || ""),
-      notes: String(bid.notes || ""),
-      chiliPhotos: bid.chiliPhotos || [],
+      dalalName: typeof bid.dalalName === 'string' ? bid.dalalName : String(bid.dalalName || ""),
+      lotNumber: typeof bid.lotNumber === 'string' ? bid.lotNumber : String(bid.lotNumber || ""),
+      bidPrice: typeof bid.bidPrice === 'string' ? bid.bidPrice : String(bid.bidPrice || ""),
+      notes: typeof bid.notes === 'string' ? bid.notes : String(bid.notes || ""),
+      chiliPhotos: Array.isArray(bid.chiliPhotos) ? bid.chiliPhotos : [],
     });
     setBidDialog(true);
   };
@@ -280,8 +275,8 @@ export default function BidPrices() {
   };
 
   const handleDalalSuggestionSelect = (dalal: any) => {
-    const dalalName = String(dalal.name || "");
-    console.log("Selecting dalal - name:", dalalName);
+    const dalalName = typeof dalal.name === 'string' ? dalal.name : String(dalal.name || "");
+    console.log("Selecting dalal - name:", dalalName, "type:", typeof dalalName);
     setBidForm(prev => ({
       ...prev,
       dalalName: dalalName
@@ -348,55 +343,77 @@ export default function BidPrices() {
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Create New Supplier/Dalal</DialogTitle>
+                  <DialogTitle>Add New Dalal/Trader</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreateDalal} className="space-y-4">
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="dalalName">Supplier/Dalal Name *</Label>
-                    <UnifiedInput
-                      id="dalalName"
-                      placeholder="Enter supplier name"
+                    <Label>Dalal Name *</Label>
+                    <Input
+                      type="text"
                       value={dalalForm.name}
-                      onChange={(value) => setDalalForm(prev => ({ ...prev, name: String(value) }))}
-                      required
+                      onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter dalal name"
                     />
                   </div>
+                  
                   <div>
-                    <Label htmlFor="contactPerson">Contact Person</Label>
-                    <UnifiedInput
-                      id="contactPerson"
-                      placeholder="Enter contact person name"
+                    <Label>Contact Person</Label>
+                    <Input
+                      type="text"
                       value={dalalForm.contactPerson}
-                      onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: String(value) }))}
+                      onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
+                      placeholder="Enter contact person name"
                     />
                   </div>
+                  
                   <div>
-                    <Label htmlFor="mobile">Mobile Number</Label>
-                    <UnifiedInput
-                      id="mobile"
-                      placeholder="Enter mobile number"
+                    <Label>Mobile Number</Label>
+                    <Input
+                      type="text"
                       value={dalalForm.mobile}
-                      onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: String(value) }))}
+                      onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
+                      placeholder="Enter mobile number"
                     />
                   </div>
+                  
                   <div>
-                    <Label htmlFor="address">Address</Label>
-                    <UnifiedInput
-                      id="address"
-                      placeholder="Enter address"
+                    <Label>Address</Label>
+                    <Input
+                      type="text"
                       value={dalalForm.address}
-                      onChange={(value) => setDalalForm(prev => ({ ...prev, address: String(value) }))}
+                      onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Enter address"
                     />
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setCreateDalalOpen(false)}>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => {
+                        if (!dalalForm.name) {
+                          toast({ title: "Error", description: "Dalal name is required", variant: "destructive" });
+                          return;
+                        }
+                        
+                        createDalalMutation.mutate(dalalForm);
+                      }}
+                      disabled={createDalalMutation.isPending}
+                      className="flex-1"
+                    >
+                      {createDalalMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      Add Dalal
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setCreateDalalOpen(false)}
+                      className="flex-1"
+                    >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={createDalalMutation.isPending}>
-                      {createDalalMutation.isPending ? "Creating..." : "Create Supplier"}
-                    </Button>
                   </div>
-                </form>
+                </div>
               </DialogContent>
             </Dialog>
 
@@ -426,9 +443,9 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="dalalName"
                         placeholder="Type to search suppliers..."
-                        value={String(bidForm.dalalName || "")}
+                        value={bidForm.dalalName}
                         onChange={(value) => {
-                          const stringValue = String(value || "");
+                          const stringValue = typeof value === 'string' ? value : String(value || "");
                           setBidForm(prev => ({ ...prev, dalalName: stringValue }));
                           setSearchDalal(stringValue);
                         }}
