@@ -101,11 +101,16 @@ export default function BidPrices() {
     queryKey: ["/api/suppliers"],
   });
 
-  // Filter suppliers based on search term
+  // Filter suppliers based on search term with enhanced matching
   const dalalSuggestions = searchDalal.length > 0 
-    ? allSuppliers.filter((supplier: any) => 
-        supplier.name && supplier.name.toLowerCase().includes(searchDalal.toLowerCase())
-      )
+    ? allSuppliers.filter((supplier: any) => {
+        const searchTerm = searchDalal.toLowerCase();
+        return (
+          (supplier.name && supplier.name.toLowerCase().includes(searchTerm)) ||
+          (supplier.mobile && supplier.mobile.includes(searchTerm)) ||
+          (supplier.address && supplier.address.toLowerCase().includes(searchTerm))
+        );
+      }).slice(0, 5) // Limit to 5 suggestions
     : [];
 
   // Create bid price mutation
@@ -332,12 +337,75 @@ export default function BidPrices() {
           </div>
           <div className="flex items-center gap-3">
             <BackToDashboard />
+            
+            {/* Create Supplier Button */}
+            <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => setCreateDalalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Supplier
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Supplier/Dalal</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateDalal} className="space-y-4">
+                  <div>
+                    <Label htmlFor="dalalName">Supplier/Dalal Name *</Label>
+                    <UnifiedInput
+                      id="dalalName"
+                      placeholder="Enter supplier name"
+                      value={dalalForm.name}
+                      onChange={(value) => setDalalForm(prev => ({ ...prev, name: String(value) }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactPerson">Contact Person</Label>
+                    <UnifiedInput
+                      id="contactPerson"
+                      placeholder="Enter contact person name"
+                      value={dalalForm.contactPerson}
+                      onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: String(value) }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mobile">Mobile Number</Label>
+                    <UnifiedInput
+                      id="mobile"
+                      placeholder="Enter mobile number"
+                      value={dalalForm.mobile}
+                      onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: String(value) }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <UnifiedInput
+                      id="address"
+                      placeholder="Enter address"
+                      value={dalalForm.address}
+                      onChange={(value) => setDalalForm(prev => ({ ...prev, address: String(value) }))}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setCreateDalalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createDalalMutation.isPending}>
+                      {createDalalMutation.isPending ? "Creating..." : "Create Supplier"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* New Bid Button */}
             <Dialog open={bidDialog} onOpenChange={setBidDialog}>
               <DialogTrigger asChild>
                 <Button onClick={() => { 
                   resetForm(); 
                   setEditingBid(null);
-                  console.log("Reset form - bidForm.dalalName:", bidForm.dalalName);
                 }}>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   New Bid
@@ -351,17 +419,16 @@ export default function BidPrices() {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Dalal Name with Suggestions */}
+                  {/* Simplified Dalal Name Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="dalalName">Dalal Name *</Label>
+                    <Label htmlFor="dalalName">Select Supplier/Dalal *</Label>
                     <div className="relative">
                       <UnifiedInput
                         id="dalalName"
-                        placeholder="Enter or search dalal name"
+                        placeholder="Type to search suppliers..."
                         value={String(bidForm.dalalName || "")}
                         onChange={(value) => {
                           const stringValue = String(value || "");
-                          console.log("Input onChange - stringValue:", stringValue);
                           setBidForm(prev => ({ ...prev, dalalName: stringValue }));
                           setSearchDalal(stringValue);
                         }}
@@ -373,39 +440,30 @@ export default function BidPrices() {
                             dalalSuggestions.map((dalal: any, index: number) => (
                               <div
                                 key={index}
-                                className="p-3 hover:bg-gray-50 cursor-pointer border-b"
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                                 onClick={() => handleDalalSuggestionSelect(dalal)}
                               >
-                                <div className="font-medium">{String(dalal.name || '')}</div>
+                                <div className="font-medium text-gray-900">{String(dalal.name || '')}</div>
                                 {dalal.mobile && (
-                                  <div className="text-sm text-gray-500">{String(dalal.mobile)}</div>
+                                  <div className="text-sm text-gray-500">📱 {String(dalal.mobile)}</div>
+                                )}
+                                {dalal.address && (
+                                  <div className="text-xs text-gray-400 mt-1">📍 {String(dalal.address)}</div>
                                 )}
                               </div>
                             ))
                           ) : (
-                            <div className="p-3">
-                              <div className="text-sm text-gray-500 mb-2">No dalal found with "{String(searchDalal)}"</div>
-                              <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
-                                <DialogTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={() => {
-                                      setDalalForm(prev => ({ ...prev, name: String(searchDalal) }));
-                                      setCreateDalalOpen(true);
-                                    }}
-                                    className="w-full"
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create New Dalal: {String(searchDalal)}
-                                  </Button>
-                                </DialogTrigger>
-                              </Dialog>
+                            <div className="p-3 text-center text-gray-500">
+                              <div className="text-sm">No suppliers found matching "{searchDalal}"</div>
+                              <div className="text-xs mt-1">Use "Create Supplier" button to add new supplier</div>
                             </div>
                           )}
                         </div>
                       )}
                     </div>
+                    <p className="text-sm text-gray-500">
+                      💡 Search by name, mobile, or address. Can't find? Use "Create Supplier" button above.
+                    </p>
                   </div>
 
                   {/* Lot Number and Bid Price */}
