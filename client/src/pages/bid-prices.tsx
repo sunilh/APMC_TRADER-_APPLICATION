@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
-import { UnifiedInput } from "@/components/ui/unified-input";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -440,12 +440,12 @@ export default function BidPrices() {
                   <div className="space-y-2">
                     <Label htmlFor="dalalName">Select Supplier/Dalal *</Label>
                     <div className="relative">
-                      <UnifiedInput
+                      <Input
                         id="dalalName"
                         placeholder="Type to search suppliers..."
                         value={bidForm.dalalName}
-                        onChange={(value) => {
-                          const stringValue = typeof value === 'string' ? value : String(value || "");
+                        onChange={(e) => {
+                          const stringValue = e.target.value;
                           setBidForm(prev => ({ ...prev, dalalName: stringValue }));
                           setSearchDalal(stringValue);
                         }}
@@ -487,23 +487,23 @@ export default function BidPrices() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="lotNumber">Lot Number *</Label>
-                      <UnifiedInput
+                      <Input
                         id="lotNumber"
                         placeholder="Enter lot number"
                         value={bidForm.lotNumber || ""}
-                        onChange={(value) => setBidForm(prev => ({ ...prev, lotNumber: String(value) }))}
+                        onChange={(e) => setBidForm(prev => ({ ...prev, lotNumber: e.target.value }))}
                         required
                       />
                     </div>
                     <div>
                       <Label htmlFor="bidPrice">Bid Price (₹) *</Label>
-                      <UnifiedInput
+                      <Input
                         id="bidPrice"
                         type="number"
                         step="0.01"
                         placeholder="Enter bid price"
                         value={bidForm.bidPrice || ""}
-                        onChange={(value) => setBidForm(prev => ({ ...prev, bidPrice: String(value) }))}
+                        onChange={(e) => setBidForm(prev => ({ ...prev, bidPrice: e.target.value }))}
                         required
                       />
                     </div>
