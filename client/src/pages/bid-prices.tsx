@@ -285,11 +285,25 @@ export default function BidPrices() {
   const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
     
+    // Validate that dalal name and lot number are provided before upload
+    if (!bidForm.dalalName || !bidForm.lotNumber) {
+      toast({
+        title: "Information Required",
+        description: "Please enter Dalal name and Lot number before uploading photos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const formData = new FormData();
       Array.from(files).forEach(file => {
         formData.append('photos', file);
       });
+      
+      // Add metadata for photo organization
+      formData.append('dalalName', bidForm.dalalName);
+      formData.append('lotNumber', bidForm.lotNumber);
       
       const response = await fetch('/api/bid-photos', {
         method: 'POST',
@@ -300,15 +314,20 @@ export default function BidPrices() {
         throw new Error('Upload failed');
       }
       
-      const { photoUrls } = await response.json();
+      const { photos } = await response.json();
+      const photoUrlsWithMetadata = photos.map((photo: any) => ({
+        url: photo.url,
+        metadata: photo.metadata
+      }));
+      
       setBidForm(prev => ({
         ...prev,
-        chiliPhotos: [...prev.chiliPhotos, ...photoUrls]
+        chiliPhotos: [...prev.chiliPhotos, ...photoUrlsWithMetadata]
       }));
       
       toast({
         title: "Success",
-        description: `${photoUrls.length} photo(s) uploaded successfully.`,
+        description: `${photos.length} photo(s) uploaded for ${bidForm.dalalName} - Lot ${bidForm.lotNumber}`,
       });
     } catch (error) {
       toast({
@@ -320,16 +339,11 @@ export default function BidPrices() {
   };
 
   const handleCameraCapture = () => {
-    if (cameraInputRef.current) {
-      cameraInputRef.current.click();
-    }
+    cameraInputRef.current?.click();
   };
 
   const handleCameraFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      await handleFileUpload(files);
-    }
+    await handleFileUpload(e.target.files);
   };
 
   const removePhoto = (index: number) => {
@@ -628,27 +642,39 @@ export default function BidPrices() {
                       onChange={handleCameraFiles}
                     />
 
-                    {/* Photo Preview */}
+                    {/* Photo Preview with Metadata */}
                     {bidForm.chiliPhotos.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {bidForm.chiliPhotos.map((photoPath, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={`/${photoPath}`}
-                              alt={`Chili photo ${index + 1}`}
-                              className="w-full h-24 object-cover rounded border"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-1 right-1 h-6 w-6 p-0"
-                              onClick={() => removePhoto(index)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {bidForm.chiliPhotos.map((photo, index) => {
+                          const photoUrl = typeof photo === 'string' ? photo : photo.url;
+                          const metadata = typeof photo === 'object' ? photo.metadata : null;
+                          
+                          return (
+                            <div key={index} className="relative border rounded-lg overflow-hidden">
+                              <img
+                                src={`/${photoUrl}`}
+                                alt={`Chili photo ${index + 1}`}
+                                className="w-full h-24 object-cover"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-1 right-1 h-6 w-6 p-0"
+                                onClick={() => removePhoto(index)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                              {metadata && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">
+                                  <div>{metadata.supplierName}</div>
+                                  <div>Lot: {metadata.lotNumber}</div>
+                                  <div>{metadata.uploadDate}</div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

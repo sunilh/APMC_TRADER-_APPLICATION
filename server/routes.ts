@@ -2954,21 +2954,32 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Upload photos for bid prices
+  // Upload photos for bid prices with metadata
   app.post("/api/bid-photos", requireAuth, requireTenant, upload.array('photos', 5), async (req: any, res) => {
     try {
       const files = req.files as Express.Multer.File[];
+      const { dalalName, lotNumber } = req.body;
+      
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
       }
 
-      const photoUrls: string[] = [];
+      if (!dalalName || !lotNumber) {
+        return res.status(400).json({ message: "Dalal name and lot number are required for photo organization" });
+      }
+
+      const photoData: Array<{url: string, metadata: any}> = [];
+      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      for (const file of files) {
-        // Generate unique filename
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(7);
-        const filename = `bid_${timestamp}_${randomId}.jpg`;
+        
+        // Create organized filename with metadata
+        const safeSupplierName = dalalName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+        const safeLotNumber = lotNumber.replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `${safeSupplierName}_${safeLotNumber}_${currentDate}_${timestamp}_${i + 1}.jpg`;
         const filePath = `uploads/bid-photos/${filename}`;
         
         // Create directory if it doesn't exist
@@ -2978,10 +2989,26 @@ export function registerRoutes(app: Express): Server {
         
         // Save file
         await fs.writeFile(filePath, file.buffer);
-        photoUrls.push(filePath);
+        
+        // Store photo with metadata
+        const photoMetadata = {
+          url: filePath,
+          metadata: {
+            supplierName: dalalName,
+            lotNumber: lotNumber,
+            uploadDate: currentDate,
+            uploadTime: new Date().toISOString(),
+            photoNumber: i + 1,
+            totalPhotos: files.length,
+            originalName: file.originalname,
+            fileSize: file.size
+          }
+        };
+        
+        photoData.push(photoMetadata);
       }
       
-      res.json({ photoUrls });
+      res.json({ photos: photoData });
     } catch (error) {
       console.error("Error uploading photos:", error);
       res.status(500).json({ message: "Failed to upload photos" });
