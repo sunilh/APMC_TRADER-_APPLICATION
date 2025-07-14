@@ -3,8 +3,25 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ 
+  limit: '50mb',
+  parameterLimit: 50000
+}));
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '50mb',
+  parameterLimit: 50000
+}));
+
+// Increase server timeout for large uploads
+app.use((req, res, next) => {
+  req.setTimeout(300000); // 5 minutes
+  res.setTimeout(300000); // 5 minutes
+  next();
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
 
 app.use((req, res, next) => {
   const start = Date.now();

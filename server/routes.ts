@@ -2954,6 +2954,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
+  // Upload photos for bid prices
+  app.post("/api/bid-photos", requireAuth, requireTenant, upload.array('photos', 5), async (req: any, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const photoUrls: string[] = [];
+      
+      for (const file of files) {
+        // Generate unique filename
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(7);
+        const filename = `bid_${timestamp}_${randomId}.jpg`;
+        const filePath = `uploads/bid-photos/${filename}`;
+        
+        // Create directory if it doesn't exist
+        const fs = require('fs').promises;
+        const path = require('path');
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        
+        // Save file
+        await fs.writeFile(filePath, file.buffer);
+        photoUrls.push(filePath);
+      }
+      
+      res.json({ photoUrls });
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+      res.status(500).json({ message: "Failed to upload photos" });
+    }
+  });
+
   // Create new bid price entry
   app.post("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
     try {
@@ -2985,7 +3019,7 @@ export function registerRoutes(app: Express): Server {
           dalalName,
           lotNumber,
           bidPrice,
-          chiliPhotos: chiliPhotos || [],
+          chiliPhotos: chiliPhotos || [], // Now stores file paths instead of base64
           notes,
           tenantId,
         })

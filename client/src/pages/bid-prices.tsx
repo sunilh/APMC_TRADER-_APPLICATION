@@ -245,25 +245,90 @@ export default function BidPrices() {
     setBidDialog(true);
   };
 
-  const handleFileUpload = (files: FileList | null) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions to keep under 1MB
+        const maxWidth = 1024;
+        const maxHeight = 1024;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+        resolve(compressedBase64);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
     if (!files) return;
     
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        setBidForm(prev => ({
-          ...prev,
-          chiliPhotos: [...prev.chiliPhotos, base64]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('photos', file);
+      });
+      
+      const response = await fetch('/api/bid-photos', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const { photoUrls } = await response.json();
+      setBidForm(prev => ({
+        ...prev,
+        chiliPhotos: [...prev.chiliPhotos, ...photoUrls]
+      }));
+      
+      toast({
+        title: "Success",
+        description: `${photoUrls.length} photo(s) uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload photos. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCameraCapture = () => {
     if (cameraInputRef.current) {
       cameraInputRef.current.click();
+    }
+  };
+
+  const handleCameraFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await handleFileUpload(files);
     }
   };
 
@@ -560,16 +625,16 @@ export default function BidPrices() {
                       accept="image/*"
                       capture="environment"
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e.target.files)}
+                      onChange={handleCameraFiles}
                     />
 
                     {/* Photo Preview */}
                     {bidForm.chiliPhotos.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {bidForm.chiliPhotos.map((photo, index) => (
+                        {bidForm.chiliPhotos.map((photoPath, index) => (
                           <div key={index} className="relative">
                             <img
-                              src={photo}
+                              src={`/${photoPath}`}
                               alt={`Chili photo ${index + 1}`}
                               className="w-full h-24 object-cover rounded border"
                             />
