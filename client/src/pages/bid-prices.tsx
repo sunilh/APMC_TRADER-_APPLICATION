@@ -378,22 +378,21 @@ export default function BidPrices() {
     }));
   };
 
-  // Photo zoom functions
+  // Photo zoom and pan functions
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   const handleZoomIn = () => {
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: Math.min(prev.zoom * 1.5, 5), // Max zoom 5x
-      panX: 0, // Reset pan to center
-      panY: 0
+      zoom: Math.min(prev.zoom * 1.5, 5) // Max zoom 5x
     }));
   };
 
   const handleZoomOut = () => {
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: Math.max(prev.zoom / 1.5, 0.5), // Min zoom 0.5x
-      panX: 0, // Reset pan to center
-      panY: 0
+      zoom: Math.max(prev.zoom / 1.5, 0.5) // Min zoom 0.5x
     }));
   };
 
@@ -413,10 +412,29 @@ export default function BidPrices() {
     
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: newZoom,
-      panX: 0, // Always center when zooming
-      panY: 0
+      zoom: newZoom
     }));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (photoViewer.zoom > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - photoViewer.panX, y: e.clientY - photoViewer.panY });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && photoViewer.zoom > 1) {
+      setPhotoViewer(prev => ({
+        ...prev,
+        panX: e.clientX - dragStart.x,
+        panY: e.clientY - dragStart.y
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
   const handleDalalSuggestionSelect = (dalal: any) => {
@@ -894,10 +912,16 @@ export default function BidPrices() {
                       </div>
                     </div>
 
-                    {/* Main Photo Display with Zoom */}
+                    {/* Main Photo Display with Zoom and Pan */}
                     <div 
-                      className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px] max-h-[400px] overflow-auto cursor-grab active:cursor-grabbing"
+                      className={`flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px] max-h-[400px] overflow-hidden ${
+                        photoViewer.zoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'
+                      }`}
                       onWheel={handleWheel}
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
                       style={{ touchAction: 'none' }}
                     >
                       <img
@@ -905,9 +929,9 @@ export default function BidPrices() {
                         alt={`Photo ${photoViewer.currentIndex + 1}`}
                         className="rounded-lg select-none block"
                         style={{
-                          transform: `scale(${photoViewer.zoom})`,
+                          transform: `scale(${photoViewer.zoom}) translate(${photoViewer.panX}px, ${photoViewer.panY}px)`,
                           transformOrigin: 'center center',
-                          transition: 'transform 0.2s ease',
+                          transition: isDragging ? 'none' : 'transform 0.2s ease',
                           maxWidth: '100%',
                           maxHeight: '400px',
                           objectFit: 'contain',
@@ -930,8 +954,8 @@ export default function BidPrices() {
                     </div>
                     
                     {/* Zoom Instructions */}
-                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                      Scroll wheel to zoom • Double-click to zoom in/reset • Drag zoom buttons
+                    <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded max-w-xs">
+                      Scroll wheel to zoom • Double-click to zoom in/reset • Drag to pan when zoomed
                     </div>
                     
                     {/* Navigation Buttons */}
