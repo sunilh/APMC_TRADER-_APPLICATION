@@ -103,6 +103,11 @@ export function Navigation() {
       icon: Building2,
       items: [
         {
+          name: "Bid Prices",
+          href: "/bid-prices",
+          icon: IndianRupee,
+        },
+        {
           name: "Invoice Processing",
           href: "/inventory-in",
           icon: ClipboardList,

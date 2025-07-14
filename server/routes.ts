@@ -39,6 +39,8 @@ import {
   expenses,
   purchaseInvoices,
   stockInventory,
+  bidPrices,
+  suppliers,
 } from "@shared/schema";
 import { getSimpleFinalAccounts } from "./finalAccountsSimple";
 import { db } from "./db";
@@ -2862,5 +2864,244 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
+  // ====================================
+  // BID PRICE SYSTEM API ROUTES
+  // ====================================
+  
+  // Get all dalals with their lots for bidding
+  app.get("/api/bid-dalals", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      
+      // Get all unique dalals from suppliers table and their lots from bid_prices
+      const dalals = await db
+        .select({
+          dalalName: suppliers.name,
+          dalalContact: suppliers.mobile,
+          dalalAddress: suppliers.address,
+        })
+        .from(suppliers)
+        .where(eq(suppliers.tenantId, tenantId))
+        .groupBy(suppliers.name, suppliers.mobile, suppliers.address);
+      
+      // Get bid lots for each dalal
+      const dalalLots = await Promise.all(dalals.map(async (dalal) => {
+        const lots = await db
+          .select({
+            id: bidPrices.id,
+            lotNumber: bidPrices.lotNumber,
+            bidPrice: bidPrices.bidPrice,
+            buyerName: buyers.name,
+            bidDate: bidPrices.bidDate,
+            chiliPhotos: bidPrices.chiliPhotos,
+            notes: bidPrices.notes,
+          })
+          .from(bidPrices)
+          .leftJoin(buyers, eq(bidPrices.buyerId, buyers.id))
+          .where(
+            and(
+              eq(bidPrices.tenantId, tenantId),
+              eq(bidPrices.dalalName, dalal.dalalName)
+            )
+          )
+          .orderBy(desc(bidPrices.bidDate));
+        
+        return {
+          ...dalal,
+          lots,
+          totalLots: lots.length,
+        };
+      }));
+      
+      res.json(dalalLots);
+    } catch (error) {
+      console.error("Error fetching dalals:", error);
+      res.status(500).json({ message: "Failed to fetch dalals" });
+    }
+  });
+  
+  // Get bid prices for specific buyer
+  app.get("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId } = req.query;
+      
+      let query = db
+        .select({
+          id: bidPrices.id,
+          dalalName: bidPrices.dalalName,
+          lotNumber: bidPrices.lotNumber,
+          bidPrice: bidPrices.bidPrice,
+          chiliPhotos: bidPrices.chiliPhotos,
+          notes: bidPrices.notes,
+          bidDate: bidPrices.bidDate,
+          buyerName: buyers.name,
+        })
+        .from(bidPrices)
+        .leftJoin(buyers, eq(bidPrices.buyerId, buyers.id))
+        .where(eq(bidPrices.tenantId, tenantId));
+      
+      if (buyerId) {
+        query = query.where(eq(bidPrices.buyerId, parseInt(buyerId as string)));
+      }
+      
+      const results = await query.orderBy(desc(bidPrices.bidDate));
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching bid prices:", error);
+      res.status(500).json({ message: "Failed to fetch bid prices" });
+    }
+  });
+  
+  // Create new bid price entry
+  app.post("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { buyerId, dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
+      
+      // Validate required fields
+      if (!buyerId || !dalalName || !lotNumber || !bidPrice) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const [newBid] = await db
+        .insert(bidPrices)
+        .values({
+          buyerId: parseInt(buyerId),
+          dalalName,
+          lotNumber,
+          bidPrice,
+          chiliPhotos: chiliPhotos || [],
+          notes,
+          tenantId,
+        })
+        .returning();
+      
+      await createAuditLog(
+        tenantId,
+        req.user.id,
+        "bid_price",
+        "create",
+        newBid.id,
+        `Created bid for ${dalalName} - Lot ${lotNumber} at ₹${bidPrice}`
+      );
+      
+      res.json(newBid);
+    } catch (error) {
+      console.error("Error creating bid price:", error);
+      res.status(500).json({ message: "Failed to create bid price" });
+    }
+  });
+  
+  // Get dalal suggestions (from suppliers table)
+  app.get("/api/dalal-suggestions", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { search } = req.query;
+      
+      let query = db
+        .select({
+          name: suppliers.name,
+          mobile: suppliers.mobile,
+          address: suppliers.address,
+        })
+        .from(suppliers)
+        .where(eq(suppliers.tenantId, tenantId))
+        .groupBy(suppliers.name, suppliers.mobile, suppliers.address);
+      
+      if (search) {
+        query = query.where(
+          like(suppliers.name, `%${search}%`)
+        );
+      }
+      
+      const suggestions = await query.limit(10);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching dalal suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch dalal suggestions" });
+    }
+  });
+  
+  // Update bid price
+  app.put("/api/bid-prices/:id", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const bidId = parseInt(req.params.id);
+      const { dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
+      
+      const [updatedBid] = await db
+        .update(bidPrices)
+        .set({
+          dalalName,
+          lotNumber,
+          bidPrice,
+          chiliPhotos,
+          notes,
+        })
+        .where(
+          and(
+            eq(bidPrices.id, bidId),
+            eq(bidPrices.tenantId, tenantId)
+          )
+        )
+        .returning();
+      
+      if (!updatedBid) {
+        return res.status(404).json({ message: "Bid price not found" });
+      }
+      
+      await createAuditLog(
+        tenantId,
+        req.user.id,
+        "bid_price",
+        "update",
+        bidId,
+        `Updated bid for ${dalalName} - Lot ${lotNumber}`
+      );
+      
+      res.json(updatedBid);
+    } catch (error) {
+      console.error("Error updating bid price:", error);
+      res.status(500).json({ message: "Failed to update bid price" });
+    }
+  });
+  
+  // Delete bid price
+  app.delete("/api/bid-prices/:id", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const bidId = parseInt(req.params.id);
+      
+      const [deletedBid] = await db
+        .delete(bidPrices)
+        .where(
+          and(
+            eq(bidPrices.id, bidId),
+            eq(bidPrices.tenantId, tenantId)
+          )
+        )
+        .returning();
+      
+      if (!deletedBid) {
+        return res.status(404).json({ message: "Bid price not found" });
+      }
+      
+      await createAuditLog(
+        tenantId,
+        req.user.id,
+        "bid_price",
+        "delete",
+        bidId,
+        `Deleted bid for ${deletedBid.dalalName} - Lot ${deletedBid.lotNumber}`
+      );
+      
+      res.json({ message: "Bid price deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting bid price:", error);
+      res.status(500).json({ message: "Failed to delete bid price" });
+    }
+  });
+
   return httpServer;
 }

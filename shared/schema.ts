@@ -709,3 +709,33 @@ export type OcrExtractionLog = typeof ocrExtractionLogs.$inferSelect;
 export type InsertOcrExtractionLog = typeof ocrExtractionLogs.$inferInsert;
 export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+
+// Bid Prices table for buyers/traders bidding at dalal shops
+export const bidPrices = pgTable("bid_prices", {
+  id: serial("id").primaryKey(),
+  buyerId: integer("buyer_id").notNull().references(() => buyers.id),
+  dalalName: text("dalal_name").notNull(),
+  lotNumber: text("lot_number").notNull(),
+  bidPrice: decimal("bid_price", { precision: 10, scale: 2 }).notNull(),
+  chiliPhotos: jsonb("chili_photos").default([]), // Array of photo URLs/paths
+  notes: text("notes"),
+  bidDate: timestamp("bid_date").defaultNow(),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  buyerIdx: index("bid_buyer_idx").on(table.buyerId),
+  tenantIdx: index("bid_tenant_idx").on(table.tenantId),
+  dalalIdx: index("bid_dalal_idx").on(table.dalalName),
+}));
+
+export const insertBidPriceSchema = createInsertSchema(bidPrices).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  dalalName: z.string().min(1, "Dalal name is required"),
+  lotNumber: z.string().min(1, "Lot number is required"),
+  bidPrice: z.string().min(1, "Bid price is required"),
+});
+
+export type BidPrice = typeof bidPrices.$inferSelect;
+export type InsertBidPrice = z.infer<typeof insertBidPriceSchema>;
