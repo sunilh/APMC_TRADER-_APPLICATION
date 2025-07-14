@@ -96,14 +96,17 @@ export default function BidPrices() {
     queryKey: ["/api/bid-dalals"],
   });
 
-  // Fetch dalal suggestions from suppliers
-  const { data: dalalSuggestions = [] } = useQuery({
+  // Fetch all suppliers for dalal suggestions
+  const { data: allSuppliers = [] } = useQuery({
     queryKey: ["/api/suppliers"],
-    select: (data) => data?.filter((supplier: any) => 
-      supplier.name.toLowerCase().includes(searchDalal.toLowerCase())
-    ) || [],
-    enabled: searchDalal.length > 0,
   });
+
+  // Filter suppliers based on search term
+  const dalalSuggestions = searchDalal.length > 0 
+    ? allSuppliers.filter((supplier: any) => 
+        supplier.name && supplier.name.toLowerCase().includes(searchDalal.toLowerCase())
+      )
+    : [];
 
   // Create bid price mutation
   const createBidMutation = useMutation({
@@ -115,7 +118,7 @@ export default function BidPrices() {
     onSuccess: () => {
       toast({
         title: editingBid ? "Bid Updated" : "Bid Created",
-        description: `Bid for ${bidForm.dalalName} - Lot ${bidForm.lotNumber} has been ${editingBid ? 'updated' : 'created'} successfully.`,
+        description: `Bid for ${String(bidForm.dalalName)} - Lot ${String(bidForm.lotNumber)} has been ${editingBid ? 'updated' : 'created'} successfully.`,
       });
       setBidDialog(false);
       setEditingBid(null);
@@ -364,15 +367,15 @@ export default function BidPrices() {
                                 className="p-3 hover:bg-gray-50 cursor-pointer border-b"
                                 onClick={() => handleDalalSuggestionSelect(dalal)}
                               >
-                                <div className="font-medium">{dalal.name}</div>
+                                <div className="font-medium">{String(dalal.name || '')}</div>
                                 {dalal.mobile && (
-                                  <div className="text-sm text-gray-500">{dalal.mobile}</div>
+                                  <div className="text-sm text-gray-500">{String(dalal.mobile)}</div>
                                 )}
                               </div>
                             ))
                           ) : (
                             <div className="p-3">
-                              <div className="text-sm text-gray-500 mb-2">No dalal found with "{searchDalal}"</div>
+                              <div className="text-sm text-gray-500 mb-2">No dalal found with "{String(searchDalal)}"</div>
                               <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
                                 <DialogTrigger asChild>
                                   <Button
@@ -385,7 +388,7 @@ export default function BidPrices() {
                                     className="w-full"
                                   >
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Create New Dalal: {searchDalal}
+                                    Create New Dalal: {String(searchDalal)}
                                   </Button>
                                 </DialogTrigger>
                               </Dialog>
@@ -531,8 +534,8 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="dalalName"
                         placeholder="Enter dalal name"
-                        value={dalalForm.name}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, name: value }))}
+                        value={dalalForm.name || ""}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, name: String(value) }))}
                         required
                       />
                     </div>
@@ -542,8 +545,8 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="contactPerson"
                         placeholder="Enter contact person name"
-                        value={dalalForm.contactPerson}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: value }))}
+                        value={dalalForm.contactPerson || ""}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: String(value) }))}
                       />
                     </div>
                     
@@ -552,8 +555,8 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="mobile"
                         placeholder="Enter mobile number"
-                        value={dalalForm.mobile}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: value }))}
+                        value={dalalForm.mobile || ""}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: String(value) }))}
                       />
                     </div>
                     
@@ -562,8 +565,8 @@ export default function BidPrices() {
                       <UnifiedInput
                         id="address"
                         placeholder="Enter address"
-                        value={dalalForm.address}
-                        onChange={(value) => setDalalForm(prev => ({ ...prev, address: value }))}
+                        value={dalalForm.address || ""}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, address: String(value) }))}
                       />
                     </div>
                   </div>
@@ -613,8 +616,8 @@ export default function BidPrices() {
                 >
                   <option value="">All Dalals</option>
                   {dalalLots.map((dalal: DalalLotSummary) => (
-                    <option key={dalal.dalalName} value={dalal.dalalName}>
-                      {dalal.dalalName} ({dalal.totalLots} lots)
+                    <option key={String(dalal.dalalName)} value={String(dalal.dalalName)}>
+                      {String(dalal.dalalName)} ({dalal.totalLots} lots)
                     </option>
                   ))}
                 </select>
@@ -652,13 +655,13 @@ export default function BidPrices() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <MapPin className="h-5 w-5" />
-                        {dalal.dalalName}
+                        {String(dalal.dalalName || '')}
                       </CardTitle>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                         {dalal.dalalContact && (
                           <div className="flex items-center gap-1">
                             <Phone className="h-4 w-4" />
-                            {dalal.dalalContact}
+                            {String(dalal.dalalContact)}
                           </div>
                         )}
                         <Badge variant="secondary">
@@ -669,7 +672,7 @@ export default function BidPrices() {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        setBidForm(prev => ({ ...prev, dalalName: dalal.dalalName }));
+                        setBidForm(prev => ({ ...prev, dalalName: String(dalal.dalalName || '') }));
                         setBidDialog(true);
                       }}
                     >
@@ -697,12 +700,12 @@ export default function BidPrices() {
                         <TableBody>
                           {dalal.lots.map((lot) => (
                             <TableRow key={lot.id}>
-                              <TableCell className="font-medium">{lot.lotNumber}</TableCell>
-                              <TableCell>{lot.buyerName}</TableCell>
+                              <TableCell className="font-medium">{String(lot.lotNumber || '')}</TableCell>
+                              <TableCell>{String(lot.buyerName || 'No Buyer')}</TableCell>
                               <TableCell>
                                 <div className="flex items-center">
                                   <IndianRupee className="h-4 w-4 mr-1" />
-                                  {parseFloat(lot.bidPrice).toLocaleString('en-IN')}
+                                  {parseFloat(String(lot.bidPrice || '0')).toLocaleString('en-IN')}
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -722,7 +725,7 @@ export default function BidPrices() {
                               </TableCell>
                               <TableCell>
                                 {lot.notes ? (
-                                  <span className="text-sm">{lot.notes.substring(0, 30)}{lot.notes.length > 30 ? '...' : ''}</span>
+                                  <span className="text-sm">{String(lot.notes).substring(0, 30)}{String(lot.notes).length > 30 ? '...' : ''}</span>
                                 ) : (
                                   <span className="text-gray-400">-</span>
                                 )}
