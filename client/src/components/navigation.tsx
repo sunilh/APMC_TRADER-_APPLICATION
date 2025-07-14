@@ -226,8 +226,17 @@ export function Navigation() {
                 setExpandedGroups(new Set());
                 setMobileMenuOpen(false);
               }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                setExpandedGroups(new Set());
+                setMobileMenuOpen(false);
+                // Force navigation on mobile after brief delay
+                setTimeout(() => {
+                  window.location.href = item.href;
+                }, 100);
+              }}
               className={`
-                inline-flex items-center w-full justify-start py-3 px-2
+                inline-flex items-center w-full justify-start py-4 px-3
                 rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
                 ${
                   active
@@ -237,7 +246,8 @@ export function Navigation() {
               `}
               style={{
                 touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
+                WebkitTapHighlightColor: "rgba(0,0,0,0.1)",
+                minHeight: "44px"
               }}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -346,8 +356,17 @@ export function Navigation() {
                           setExpandedGroups(new Set());
                           setMobileMenuOpen(false);
                         }}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          setExpandedGroups(new Set());
+                          setMobileMenuOpen(false);
+                          // Force navigation on mobile after brief delay
+                          setTimeout(() => {
+                            window.location.href = subItem.href;
+                          }, 100);
+                        }}
                         className={`
-                          inline-flex items-center w-full justify-start text-sm py-3 px-2
+                          inline-flex items-center w-full justify-start text-sm py-4 px-3
                           rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
                           ${
                             subActive
@@ -357,7 +376,8 @@ export function Navigation() {
                         `}
                         style={{
                           touchAction: "manipulation",
-                          WebkitTapHighlightColor: "transparent",
+                          WebkitTapHighlightColor: "rgba(0,0,0,0.1)",
+                          minHeight: "44px"
                         }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
