@@ -71,11 +71,12 @@ export default function BidPrices() {
   const [editingBid, setEditingBid] = useState<any>(null);
   const [selectedDalal, setSelectedDalal] = useState<string>("");
   const [searchDalal, setSearchDalal] = useState("");
-  const [showDalalForm, setShowDalalForm] = useState(false);
-  const [newDalalForm, setNewDalalForm] = useState({
+  const [createDalalOpen, setCreateDalalOpen] = useState(false);
+  const [dalalForm, setDalalForm] = useState({
     name: "",
+    contactPerson: "",
     mobile: "",
-    address: "",
+    address: ""
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -151,28 +152,48 @@ export default function BidPrices() {
     },
   });
 
-  // Create new dalal mutation
+  // Create dalal mutation
   const createDalalMutation = useMutation({
     mutationFn: async (dalalData: any) => {
-      return await apiRequest("POST", "/api/suppliers", dalalData);
+      // Remove empty fields that could cause database errors
+      const cleanData = {
+        name: dalalData.name,
+        contactPerson: dalalData.contactPerson || null,
+        mobile: dalalData.mobile || null,
+        address: dalalData.address || null,
+        email: dalalData.email || null,
+        gstNumber: dalalData.gstNumber || null,
+        panNumber: dalalData.panNumber || null,
+        isActive: true
+      };
+      return await apiRequest("POST", "/api/suppliers", cleanData);
     },
-    onSuccess: (newDalal) => {
-      toast({
-        title: "Dalal Created",
-        description: `${newDalal.name} has been added successfully.`,
-      });
-      setBidForm(prev => ({ ...prev, dalalName: newDalal.name }));
-      setNewDalalForm({ name: "", mobile: "", address: "" });
-      setShowDalalForm(false);
+    onSuccess: (newSupplier: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create dalal.",
-        variant: "destructive",
+      setCreateDalalOpen(false);
+      setDalalForm({
+        name: "",
+        contactPerson: "",
+        mobile: "",
+        address: ""
+      });
+      // Auto-select the new dalal in the form
+      setBidForm(prev => ({ 
+        ...prev, 
+        dalalName: newSupplier.name
+      }));
+      toast({ 
+        title: "Success", 
+        description: "Dalal created successfully" 
       });
     },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
   });
 
   const resetForm = () => {
@@ -252,20 +273,15 @@ export default function BidPrices() {
 
   const handleCreateDalal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDalalForm.name || !newDalalForm.mobile) {
+    if (!dalalForm.name) {
       toast({
         title: "Validation Error",
-        description: "Please fill in dalal name and mobile number.",
+        description: "Please enter dalal name.",
         variant: "destructive",
       });
       return;
     }
-    createDalalMutation.mutate(newDalalForm);
-  };
-
-  const handleNewDalalClick = () => {
-    setNewDalalForm({ name: searchDalal, mobile: "", address: "" });
-    setShowDalalForm(true);
+    createDalalMutation.mutate(dalalForm);
   };
 
   // Filter dalals based on search
@@ -350,15 +366,22 @@ export default function BidPrices() {
                           ) : (
                             <div className="p-3">
                               <div className="text-sm text-gray-500 mb-2">No dalal found with "{searchDalal}"</div>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={handleNewDalalClick}
-                                className="w-full"
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create New Dalal: {searchDalal}
-                              </Button>
+                              <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => {
+                                      setDalalForm(prev => ({ ...prev, name: searchDalal }));
+                                      setCreateDalalOpen(true);
+                                    }}
+                                    className="w-full"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Create New Dalal: {searchDalal}
+                                  </Button>
+                                </DialogTrigger>
+                              </Dialog>
                             </div>
                           )}
                         </div>
@@ -392,71 +415,7 @@ export default function BidPrices() {
                     </div>
                   </div>
 
-                  {/* New Dalal Creation Form */}
-                  {showDalalForm && (
-                    <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-blue-900">Create New Dalal</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowDalalForm(false)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <Label htmlFor="newDalalName">Dalal Name *</Label>
-                          <UnifiedInput
-                            id="newDalalName"
-                            placeholder="Enter dalal name"
-                            value={newDalalForm.name}
-                            onChange={(value) => setNewDalalForm(prev => ({ ...prev, name: value }))}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="newDalalMobile">Mobile *</Label>
-                          <UnifiedInput
-                            id="newDalalMobile"
-                            placeholder="Enter mobile number"
-                            value={newDalalForm.mobile}
-                            onChange={(value) => setNewDalalForm(prev => ({ ...prev, mobile: value }))}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <Label htmlFor="newDalalAddress">Address</Label>
-                        <UnifiedInput
-                          id="newDalalAddress"
-                          placeholder="Enter address"
-                          value={newDalalForm.address}
-                          onChange={(value) => setNewDalalForm(prev => ({ ...prev, address: value }))}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2 mt-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowDalalForm(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={handleCreateDalal}
-                          disabled={createDalalMutation.isPending}
-                        >
-                          {createDalalMutation.isPending ? "Creating..." : "Create Dalal"}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Notes */}
                   <div>
@@ -545,6 +504,86 @@ export default function BidPrices() {
                       disabled={createBidMutation.isPending}
                     >
                       {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "Create Bid")}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Create Dalal Dialog - Copied from Inventory Screen */}
+            <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Dalal/Supplier</DialogTitle>
+                </DialogHeader>
+                
+                <form onSubmit={handleCreateDalal} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dalalName">Dalal Name *</Label>
+                      <UnifiedInput
+                        id="dalalName"
+                        placeholder="Enter dalal name"
+                        value={dalalForm.name}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, name: value }))}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="contactPerson">Contact Person</Label>
+                      <UnifiedInput
+                        id="contactPerson"
+                        placeholder="Enter contact person name"
+                        value={dalalForm.contactPerson}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, contactPerson: value }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="mobile">Mobile Number</Label>
+                      <UnifiedInput
+                        id="mobile"
+                        placeholder="Enter mobile number"
+                        value={dalalForm.mobile}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, mobile: value }))}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="address">Address</Label>
+                      <UnifiedInput
+                        id="address"
+                        placeholder="Enter address"
+                        value={dalalForm.address}
+                        onChange={(value) => setDalalForm(prev => ({ ...prev, address: value }))}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2 mt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCreateDalalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={createDalalMutation.isPending}
+                    >
+                      {createDalalMutation.isPending ? (
+                        <>
+                          <Package className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Dalal
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
