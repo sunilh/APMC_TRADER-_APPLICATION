@@ -93,10 +93,8 @@ export function Navigation() {
 
   const handleNavigation = (href: string) => {
     console.log('Navigation to:', href);
-    // Use history.pushState for client-side navigation without full page reload
-    window.history.pushState({}, '', href);
-    // Trigger popstate event to notify wouter of the navigation
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    // Force page navigation for mobile
+    window.location.href = href;
   };
 
   const getInitials = (name: string) => {
@@ -143,32 +141,45 @@ export function Navigation() {
           const Icon = item.icon;
           const active = isActive(item.href);
           
-          return (
-            <Link
+          return mobile ? (
+            <button
               key={item.name}
-              href={item.href}
+              onClick={() => {
+                console.log('Mobile single item clicked:', item.href);
+                setExpandedGroups(new Set());
+                setMobileMenuOpen(false);
+                handleNavigation(item.href);
+              }}
               className={`
-                inline-flex items-center ${mobile ? 'w-full justify-start py-3 px-2 touch-manipulation' : 'px-3 py-2'} 
+                inline-flex items-center w-full justify-start py-3 px-2 touch-manipulation
                 rounded-md text-sm font-medium transition-colors cursor-pointer
                 ${active 
                   ? 'text-primary bg-primary/10 border-b-2 border-primary' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
                 }
               `}
-              onClick={(e) => {
-                console.log('Single item clicked:', item.href);
-                setExpandedGroups(new Set()); // Close all dropdowns
-                if (mobile) setMobileMenuOpen(false);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                console.log('Touch end on single item:', item.href);
-                if (mobile) {
-                  setTimeout(() => setMobileMenuOpen(false), 100);
+            >
+              <Icon className="h-4 w-4 mr-2" />
+              {item.name}
+            </button>
+          ) : (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`
+                inline-flex items-center px-3 py-2
+                rounded-md text-sm font-medium transition-colors cursor-pointer
+                ${active 
+                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }
+              `}
+              onClick={() => {
+                console.log('Desktop single item clicked:', item.href);
+                setExpandedGroups(new Set());
               }}
             >
-              <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+              <Icon className="h-4 w-4 mr-1" />
               {item.name}
             </Link>
           );
@@ -239,30 +250,42 @@ export function Navigation() {
                     const SubIcon = subItem.icon;
                     const subActive = isActive(subItem.href);
 
-                    return (
+                    return mobile ? (
+                      <button
+                        key={subItem.name}
+                        onClick={() => {
+                          console.log('Mobile sub item clicked:', subItem.href);
+                          setExpandedGroups(new Set());
+                          setMobileMenuOpen(false);
+                          handleNavigation(subItem.href);
+                        }}
+                        className={`
+                          inline-flex items-center w-full justify-start text-sm py-3 px-2 touch-manipulation
+                          rounded-md text-sm font-medium transition-colors cursor-pointer
+                          ${subActive 
+                            ? 'text-primary bg-primary/10' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
+                          }
+                        `}
+                      >
+                        <SubIcon className="h-4 w-4 mr-2" />
+                        {subItem.name}
+                      </button>
+                    ) : (
                       <Link
                         key={subItem.name}
                         href={subItem.href}
                         className={`
-                          inline-flex items-center ${mobile ? 'w-full justify-start text-sm py-3 px-2 touch-manipulation' : 'w-full justify-start px-4 py-2'}
+                          inline-flex items-center w-full justify-start px-4 py-2
                           rounded-md text-sm font-medium transition-colors cursor-pointer
                           ${subActive 
                             ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white active:bg-gray-200'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
                           }
                         `}
-                        onClick={(e) => {
-                          console.log('Sub item clicked:', subItem.href);
-                          setExpandedGroups(new Set()); // Close all dropdowns
-                          if (mobile) setMobileMenuOpen(false);
-                        }}
-                        onTouchEnd={(e) => {
-                          e.stopPropagation();
-                          console.log('Touch end on sub item:', subItem.href);
+                        onClick={() => {
+                          console.log('Desktop sub item clicked:', subItem.href);
                           setExpandedGroups(new Set());
-                          if (mobile) {
-                            setTimeout(() => setMobileMenuOpen(false), 100);
-                          }
                         }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
