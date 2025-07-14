@@ -148,17 +148,27 @@ export function Navigation() {
           const active = isActive(item.href);
           
           return mobile ? (
-            <a
+            <div
               key={item.name}
-              href={item.href}
-              onClick={() => {
-                console.log('Mobile single item clicked:', item.href);
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('=== MOBILE SINGLE NAVIGATION CLICKED ===');
+                console.log('Item:', item.name);
+                console.log('Target URL:', item.href);
+                console.log('Current location:', window.location.href);
+                
+                // Close menu first
                 setExpandedGroups(new Set());
                 setMobileMenuOpen(false);
+                
+                // Force navigation
+                console.log('Navigating to:', item.href);
+                window.location.href = item.href;
               }}
               className={`
                 inline-flex items-center w-full justify-start py-3 px-2 touch-manipulation
-                rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
+                rounded-md text-sm font-medium transition-colors cursor-pointer
                 ${active 
                   ? 'text-primary bg-primary/10 border-b-2 border-primary' 
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
@@ -167,7 +177,7 @@ export function Navigation() {
             >
               <Icon className="h-4 w-4 mr-2" />
               {item.name}
-            </a>
+            </div>
           ) : (
             <Link
               key={item.name}
@@ -257,17 +267,27 @@ export function Navigation() {
                     const subActive = isActive(subItem.href);
 
                     return mobile ? (
-                      <a
+                      <div
                         key={subItem.name}
-                        href={subItem.href}
-                        onClick={() => {
-                          console.log('Mobile sub item clicked:', subItem.href);
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('=== MOBILE NAVIGATION CLICKED ===');
+                          console.log('Item:', subItem.name);
+                          console.log('Target URL:', subItem.href);
+                          console.log('Current location:', window.location.href);
+                          
+                          // Close menu first
                           setExpandedGroups(new Set());
                           setMobileMenuOpen(false);
+                          
+                          // Force navigation
+                          console.log('Navigating to:', subItem.href);
+                          window.location.href = subItem.href;
                         }}
                         className={`
                           inline-flex items-center w-full justify-start text-sm py-3 px-2 touch-manipulation
-                          rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
+                          rounded-md text-sm font-medium transition-colors cursor-pointer
                           ${subActive 
                             ? 'text-primary bg-primary/10' 
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
@@ -276,7 +296,7 @@ export function Navigation() {
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
                         {subItem.name}
-                      </a>
+                      </div>
                     ) : (
                       <Link
                         key={subItem.name}
