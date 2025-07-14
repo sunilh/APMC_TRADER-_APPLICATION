@@ -181,9 +181,10 @@ export default function BidPrices() {
         address: ""
       });
       // Auto-select the new dalal in the form
+      const newDalalName = String(newSupplier.name || "");
       setBidForm(prev => ({ 
         ...prev, 
-        dalalName: String(newSupplier.name || "")
+        dalalName: newDalalName
       }));
       toast({ 
         title: "Success", 
@@ -274,9 +275,10 @@ export default function BidPrices() {
   };
 
   const handleDalalSuggestionSelect = (dalal: any) => {
+    const dalalName = String(dalal.name || "");
     setBidForm(prev => ({
       ...prev,
-      dalalName: String(dalal.name || "")
+      dalalName: dalalName
     }));
     setSearchDalal("");
   };
@@ -353,8 +355,9 @@ export default function BidPrices() {
                         placeholder="Enter or search dalal name"
                         value={bidForm.dalalName || ""}
                         onChange={(value) => {
-                          setBidForm(prev => ({ ...prev, dalalName: String(value) }));
-                          setSearchDalal(String(value));
+                          const stringValue = String(value);
+                          setBidForm(prev => ({ ...prev, dalalName: stringValue }));
+                          setSearchDalal(stringValue);
                         }}
                         required
                       />
