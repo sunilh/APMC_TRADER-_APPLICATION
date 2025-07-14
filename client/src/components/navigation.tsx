@@ -2,10 +2,41 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sprout, Home, Users, Package, Settings, LogOut, Menu, Globe, IndianRupee, Building2, Receipt, FileText, Search, BarChart3, FolderOpen, Briefcase, ClipboardList, Bug } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sprout,
+  Home,
+  Users,
+  Package,
+  Settings,
+  LogOut,
+  Menu,
+  Globe,
+  IndianRupee,
+  Building2,
+  Receipt,
+  FileText,
+  Search,
+  BarChart3,
+  FolderOpen,
+  Briefcase,
+  ClipboardList,
+  Bug,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -21,7 +52,7 @@ export function Navigation() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       let shouldCloseAll = true;
-      
+
       // Check if click is inside any dropdown
       for (const [groupName, ref] of Object.entries(dropdownRefs.current)) {
         if (ref && ref.contains(event.target as Node)) {
@@ -29,62 +60,101 @@ export function Navigation() {
           break;
         }
       }
-      
+
       if (shouldCloseAll) {
         setExpandedGroups(new Set());
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Regular tenant user navigation (with grouped tabs)
   const tenantNavigation = [
-    { name: t('nav.dashboard'), href: '/', icon: Home, type: 'single' },
-    
+    { name: t("nav.dashboard"), href: "/", icon: Home, type: "single" },
+
     // Manage Group
-    { name: 'Manage', type: 'group', icon: FolderOpen, items: [
-      { name: t('nav.farmers'), href: '/farmers', icon: Users },
-      { name: 'Buyers', href: '/buyers', icon: Users },
-      ...(user?.role === 'admin' ? [{ name: 'Staff', href: '/staff', icon: Users }] : []),
-    ]},
-    
+    {
+      name: "Manage",
+      type: "group",
+      icon: FolderOpen,
+      items: [
+        { name: t("nav.farmers"), href: "/farmers", icon: Users },
+        { name: "Buyers", href: "/buyers", icon: Users },
+        ...(user?.role === "admin"
+          ? [{ name: "Staff", href: "/staff", icon: Users }]
+          : []),
+      ],
+    },
+
     // Operations Group
-    { name: 'Operations', type: 'group', icon: Briefcase, items: [
-      { name: t('nav.lots'), href: '/lots', icon: Package },
-    ]},
-    
+    {
+      name: "Operations",
+      type: "group",
+      icon: Briefcase,
+      items: [{ name: t("nav.lots"), href: "/lots", icon: Package }],
+    },
+
     // Buyer/Trader Group
-    { name: 'Buyer/Trader', type: 'group', icon: Building2, items: [
-      { name: 'Invoice Processing', href: '/inventory-in', icon: ClipboardList },
-      { name: 'Invoice Reports', href: '/invoice-reports', icon: FileText },
-      { name: 'Stock Reports', href: '/stock-reports', icon: Package },
-      { name: 'Test Reports', href: '/test-reports', icon: Bug },
-    ]},
-    
+    {
+      name: "Buyer/Trader",
+      type: "group",
+      icon: Building2,
+      items: [
+        {
+          name: "Invoice Processing",
+          href: "/inventory-in",
+          icon: ClipboardList,
+        },
+        { name: "Invoice Reports", href: "/invoice-reports", icon: FileText },
+        { name: "Stock Reports", href: "/stock-reports", icon: Package },
+        { name: "Test Reports", href: "/test-reports", icon: Bug },
+      ],
+    },
+
     // Bills Group
-    { name: 'Bills', type: 'group', icon: Receipt, items: [
-      { name: 'Farmer Bill', href: '/farmer-bill', icon: Receipt },
-      { name: 'Tax Invoice', href: '/tax-invoice', icon: FileText },
-    ]},
-    
+    {
+      name: "Bills",
+      type: "group",
+      icon: Receipt,
+      items: [
+        { name: "Farmer Bill", href: "/farmer-bill", icon: Receipt },
+        { name: "Tax Invoice", href: "/tax-invoice", icon: FileText },
+      ],
+    },
+
     // Reports Group
-    { name: 'Reports', type: 'group', icon: BarChart3, items: [
-      { name: 'CESS Reports', href: '/cess-reports', icon: BarChart3 },
-      { name: 'GST Reports', href: '/gst-reports', icon: BarChart3 },
-    ]},
-    
+    {
+      name: "Reports",
+      type: "group",
+      icon: BarChart3,
+      items: [
+        { name: "CESS Reports", href: "/cess-reports", icon: BarChart3 },
+        { name: "GST Reports", href: "/gst-reports", icon: BarChart3 },
+      ],
+    },
+
     // Account Group
-    { name: 'Account', type: 'group', icon: Settings, items: [
-      { name: 'Final Accounts', href: '/final-accounts', icon: IndianRupee },
-      { name: t('nav.settings'), href: '/settings', icon: Settings },
-    ]},
+    {
+      name: "Account",
+      type: "group",
+      icon: Settings,
+      items: [
+        { name: "Final Accounts", href: "/final-accounts", icon: IndianRupee },
+        { name: t("nav.settings"), href: "/settings", icon: Settings },
+      ],
+    },
   ];
 
   // Simple navigation for superadmin (no grouped tabs, no tenant-specific features)
   const superAdminNavigation = [
-    { name: 'Create Tenant', href: '/tenant-onboarding', icon: Building2, type: 'single' },
+    {
+      name: "Create Tenant",
+      href: "/tenant-onboarding",
+      icon: Building2,
+      type: "single",
+    },
   ];
 
   const handleLogout = () => {
@@ -92,12 +162,12 @@ export function Navigation() {
   };
 
   const handleNavigation = (href: string) => {
-    console.log('Navigation to:', href);
+    console.log("Navigation to:", href);
     try {
       // Force page reload for reliable navigation
       window.location.assign(href);
     } catch (error) {
-      console.error('Navigation error:', error);
+      console.error("Navigation error:", error);
       // Fallback navigation
       window.location.href = href;
     }
@@ -105,22 +175,22 @@ export function Navigation() {
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const isActive = (href: string) => {
-    if (href === '/') {
+    if (href === "/") {
       return location === href;
     }
     return location.startsWith(href);
   };
 
   const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev => {
+    setExpandedGroups((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(groupName)) {
         newSet.delete(groupName);
@@ -134,19 +204,20 @@ export function Navigation() {
   const isGroupExpanded = (groupName: string) => expandedGroups.has(groupName);
 
   const isGroupActive = (items: any[]) => {
-    return items.some(item => item.href && isActive(item.href));
+    return items.some((item) => item.href && isActive(item.href));
   };
 
-  const currentNavigation = user?.role === 'super_admin' ? superAdminNavigation : tenantNavigation;
+  const currentNavigation =
+    user?.role === "super_admin" ? superAdminNavigation : tenantNavigation;
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
-    <div className={`${mobile ? 'space-y-1' : 'space-x-1 flex'}`}>
+    <div className={`${mobile ? "space-y-1" : "space-x-1 flex"}`}>
       {currentNavigation.map((item: any) => {
         // Single item (not grouped)
-        if (item.type === 'single') {
+        if (item.type === "single") {
           const Icon = item.icon;
           const active = isActive(item.href);
-          
+
           return mobile ? (
             <Link
               key={item.name}
@@ -158,14 +229,15 @@ export function Navigation() {
               className={`
                 inline-flex items-center w-full justify-start py-3 px-2
                 rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
-                ${active 
-                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
+                ${
+                  active
+                    ? "text-primary bg-primary/10 border-b-2 border-primary"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
                 }
               `}
               style={{
-                touchAction: 'manipulation',
-                WebkitTapHighlightColor: 'transparent'
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
               <Icon className="h-4 w-4 mr-2" />
@@ -178,13 +250,14 @@ export function Navigation() {
               className={`
                 inline-flex items-center px-3 py-2
                 rounded-md text-sm font-medium transition-colors cursor-pointer
-                ${active 
-                  ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ${
+                  active
+                    ? "text-primary bg-primary/10 border-b-2 border-primary"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }
               `}
               onClick={() => {
-                console.log('Desktop single item clicked:', item.href);
+                console.log("Desktop single item clicked:", item.href);
                 setExpandedGroups(new Set());
               }}
             >
@@ -195,15 +268,15 @@ export function Navigation() {
         }
 
         // Grouped items
-        if (item.type === 'group') {
+        if (item.type === "group") {
           const Icon = item.icon;
           const expanded = isGroupExpanded(item.name);
           const groupActive = isGroupActive(item.items);
 
           return (
-            <div 
-              key={item.name} 
-              className={mobile ? 'space-y-1' : 'relative'}
+            <div
+              key={item.name}
+              className={mobile ? "space-y-1" : "relative"}
               ref={(el) => {
                 if (!mobile) {
                   dropdownRefs.current[item.name] = el;
@@ -215,7 +288,7 @@ export function Navigation() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Group clicked:', item.name);
+                  console.log("Group clicked:", item.name);
                   // Close all other groups and toggle this one
                   const wasExpanded = isGroupExpanded(item.name);
                   setExpandedGroups(new Set());
@@ -233,28 +306,34 @@ export function Navigation() {
                   }
                 }}
                 className={`
-                  ${mobile ? 'w-full justify-start touch-manipulation active:bg-gray-100' : 'px-3 py-2'}
-                  ${groupActive 
-                    ? 'text-primary bg-primary/10 border-b-2 border-primary' 
-                    : 'text-gray-600 hover:text-gray-900'
+                  ${mobile ? "w-full justify-start touch-manipulation active:bg-gray-100" : "px-3 py-2"}
+                  ${
+                    groupActive
+                      ? "text-primary bg-primary/10 border-b-2 border-primary"
+                      : "text-gray-600 hover:text-gray-900"
                   }
                 `}
               >
-                <Icon className={`h-4 w-4 ${mobile ? 'mr-2' : 'mr-1'}`} />
+                <Icon className={`h-4 w-4 ${mobile ? "mr-2" : "mr-1"}`} />
                 {item.name}
-                <div className={`transition-transform ml-1 ${expanded ? 'rotate-90' : ''}`}>
+                <div
+                  className={`transition-transform ml-1 ${expanded ? "rotate-90" : ""}`}
+                >
                   ▶
                 </div>
               </Button>
 
               {/* Submenu */}
               {expanded && (
-                <div className={`
-                  ${mobile 
-                    ? 'ml-4 space-y-1' 
-                    : 'absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg border rounded-md py-2 min-w-[160px] z-50'
+                <div
+                  className={`
+                  ${
+                    mobile
+                      ? "ml-4 space-y-1"
+                      : "absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg border rounded-md py-2 min-w-[160px] z-50"
                   }
-                `}>
+                `}
+                >
                   {item.items.map((subItem: any) => {
                     const SubIcon = subItem.icon;
                     const subActive = isActive(subItem.href);
@@ -270,14 +349,15 @@ export function Navigation() {
                         className={`
                           inline-flex items-center w-full justify-start text-sm py-3 px-2
                           rounded-md text-sm font-medium transition-colors cursor-pointer no-underline
-                          ${subActive 
-                            ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200'
+                          ${
+                            subActive
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200"
                           }
                         `}
                         style={{
-                          touchAction: 'manipulation',
-                          WebkitTapHighlightColor: 'transparent'
+                          touchAction: "manipulation",
+                          WebkitTapHighlightColor: "transparent",
                         }}
                       >
                         <SubIcon className="h-4 w-4 mr-2" />
@@ -290,13 +370,17 @@ export function Navigation() {
                         className={`
                           inline-flex items-center w-full justify-start px-4 py-2
                           rounded-md text-sm font-medium transition-colors cursor-pointer
-                          ${subActive 
-                            ? 'text-primary bg-primary/10' 
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white'
+                          ${
+                            subActive
+                              ? "text-primary bg-primary/10"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white"
                           }
                         `}
                         onClick={() => {
-                          console.log('Desktop sub item clicked:', subItem.href);
+                          console.log(
+                            "Desktop sub item clicked:",
+                            subItem.href,
+                          );
                           setExpandedGroups(new Set());
                         }}
                       >
@@ -326,12 +410,16 @@ export function Navigation() {
               <div className="flex items-center cursor-pointer">
                 <Sprout className="h-8 w-8 text-secondary mr-3" />
                 <div>
-                  <span className="text-xl font-bold text-gray-900">APMC Trader</span>
-                  <p className="text-xs text-gray-600 -mt-1">Agricultural Market</p>
+                  <span className="text-xl font-bold text-gray-900">
+                    APMC Trader
+                  </span>
+                  <p className="text-xs text-gray-600 -mt-1">
+                    Agricultural Market
+                  </p>
                 </div>
               </div>
             </Link>
-            
+
             {/* Desktop navigation */}
             <div className="hidden md:ml-8 md:flex md:items-center">
               <NavLinks />
@@ -359,10 +447,17 @@ export function Navigation() {
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 px-2">
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2 px-2"
+                  >
                     <div className="text-right hidden sm:block">
-                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">
+                        {user.role}
+                      </p>
                     </div>
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-secondary text-white text-sm">
@@ -380,16 +475,16 @@ export function Navigation() {
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center">
                       <Settings className="h-4 w-4 mr-2" />
-                      {t('nav.settings')}
+                      {t("nav.settings")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleLogout}
                     className="text-red-600 focus:text-red-600"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
-                    {t('auth.logout')}
+                    {t("auth.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -399,11 +494,18 @@ export function Navigation() {
             <div className="md:hidden">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="touch-manipulation">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="touch-manipulation"
+                  >
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 z-[100] max-h-screen overflow-y-auto">
+                <SheetContent
+                  side="right"
+                  className="w-80 z-[100] max-h-screen overflow-y-auto"
+                >
                   <div className="flex flex-col space-y-4 mt-8 pb-8">
                     {/* User info */}
                     {user && (
@@ -414,17 +516,21 @@ export function Navigation() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                          <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-gray-500 capitalize">
+                            {user.role}
+                          </p>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Navigation Links */}
                     <div className="space-y-2">
                       <NavLinks mobile />
                     </div>
-                    
+
                     <div className="border-t pt-4 space-y-4">
                       <div className="flex items-center space-x-2">
                         <Globe className="h-4 w-4 text-gray-400" />
@@ -439,7 +545,7 @@ export function Navigation() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       {user && (
                         <Button
                           variant="ghost"
@@ -447,7 +553,7 @@ export function Navigation() {
                           className="w-full justify-start text-red-600 hover:text-red-600 touch-manipulation py-3"
                         >
                           <LogOut className="h-4 w-4 mr-2" />
-                          {t('auth.logout')}
+                          {t("auth.logout")}
                         </Button>
                       )}
                     </div>
