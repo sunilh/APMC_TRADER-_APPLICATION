@@ -382,14 +382,18 @@ export default function BidPrices() {
   const handleZoomIn = () => {
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: Math.min(prev.zoom * 1.5, 5) // Max zoom 5x
+      zoom: Math.min(prev.zoom * 1.5, 5), // Max zoom 5x
+      panX: 0, // Reset pan to center
+      panY: 0
     }));
   };
 
   const handleZoomOut = () => {
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: Math.max(prev.zoom / 1.5, 0.5) // Min zoom 0.5x
+      zoom: Math.max(prev.zoom / 1.5, 0.5), // Min zoom 0.5x
+      panX: 0, // Reset pan to center
+      panY: 0
     }));
   };
 
@@ -405,9 +409,13 @@ export default function BidPrices() {
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.5, Math.min(5, photoViewer.zoom * delta));
+    
     setPhotoViewer(prev => ({
       ...prev,
-      zoom: Math.max(0.5, Math.min(5, prev.zoom * delta))
+      zoom: newZoom,
+      panX: 0, // Always center when zooming
+      panY: 0
     }));
   };
 
@@ -888,21 +896,23 @@ export default function BidPrices() {
 
                     {/* Main Photo Display with Zoom */}
                     <div 
-                      className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px] overflow-hidden cursor-grab active:cursor-grabbing"
+                      className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px] max-h-[400px] overflow-auto cursor-grab active:cursor-grabbing"
                       onWheel={handleWheel}
                       style={{ touchAction: 'none' }}
                     >
                       <img
                         src={`/${photoViewer.photos[photoViewer.currentIndex]?.url || ''}`}
                         alt={`Photo ${photoViewer.currentIndex + 1}`}
-                        className="rounded-lg select-none"
+                        className="rounded-lg select-none block"
                         style={{
-                          transform: `scale(${photoViewer.zoom}) translate(${photoViewer.panX}px, ${photoViewer.panY}px)`,
+                          transform: `scale(${photoViewer.zoom})`,
                           transformOrigin: 'center center',
-                          transition: photoViewer.zoom === 1 ? 'transform 0.2s ease' : 'none',
+                          transition: 'transform 0.2s ease',
                           maxWidth: '100%',
                           maxHeight: '400px',
-                          objectFit: 'contain'
+                          objectFit: 'contain',
+                          display: 'block',
+                          margin: 'auto'
                         }}
                         onError={(e) => {
                           console.error('Image failed to load:', photoViewer.photos[photoViewer.currentIndex]?.url);
@@ -911,7 +921,6 @@ export default function BidPrices() {
                         onDoubleClick={() => {
                           if (photoViewer.zoom === 1) {
                             handleZoomIn();
-                            handleZoomIn(); // Double zoom on double-click
                           } else {
                             resetZoom();
                           }
