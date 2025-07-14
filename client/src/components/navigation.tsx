@@ -434,9 +434,151 @@ export function Navigation() {
                       </div>
                     )}
                     
-                    {/* Navigation Links */}
+                    {/* Direct Mobile Navigation Links */}
                     <div className="space-y-2">
-                      <NavLinks mobile />
+                      {/* Dashboard */}
+                      <a 
+                        href="/"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Home className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </a>
+
+                      {/* Farmers */}
+                      <a 
+                        href="/farmers"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Farmers
+                      </a>
+
+                      {/* Buyers */}
+                      <a 
+                        href="/buyers"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Building2 className="h-4 w-4 mr-2" />
+                        Buyers
+                      </a>
+
+                      {/* Staff */}
+                      {user?.role !== 'super_admin' && (
+                        <a 
+                          href="/staff"
+                          className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Staff
+                        </a>
+                      )}
+
+                      {/* Lots */}
+                      <a 
+                        href="/lots"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Package className="h-4 w-4 mr-2" />
+                        Lots
+                      </a>
+
+                      {/* Invoice Processing */}
+                      <a 
+                        href="/invoice-processing"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Invoice Processing
+                      </a>
+
+                      {/* Stock Reports */}
+                      <a 
+                        href="/stock-reports"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Stock Reports
+                      </a>
+
+                      {/* Farmer Bill */}
+                      <a 
+                        href="/farmer-bill"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <IndianRupee className="h-4 w-4 mr-2" />
+                        Farmer Bill
+                      </a>
+
+                      {/* Tax Invoice */}
+                      <a 
+                        href="/tax-invoice"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Tax Invoice
+                      </a>
+
+                      {/* CESS Reports */}
+                      <a 
+                        href="/cess-reports"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        CESS Reports
+                      </a>
+
+                      {/* GST Reports */}
+                      <a 
+                        href="/gst-reports"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        GST Reports
+                      </a>
+
+                      {/* Final Accounts */}
+                      <a 
+                        href="/final-accounts"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <IndianRupee className="h-4 w-4 mr-2" />
+                        Final Accounts
+                      </a>
+
+                      {/* Settings */}
+                      <a 
+                        href="/settings"
+                        className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </a>
+
+                      {/* Create Tenant (Super Admin only) */}
+                      {user?.role === 'super_admin' && (
+                        <a 
+                          href="/tenant-onboarding"
+                          className="flex items-center w-full justify-start py-3 px-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 no-underline"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Building2 className="h-4 w-4 mr-2" />
+                          Create Tenant
+                        </a>
+                      )}
                     </div>
                     
                     <div className="border-t pt-4 space-y-4">
