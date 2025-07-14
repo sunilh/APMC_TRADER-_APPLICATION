@@ -286,7 +286,7 @@ export default function FinalAccounts() {
       </div>
 
       {/* Key Financial Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
@@ -350,15 +350,17 @@ export default function FinalAccounts() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="profit-loss">P&L</TabsTrigger>
-          <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
-          <TabsTrigger value="cash-flow">Cash Flow</TabsTrigger>
-          <TabsTrigger value="profitability">Profitability</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4">
+          <TabsList className="flex w-max min-w-full justify-start gap-1 bg-muted p-1 rounded-md">
+            <TabsTrigger value="overview" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Overview</TabsTrigger>
+            <TabsTrigger value="profit-loss" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">P&L</TabsTrigger>
+            <TabsTrigger value="balance-sheet" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Balance Sheet</TabsTrigger>
+            <TabsTrigger value="cash-flow" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Cash Flow</TabsTrigger>
+            <TabsTrigger value="profitability" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Profitability</TabsTrigger>
+            <TabsTrigger value="transactions" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Transactions</TabsTrigger>
+            <TabsTrigger value="expenses" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Expenses</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
