@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
@@ -112,6 +112,9 @@ async function createAuditLog(
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+  
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Tenant info
   app.get("/api/tenant", requireAuth, requireTenant, async (req: any, res) => {

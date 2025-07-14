@@ -36,7 +36,11 @@ import {
   Phone,
   Users,
   Package,
-  Loader2
+  Loader2,
+  Image,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +92,14 @@ export default function BidPrices() {
     bidPrice: "",
     notes: "",
     chiliPhotos: [],
+  });
+  
+  // Photo viewer state
+  const [photoViewer, setPhotoViewer] = useState({
+    open: false,
+    photos: [] as any[],
+    currentIndex: 0,
+    lotInfo: { dalalName: "", lotNumber: "" }
   });
 
 
@@ -789,6 +801,115 @@ export default function BidPrices() {
                 </form>
               </DialogContent>
             </Dialog>
+            
+            {/* Photo Viewer Dialog */}
+            <Dialog open={photoViewer.open} onOpenChange={(open) => setPhotoViewer(prev => ({ ...prev, open }))}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>Photos - {photoViewer.lotInfo.dalalName} (Lot {photoViewer.lotInfo.lotNumber})</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      {photoViewer.currentIndex + 1} of {photoViewer.photos.length}
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {photoViewer.photos.length > 0 && (
+                  <div className="relative">
+                    {/* Main Photo Display */}
+                    <div className="flex items-center justify-center bg-gray-50 rounded-lg min-h-[400px]">
+                      <img
+                        src={`/${photoViewer.photos[photoViewer.currentIndex]?.url || ''}`}
+                        alt={`Photo ${photoViewer.currentIndex + 1}`}
+                        className="max-w-full max-h-[400px] object-contain rounded-lg"
+                        onError={(e) => {
+                          console.error('Image failed to load:', photoViewer.photos[photoViewer.currentIndex]?.url);
+                          e.currentTarget.src = '/placeholder-image.png';
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Navigation Buttons */}
+                    {photoViewer.photos.length > 1 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                          onClick={() => setPhotoViewer(prev => ({
+                            ...prev,
+                            currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : prev.photos.length - 1
+                          }))}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                          onClick={() => setPhotoViewer(prev => ({
+                            ...prev,
+                            currentIndex: prev.currentIndex < prev.photos.length - 1 ? prev.currentIndex + 1 : 0
+                          }))}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    
+                    {/* Photo Metadata */}
+                    {photoViewer.photos[photoViewer.currentIndex]?.metadata && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="font-medium">Supplier:</span>
+                            <br />
+                            {photoViewer.photos[photoViewer.currentIndex].metadata.supplierName}
+                          </div>
+                          <div>
+                            <span className="font-medium">Lot:</span>
+                            <br />
+                            {photoViewer.photos[photoViewer.currentIndex].metadata.lotNumber}
+                          </div>
+                          <div>
+                            <span className="font-medium">Date:</span>
+                            <br />
+                            {photoViewer.photos[photoViewer.currentIndex].metadata.uploadDate}
+                          </div>
+                          <div>
+                            <span className="font-medium">Size:</span>
+                            <br />
+                            {Math.round(photoViewer.photos[photoViewer.currentIndex].metadata.fileSize / 1024)} KB
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Thumbnail Navigation */}
+                    {photoViewer.photos.length > 1 && (
+                      <div className="flex gap-2 mt-4 justify-center overflow-x-auto pb-2">
+                        {photoViewer.photos.map((photo, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setPhotoViewer(prev => ({ ...prev, currentIndex: index }))}
+                            className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${
+                              index === photoViewer.currentIndex ? 'border-blue-500' : 'border-gray-300'
+                            }`}
+                          >
+                            <img
+                              src={`/${photo.url}`}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -908,9 +1029,19 @@ export default function BidPrices() {
                               </TableCell>
                               <TableCell>
                                 {lot.chiliPhotos && lot.chiliPhotos.length > 0 ? (
-                                  <Badge variant="outline">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setPhotoViewer({
+                                      open: true,
+                                      photos: lot.chiliPhotos,
+                                      currentIndex: 0,
+                                      lotInfo: { dalalName: String(dalal.dalalName), lotNumber: String(lot.lotNumber) }
+                                    })}
+                                  >
+                                    <Image className="h-4 w-4 mr-1" />
                                     {lot.chiliPhotos.length} photo{lot.chiliPhotos.length > 1 ? 's' : ''}
-                                  </Badge>
+                                  </Button>
                                 ) : (
                                   <span className="text-gray-400">No photos</span>
                                 )}
