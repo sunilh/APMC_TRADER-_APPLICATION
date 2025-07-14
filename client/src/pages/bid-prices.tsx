@@ -689,7 +689,7 @@ export default function BidPrices() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Lot Number</TableHead>
-                            <TableHead>Buyer</TableHead>
+                            <TableHead>Dalal/Supplier</TableHead>
                             <TableHead>Bid Price</TableHead>
                             <TableHead>Bid Date</TableHead>
                             <TableHead>Photos</TableHead>
@@ -701,7 +701,7 @@ export default function BidPrices() {
                           {dalal.lots.map((lot) => (
                             <TableRow key={lot.id}>
                               <TableCell className="font-medium">{String(lot.lotNumber || '')}</TableCell>
-                              <TableCell>{String(lot.buyerName || 'No Buyer')}</TableCell>
+                              <TableCell>{String(dalal.dalalName || 'No Dalal')}</TableCell>
                               <TableCell>
                                 <div className="flex items-center">
                                   <IndianRupee className="h-4 w-4 mr-1" />
