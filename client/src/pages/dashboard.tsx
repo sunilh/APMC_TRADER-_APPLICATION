@@ -3,7 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navigation } from "@/components/navigation";
-import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle, Building2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle, Building2, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -22,6 +24,37 @@ interface LotCompletionStat {
   actualBags: number;
   missingBags: number;
   completionPercentage: number;
+}
+
+interface MissingBagDetail {
+  lotId: number;
+  lotNumber: string;
+  farmerId: number;
+  farmerName: string;
+  totalBags: number;
+  enteredBags: number;
+  missingBagNumbers: number[];
+  emptyWeightBags: number[];
+  missingCount: number;
+  emptyWeightCount: number;
+  completionPercentage: number;
+  status: string;
+  createdAt: string;
+}
+
+interface MissingBagsSummary {
+  totalLotsToday: number;
+  lotsWithMissingBags: number;
+  lotsComplete: number;
+  totalMissingBags: number;
+  totalEmptyWeightBags: number;
+  date: string;
+}
+
+interface MissingBagsResponse {
+  summary: MissingBagsSummary;
+  missingBagsDetails: MissingBagDetail[];
+  todaysLots: any[];
 }
 
 interface Lot {
@@ -104,6 +137,11 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard/lot-completion"],
   });
 
+  const { data: missingBagsData, isLoading: missingBagsLoading } = useQuery<MissingBagsResponse>({
+    queryKey: ["/api/missing-bags/today"],
+    enabled: user?.role !== 'super_admin',
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -180,40 +218,93 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Missing Bags Alert - Mobile Optimized */}
-        {!completionLoading && lotCompletion.some(lot => lot.missingBags > 0) && (
+        {/* Today's Missing Bags Alert */}
+        {!missingBagsLoading && missingBagsData && (
           <div className="mb-6 sm:mb-8">
-            <Card className="bg-red-50 border-red-200">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start space-x-2 sm:space-x-3">
-                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold text-red-900 mb-2">Missing Bags Detected</h3>
-                    <p className="text-sm sm:text-base text-red-700 mb-3 sm:mb-4">Some lots have incomplete bag entries that need attention:</p>
-                    <div className="space-y-2">
-                      {lotCompletion
-                        .filter(lot => lot.missingBags > 0)
-                        .map(lot => (
-                          <div key={lot.lotId} className="flex items-center justify-between bg-red-100 p-3 rounded-lg">
-                            <div>
-                              <span className="font-medium text-red-900">{lot.lotNumber}</span>
-                              <span className="text-red-700 ml-2">({lot.farmerName})</span>
+            {missingBagsData.summary.lotsWithMissingBags > 0 ? (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertDescription>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-red-900 mb-2">
+                        Today's Missing Bags Detected ({missingBagsData.summary.date})
+                      </h4>
+                      <p className="text-red-700 text-sm mb-3">
+                        {missingBagsData.summary.lotsWithMissingBags} lots have incomplete bag entries - 
+                        {missingBagsData.summary.totalMissingBags} missing bags, {missingBagsData.summary.totalEmptyWeightBags} empty weights
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {missingBagsData.missingBagsDetails.map((lot) => (
+                        <div key={lot.lotId} className="bg-red-100 p-3 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-mono text-red-800 border-red-300">
+                                {lot.lotNumber}
+                              </Badge>
+                              <span className="text-red-800 font-medium">{lot.farmerName}</span>
                             </div>
                             <div className="text-right">
                               <div className="text-red-900 font-semibold">
-                                {lot.missingBags} bags missing
-                              </div>
-                              <div className="text-sm text-red-600">
-                                {lot.actualBags}/{lot.expectedBags} completed ({lot.completionPercentage}%)
+                                {lot.enteredBags}/{lot.totalBags} bags ({lot.completionPercentage}%)
                               </div>
                             </div>
                           </div>
-                        ))}
+                          
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            {lot.missingBagNumbers.length > 0 && (
+                              <div>
+                                <span className="text-red-700 font-medium">Missing: </span>
+                                <span className="text-red-600">
+                                  {lot.missingBagNumbers.slice(0, 5).map(n => `#${n}`).join(', ')}
+                                  {lot.missingBagNumbers.length > 5 && ` +${lot.missingBagNumbers.length - 5} more`}
+                                </span>
+                              </div>
+                            )}
+                            {lot.emptyWeightBags.length > 0 && (
+                              <div>
+                                <span className="text-yellow-700 font-medium">No Weight: </span>
+                                <span className="text-yellow-600">
+                                  {lot.emptyWeightBags.slice(0, 5).map(n => `#${n}`).join(', ')}
+                                  {lot.emptyWeightBags.length > 5 && ` +${lot.emptyWeightBags.length - 5} more`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-2 flex gap-2">
+                            <Link href={`/lots/${lot.lotId}/bags`}>
+                              <Button size="sm" className="text-xs bg-red-600 hover:bg-red-700">
+                                Fix Missing Bags
+                              </Button>
+                            </Link>
+                            <Link href="/missing-bags">
+                              <Button size="sm" variant="outline" className="text-xs border-red-300 text-red-700 hover:bg-red-50">
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <AlertDescription>
+                  <div className="text-green-800">
+                    <span className="font-semibold">✅ All Today's Lots Complete!</span>
+                    <span className="ml-2">
+                      {missingBagsData.summary.totalLotsToday} lots processed with no missing bags detected.
+                    </span>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
