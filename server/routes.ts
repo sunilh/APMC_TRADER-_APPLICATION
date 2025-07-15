@@ -885,6 +885,78 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update farmer bill deductions
+  app.patch("/api/farmer-bill/:billId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const billId = parseInt(req.params.billId);
+      const tenantId = req.user.tenantId;
+      const { deductions } = req.body;
+
+      // Validate deductions data
+      if (!deductions || typeof deductions !== 'object') {
+        return res.status(400).json({ message: "Invalid deductions data" });
+      }
+
+      const { hamali, vehicleRent, emptyBagCharges, advance, other, commission } = deductions;
+
+      // Validate all deduction amounts are numbers
+      const deductionValues = [hamali, vehicleRent, emptyBagCharges, advance, other, commission];
+      if (deductionValues.some(val => typeof val !== 'number' || val < 0)) {
+        return res.status(400).json({ message: "All deduction amounts must be valid positive numbers" });
+      }
+
+      // Get the current bill to calculate new net payable
+      const [currentBill] = await db
+        .select()
+        .from(farmerBills)
+        .where(and(eq(farmerBills.id, billId), eq(farmerBills.tenantId, tenantId)))
+        .limit(1);
+
+      if (!currentBill) {
+        return res.status(404).json({ message: "Farmer bill not found" });
+      }
+
+      // Calculate new totals
+      const totalDeductions = hamali + vehicleRent + emptyBagCharges + advance + other + commission;
+      const totalAmount = parseFloat(currentBill.totalAmount.toString());
+      const newNetPayable = totalAmount - totalDeductions;
+
+      // Update the bill with new deductions
+      await db
+        .update(farmerBills)
+        .set({
+          hamali: hamali.toString(),
+          vehicleRent: vehicleRent.toString(),
+          emptyBagCharges: emptyBagCharges.toString(),
+          advance: advance.toString(),
+          otherCharges: other.toString(),
+          commission: commission.toString(),
+          totalDeductions: totalDeductions.toString(),
+          netPayable: newNetPayable.toString(),
+          updatedAt: new Date()
+        })
+        .where(and(eq(farmerBills.id, billId), eq(farmerBills.tenantId, tenantId)));
+
+      res.json({
+        message: "Farmer bill deductions updated successfully",
+        billId: billId,
+        updatedDeductions: {
+          hamali,
+          vehicleRent,
+          emptyBagCharges,
+          advance,
+          other: other,
+          commission,
+          totalDeductions,
+          netPayable: newNetPayable
+        }
+      });
+    } catch (error) {
+      console.error("Error updating farmer bill deductions:", error);
+      res.status(500).json({ message: "Failed to update farmer bill deductions" });
+    }
+  });
+
   // Check if tax invoice already exists for buyer
   app.get("/api/tax-invoice/:buyerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {

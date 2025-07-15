@@ -66,6 +66,16 @@ export default function FarmerBill() {
     other: 0,
     commission: 0,
   });
+  
+  const [editingDeductions, setEditingDeductions] = useState(false);
+  const [editBillData, setEditBillData] = useState<FarmerBillData>({
+    hamali: 0,
+    vehicleRent: 0,
+    emptyBagCharges: 0,
+    advance: 0,
+    other: 0,
+    commission: 0,
+  });
 
   // Set default date range to current month
   useEffect(() => {
@@ -700,9 +710,245 @@ export default function FarmerBill() {
                                   <Printer className="h-4 w-4 mr-2" />
                                   Print
                                 </Button>
+                                <Button
+                                  onClick={() => {
+                                    setEditingDeductions(true);
+                                    // Load current deduction values for editing
+                                    setEditBillData({
+                                      hamali: parseFloat(billCheck.bill?.hamali || "0"),
+                                      vehicleRent: parseFloat(billCheck.bill?.vehicleRent || "0"),
+                                      emptyBagCharges: parseFloat(billCheck.bill?.emptyBagCharges || "0"),
+                                      advance: parseFloat(billCheck.bill?.advance || "0"),
+                                      other: parseFloat(billCheck.bill?.other || "0"),
+                                      commission: parseFloat(billCheck.bill?.commission || "0"),
+                                    });
+                                  }}
+                                  variant="outline"
+                                  className="w-full sm:w-auto min-h-[44px]"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Edit Deductions
+                                </Button>
                               </div>
                             </CardContent>
                           </Card>
+                          
+                          {/* Edit Deductions Dialog */}
+                          <Dialog open={editingDeductions} onOpenChange={setEditingDeductions}>
+                            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Edit Deductions - {selectedFarmer?.name}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <Label htmlFor="edit-hamali">Hamali (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-hamali"
+                                        type="number"
+                                        value={editBillData.hamali}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          hamali: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          hamali: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="edit-vehicle-rent">Vehicle Rent (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-vehicle-rent"
+                                        type="number"
+                                        value={editBillData.vehicleRent}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          vehicleRent: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          vehicleRent: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="edit-empty-bags">Empty Bag Charges (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-empty-bags"
+                                        type="number"
+                                        value={editBillData.emptyBagCharges}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          emptyBagCharges: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          emptyBagCharges: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="edit-advance">Advance (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-advance"
+                                        type="number"
+                                        value={editBillData.advance}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          advance: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          advance: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="edit-other">Other Deductions (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-other"
+                                        type="number"
+                                        value={editBillData.other}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          other: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          other: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <Label htmlFor="edit-commission">Commission (₹)</Label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="edit-commission"
+                                        type="number"
+                                        value={editBillData.commission}
+                                        onChange={(e) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          commission: parseFloat(e.target.value) || 0 
+                                        }))}
+                                        className="flex-1"
+                                      />
+                                      <VoiceInput
+                                        onResult={(value) => setEditBillData(prev => ({ 
+                                          ...prev, 
+                                          commission: parseFloat(value) || 0 
+                                        }))}
+                                        type="number"
+                                        className="w-10 h-10"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="border-t pt-4">
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                      <span>Total Amount:</span>
+                                      <span className="font-bold">{formatCurrency(billCheck.bill?.totalAmount || 0)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>Total Deductions:</span>
+                                      <span className="font-bold text-red-600">
+                                        -{formatCurrency(editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.commission)}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between text-lg font-bold border-t pt-2">
+                                      <span>Net Payable:</span>
+                                      <span className="text-green-600">
+                                        {formatCurrency(
+                                          parseFloat(billCheck.bill?.totalAmount || "0") - 
+                                          (editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.commission)
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex justify-end gap-2 pt-4">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingDeductions(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={async () => {
+                                      try {
+                                        // Update the farmer bill with new deductions
+                                        await apiRequest("PATCH", `/api/farmer-bill/${billCheck.bill.id}`, {
+                                          deductions: editBillData
+                                        });
+                                        
+                                        toast({
+                                          title: "Success",
+                                          description: "Deductions updated successfully!",
+                                        });
+                                        
+                                        // Refresh the bill check data
+                                        queryClient.invalidateQueries({ queryKey: [`/api/farmer-bill/${selectedFarmerId}/check`] });
+                                        setEditingDeductions(false);
+                                      } catch (error) {
+                                        console.error("Error updating deductions:", error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to update deductions",
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    Save Changes
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       ) : (
                         <div className="space-y-4">
