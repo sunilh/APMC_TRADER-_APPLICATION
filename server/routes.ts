@@ -67,14 +67,18 @@ const upload = multer({
 });
 
 function requireAuth(req: any, res: any, next: any) {
+  console.log('requireAuth check:', { isAuthenticated: req.isAuthenticated(), user: req.user });
   if (!req.isAuthenticated() || !req.user) {
+    console.log('Authentication failed');
     return res.status(401).json({ message: "Authentication required" });
   }
   next();
 }
 
 function requireTenant(req: any, res: any, next: any) {
+  console.log('requireTenant check:', { user: req.user, tenantId: req.user?.tenantId });
   if (!req.user?.tenantId) {
+    console.log('Tenant access denied: no tenantId');
     return res.status(403).json({ message: "Tenant access required" });
   }
   next();
@@ -1602,6 +1606,7 @@ export function registerRoutes(app: Express): Server {
 
   // Buyer purchase history route
   app.get("/api/buyers/:id/purchases", requireAuth, requireTenant, async (req: any, res) => {
+    console.log('Buyer purchase route hit:', req.params.id);
     try {
       const buyerId = parseInt(req.params.id);
       if (isNaN(buyerId)) {

@@ -218,8 +218,22 @@ export default function Buyers() {
     setIsDialogOpen(true);
   };
 
-  const handleViewPurchases = (buyer: BuyerSummary) => {
+  const handleViewPurchases = async (buyer: BuyerSummary) => {
     setSelectedBuyer(buyer);
+    try {
+      console.log('Fetching purchases for buyer:', buyer.id);
+      const response = await apiRequest('GET', `/api/buyers/${buyer.id}/purchases`);
+      console.log('Purchase response:', response);
+      setPurchases(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      setPurchases([]);
+      toast({
+        title: "Error",
+        description: "Failed to fetch purchase history",
+        variant: "destructive",
+      });
+    }
     setPurchaseDialogOpen(true);
   };
 
