@@ -24,6 +24,7 @@ const gstSettingsSchema = z.object({
   packagingWeight: z.number().min(0),
   weighingFee: z.number().min(0),
   apmcCommission: z.number().min(0).max(100),
+  rokPercentage: z.number().min(0).max(100),
 });
 
 type GSTSettings = z.infer<typeof gstSettingsSchema>;
@@ -38,6 +39,7 @@ interface TenantSettings {
     packagingWeight: number;
     weighingFee: number;
     apmcCommission: number;
+    rokPercentage: number;
   };
   maxUsers: number;
   subscriptionPlan: string;
@@ -89,6 +91,7 @@ function SettingsContent() {
       packaging: 5,
       weighingFee: 2,
       apmcCommission: 2,
+      rokPercentage: 3,
     },
   });
 
@@ -136,6 +139,7 @@ function SettingsContent() {
         packagingWeight: settings.gstSettings.packagingWeight || 0,
         weighingFee: settings.gstSettings.weighingFee || 2,
         apmcCommission: settings.gstSettings.apmcCommission || 2,
+        rokPercentage: settings.gstSettings.rokPercentage || 3,
       });
     }
   }, [settings, gstForm]);
@@ -292,6 +296,18 @@ function SettingsContent() {
                         min="0"
                         max="100"
                         {...gstForm.register("apmcCommission", { valueAsNumber: true })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="rokPercentage">Rok Rate (%)</Label>
+                      <Input
+                        id="rokPercentage"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        {...gstForm.register("rokPercentage", { valueAsNumber: true })}
                       />
                     </div>
                   </div>

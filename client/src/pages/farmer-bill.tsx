@@ -86,15 +86,27 @@ export default function FarmerBill() {
     setEndDate(todayStr);
   }, []);
 
-  // Update hamali calculation when settings or lots change
+  // Update hamali and rok calculation when settings or lots change
   useEffect(() => {
-    if (settings?.gstSettings?.hamali && farmerLots.length > 0) {
+    if (settings?.gstSettings && farmerLots.length > 0) {
       const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
-      const calculatedHamali = settings.gstSettings.hamali * totalBags;
+      const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
+        const weight = lot.totalWeight || 0;
+        const price = parseFloat(lot.lotPrice || 0);
+        const quintals = weight / 100;
+        return sum + (quintals * price);
+      }, 0);
+      
+      const hamaliRate = settings.gstSettings.unloadHamali || 0;
+      const calculatedHamali = hamaliRate * totalBags;
+      
+      const rokPercentage = settings.gstSettings.rokPercentage || 3;
+      const calculatedRok = (totalAmount * rokPercentage) / 100;
       
       setBillData(prev => ({
         ...prev,
-        hamali: calculatedHamali
+        hamali: calculatedHamali,
+        rok: calculatedRok
       }));
     }
   }, [settings, farmerLots]);
@@ -305,7 +317,7 @@ export default function FarmerBill() {
               <tr><td>Less: Vehicle Rent / ಕಡಿಮೆ: ವಾಹನ ಬಾಡಿಗೆ</td><td>-${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
               <tr><td>Less: Empty Bags / ಕಡಿಮೆ: ಖಾಲಿ ಚೀಲಗಳು</td><td>-${formatCurrency(billDetails.emptyBagCharges || 0)}</td></tr>
               <tr><td>Less: Advance / ಕಡಿಮೆ: ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</td><td>-${formatCurrency(billDetails.advance || 0)}</td></tr>
-              <tr><td>Less: Commission (3%) / ಕಡಿಮೆ: ಕಮಿಷನ್</td><td>-${formatCurrency(billDetails.commission || 0)}</td></tr>
+              <tr><td>Less: Rok (${billDetails.rokPercentage || 3}%) / ಕಡಿಮೆ: ರೋಕ್</td><td>-${formatCurrency(billDetails.rok || 0)}</td></tr>
               <tr><td>Less: Other / ಕಡಿಮೆ: ಇತರೆ</td><td>-${formatCurrency(billDetails.other || 0)}</td></tr>
               <tr class="total-row"><td><strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
             </table>
@@ -435,7 +447,7 @@ export default function FarmerBill() {
               <tr><td>Less: Vehicle Rent / ಕಡಿಮೆ: ವಾಹನ ಬಾಡಿಗೆ</td><td>-${formatCurrency(billDetails.vehicleRent || 0)}</td></tr>
               <tr><td>Less: Empty Bags / ಕಡಿಮೆ: ಖಾಲಿ ಚೀಲಗಳು</td><td>-${formatCurrency(billDetails.emptyBagCharges || 0)}</td></tr>
               <tr><td>Less: Advance / ಕಡಿಮೆ: ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</td><td>-${formatCurrency(billDetails.advance || 0)}</td></tr>
-              <tr><td>Less: Commission (3%) / ಕಡಿಮೆ: ಕಮಿಷನ್</td><td>-${formatCurrency(billDetails.commission || 0)}</td></tr>
+              <tr><td>Less: Rok (${billDetails.rokPercentage || 3}%) / ಕಡಿಮೆ: ರೋಕ್</td><td>-${formatCurrency(billDetails.rok || 0)}</td></tr>
               <tr><td>Less: Other / ಕಡಿಮೆ: ಇತರೆ</td><td>-${formatCurrency(billDetails.other || 0)}</td></tr>
               <tr class="total-row"><td><strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ</strong></td><td><strong>${formatCurrency(bill.netPayable)}</strong></td></tr>
             </table>
@@ -758,7 +770,7 @@ export default function FarmerBill() {
                                       emptyBagCharges: parseFloat(billCheck.bill?.emptyBagCharges || "0"),
                                       advance: parseFloat(billCheck.bill?.advance || "0"),
                                       other: parseFloat(billCheck.bill?.other || "0"),
-                                      commission: parseFloat(billCheck.bill?.commission || "0"),
+                                      rok: parseFloat(billCheck.bill?.commission || "0"),
                                     });
                                   }}
                                   variant="outline"
@@ -1045,9 +1057,9 @@ export default function FarmerBill() {
                                     <div>
                                       <Label htmlFor="hamali">
                                         Hamali (₹) - Auto-calculated from settings
-                                        {settings?.gstSettings?.hamali && (
+                                        {settings?.gstSettings?.unloadHamali && (
                                           <span className="text-xs text-gray-500 ml-1">
-                                            (₹{settings.gstSettings.hamali}/bag)
+                                            (₹{settings.gstSettings.unloadHamali}/bag)
                                           </span>
                                         )}
                                       </Label>
@@ -1135,6 +1147,29 @@ export default function FarmerBill() {
                                       </div>
                                     </div>
                                     <div>
+                                      <Label htmlFor="rok">
+                                        Rok (₹) - Auto-calculated from settings
+                                        {settings?.gstSettings?.rokPercentage && (
+                                          <span className="text-xs text-gray-500 ml-1">
+                                            ({settings.gstSettings.rokPercentage}% of total)
+                                          </span>
+                                        )}
+                                      </Label>
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="rok"
+                                          type="number"
+                                          value={billData.rok}
+                                          readOnly
+                                          className="flex-1 bg-gray-50"
+                                          title="Calculated from settings: percentage of total amount"
+                                        />
+                                        <div className="w-10 h-10 bg-gray-50 border rounded flex items-center justify-center">
+                                          <span className="text-xs text-gray-500">Auto</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div>
                                       <Label htmlFor="other">Other Deductions (₹)</Label>
                                       <div className="flex gap-2">
                                         <Input
@@ -1172,9 +1207,11 @@ export default function FarmerBill() {
                                           const quintals = weight / 100;
                                           return sum + (quintals * price);
                                         }, 0);
-                                        const hamaliFromSettings = settings?.gstSettings?.hamali || 0;
+                                        const hamaliFromSettings = settings?.gstSettings?.unloadHamali || 0;
                                         const calculatedHamali = hamaliFromSettings * totalBags;
-                                        const totalDeductions = calculatedHamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + billData.rok;
+                                        const rokPercentage = settings?.gstSettings?.rokPercentage || 3;
+                                        const calculatedRok = (totalAmount * rokPercentage) / 100;
+                                        const totalDeductions = calculatedHamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + calculatedRok;
                                         const netPayable = totalAmount - totalDeductions;
                                         
                                         return (
@@ -1187,7 +1224,7 @@ export default function FarmerBill() {
                                               <div className="flex justify-between text-red-600"><span>Vehicle Rent:</span><span>-{formatCurrency(billData.vehicleRent)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Empty Bags:</span><span>-{formatCurrency(billData.emptyBagCharges)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Advance:</span><span>-{formatCurrency(billData.advance)}</span></div>
-                                              <div className="flex justify-between text-red-600"><span>Rok:</span><span>-{formatCurrency(billData.rok)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Rok ({rokPercentage}%):</span><span>-{formatCurrency(calculatedRok)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Other:</span><span>-{formatCurrency(billData.other)}</span></div>
                                               <div className="flex justify-between font-bold text-red-600 border-t pt-1"><span>Total Deductions:</span><span>-{formatCurrency(totalDeductions)}</span></div>
                                             </div>
@@ -1232,7 +1269,8 @@ export default function FarmerBill() {
                                         pattiNumber: finalPattiNumber,
                                         billData: {
                                           ...billData,
-                                          hamali: (settings?.gstSettings?.hamali || 0) * totalBags,
+                                          hamali: (settings?.gstSettings?.unloadHamali || 0) * totalBags,
+                                          rok: (totalAmount * (settings?.gstSettings?.rokPercentage || 3)) / 100,
                                           totalAmount,
                                           totalBags,
                                           totalWeight,

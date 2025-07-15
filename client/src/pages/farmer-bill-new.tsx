@@ -14,7 +14,7 @@ interface FarmerBillData {
   emptyBagCharges: number;
   advance: number;
   other: number;
-  commission: number;
+  rok: number;
 }
 
 export default function FarmerBillNew() {
@@ -27,7 +27,7 @@ export default function FarmerBillNew() {
     emptyBagCharges: 0,
     advance: 0,
     other: 0,
-    commission: 0,
+    rok: 0,
   });
 
   const { data: lots } = useQuery({
@@ -62,14 +62,14 @@ export default function FarmerBillNew() {
   const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + lot.numberOfBags, 0);
   const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + lot.totalWeight, 0);
   
-  const commission = totalAmount * 0.03; // 3% commission
+  const rok = totalAmount * 0.03; // 3% commission
   const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
-                         billData.advance + commission + billData.other;
+                         billData.advance + rok + billData.other;
   const netPayable = totalAmount - totalDeductions;
 
   // Update commission when total amount changes
   useEffect(() => {
-    setBillData(prev => ({ ...prev, commission: totalAmount * 0.03 }));
+    setBillData(prev => ({ ...prev, rok: totalAmount * 0.03 }));
   }, [totalAmount]);
 
   const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
@@ -161,7 +161,7 @@ export default function FarmerBillNew() {
               <tr><td>Less: Vehicle Rent / ಕಡಿಮೆ: ವಾಹನ ಬಾಡಿಗೆ</td><td>-${formatCurrency(billData.vehicleRent)}</td></tr>
               <tr><td>Less: Empty Bags / ಕಡಿಮೆ: ಖಾಲಿ ಚೀಲಗಳು</td><td>-${formatCurrency(billData.emptyBagCharges)}</td></tr>
               <tr><td>Less: Advance / ಕಡಿಮೆ: ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</td><td>-${formatCurrency(billData.advance)}</td></tr>
-              <tr><td>Less: Commission (3%) / ಕಡಿಮೆ: ಕಮಿಷನ್</td><td>-${formatCurrency(commission)}</td></tr>
+              <tr><td>Less: Rok (3%) / ಕಡಿಮೆ: ರೋಕ್</td><td>-${formatCurrency(rok)}</td></tr>
               <tr><td>Less: Other / ಕಡಿಮೆ: ಇತರೆ</td><td>-${formatCurrency(billData.other)}</td></tr>
               <tr class="total-row"><td><strong>Net Payable / ನಿವ್ವಳ ಪಾವತಿ</strong></td><td><strong>${formatCurrency(netPayable)}</strong></td></tr>
             </table>
@@ -370,7 +370,7 @@ export default function FarmerBillNew() {
                 <div className="space-y-2">
                   <Label>Commission (3%) / ಕಮಿಷನ್</Label>
                   <div className="p-2 bg-yellow-50 rounded font-semibold text-yellow-700">
-                    {formatCurrency(commission)}
+                    {formatCurrency(rok)}
                   </div>
                 </div>
                 <div className="space-y-2">
