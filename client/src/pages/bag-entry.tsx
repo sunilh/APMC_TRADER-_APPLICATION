@@ -173,14 +173,28 @@ export default function BagEntry() {
           bag.status === "pending" && (bag.weight || bag.grade || bag.notes),
       );
 
-      const savePromises = pendingBags.map((bag) =>
-        apiRequest("POST", `/api/lots/${lotId}/bags`, {
-          bagNumber: bag.bagNumber,
-          weight: bag.weight,
-          grade: bag.grade,
-          notes: bag.notes,
-        }),
-      );
+      const savePromises = pendingBags.map((bag) => {
+        const existingBag = existingBags?.find(
+          (eb) => eb.bagNumber === bag.bagNumber,
+        );
+
+        if (existingBag) {
+          // Update existing bag
+          return apiRequest("PUT", `/api/bags/${existingBag.id}`, {
+            weight: bag.weight,
+            grade: bag.grade,
+            notes: bag.notes,
+          });
+        } else {
+          // Create new bag
+          return apiRequest("POST", `/api/lots/${lotId}/bags`, {
+            bagNumber: bag.bagNumber,
+            weight: bag.weight,
+            grade: bag.grade,
+            notes: bag.notes,
+          });
+        }
+      });
 
       return await Promise.all(savePromises);
     },
