@@ -646,20 +646,23 @@ export default function BidPrices() {
                   New Bid
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-y-auto p-4">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingBid ? "Edit Bid Price" : "Create New Bid Price"}
-                  </DialogTitle>
-                  {bidForm.dalalName || bidForm.lotNumber || bidForm.bidPrice ? (
-                    <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                      💾 Form data auto-saved (survives page reload)
-                    </div>
-                  ) : null}
-                </DialogHeader>
+              <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
+                <div className="p-4 pb-0">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingBid ? "Edit Bid Price" : "Create New Bid Price"}
+                    </DialogTitle>
+                    {bidForm.dalalName || bidForm.lotNumber || bidForm.bidPrice ? (
+                      <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                        💾 Form data auto-saved (survives page reload)
+                      </div>
+                    ) : null}
+                  </DialogHeader>
+                </div>
                 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Simplified Dalal Name Selection */}
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+                  <div className="p-4 space-y-4">
+                    {/* Simplified Dalal Name Selection */}
                   <div className="space-y-2">
                     <Label htmlFor="dalalName" className="text-base font-medium">Select Supplier/Dalal *</Label>
                     <div className="relative">
@@ -836,24 +839,27 @@ export default function BidPrices() {
                       </div>
                     )}
                   </div>
+                  </div>
 
                   {/* Submit Button */}
-                  <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setBidDialog(false)}
-                      className="w-full sm:w-auto"
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createBidMutation.isPending}
-                      className="w-full sm:w-auto"
-                    >
-                      {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "Create Bid")}
-                    </Button>
+                  <div className="sticky bottom-0 bg-white p-4 -m-4 mt-4 border-t">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setBidDialog(false)}
+                        className="w-full sm:w-auto min-h-[48px] text-base"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={createBidMutation.isPending}
+                        className="w-full sm:w-auto min-h-[48px] text-base font-semibold"
+                      >
+                        {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "Create Bid")}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </DialogContent>
