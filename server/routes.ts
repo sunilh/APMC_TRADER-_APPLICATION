@@ -3024,50 +3024,123 @@ export function registerRoutes(app: Express): Server {
       const tenantId = req.user.tenantId;
       const { dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
       
-      // Validate required fields (removed buyerId requirement)
+      // Validate required fields
       if (!dalalName || !lotNumber || !bidPrice) {
-        return res.status(400).json({ message: "Missing required fields" });
+        return res.status(400).json({ message: "Missing required fields: dalalName, lotNumber, and bidPrice are required" });
+      }
+
+      // Validate bidPrice is a valid number
+      const priceNumber = parseFloat(bidPrice);
+      if (isNaN(priceNumber) || priceNumber <= 0) {
+        return res.status(400).json({ message: "Bid price must be a valid positive number" });
       }
       
-      // Find supplier ID by dalal name
-      const supplier = await db
-        .select({ id: suppliers.id })
-        .from(suppliers)
-        .where(
-          and(
-            eq(suppliers.name, dalalName),
-            eq(suppliers.tenantId, tenantId)
+      let supplierId = null;
+      
+      try {
+        // Find supplier ID by dalal name (case-insensitive search)
+        const supplier = await db
+          .select({ id: suppliers.id })
+          .from(suppliers)
+          .where(
+            and(
+              sql`LOWER(${suppliers.name}) = LOWER(${dalalName})`,
+              eq(suppliers.tenantId, tenantId)
+            )
           )
-        )
-        .limit(1);
+          .limit(1);
 
-      const [newBid] = await db
-        .insert(bidPrices)
-        .values({
-          buyerId: null, // No buyer required for bid prices
-          supplierId: supplier[0]?.id || null, // Link to supplier if found
-          dalalName,
-          lotNumber,
-          bidPrice,
-          chiliPhotos: chiliPhotos || [], // Now stores file paths instead of base64
-          notes,
+        if (supplier && supplier.length > 0) {
+          supplierId = supplier[0].id;
+        } else {
+          // Auto-create supplier if not found
+          console.log(`Auto-creating supplier for dalal: ${dalalName}`);
+          const [newSupplier] = await db
+            .insert(suppliers)
+            .values({
+              name: dalalName,
+              tenantId,
+              isActive: true,
+              contactPerson: null,
+              mobile: null,
+              address: null,
+              email: null,
+              gstNumber: null,
+              panNumber: null,
+            })
+            .returning();
+          
+          supplierId = newSupplier.id;
+          console.log(`Created new supplier with ID: ${supplierId}`);
+        }
+      } catch (supplierError) {
+        console.error("Error handling supplier lookup/creation:", supplierError);
+        // Continue without supplierId - bid price can still be saved
+      }
+
+      // Insert bid price with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      let newBid;
+
+      while (retryCount < maxRetries) {
+        try {
+          const [bid] = await db
+            .insert(bidPrices)
+            .values({
+              buyerId: null,
+              supplierId,
+              dalalName,
+              lotNumber,
+              bidPrice,
+              chiliPhotos: chiliPhotos || [],
+              notes: notes || "",
+              tenantId,
+            })
+            .returning();
+          
+          newBid = bid;
+          break; // Success, exit retry loop
+        } catch (insertError: any) {
+          retryCount++;
+          console.error(`Bid price insert attempt ${retryCount} failed:`, insertError);
+          
+          if (retryCount >= maxRetries) {
+            throw insertError; // Re-throw after max retries
+          }
+          
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, retryCount * 100));
+        }
+      }
+
+      if (!newBid) {
+        throw new Error("Failed to create bid price after multiple attempts");
+      }
+      
+      // Log audit trail
+      try {
+        await createAuditLog(
           tenantId,
-        })
-        .returning();
+          req.user.id,
+          "bid_price",
+          "create",
+          newBid.id,
+          `Created bid for ${dalalName} - Lot ${lotNumber} at ₹${bidPrice}`
+        );
+      } catch (auditError) {
+        console.error("Audit log creation failed:", auditError);
+        // Don't fail the request if audit logging fails
+      }
       
-      await createAuditLog(
-        tenantId,
-        req.user.id,
-        "bid_price",
-        "create",
-        newBid.id,
-        `Created bid for ${dalalName} - Lot ${lotNumber} at ₹${bidPrice}`
-      );
-      
+      console.log(`Bid price saved successfully: ID ${newBid.id}, Dalal: ${dalalName}, Lot: ${lotNumber}, Price: ₹${bidPrice}`);
       res.json(newBid);
     } catch (error) {
       console.error("Error creating bid price:", error);
-      res.status(500).json({ message: "Failed to create bid price" });
+      res.status(500).json({ 
+        message: "Failed to create bid price", 
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
   

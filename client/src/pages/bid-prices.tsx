@@ -240,14 +240,38 @@ export default function BidPrices() {
     e.preventDefault();
     e.stopPropagation();
     
+    // Prevent multiple submissions
+    if (createBidMutation.isPending) {
+      return;
+    }
+    
+    // Validate required fields
     if (!bidForm.dalalName || !bidForm.lotNumber || !bidForm.bidPrice) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields: Dalal Name, Lot Number, and Bid Price.",
         variant: "destructive",
       });
       return;
     }
+
+    // Validate bid price is a valid number
+    const priceNumber = parseFloat(bidForm.bidPrice);
+    if (isNaN(priceNumber) || priceNumber <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Bid price must be a valid positive number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Submitting bid price:", {
+      dalalName: bidForm.dalalName,
+      lotNumber: bidForm.lotNumber,
+      bidPrice: bidForm.bidPrice,
+      notes: bidForm.notes
+    });
 
     createBidMutation.mutate(bidForm);
   };
