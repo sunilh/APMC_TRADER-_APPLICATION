@@ -520,13 +520,6 @@ export async function generateTaxInvoice(
       return null;
     }
 
-    // Get today's date range
-    const today = new Date();
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
-
     // Get existing tax invoices for this buyer to exclude already processed lots
     const existingInvoices = await db
       .select({ lotIds: taxInvoices.lotIds })
@@ -543,7 +536,7 @@ export async function generateTaxInvoice(
 
     console.log("Already processed lot numbers:", Array.from(processedLotNumbers));
 
-    // Get completed lots for this buyer from today only (check both direct assignment and lot_buyers table)
+    // Get completed lots for this buyer (all dates - not just today)
     const directLots = await db
       .select()
       .from(lots)
@@ -551,8 +544,7 @@ export async function generateTaxInvoice(
         and(
           eq(lots.buyerId, buyerId),
           eq(lots.tenantId, tenantId),
-          eq(lots.status, "completed"),
-          between(lots.createdAt, startOfDay, endOfDay)
+          eq(lots.status, "completed")
         )
       );
 
@@ -579,8 +571,7 @@ export async function generateTaxInvoice(
         and(
           eq(lotBuyers.buyerId, buyerId),
           eq(lotBuyers.tenantId, tenantId),
-          eq(lots.status, "completed"),
-          between(lots.createdAt, startOfDay, endOfDay)
+          eq(lots.status, "completed")
         )
       );
 
