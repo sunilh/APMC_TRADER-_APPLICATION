@@ -2715,6 +2715,106 @@ export function registerRoutes(app: Express): Server {
   // BUYER-SIDE INVENTORY & OCR SYSTEM API ENDPOINTS  
   // =================================
 
+  // Missing Bags Detection endpoint - Today's lots only
+  app.get('/api/missing-bags/today', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      
+      // Get today's date range
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+      // Get all lots created today
+      const todaysLots = await db
+        .select({
+          id: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerId: lots.farmerId,
+          numberOfBags: lots.numberOfBags,
+          farmerName: farmers.name,
+          createdAt: lots.createdAt,
+          status: lots.status
+        })
+        .from(lots)
+        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+        .where(
+          and(
+            eq(lots.tenantId, tenantId),
+            gte(lots.createdAt, startOfDay),
+            lte(lots.createdAt, endOfDay)
+          )
+        )
+        .orderBy(lots.createdAt);
+
+      // For each lot, check for missing bags
+      const missingBagsReport = [];
+
+      for (const lot of todaysLots) {
+        // Get all bags for this lot
+        const lotBags = await db
+          .select({
+            bagNumber: bags.bagNumber,
+            weight: bags.weight
+          })
+          .from(bags)
+          .where(eq(bags.lotId, lot.id))
+          .orderBy(bags.bagNumber);
+
+        // Find missing bag numbers
+        const expectedBags = Array.from({ length: lot.numberOfBags }, (_, i) => i + 1);
+        const existingBagNumbers = lotBags.map(bag => bag.bagNumber);
+        const missingBagNumbers = expectedBags.filter(bagNum => !existingBagNumbers.includes(bagNum));
+        
+        // Find empty weight bags (bags without weight entry)
+        const emptyWeightBags = lotBags
+          .filter(bag => !bag.weight || bag.weight === null || bag.weight === '0')
+          .map(bag => bag.bagNumber);
+
+        if (missingBagNumbers.length > 0 || emptyWeightBags.length > 0) {
+          missingBagsReport.push({
+            lotId: lot.id,
+            lotNumber: lot.lotNumber,
+            farmerId: lot.farmerId,
+            farmerName: lot.farmerName,
+            totalBags: lot.numberOfBags,
+            enteredBags: existingBagNumbers.length,
+            missingBagNumbers,
+            emptyWeightBags,
+            missingCount: missingBagNumbers.length,
+            emptyWeightCount: emptyWeightBags.length,
+            completionPercentage: Math.round((existingBagNumbers.length / lot.numberOfBags) * 100),
+            status: lot.status,
+            createdAt: lot.createdAt
+          });
+        }
+      }
+
+      // Summary statistics
+      const summary = {
+        totalLotsToday: todaysLots.length,
+        lotsWithMissingBags: missingBagsReport.length,
+        lotsComplete: todaysLots.length - missingBagsReport.length,
+        totalMissingBags: missingBagsReport.reduce((sum, lot) => sum + lot.missingCount, 0),
+        totalEmptyWeightBags: missingBagsReport.reduce((sum, lot) => sum + lot.emptyWeightCount, 0),
+        date: today.toISOString().split('T')[0]
+      };
+
+      res.json({
+        summary,
+        missingBagsDetails: missingBagsReport,
+        todaysLots: todaysLots.map(lot => ({
+          ...lot,
+          isComplete: !missingBagsReport.find(missing => missing.lotId === lot.id)
+        }))
+      });
+
+    } catch (error) {
+      console.error('Missing bags detection error:', error);
+      res.status(500).json({ error: 'Failed to detect missing bags' });
+    }
+  });
+
   // OCR invoice processing endpoint
   app.post("/api/ocr/process-invoice", requireAuth, requireTenant, upload.single('image'), async (req: any, res) => {
     try {

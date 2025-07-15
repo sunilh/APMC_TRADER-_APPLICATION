@@ -24,6 +24,7 @@ import InventoryIn from "@/pages/inventory-in";
 import InvoiceReports from "@/pages/invoice-reports";
 import StockReports from "@/pages/stock-reports";
 import TestReports from "@/pages/test-reports";
+import MissingBags from "@/pages/missing-bags";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/farmers" component={Farmers} />
       <ProtectedRoute path="/lots" component={Lots} />
       <ProtectedRoute path="/lots/:id/bags" component={BagEntryNew} />
+      <ProtectedRoute path="/missing-bags" component={MissingBags} />
       <ProtectedRoute path="/buyers" component={Buyers} />
       <ProtectedRoute path="/staff" component={StaffManagement} />
       <ProtectedRoute path="/tax-invoice" component={TaxInvoice} />

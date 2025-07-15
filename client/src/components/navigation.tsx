@@ -93,7 +93,10 @@ export function Navigation() {
       name: "Operations",
       type: "group",
       icon: Briefcase,
-      items: [{ name: t("nav.lots"), href: "/lots", icon: Package }],
+      items: [
+        { name: t("nav.lots"), href: "/lots", icon: Package },
+        { name: "Missing Bags", href: "/missing-bags", icon: Search },
+      ],
     },
 
     // Buyer/Trader Group
