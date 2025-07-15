@@ -60,6 +60,9 @@ export default function BagEntry() {
   // State
   const [lotPrice, setLotPrice] = useState("");
   const [lotGrade, setLotGrade] = useState("");
+  const [selectedBuyer, setSelectedBuyer] = useState("");
+  const [newBuyerName, setNewBuyerName] = useState("");
+  const [showInlineBuyerForm, setShowInlineBuyerForm] = useState(false);
   const [bagData, setBagData] = useState<BagEntryData[]>([]);
   const [buyerAllocations, setBuyerAllocations] = useState<BuyerAllocation[]>([]);
   const [finalNotes, setFinalNotes] = useState("");
