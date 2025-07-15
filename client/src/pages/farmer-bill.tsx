@@ -122,12 +122,13 @@ export default function FarmerBill() {
     enabled: !!selectedFarmerId && activeTab === "history",
   });
 
-  // Check if farmer bill already exists
+  // Check if farmer bill already exists for selected date
   const { data: billCheck, isLoading: checkLoading } = useQuery({
-    queryKey: ["/api/farmer-bill", selectedFarmerId, "check"],
+    queryKey: ["/api/farmer-bill", selectedFarmerId, "check", startDate],
     queryFn: async () => {
       if (!selectedFarmerId) return null;
-      const response = await fetch(`/api/farmer-bill/${selectedFarmerId}/check`, {
+      const billDate = startDate || new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/farmer-bill/${selectedFarmerId}/check?date=${billDate}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -144,12 +145,14 @@ export default function FarmerBill() {
       farmerId: number; 
       pattiNumber: string; 
       billData: any; 
-      lotIds: number[] 
+      lotIds: number[];
+      billDate: string;
     }) => {
       return apiRequest("POST", `/api/farmer-bill/${data.farmerId}`, {
         pattiNumber: data.pattiNumber,
         billData: data.billData,
         lotIds: data.lotIds,
+        billDate: data.billDate,
       });
     },
     onSuccess: () => {
@@ -169,12 +172,13 @@ export default function FarmerBill() {
     },
   });
 
-  // Fetch farmer's completed lots for bill generation (all dates)
+  // Fetch farmer's completed lots for bill generation (for selected date)
   const { data: farmerLots = [], isLoading: lotsLoading } = useQuery({
-    queryKey: ["/api/farmer", selectedFarmerId, "completed-lots"],
+    queryKey: ["/api/farmer", selectedFarmerId, "completed-lots", startDate],
     queryFn: async () => {
       if (!selectedFarmerId) return [];
-      const response = await fetch(`/api/farmer/${selectedFarmerId}/completed-lots`, {
+      const billDate = startDate || new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/farmer/${selectedFarmerId}/completed-lots?date=${billDate}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -630,23 +634,39 @@ export default function FarmerBill() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
-                  <div>
-                    <Label htmlFor="farmer" className="text-sm sm:text-base">Select Farmer</Label>
-                    <Select
-                      value={selectedFarmerId}
-                      onValueChange={setSelectedFarmerId}
-                    >
-                      <SelectTrigger className="min-h-[44px]">
-                        <SelectValue placeholder="Choose a farmer..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {farmers.map((farmer) => (
-                          <SelectItem key={farmer.id} value={farmer.id.toString()}>
-                            {farmer.name} - {farmer.place}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="farmer" className="text-sm sm:text-base">Select Farmer</Label>
+                      <Select
+                        value={selectedFarmerId}
+                        onValueChange={setSelectedFarmerId}
+                      >
+                        <SelectTrigger className="min-h-[44px]">
+                          <SelectValue placeholder="Choose a farmer..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {farmers.map((farmer) => (
+                            <SelectItem key={farmer.id} value={farmer.id.toString()}>
+                              {farmer.name} - {farmer.place}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="bill-date" className="text-sm sm:text-base">Bill Date</Label>
+                      <Input
+                        id="bill-date"
+                        type="date"
+                        value={startDate || new Date().toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setEndDate(e.target.value); // Set same date for single day bills
+                        }}
+                        className="min-h-[44px]"
+                      />
+                    </div>
                   </div>
 
                   {selectedFarmerId && (
@@ -967,7 +987,7 @@ export default function FarmerBill() {
                           ) : farmerLots.length > 0 ? (
                             <div className="space-y-4">
                               <div className="text-sm text-gray-600">
-                                <p className="font-medium">Completed lots for {selectedFarmer?.name}:</p>
+                                <p className="font-medium">Completed lots for {selectedFarmer?.name} on {new Date(startDate || new Date().toISOString().split('T')[0]).toLocaleDateString('en-IN')}:</p>
                                 <ul className="mt-2 space-y-1">
                                   {farmerLots.map((lot: any) => (
                                     <li key={lot.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -982,54 +1002,182 @@ export default function FarmerBill() {
 
                               <Card>
                                 <CardHeader>
-                                  <CardTitle className="text-lg">Bill Configuration</CardTitle>
+                                  <CardTitle className="text-lg">Bill Configuration & Deductions</CardTitle>
+                                  <CardDescription>Set deductions before generating the bill</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                       <Label htmlFor="patti-number">Patti Number</Label>
-                                      <Input
-                                        id="patti-number"
-                                        value={pattiNumber}
-                                        onChange={(e) => setPattiNumber(e.target.value)}
-                                        placeholder="Auto-generated if empty"
-                                      />
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="patti-number"
+                                          value={pattiNumber}
+                                          onChange={(e) => setPattiNumber(e.target.value)}
+                                          placeholder="Auto-generated if empty"
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setPattiNumber(value)}
+                                          type="text"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
                                     </div>
                                     <div>
                                       <Label htmlFor="hamali">Hamali (₹)</Label>
-                                      <Input
-                                        id="hamali"
-                                        type="number"
-                                        value={billData.hamali}
-                                        onChange={(e) => setBillData(prev => ({ 
-                                          ...prev, 
-                                          hamali: parseFloat(e.target.value) || 0 
-                                        }))}
-                                      />
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="hamali"
+                                          type="number"
+                                          value={billData.hamali}
+                                          onChange={(e) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            hamali: parseFloat(e.target.value) || 0 
+                                          }))}
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            hamali: parseFloat(value) || 0 
+                                          }))}
+                                          type="number"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
                                     </div>
                                     <div>
                                       <Label htmlFor="vehicle-rent">Vehicle Rent (₹)</Label>
-                                      <Input
-                                        id="vehicle-rent"
-                                        type="number"
-                                        value={billData.vehicleRent}
-                                        onChange={(e) => setBillData(prev => ({ 
-                                          ...prev, 
-                                          vehicleRent: parseFloat(e.target.value) || 0 
-                                        }))}
-                                      />
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="vehicle-rent"
+                                          type="number"
+                                          value={billData.vehicleRent}
+                                          onChange={(e) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            vehicleRent: parseFloat(e.target.value) || 0 
+                                          }))}
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            vehicleRent: parseFloat(value) || 0 
+                                          }))}
+                                          type="number"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="empty-bags">Empty Bag Charges (₹)</Label>
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="empty-bags"
+                                          type="number"
+                                          value={billData.emptyBagCharges}
+                                          onChange={(e) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            emptyBagCharges: parseFloat(e.target.value) || 0 
+                                          }))}
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            emptyBagCharges: parseFloat(value) || 0 
+                                          }))}
+                                          type="number"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
                                     </div>
                                     <div>
                                       <Label htmlFor="advance">Advance (₹)</Label>
-                                      <Input
-                                        id="advance"
-                                        type="number"
-                                        value={billData.advance}
-                                        onChange={(e) => setBillData(prev => ({ 
-                                          ...prev, 
-                                          advance: parseFloat(e.target.value) || 0 
-                                        }))}
-                                      />
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="advance"
+                                          type="number"
+                                          value={billData.advance}
+                                          onChange={(e) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            advance: parseFloat(e.target.value) || 0 
+                                          }))}
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            advance: parseFloat(value) || 0 
+                                          }))}
+                                          type="number"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label htmlFor="other">Other Deductions (₹)</Label>
+                                      <div className="flex gap-2">
+                                        <Input
+                                          id="other"
+                                          type="number"
+                                          value={billData.other}
+                                          onChange={(e) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            other: parseFloat(e.target.value) || 0 
+                                          }))}
+                                          className="flex-1"
+                                        />
+                                        <VoiceInput
+                                          onResult={(value) => setBillData(prev => ({ 
+                                            ...prev, 
+                                            other: parseFloat(value) || 0 
+                                          }))}
+                                          type="number"
+                                          className="w-10 h-10"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Bill Preview Section */}
+                                  <div className="border-t pt-4 mt-4">
+                                    <h4 className="font-medium mb-3">Bill Preview</h4>
+                                    <div className="space-y-2 text-sm bg-gray-50 p-3 rounded">
+                                      {(() => {
+                                        const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
+                                        const totalWeight = farmerLots.reduce((sum: number, lot: any) => sum + (lot.totalWeight || 0), 0);
+                                        const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
+                                          const weight = lot.totalWeight || 0;
+                                          const price = parseFloat(lot.lotPrice || 0);
+                                          const quintals = weight / 100;
+                                          return sum + (quintals * price);
+                                        }, 0);
+                                        const commission = totalAmount * 0.03; // 3% commission
+                                        const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + commission;
+                                        const netPayable = totalAmount - totalDeductions;
+                                        
+                                        return (
+                                          <div className="space-y-1">
+                                            <div className="flex justify-between"><span>Total Bags:</span><span>{totalBags}</span></div>
+                                            <div className="flex justify-between"><span>Total Weight:</span><span>{totalWeight.toFixed(2)} kg</span></div>
+                                            <div className="flex justify-between"><span>Gross Amount:</span><span className="font-bold">{formatCurrency(totalAmount)}</span></div>
+                                            <div className="border-t pt-1 mt-2">
+                                              <div className="flex justify-between text-red-600"><span>Hamali:</span><span>-{formatCurrency(billData.hamali)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Vehicle Rent:</span><span>-{formatCurrency(billData.vehicleRent)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Empty Bags:</span><span>-{formatCurrency(billData.emptyBagCharges)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Advance:</span><span>-{formatCurrency(billData.advance)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Commission (3%):</span><span>-{formatCurrency(commission)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Other:</span><span>-{formatCurrency(billData.other)}</span></div>
+                                              <div className="flex justify-between font-bold text-red-600 border-t pt-1"><span>Total Deductions:</span><span>-{formatCurrency(totalDeductions)}</span></div>
+                                            </div>
+                                            <div className="flex justify-between text-lg font-bold text-green-600 border-t pt-2 mt-2">
+                                              <span>Net Payable:</span><span>{formatCurrency(netPayable)}</span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
 
@@ -1070,6 +1218,7 @@ export default function FarmerBill() {
                                           totalWeight,
                                         },
                                         lotIds,
+                                        billDate: startDate || new Date().toISOString().split('T')[0],
                                       });
                                     }}
                                     disabled={generateBillMutation.isPending || farmerLots.length === 0}

@@ -485,20 +485,21 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  // Get today's completed lots for a farmer for bill generation
+  // Get completed lots for a farmer for bill generation (supports date filtering)
   app.get("/api/farmer/:farmerId/completed-lots", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
+      const { date } = req.query;
 
-      // Get today's date range
-      const today = new Date();
-      const startOfToday = new Date(today);
-      startOfToday.setHours(0, 0, 0, 0);
-      const endOfToday = new Date(today);
-      endOfToday.setHours(23, 59, 59, 999);
+      // Use provided date or default to today
+      const targetDate = date ? new Date(date as string) : new Date();
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      // Get only today's completed lots for this farmer with bag weights
+      // Get completed lots for this farmer on the specified date with bag weights
       const completedLots = await db.select({
         id: lots.id,
         lotNumber: lots.lotNumber,
@@ -518,8 +519,8 @@ export function registerRoutes(app: Express): Server {
         eq(lots.farmerId, farmerId),
         eq(lots.tenantId, tenantId),
         eq(lots.status, 'completed'),
-        gte(lots.createdAt, startOfToday),
-        lte(lots.createdAt, endOfToday),
+        gte(lots.createdAt, startOfDay),
+        lte(lots.createdAt, endOfDay),
         sql`${lots.lotPrice} IS NOT NULL AND ${lots.lotPrice} > 0`
       ))
       .orderBy(desc(lots.createdAt));
@@ -666,15 +667,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Check if farmer bill already exists
+  // Check if farmer bill already exists for specific date
   app.get("/api/farmer-bill/:farmerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
+      const { date } = req.query;
+
+      // Use provided date or default to today for bill checking
+      const targetDate = date ? new Date(date as string) : new Date();
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       const existingBill = await db.select()
         .from(farmerBills)
-        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .where(and(
+          eq(farmerBills.farmerId, farmerId), 
+          eq(farmerBills.tenantId, tenantId),
+          gte(farmerBills.createdAt, startOfDay),
+          lte(farmerBills.createdAt, endOfDay)
+        ))
         .limit(1);
 
       res.json({ 
@@ -687,22 +701,34 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Generate and save farmer bill (only if not exists)
+  // Generate and save farmer bill (only if not exists for specific date)
   app.post("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
       const tenantId = req.user.tenantId;
-      const { pattiNumber, billData, lotIds } = req.body;
+      const { pattiNumber, billData, lotIds, billDate } = req.body;
 
-      // Check if bill already exists for this farmer
+      // Use provided bill date or default to today
+      const targetDate = billDate ? new Date(billDate) : new Date();
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Check if bill already exists for this farmer on the specified date
       const existingBill = await db.select()
         .from(farmerBills)
-        .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)))
+        .where(and(
+          eq(farmerBills.farmerId, farmerId), 
+          eq(farmerBills.tenantId, tenantId),
+          gte(farmerBills.createdAt, startOfDay),
+          lte(farmerBills.createdAt, endOfDay)
+        ))
         .limit(1);
 
       if (existingBill.length > 0) {
         return res.status(400).json({ 
-          message: "Farmer bill already generated for this farmer",
+          message: "Farmer bill already generated for this farmer on this date",
           billId: existingBill[0].id
         });
       }
