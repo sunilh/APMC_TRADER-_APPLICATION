@@ -574,7 +574,7 @@ export default function Buyers() {
 
         {/* Purchase Details Dialog */}
         <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 Purchase History - {selectedBuyer?.name}
@@ -586,51 +586,95 @@ export default function Buyers() {
                   No purchases found for this buyer
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lot #</TableHead>
-                      <TableHead>Farmer</TableHead>
-                      <TableHead>Variety/Grade</TableHead>
-                      <TableHead>Bags</TableHead>
-                      <TableHead>Amount Due</TableHead>
-                      <TableHead>Payment Status</TableHead>
-                      <TableHead>Bill</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Mobile Card View - visible on small screens */}
+                  <div className="md:hidden space-y-4">
                     {purchases.map((purchase: any) => (
-                      <TableRow key={purchase.lotId}>
-                        <TableCell>{purchase.lotNumber}</TableCell>
-                        <TableCell>{purchase.farmerName}</TableCell>
-                        <TableCell>{purchase.varietyGrade} - {purchase.grade}</TableCell>
-                        <TableCell>{purchase.numberOfBags}</TableCell>
-                        <TableCell>{formatCurrency(purchase.amountDue)}</TableCell>
-                        <TableCell>
-                          <Badge className={getPaymentStatusBadge(purchase.paymentStatus)}>
-                            {purchase.paymentStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={purchase.billGenerated ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                            {purchase.billGenerated ? 'Generated' : 'Pending'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePaymentUpdate(purchase)}
-                          >
-                            <CreditCard className="h-4 w-4 mr-1" />
-                            Update Payment
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                      <Card key={purchase.lotId} className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium text-lg">{purchase.lotNumber}</div>
+                              <div className="text-sm text-muted-foreground">{purchase.farmerName}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-lg">{formatCurrency(purchase.amountDue)}</div>
+                              <Badge className={getPaymentStatusBadge(purchase.paymentStatus)}>
+                                {purchase.paymentStatus}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Variety: {purchase.varietyGrade} - {purchase.grade}</span>
+                            <span>Bags: {purchase.numberOfBags}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <Badge className={purchase.billGenerated ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                              Bill: {purchase.billGenerated ? 'Generated' : 'Pending'}
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePaymentUpdate(purchase)}
+                            >
+                              <CreditCard className="h-4 w-4 mr-1" />
+                              Update Payment
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop Table View - visible on medium+ screens */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[120px]">Lot #</TableHead>
+                          <TableHead className="min-w-[120px]">Farmer</TableHead>
+                          <TableHead className="min-w-[140px]">Variety/Grade</TableHead>
+                          <TableHead className="min-w-[80px]">Bags</TableHead>
+                          <TableHead className="min-w-[120px]">Amount Due</TableHead>
+                          <TableHead className="min-w-[120px]">Payment Status</TableHead>
+                          <TableHead className="min-w-[100px]">Bill</TableHead>
+                          <TableHead className="min-w-[140px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {purchases.map((purchase: any) => (
+                          <TableRow key={purchase.lotId}>
+                            <TableCell className="font-medium">{purchase.lotNumber}</TableCell>
+                            <TableCell>{purchase.farmerName}</TableCell>
+                            <TableCell>{purchase.varietyGrade} - {purchase.grade}</TableCell>
+                            <TableCell>{purchase.numberOfBags}</TableCell>
+                            <TableCell className="font-medium">{formatCurrency(purchase.amountDue)}</TableCell>
+                            <TableCell>
+                              <Badge className={getPaymentStatusBadge(purchase.paymentStatus)}>
+                                {purchase.paymentStatus}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={purchase.billGenerated ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {purchase.billGenerated ? 'Generated' : 'Pending'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePaymentUpdate(purchase)}
+                              >
+                                <CreditCard className="h-4 w-4 mr-1" />
+                                Update Payment
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </div>
           </DialogContent>
