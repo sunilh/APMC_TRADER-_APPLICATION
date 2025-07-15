@@ -261,10 +261,11 @@ export default function Buyers() {
 
   const handlePaymentUpdate = (purchase: BuyerPurchase) => {
     setPaymentDialog({ open: true, purchase });
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     setPaymentForm({
       paymentStatus: purchase.paymentStatus,
       amountPaid: purchase.amountPaid,
-      paymentDate: purchase.paymentDate || '',
+      paymentDate: purchase.paymentDate || today, // Default to today's date
     });
   };
 
@@ -646,7 +647,17 @@ export default function Buyers() {
                 <Label>Payment Status</Label>
                 <Select
                   value={paymentForm.paymentStatus}
-                  onValueChange={(value) => setPaymentForm({ ...paymentForm, paymentStatus: value })}
+                  onValueChange={(value) => {
+                    setPaymentForm({ ...paymentForm, paymentStatus: value });
+                    // Auto-copy total amount when "Fully Paid" is selected
+                    if (value === 'paid' && paymentDialog.purchase) {
+                      setPaymentForm({ 
+                        ...paymentForm, 
+                        paymentStatus: value,
+                        amountPaid: paymentDialog.purchase.amountDue 
+                      });
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
