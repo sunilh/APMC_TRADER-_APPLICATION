@@ -86,31 +86,6 @@ export default function FarmerBill() {
     setEndDate(todayStr);
   }, []);
 
-  // Update hamali and rok calculation when settings or lots change
-  useEffect(() => {
-    if (settings?.gstSettings && farmerLots.length > 0) {
-      const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
-      const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
-        const weight = lot.totalWeight || 0;
-        const price = parseFloat(lot.lotPrice || 0);
-        const quintals = weight / 100;
-        return sum + (quintals * price);
-      }, 0);
-      
-      const hamaliRate = settings.gstSettings.unloadHamali || 0;
-      const calculatedHamali = hamaliRate * totalBags;
-      
-      const rokPercentage = settings.gstSettings.rokPercentage || 3;
-      const calculatedRok = (totalAmount * rokPercentage) / 100;
-      
-      setBillData(prev => ({
-        ...prev,
-        hamali: calculatedHamali,
-        rok: calculatedRok
-      }));
-    }
-  }, [settings, farmerLots]);
-
   // Auto-generate unique patti number each time
   const generatePattiNumber = () => {
     const today = new Date();
@@ -218,6 +193,31 @@ export default function FarmerBill() {
     },
     enabled: !!selectedFarmerId && activeTab === "generate" && !billCheck?.exists,
   });
+
+  // Update hamali and rok calculation when settings or lots change
+  useEffect(() => {
+    if (settings?.gstSettings && farmerLots.length > 0) {
+      const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
+      const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
+        const weight = lot.totalWeight || 0;
+        const price = parseFloat(lot.lotPrice || 0);
+        const quintals = weight / 100;
+        return sum + (quintals * price);
+      }, 0);
+      
+      const hamaliRate = settings.gstSettings.unloadHamali || 0;
+      const calculatedHamali = hamaliRate * totalBags;
+      
+      const rokPercentage = settings.gstSettings.rokPercentage || 3;
+      const calculatedRok = (totalAmount * rokPercentage) / 100;
+      
+      setBillData(prev => ({
+        ...prev,
+        hamali: calculatedHamali,
+        rok: calculatedRok
+      }));
+    }
+  }, [settings, farmerLots]);
 
   const formatCurrency = (amount: number | string) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
