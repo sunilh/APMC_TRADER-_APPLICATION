@@ -628,6 +628,7 @@ export class DatabaseStorage implements IStorage {
         billGeneratedLots: sql<number>`count(case when ${lots.billGenerated} = true then 1 end)`,
         totalAmountDue: sql<string>`coalesce(sum(${lots.lotPrice} * ${lots.numberOfBags}), 0)`,
         totalAmountPaid: sql<string>`coalesce(sum(${lots.amountPaid}), 0)`,
+        pendingPayments: sql<number>`count(case when ${lots.status} = 'completed' and (${lots.paymentStatus} = 'pending' or ${lots.paymentStatus} is null) then 1 end)`,
       })
       .from(lots)
       .where(and(
@@ -637,7 +638,6 @@ export class DatabaseStorage implements IStorage {
 
     const stats = result[0];
     const pendingBills = stats.totalLots - stats.billGeneratedLots;
-    const pendingPayments = stats.completedLots - Math.floor(parseFloat(stats.totalAmountPaid || '0') > 0 ? 1 : 0);
 
     return {
       totalLots: stats.totalLots,
@@ -646,7 +646,7 @@ export class DatabaseStorage implements IStorage {
       pendingBills,
       totalAmountDue: stats.totalAmountDue || '0',
       totalAmountPaid: stats.totalAmountPaid || '0',
-      pendingPayments,
+      pendingPayments: stats.pendingPayments,
     };
   }
 
