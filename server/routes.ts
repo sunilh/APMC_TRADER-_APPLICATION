@@ -2873,23 +2873,29 @@ export function registerRoutes(app: Express): Server {
   // BID PRICE SYSTEM API ROUTES
   // ====================================
   
-  // Get all dalals with their lots for bidding
+  // Get all dalals with their TODAY'S lots for bidding only
   app.get("/api/bid-dalals", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
       
-      // Get all unique dalals from suppliers table and their lots from bid_prices
+      // Get today's date range (start and end of today)
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+      
+      // Get all unique dalals from suppliers table and their TODAY'S lots from bid_prices
       const dalals = await db
         .select({
           dalalName: suppliers.name,
           dalalContact: suppliers.mobile,
           dalalAddress: suppliers.address,
+          apmcCode: suppliers.apmcCode,
         })
         .from(suppliers)
         .where(eq(suppliers.tenantId, tenantId))
-        .groupBy(suppliers.name, suppliers.mobile, suppliers.address);
+        .groupBy(suppliers.name, suppliers.mobile, suppliers.address, suppliers.apmcCode);
       
-      // Get bid lots for each dalal
+      // Get TODAY'S bid lots for each dalal
       const dalalLots = await Promise.all(dalals.map(async (dalal) => {
         const lots = await db
           .select({
@@ -2907,7 +2913,9 @@ export function registerRoutes(app: Express): Server {
           .where(
             and(
               eq(bidPrices.tenantId, tenantId),
-              eq(bidPrices.dalalName, dalal.dalalName)
+              eq(bidPrices.dalalName, dalal.dalalName),
+              gte(bidPrices.bidDate, startOfDay),
+              lte(bidPrices.bidDate, endOfDay)
             )
           )
           .orderBy(desc(bidPrices.bidDate));
@@ -2919,7 +2927,10 @@ export function registerRoutes(app: Express): Server {
         };
       }));
       
-      res.json(dalalLots);
+      // Only return dalals who have bids today
+      const dalalLotsWithBids = dalalLots.filter(dalal => dalal.totalLots > 0);
+      
+      res.json(dalalLotsWithBids);
     } catch (error) {
       console.error("Error fetching dalals:", error);
       res.status(500).json({ message: "Failed to fetch dalals" });
@@ -3059,6 +3070,7 @@ export function registerRoutes(app: Express): Server {
             .insert(suppliers)
             .values({
               name: dalalName,
+              apmcCode: null,
               tenantId,
               isActive: true,
               contactPerson: null,

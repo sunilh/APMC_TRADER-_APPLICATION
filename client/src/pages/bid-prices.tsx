@@ -53,6 +53,7 @@ interface DalalLotSummary {
   dalalName: string;
   dalalContact: string;
   dalalAddress: string;
+  apmcCode: string;
   lots: Array<{
     id: number;
     lotNumber: string;
@@ -84,7 +85,8 @@ export default function BidPrices() {
     name: "",
     contactPerson: "",
     mobile: "",
-    address: ""
+    address: "",
+    apmcCode: ""
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +187,7 @@ export default function BidPrices() {
       // Remove empty fields that could cause database errors
       const cleanData = {
         name: dalalData.name,
+        apmcCode: dalalData.apmcCode || null,
         contactPerson: dalalData.contactPerson || null,
         mobile: dalalData.mobile || null,
         address: dalalData.address || null,
@@ -202,7 +205,8 @@ export default function BidPrices() {
         name: "",
         contactPerson: "",
         mobile: "",
-        address: ""
+        address: "",
+        apmcCode: ""
       });
       // Auto-select the new dalal in the form
       const newDalalName = String(newSupplier.name || "");
@@ -917,6 +921,16 @@ export default function BidPrices() {
                         onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
                       />
                     </div>
+                    
+                    <div>
+                      <Label htmlFor="apmcCode">APMC Code</Label>
+                      <Input
+                        id="apmcCode"
+                        placeholder="Enter APMC code"
+                        value={dalalForm.apmcCode || ""}
+                        onChange={(e) => setDalalForm(prev => ({ ...prev, apmcCode: e.target.value }))}
+                      />
+                    </div>
                   </div>
                   
                   <div className="flex justify-end gap-2 mt-6">
@@ -1197,6 +1211,11 @@ export default function BidPrices() {
                       <CardTitle className="flex items-center gap-2">
                         <MapPin className="h-5 w-5" />
                         {String(dalal.dalalName || '')}
+                        {dalal.apmcCode && dalal.apmcCode !== 'N/A' && (
+                          <Badge variant="outline" className="ml-2">
+                            APMC: {dalal.apmcCode}
+                          </Badge>
+                        )}
                       </CardTitle>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                         {dalal.dalalContact && (
@@ -1229,8 +1248,8 @@ export default function BidPrices() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Supplier ID</TableHead>
                             <TableHead>Supplier/Dalal Name</TableHead>
+                            <TableHead>APMC Code</TableHead>
                             <TableHead>Lot Number</TableHead>
                             <TableHead>Bid Price</TableHead>
                             <TableHead>Bid Date</TableHead>
@@ -1242,8 +1261,12 @@ export default function BidPrices() {
                         <TableBody>
                           {dalal.lots.map((lot) => (
                             <TableRow key={lot.id}>
-                              <TableCell className="font-medium">{String(lot.supplierId || 'N/A')}</TableCell>
                               <TableCell>{String(dalal.dalalName || 'No Dalal')}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-xs">
+                                  {dalal.apmcCode && dalal.apmcCode !== 'N/A' ? dalal.apmcCode : 'No Code'}
+                                </Badge>
+                              </TableCell>
                               <TableCell className="font-medium">{String(lot.lotNumber || '')}</TableCell>
                               <TableCell>
                                 <div className="flex items-center">

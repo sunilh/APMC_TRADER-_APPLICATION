@@ -627,6 +627,7 @@ export const ocrExtractionLogs = pgTable("ocr_extraction_logs", {
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  apmcCode: text("apmc_code"), // APMC code for dalal identification
   contactPerson: text("contact_person"),
   mobile: text("mobile"),
   email: text("email"),
