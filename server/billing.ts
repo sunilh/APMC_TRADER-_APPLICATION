@@ -490,10 +490,11 @@ export interface TaxInvoice {
   };
 }
 
-// Generate Tax Invoice for a specific buyer
+// Generate Tax Invoice for a specific buyer on a specific date
 export async function generateTaxInvoice(
   buyerId: number,
-  tenantId: number
+  tenantId: number,
+  selectedDate?: Date
 ): Promise<TaxInvoice | null> {
   try {
     console.log(`Starting tax invoice generation for buyer ${buyerId}, tenant ${tenantId}`);
@@ -520,11 +521,24 @@ export async function generateTaxInvoice(
       return null;
     }
 
-    // Get existing tax invoices for this buyer to exclude already processed lots
+    // Use selected date or default to today
+    const targetDate = selectedDate || new Date();
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    console.log(`Generating invoice for date: ${targetDate.toISOString().split('T')[0]}`);
+
+    // Get existing tax invoices for this buyer on this date to exclude already processed lots
     const existingInvoices = await db
       .select({ lotIds: taxInvoices.lotIds })
       .from(taxInvoices)
-      .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+      .where(and(
+        eq(taxInvoices.buyerId, buyerId), 
+        eq(taxInvoices.tenantId, tenantId),
+        between(taxInvoices.invoiceDate, startOfDay, endOfDay)
+      ));
 
     const processedLotNumbers = new Set();
     existingInvoices.forEach(invoice => {
@@ -534,9 +548,9 @@ export async function generateTaxInvoice(
       }
     });
 
-    console.log("Already processed lot numbers:", Array.from(processedLotNumbers));
+    console.log("Already processed lot numbers for this date:", Array.from(processedLotNumbers));
 
-    // Get completed lots for this buyer (all dates - not just today)
+    // Get completed lots for this buyer on the selected date only
     const directLots = await db
       .select()
       .from(lots)
@@ -544,7 +558,8 @@ export async function generateTaxInvoice(
         and(
           eq(lots.buyerId, buyerId),
           eq(lots.tenantId, tenantId),
-          eq(lots.status, "completed")
+          eq(lots.status, "completed"),
+          between(lots.createdAt, startOfDay, endOfDay)
         )
       );
 
@@ -571,7 +586,8 @@ export async function generateTaxInvoice(
         and(
           eq(lotBuyers.buyerId, buyerId),
           eq(lotBuyers.tenantId, tenantId),
-          eq(lots.status, "completed")
+          eq(lots.status, "completed"),
+          between(lots.createdAt, startOfDay, endOfDay)
         )
       );
 

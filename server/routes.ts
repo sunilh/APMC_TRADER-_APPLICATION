@@ -1025,7 +1025,11 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`Generating tax invoice for buyer ${buyerId}, tenant ${tenantId}`);
       try {
-        const taxInvoice = await generateTaxInvoice(buyerId, tenantId);
+        // Get selected date from request body (optional, defaults to today)
+        const selectedDate = req.body.selectedDate ? new Date(req.body.selectedDate) : undefined;
+        console.log(`Selected date for invoice: ${selectedDate ? selectedDate.toISOString().split('T')[0] : 'today'}`);
+        
+        const taxInvoice = await generateTaxInvoice(buyerId, tenantId, selectedDate);
         
         console.log("Tax invoice generation result:", taxInvoice ? "Success" : "Failed");
         if (taxInvoice) {

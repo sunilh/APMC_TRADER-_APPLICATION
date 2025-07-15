@@ -97,6 +97,7 @@ interface InvoiceRecord {
 
 export default function TaxInvoice() {
   const [selectedBuyerId, setSelectedBuyerId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10)); // Default to today
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeTab, setActiveTab] = useState("generate");
@@ -173,7 +174,7 @@ export default function TaxInvoice() {
   // Generate new tax invoice
   const generateInvoiceMutation = useMutation({
     mutationFn: async (buyerId: number) => {
-      return await apiRequest("POST", `/api/tax-invoice/${buyerId}`, {});
+      return await apiRequest("POST", `/api/tax-invoice/${buyerId}`, { selectedDate });
     },
     onSuccess: () => {
       toast({
@@ -502,27 +503,43 @@ export default function TaxInvoice() {
                 <CardHeader>
                   <CardTitle>Generate New Tax Invoice</CardTitle>
                   <CardDescription>
-                    Select a buyer to generate tax invoice for today's completed lots
+                    Select a buyer and date to generate tax invoice for completed lots on that specific date
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
-                  <div>
-                    <Label htmlFor="buyer" className="text-sm sm:text-base">Select Buyer</Label>
-                    <Select
-                      value={selectedBuyerId?.toString() || ""}
-                      onValueChange={(value) => setSelectedBuyerId(parseInt(value))}
-                    >
-                      <SelectTrigger className="min-h-[44px]">
-                        <SelectValue placeholder="Choose a buyer..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {buyers.map((buyer) => (
-                          <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                            {buyer.name} - {buyer.contactPerson}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="buyer" className="text-sm sm:text-base">Select Buyer</Label>
+                      <Select
+                        value={selectedBuyerId?.toString() || ""}
+                        onValueChange={(value) => setSelectedBuyerId(parseInt(value))}
+                      >
+                        <SelectTrigger className="min-h-[44px]">
+                          <SelectValue placeholder="Choose a buyer..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {buyers.map((buyer) => (
+                            <SelectItem key={buyer.id} value={buyer.id.toString()}>
+                              {buyer.name} - {buyer.contactPerson}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="invoice-date" className="text-sm sm:text-base">Invoice Date</Label>
+                      <Input
+                        id="invoice-date"
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="min-h-[44px]"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Generate invoice for completed lots on this date
+                      </p>
+                    </div>
                   </div>
 
                   {selectedBuyerId && (
