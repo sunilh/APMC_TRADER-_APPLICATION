@@ -14,11 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BackToDashboard } from "@/components/back-to-dashboard";
 import type { Lot, Bag, Buyer } from "@shared/schema";
+import jsPDF from "jspdf";
 
 interface LotWithDetails extends Lot {
   farmer: {
@@ -319,6 +320,82 @@ export default function BagEntry() {
     }
   };
 
+  // Download compact bag entry form
+  const generateCompactBagForm = () => {
+    if (!lot) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    
+    // Header
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("BAG ENTRY FORM", pageWidth / 2, 20, { align: "center" });
+    
+    // Lot details - compact
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    let yPos = 35;
+    
+    const details = [
+      `Lot: ${lot.lotNumber}`,
+      `Farmer: ${lot.farmer.name}`,
+      `Mobile: ${lot.farmer.mobile}`,
+      `Bags: ${lot.numberOfBags}`,
+      `Date: ${new Date().toLocaleDateString()}`
+    ];
+    
+    doc.text(details.join("  |  "), margin, yPos);
+    
+    // Create compact grid for weights
+    yPos = 55;
+    const cellWidth = 25;
+    const cellHeight = 15;
+    const cols = 7; // 7 columns of weight entries per row
+    const rows = Math.ceil(lot.numberOfBags / cols);
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("WEIGHT ENTRY (KG):", margin, yPos - 5);
+    
+    // Draw grid
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const bagNum = row * cols + col + 1;
+        if (bagNum > lot.numberOfBags) break;
+        
+        const x = margin + col * cellWidth;
+        const y = yPos + row * cellHeight;
+        
+        // Draw cell border
+        doc.rect(x, y, cellWidth, cellHeight);
+        
+        // Add small bag indicator (just a dot)
+        doc.setFontSize(6);
+        doc.text("•", x + 2, y + 8);
+        
+        // Weight line
+        doc.line(x + 5, y + 10, x + cellWidth - 2, y + 10);
+      }
+    }
+    
+    // Footer with signature
+    const footerY = yPos + rows * cellHeight + 20;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Signature: ___________________", margin, footerY);
+    doc.text("Date: ___________", pageWidth - margin - 40, footerY);
+    
+    // Download
+    doc.save(`${lot.lotNumber}_BagEntry_Form.pdf`);
+    
+    toast({
+      title: "Downloaded",
+      description: "Compact bag entry form downloaded successfully",
+    });
+  };
+
   const handleLotGradeUpdate = (grade: string) => {
     updateLotMutation.mutate({
       lotPrice: lotPrice || undefined,
@@ -420,18 +497,28 @@ export default function BagEntry() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackToDashboard />
-        <div className="mb-6">
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/lots")}
+              className="text-primary hover:text-primary/80 mb-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Lots
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Bag Entry - {lot.lotNumber}
+            </h1>
+          </div>
           <Button
-            variant="ghost"
-            onClick={() => setLocation("/lots")}
-            className="text-primary hover:text-primary/80 mb-4"
+            variant="outline"
+            onClick={generateCompactBagForm}
+            className="gap-2 mt-8"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Lots
+            <Download className="h-4 w-4" />
+            Download Form
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Bag Entry - {lot.lotNumber}
-          </h1>
         </div>
 
         {/* Lot Information Header */}
