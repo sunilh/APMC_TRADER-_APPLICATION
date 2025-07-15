@@ -688,12 +688,12 @@ export async function generateTaxInvoice(
     const totalAmount = taxableAmount + totalGst;
 
     // Generate invoice number
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = targetDate.toISOString().slice(0, 10).replace(/-/g, '');
     const invoiceNumber = `INV-${dateStr}-${String(buyerId).padStart(3, '0')}`;
 
     const taxInvoice: TaxInvoice = {
       invoiceNumber,
-      invoiceDate: today.toLocaleDateString('en-GB'),
+      invoiceDate: targetDate.toLocaleDateString('en-GB'),
       hsnCode: buyer.hsnCode,
       seller: {
         companyName: tenant.name,
