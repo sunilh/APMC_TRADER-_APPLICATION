@@ -619,33 +619,42 @@ export default function BidPrices() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="p-6 space-y-6">
+      <div className="p-2 sm:p-6 space-y-4 sm:space-y-6">
+        <BackToDashboard />
+        
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Bid Prices - Dalal Shops</h1>
-            <p className="text-gray-600">Manage your chili bids at various dalal shops</p>
+        <div className="flex flex-col gap-4">
+          <div className="text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Bid Prices Management</h1>
+            <p className="text-sm sm:text-base text-gray-600">Track and manage bid prices from different dalals</p>
           </div>
-          <div className="flex items-center gap-3">
-            <BackToDashboard />
-            
-            {/* Create Supplier Button */}
-            <Button variant="outline" onClick={() => setCreateDalalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Supplier
-            </Button>
+          
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              {/* Create Supplier Button */}
+              <Button 
+                variant="outline" 
+                onClick={() => setCreateDalalOpen(true)}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Supplier
+              </Button>
 
-            {/* New Bid Button */}
-            <Dialog open={bidDialog} onOpenChange={setBidDialog}>
-              <DialogTrigger asChild>
-                <Button onClick={() => { 
-                  resetForm(); 
-                  setEditingBid(null);
-                }}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  New Bid
-                </Button>
-              </DialogTrigger>
+              {/* New Bid Button */}
+              <Dialog open={bidDialog} onOpenChange={setBidDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => { 
+                      resetForm(); 
+                      setEditingBid(null);
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    New Bid
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col p-0">
                 <div className="p-4 pb-0">
                   <DialogHeader>
@@ -1155,15 +1164,68 @@ export default function BidPrices() {
           </div>
         </div>
 
-        {/* Dalal Filter */}
+        {/* Summary Stats - Mobile Optimized */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Dalals</p>
+                  <p className="text-lg sm:text-2xl font-bold text-blue-600">{dalalLots.length}</p>
+                </div>
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mt-1 sm:mt-0" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">Total Lots</p>
+                  <p className="text-lg sm:text-2xl font-bold text-green-600">
+                    {dalalLots.reduce((total: number, dalal: DalalLotSummary) => total + dalal.totalLots, 0)}
+                  </p>
+                </div>
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mt-1 sm:mt-0" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">Avg Bid Price</p>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-600">₹45,000</p>
+                </div>
+                <IndianRupee className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 mt-1 sm:mt-0" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-600">Today's Bids</p>
+                  <p className="text-lg sm:text-2xl font-bold text-orange-600">12</p>
+                </div>
+                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 mt-1 sm:mt-0" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Dalal Filter - Mobile Optimized */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label htmlFor="dalalFilter">Filter by Dalal</Label>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1 w-full sm:w-auto">
+                <Label htmlFor="dalalFilter" className="text-sm font-medium">Filter by Dalal</Label>
                 <select
                   id="dalalFilter"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   value={selectedDalal}
                   onChange={(e) => setSelectedDalal(e.target.value)}
                 >
@@ -1176,25 +1238,32 @@ export default function BidPrices() {
                 </select>
               </div>
               
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users className="h-4 w-4" />
-                <span>{dalalLots.length} dalals</span>
-                <Package className="h-4 w-4 ml-2" />
-                <span>{dalalLots.reduce((total: number, dalal: DalalLotSummary) => total + dalal.totalLots, 0)} total lots</span>
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>{dalalLots.length} dalals</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Package className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>{dalalLots.reduce((total: number, dalal: DalalLotSummary) => total + dalal.totalLots, 0)} total lots</span>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Dalals and Lots Display */}
-        <div className="space-y-6">
+        {/* Dalals and Lots Display - Mobile Optimized */}
+        <div className="space-y-3 sm:space-y-6">
           {filteredDalals.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
-                <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <CardContent className="p-6 sm:p-8 text-center">
+                <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Dalals Found</h3>
-                <p className="text-gray-500 mb-4">Start by creating your first bid at a dalal shop.</p>
-                <Button onClick={() => setBidDialog(true)}>
+                <p className="text-sm sm:text-base text-gray-500 mb-4">Start by creating your first bid at a dalal shop.</p>
+                <Button 
+                  onClick={() => setBidDialog(true)}
+                  className="w-full sm:w-auto"
+                >
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Create First Bid
                 </Button>
@@ -1202,15 +1271,17 @@ export default function BidPrices() {
             </Card>
           ) : (
             filteredDalals.map((dalal: DalalLotSummary) => (
-              <Card key={dalal.dalalName}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
-                        {String(dalal.dalalName || '')}
+              <Card key={dalal.dalalName} className="overflow-hidden">
+                <CardHeader className="p-3 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-base sm:text-lg">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                          <span className="truncate">{String(dalal.dalalName || '')}</span>
+                        </div>
                         {dalal.apmcCode && dalal.apmcCode !== 'N/A' && (
-                          <Badge variant="outline" className="ml-2">
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
                             APMC: {dalal.apmcCode}
                           </Badge>
                         )}
@@ -1241,8 +1312,105 @@ export default function BidPrices() {
                 </CardHeader>
 
                 {dalal.lots.length > 0 && (
-                  <CardContent>
-                    <div className="rounded-md border">
+                  <CardContent className="p-3 sm:p-6">
+                    {/* Mobile Card View */}
+                    <div className="block sm:hidden space-y-3">
+                      {dalal.lots.map((lot) => (
+                        <Card key={lot.id} className="border border-gray-200">
+                          <CardContent className="p-3">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-sm">Lot {String(lot.lotNumber || '')}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {dalal.apmcCode && dalal.apmcCode !== 'N/A' ? dalal.apmcCode : 'No Code'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center text-lg font-bold text-green-600">
+                                  <IndianRupee className="h-4 w-4 mr-1" />
+                                  {parseFloat(String(lot.bidPrice || '0')).toLocaleString('en-IN')}
+                                </div>
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {new Date(lot.bidDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                              
+                              {lot.notes && (
+                                <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                                  {String(lot.notes)}
+                                </p>
+                              )}
+                              
+                              <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center gap-2">
+                                  {lot.chiliPhotos && lot.chiliPhotos.length > 0 ? (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setPhotoViewer({
+                                          open: true,
+                                          photos: lot.chiliPhotos,
+                                          currentIndex: 0,
+                                          zoom: 1,
+                                          panX: 0,
+                                          panY: 0,
+                                          lotInfo: {
+                                            dalalName: String(dalal.dalalName || ''),
+                                            lotNumber: String(lot.lotNumber || '')
+                                          }
+                                        });
+                                      }}
+                                      className="text-xs"
+                                    >
+                                      <Image className="h-3 w-3 mr-1" />
+                                      {lot.chiliPhotos.length} photo{lot.chiliPhotos.length !== 1 ? 's' : ''}
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">No photos</span>
+                                  )}
+                                </div>
+                                
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingBid(lot);
+                                      setBidForm({
+                                        dalalName: String(dalal.dalalName || ''),
+                                        lotNumber: String(lot.lotNumber || ''),
+                                        bidPrice: String(lot.bidPrice || ''),
+                                        notes: String(lot.notes || ''),
+                                        chiliPhotos: lot.chiliPhotos || []
+                                      });
+                                      setBidDialog(true);
+                                    }}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteBidMutation.mutate(lot.id)}
+                                    disabled={deleteBidMutation.isPending}
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden sm:block rounded-md border">
                       <Table>
                         <TableHeader>
                           <TableRow>
