@@ -52,6 +52,7 @@ export default function Buyers() {
   const [editingBuyer, setEditingBuyer] = useState<Buyer | null>(null);
   const [selectedBuyer, setSelectedBuyer] = useState<BuyerSummary | null>(null);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [purchases, setPurchases] = useState<BuyerPurchase[]>([]);
   const [paymentDialog, setPaymentDialog] = useState<{ open: boolean; purchase: BuyerPurchase | null }>({
     open: false,
     purchase: null,
@@ -70,11 +71,7 @@ export default function Buyers() {
     retryDelay: 1000,
   });
 
-  // Fetch detailed purchases for selected buyer
-  const { data: purchases = [] } = useQuery({
-    queryKey: ['/api/buyers', selectedBuyer?.id, 'purchases'],
-    enabled: !!selectedBuyer,
-  });
+  // Remove this useQuery since we're handling purchases manually in handleViewPurchases
 
   // Payment update mutation
   const updatePaymentMutation = useMutation({
