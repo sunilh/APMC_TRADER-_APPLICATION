@@ -2715,7 +2715,108 @@ export function registerRoutes(app: Express): Server {
   // BUYER-SIDE INVENTORY & OCR SYSTEM API ENDPOINTS  
   // =================================
 
-  // Missing Bags Detection endpoint - Today's lots only
+  // Missing Bags Detection endpoint - with date filtering
+  app.get('/api/missing-bags', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const tenantId = req.user.tenantId;
+      const { date } = req.query;
+      
+      // Get target date range (default to today if no date provided)
+      const targetDate = date ? new Date(date) : new Date();
+      const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
+
+      // Get all lots for the target date
+      const dateLots = await db
+        .select({
+          id: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerId: lots.farmerId,
+          numberOfBags: lots.numberOfBags,
+          farmerName: farmers.name,
+          createdAt: lots.createdAt,
+          status: lots.status
+        })
+        .from(lots)
+        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+        .where(
+          and(
+            eq(lots.tenantId, tenantId),
+            gte(lots.createdAt, startOfDay),
+            lte(lots.createdAt, endOfDay)
+          )
+        )
+        .orderBy(lots.createdAt);
+
+      // For each lot, check for missing bags
+      const missingBagsReport = [];
+
+      for (const lot of dateLots) {
+        // Get all bags for this lot
+        const lotBags = await db
+          .select({
+            bagNumber: bags.bagNumber,
+            weight: bags.weight
+          })
+          .from(bags)
+          .where(eq(bags.lotId, lot.id))
+          .orderBy(bags.bagNumber);
+
+        // Find missing bag numbers
+        const expectedBags = Array.from({ length: lot.numberOfBags }, (_, i) => i + 1);
+        const existingBagNumbers = lotBags.map(bag => bag.bagNumber);
+        const missingBagNumbers = expectedBags.filter(bagNum => !existingBagNumbers.includes(bagNum));
+        
+        // Find empty weight bags (bags without weight entry)
+        const emptyWeightBags = lotBags
+          .filter(bag => !bag.weight || bag.weight === null || bag.weight === '0')
+          .map(bag => bag.bagNumber);
+
+        if (missingBagNumbers.length > 0 || emptyWeightBags.length > 0) {
+          missingBagsReport.push({
+            lotId: lot.id,
+            lotNumber: lot.lotNumber,
+            farmerId: lot.farmerId,
+            farmerName: lot.farmerName,
+            totalBags: lot.numberOfBags,
+            enteredBags: existingBagNumbers.length,
+            missingBagNumbers,
+            emptyWeightBags,
+            missingCount: missingBagNumbers.length,
+            emptyWeightCount: emptyWeightBags.length,
+            completionPercentage: Math.round((existingBagNumbers.length / lot.numberOfBags) * 100),
+            status: lot.status,
+            createdAt: lot.createdAt
+          });
+        }
+      }
+
+      // Summary statistics
+      const summary = {
+        totalLotsForDate: dateLots.length,
+        lotsWithMissingBags: missingBagsReport.length,
+        lotsComplete: dateLots.length - missingBagsReport.length,
+        totalMissingBags: missingBagsReport.reduce((sum, lot) => sum + lot.missingCount, 0),
+        totalEmptyWeightBags: missingBagsReport.reduce((sum, lot) => sum + lot.emptyWeightCount, 0),
+        date: targetDate.toISOString().split('T')[0]
+      };
+
+      res.json({
+        summary,
+        missingBagsDetails: missingBagsReport,
+        dateLots: dateLots.map(lot => ({
+          ...lot,
+          isComplete: !missingBagsReport.find(missing => missing.lotId === lot.id)
+        }))
+      });
+
+    } catch (error) {
+      console.error('Missing bags detection error:', error);
+      res.status(500).json({ error: 'Failed to detect missing bags' });
+    }
+  });
+
+  // Missing Bags Detection endpoint - Today's lots only (backward compatibility)
   app.get('/api/missing-bags/today', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
