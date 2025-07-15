@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Navigation } from "@/components/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Package, Weight, DollarSign, Plus, Search, Edit, Printer, AlertTriangle, Building2, CheckCircle } from "lucide-react";
+import { Users, Package, Weight, DollarSign, Plus, Search, AlertTriangle, Building2, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -397,15 +397,13 @@ export default function Dashboard() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Unload Hamali
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {lotsLoading ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
                       Loading lots...
                     </td>
                   </tr>
@@ -439,23 +437,12 @@ export default function Dashboard() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ₹{lot.unloadHamali}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <Link href={`/lots/${lot.id}/bags`}>
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
-                            <Edit className="h-4 w-4 mr-1" />
-                            Create Bag Details
-                          </Button>
-                        </Link>
-                        <Button variant="ghost" size="sm" className="text-secondary hover:text-secondary/80">
-                          <Printer className="h-4 w-4 mr-1" />
-                          Print
-                        </Button>
-                      </td>
+
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
                       No lots found. Create your first lot to get started.
                     </td>
                   </tr>
