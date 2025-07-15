@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 
@@ -91,12 +91,25 @@ export default function BidPrices() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  const [bidForm, setBidForm] = useState<BidForm>({
-    dalalName: "",
-    lotNumber: "",
-    bidPrice: "",
-    notes: "",
-    chiliPhotos: [],
+  // Initialize form with localStorage data if available
+  const [bidForm, setBidForm] = useState<BidForm>(() => {
+    try {
+      const saved = localStorage.getItem('bidForm');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log("Restored form data from localStorage:", parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error("Error restoring form data:", error);
+    }
+    return {
+      dalalName: "",
+      lotNumber: "",
+      bidPrice: "",
+      notes: "",
+      chiliPhotos: [],
+    };
   });
   
   // Photo viewer state
@@ -228,16 +241,33 @@ export default function BidPrices() {
     }
   });
 
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('bidForm', JSON.stringify(bidForm));
+    } catch (error) {
+      console.error("Error saving form data:", error);
+    }
+  }, [bidForm]);
+
   const resetForm = () => {
-    setBidForm({
+    const emptyForm = {
       dalalName: "",
       lotNumber: "",
       bidPrice: "",
       notes: "",
       chiliPhotos: [],
-    });
+    };
+    setBidForm(emptyForm);
     setSearchDalal("");
     setEditingBid(null);
+    // Clear localStorage
+    try {
+      localStorage.removeItem('bidForm');
+      console.log("Form data cleared from localStorage");
+    } catch (error) {
+      console.error("Error clearing form data:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -388,10 +418,11 @@ export default function BidPrices() {
       
       toast({
         title: "Success",
-        description: `${photos.length} photo(s) uploaded for ${bidForm.dalalName} - Lot ${bidForm.lotNumber}`,
+        description: `${photos.length} photo(s) uploaded for ${bidForm.dalalName} - Lot ${bidForm.lotNumber}. Form data saved automatically.`,
       });
       
       console.log("Photos uploaded successfully:", photos.length);
+      console.log("Form data auto-saved to localStorage");
     } catch (error) {
       console.error("Photo upload error:", error);
       toast({
@@ -620,6 +651,11 @@ export default function BidPrices() {
                   <DialogTitle>
                     {editingBid ? "Edit Bid Price" : "Create New Bid Price"}
                   </DialogTitle>
+                  {bidForm.dalalName || bidForm.lotNumber || bidForm.bidPrice ? (
+                    <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                      💾 Form data auto-saved (survives page reload)
+                    </div>
+                  ) : null}
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
