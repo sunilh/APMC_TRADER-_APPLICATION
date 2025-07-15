@@ -221,17 +221,21 @@ export default function Buyers() {
     try {
       console.log('Fetching purchases for buyer:', buyer.id);
       const response = await apiRequest('GET', `/api/buyers/${buyer.id}/purchases`);
-      console.log('Purchase response:', response);
-      console.log('Response type:', typeof response);
-      console.log('Is array:', Array.isArray(response));
-      console.log('Response length:', Array.isArray(response) ? response.length : 'N/A');
+      console.log('Raw response object:', response);
       
-      if (Array.isArray(response) && response.length > 0) {
-        console.log('First purchase item:', response[0]);
-        setPurchases(response);
+      // Parse JSON from the response
+      const data = await response.json();
+      console.log('Parsed JSON data:', data);
+      console.log('Data type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
+      console.log('Data length:', Array.isArray(data) ? data.length : 'N/A');
+      
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('First purchase item:', data[0]);
+        setPurchases(data);
         toast({
           title: "Success",
-          description: `Found ${response.length} purchase(s)`,
+          description: `Found ${data.length} purchase(s)`,
           variant: "default",
         });
       } else {
