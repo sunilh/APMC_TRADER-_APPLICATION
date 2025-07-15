@@ -747,7 +747,7 @@ export function registerRoutes(app: Express): Server {
 
       // Calculate totals from request data
       const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + 
-                             billData.advance + billData.commission + billData.other;
+                             billData.advance + billData.rok + billData.other;
 
       // Enhanced validation before saving
       if (!pattiNumber || !billData || !lotIds || lotIds.length === 0) {
@@ -772,7 +772,7 @@ export function registerRoutes(app: Express): Server {
         vehicleRent: billData.vehicleRent.toString(),
         emptyBagCharges: billData.emptyBagCharges.toString(),
         advance: billData.advance.toString(),
-        commission: billData.commission.toString(),
+        rok: billData.rok.toString(),
         otherCharges: billData.other.toString(),
         totalDeductions: totalDeductions.toString(),
         netPayable: (billData.totalAmount - totalDeductions).toString(),
