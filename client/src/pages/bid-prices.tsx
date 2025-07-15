@@ -646,7 +646,7 @@ export default function BidPrices() {
                   New Bid
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-y-auto p-4">
                 <DialogHeader>
                   <DialogTitle>
                     {editingBid ? "Edit Bid Price" : "Create New Bid Price"}
@@ -661,7 +661,7 @@ export default function BidPrices() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Simplified Dalal Name Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="dalalName">Select Supplier/Dalal *</Label>
+                    <Label htmlFor="dalalName" className="text-base font-medium">Select Supplier/Dalal *</Label>
                     <div className="relative">
                       <Input
                         id="dalalName"
@@ -673,6 +673,7 @@ export default function BidPrices() {
                           setSearchDalal(stringValue);
                         }}
                         required
+                        className="min-h-[44px] text-base"
                       />
                       {searchDalal && (
                         <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
@@ -707,19 +708,20 @@ export default function BidPrices() {
                   </div>
 
                   {/* Lot Number and Bid Price */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <Label htmlFor="lotNumber">Lot Number *</Label>
+                      <Label htmlFor="lotNumber" className="text-base font-medium">Lot Number *</Label>
                       <Input
                         id="lotNumber"
                         placeholder="Enter lot number"
                         value={bidForm.lotNumber || ""}
                         onChange={(e) => setBidForm(prev => ({ ...prev, lotNumber: e.target.value }))}
                         required
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="bidPrice">Bid Price (₹) *</Label>
+                      <Label htmlFor="bidPrice" className="text-base font-medium">Bid Price (₹) *</Label>
                       <Input
                         id="bidPrice"
                         type="number"
@@ -728,6 +730,7 @@ export default function BidPrices() {
                         value={bidForm.bidPrice || ""}
                         onChange={(e) => setBidForm(prev => ({ ...prev, bidPrice: e.target.value }))}
                         required
+                        className="min-h-[44px] text-base"
                       />
                     </div>
                   </div>
@@ -736,24 +739,26 @@ export default function BidPrices() {
 
                   {/* Notes */}
                   <div>
-                    <Label htmlFor="notes">Notes</Label>
+                    <Label htmlFor="notes" className="text-base">Notes</Label>
                     <Textarea
                       id="notes"
                       placeholder="Enter any additional notes"
                       value={bidForm.notes || ""}
                       onChange={(e) => setBidForm(prev => ({ ...prev, notes: String(e.target.value) }))}
                       rows={3}
+                      className="min-h-[44px] text-base resize-none"
                     />
                   </div>
 
                   {/* Photo Capture */}
                   <div className="space-y-2">
-                    <Label>Chili Photos</Label>
-                    <div className="flex gap-2">
+                    <Label className="text-base font-medium">Chili Photos</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleCameraCapture}
+                        className="flex-1 sm:flex-none min-h-[44px]"
                       >
                         <Camera className="h-4 w-4 mr-2" />
                         Take Photo
@@ -762,6 +767,7 @@ export default function BidPrices() {
                         type="button"
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 sm:flex-none min-h-[44px]"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Upload
@@ -796,7 +802,7 @@ export default function BidPrices() {
 
                     {/* Photo Preview with Metadata */}
                     {bidForm.chiliPhotos.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         {bidForm.chiliPhotos.map((photo, index) => {
                           const photoUrl = typeof photo === 'string' ? photo : photo.url;
                           const metadata = typeof photo === 'object' ? photo.metadata : null;
@@ -832,13 +838,19 @@ export default function BidPrices() {
                   </div>
 
                   {/* Submit Button */}
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setBidDialog(false)}>
+                  <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setBidDialog(false)}
+                      className="w-full sm:w-auto"
+                    >
                       Cancel
                     </Button>
                     <Button 
                       type="submit" 
                       disabled={createBidMutation.isPending}
+                      className="w-full sm:w-auto"
                     >
                       {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "Create Bid")}
                     </Button>
