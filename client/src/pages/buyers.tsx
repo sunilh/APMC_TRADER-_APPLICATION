@@ -217,11 +217,32 @@ export default function Buyers() {
 
   const handleViewPurchases = async (buyer: BuyerSummary) => {
     setSelectedBuyer(buyer);
+    setPurchases([]); // Clear previous purchases
     try {
       console.log('Fetching purchases for buyer:', buyer.id);
       const response = await apiRequest('GET', `/api/buyers/${buyer.id}/purchases`);
       console.log('Purchase response:', response);
-      setPurchases(Array.isArray(response) ? response : []);
+      console.log('Response type:', typeof response);
+      console.log('Is array:', Array.isArray(response));
+      console.log('Response length:', Array.isArray(response) ? response.length : 'N/A');
+      
+      if (Array.isArray(response) && response.length > 0) {
+        console.log('First purchase item:', response[0]);
+        setPurchases(response);
+        toast({
+          title: "Success",
+          description: `Found ${response.length} purchase(s)`,
+          variant: "default",
+        });
+      } else {
+        console.log('No purchases or invalid response format');
+        setPurchases([]);
+        toast({
+          title: "Info",
+          description: "No purchases found for this buyer",
+          variant: "default",
+        });
+      }
     } catch (error) {
       console.error('Error fetching purchases:', error);
       setPurchases([]);
