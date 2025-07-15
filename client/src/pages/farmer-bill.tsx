@@ -77,14 +77,13 @@ export default function FarmerBill() {
     commission: 0,
   });
 
-  // Set default date range to current month
+  // Set default date to today
   useEffect(() => {
     const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const todayStr = today.toISOString().slice(0, 10);
     
-    setStartDate(startOfMonth.toISOString().slice(0, 10));
-    setEndDate(endOfMonth.toISOString().slice(0, 10));
+    setStartDate(todayStr);
+    setEndDate(todayStr);
   }, []);
 
   // Auto-generate unique patti number each time
@@ -659,7 +658,7 @@ export default function FarmerBill() {
                       <Input
                         id="bill-date"
                         type="date"
-                        value={startDate || new Date().toISOString().split('T')[0]}
+                        value={startDate}
                         onChange={(e) => {
                           setStartDate(e.target.value);
                           setEndDate(e.target.value); // Set same date for single day bills

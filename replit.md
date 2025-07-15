@@ -411,6 +411,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced navigation with dedicated "Buyer/Trader" menu group containing inventory and related features
   - System properly reflects agricultural trading chain: Dalals sell to Traders, Traders sell to Buyers
   - Created expandable menu structure to accommodate future buyer/trader features in organized fashion
+- July 15, 2025: Enhanced farmer bill system with date selection and improved deduction workflow
+  - Added date selection capability allowing users to generate bills for any specific date instead of just today
+  - Redesigned deduction workflow to "setup deductions first, then generate bill" instead of "generate then edit"
+  - Enhanced user interface with comprehensive deduction fields including voice input support for all fields
+  - Added real-time bill preview showing calculated amounts as deductions are entered
+  - Updated backend API endpoints to support date filtering for completed lots retrieval and bill checking
+  - Implemented proper date range filtering in database queries for historical bill generation
+  - Bill checking now considers both farmer ID and selected date for duplicate prevention
+  - System defaults to today's date for immediate usability while allowing historical date selection
 
 # User Preferences
 
