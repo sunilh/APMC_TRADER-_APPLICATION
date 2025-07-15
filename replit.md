@@ -429,6 +429,9 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Resolved data integrity issue where multiple lots with same lot number caused incorrect bag counting
   - Tax invoice generation now processes only bags from specific lot ID being invoiced, not all lots with same lot number
   - System generates accurate invoices: LOT20250715-001 now correctly calculates ₹70,76,810 for 124.64 quintals at ₹56,778/quintal
+  - Updated purchase history calculation to use actual bag weights instead of number of bags × price
+  - Fixed buyer purchase stats to calculate total amount due based on weight-based calculations
+  - Purchase history now displays the correct weight-based amounts matching tax invoice calculations
 
 # User Preferences
 

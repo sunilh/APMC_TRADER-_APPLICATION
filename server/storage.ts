@@ -626,7 +626,6 @@ export class DatabaseStorage implements IStorage {
         totalLots: sql<number>`count(*)`,
         completedLots: sql<number>`count(case when ${lots.status} = 'completed' then 1 end)`,
         billGeneratedLots: sql<number>`count(case when ${lots.billGenerated} = true then 1 end)`,
-        totalAmountDue: sql<string>`coalesce(sum(${lots.lotPrice} * ${lots.numberOfBags}), 0)`,
         totalAmountPaid: sql<string>`coalesce(sum(${lots.amountPaid}), 0)`,
         pendingPayments: sql<number>`count(case when ${lots.status} = 'completed' and (${lots.paymentStatus} = 'pending' or ${lots.paymentStatus} is null) then 1 end)`,
       })
@@ -636,6 +635,33 @@ export class DatabaseStorage implements IStorage {
         eq(lots.tenantId, tenantId)
       ));
 
+    // Calculate total amount due based on actual bag weights
+    const lotsWithPrices = await db
+      .select({
+        lotId: lots.id,
+        lotPrice: lots.lotPrice,
+      })
+      .from(lots)
+      .where(and(
+        eq(lots.buyerId, buyerId),
+        eq(lots.tenantId, tenantId)
+      ));
+
+    let totalAmountDue = 0;
+    for (const lot of lotsWithPrices) {
+      const bagWeights = await db
+        .select({
+          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+        })
+        .from(bags)
+        .where(eq(bags.lotId, lot.lotId));
+
+      const totalWeightKg = bagWeights[0]?.totalWeight || 0;
+      const totalWeightQuintals = totalWeightKg / 100; // Convert kg to quintals
+      const lotPrice = parseFloat(lot.lotPrice || '0');
+      totalAmountDue += totalWeightQuintals * lotPrice;
+    }
+
     const stats = result[0];
     const pendingBills = stats.totalLots - stats.billGeneratedLots;
 
@@ -644,7 +670,7 @@ export class DatabaseStorage implements IStorage {
       completedLots: stats.completedLots,
       billGeneratedLots: stats.billGeneratedLots,
       pendingBills,
-      totalAmountDue: stats.totalAmountDue || '0',
+      totalAmountDue: totalAmountDue.toFixed(2),
       totalAmountPaid: stats.totalAmountPaid || '0',
       pendingPayments: stats.pendingPayments,
     };
@@ -678,7 +704,7 @@ export class DatabaseStorage implements IStorage {
         billGenerated: lots.billGenerated,
         billGeneratedAt: lots.billGeneratedAt,
         paymentStatus: lots.paymentStatus,
-        amountDue: sql<string>`${lots.lotPrice} * ${lots.numberOfBags}`,
+        lotPrice: lots.lotPrice,
         amountPaid: lots.amountPaid,
         paymentDate: lots.paymentDate,
         createdAt: lots.createdAt,
@@ -691,17 +717,35 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(desc(lots.createdAt));
 
-    return result.map(row => ({
-      ...row,
-      farmerName: row.farmerName || '',
-      grade: row.grade || '',
-      billGeneratedAt: row.billGeneratedAt?.toISOString() || '',
-      paymentDate: row.paymentDate?.toISOString() || '',
-      createdAt: row.createdAt?.toISOString() || '',
-      amountDue: row.amountDue?.toString() || '0',
-      amountPaid: row.amountPaid?.toString() || '0',
-      paymentStatus: row.paymentStatus || 'pending',
+    // Calculate amount due based on actual bag weights
+    const enrichedResult = await Promise.all(result.map(async (row) => {
+      // Get total weight of bags for this lot
+      const bagWeights = await db
+        .select({
+          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+        })
+        .from(bags)
+        .where(eq(bags.lotId, row.lotId));
+
+      const totalWeightKg = bagWeights[0]?.totalWeight || 0;
+      const totalWeightQuintals = totalWeightKg / 100; // Convert kg to quintals
+      const lotPrice = parseFloat(row.lotPrice || '0');
+      const calculatedAmount = totalWeightQuintals * lotPrice;
+
+      return {
+        ...row,
+        farmerName: row.farmerName || '',
+        grade: row.grade || '',
+        billGeneratedAt: row.billGeneratedAt?.toISOString() || '',
+        paymentDate: row.paymentDate?.toISOString() || '',
+        createdAt: row.createdAt?.toISOString() || '',
+        amountDue: calculatedAmount.toFixed(2),
+        amountPaid: row.amountPaid?.toString() || '0',
+        paymentStatus: row.paymentStatus || 'pending',
+      };
     }));
+
+    return enrichedResult;
   }
 
   async updateLotPayment(lotId: number, tenantId: number, paymentData: {
