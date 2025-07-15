@@ -874,61 +874,66 @@ export default function BidPrices() {
 
             {/* Create Dalal Dialog - Copied from Inventory Screen */}
             <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Dalal/Supplier</DialogTitle>
+                  <DialogTitle>Create New Dalal/Supplier (Including APMC Code)</DialogTitle>
                 </DialogHeader>
                 
                 <form onSubmit={handleCreateDalal} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="dalalName">Dalal Name *</Label>
-                      <Input
-                        id="dalalName"
-                        placeholder="Enter dalal name"
-                        value={dalalForm.name || ""}
-                        onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
-                        required
-                      />
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="dalalName">Dalal Name *</Label>
+                        <Input
+                          id="dalalName"
+                          placeholder="Enter dalal name"
+                          value={dalalForm.name || ""}
+                          onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="apmcCode" className="text-blue-600 font-semibold">APMC Code *</Label>
+                        <Input
+                          id="apmcCode"
+                          placeholder="Enter APMC code (Required)"
+                          value={dalalForm.apmcCode || ""}
+                          onChange={(e) => setDalalForm(prev => ({ ...prev, apmcCode: e.target.value }))}
+                          className="border-blue-300 focus:border-blue-500"
+                        />
+                      </div>
                     </div>
                     
-                    <div>
-                      <Label htmlFor="contactPerson">Contact Person</Label>
-                      <Input
-                        id="contactPerson"
-                        placeholder="Enter contact person name"
-                        value={dalalForm.contactPerson || ""}
-                        onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="mobile">Mobile Number</Label>
-                      <Input
-                        id="mobile"
-                        placeholder="Enter mobile number"
-                        value={dalalForm.mobile || ""}
-                        onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="contactPerson">Contact Person</Label>
+                        <Input
+                          id="contactPerson"
+                          placeholder="Enter contact person name"
+                          value={dalalForm.contactPerson || ""}
+                          onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="mobile">Mobile Number</Label>
+                        <Input
+                          id="mobile"
+                          placeholder="Enter mobile number"
+                          value={dalalForm.mobile || ""}
+                          onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
+                        />
+                      </div>
                     </div>
                     
                     <div>
                       <Label htmlFor="address">Address</Label>
                       <Input
                         id="address"
-                        placeholder="Enter address"
+                        placeholder="Enter full address"
                         value={dalalForm.address || ""}
                         onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="apmcCode">APMC Code</Label>
-                      <Input
-                        id="apmcCode"
-                        placeholder="Enter APMC code"
-                        value={dalalForm.apmcCode || ""}
-                        onChange={(e) => setDalalForm(prev => ({ ...prev, apmcCode: e.target.value }))}
                       />
                     </div>
                   </div>
