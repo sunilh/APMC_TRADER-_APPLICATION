@@ -53,6 +53,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint for Google Cloud
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 (async () => {
   const server = await registerRoutes(app);
 

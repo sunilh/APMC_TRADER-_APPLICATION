@@ -432,6 +432,16 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Updated purchase history calculation to use actual bag weights instead of number of bags × price
   - Fixed buyer purchase stats to calculate total amount due based on weight-based calculations
   - Purchase history now displays the correct weight-based amounts matching tax invoice calculations
+- July 15, 2025: Enhanced mobile responsiveness and created comprehensive Google Cloud deployment configuration
+  - Fixed mobile purchase history display with responsive card layout for small screens and table for desktop
+  - Added proper dialog scrolling and overflow handling for mobile devices
+  - Created complete Google Cloud deployment package with Dockerfile, Cloud Build, and App Engine configurations
+  - Implemented automated deployment scripts for one-command setup and Cloud Run deployment
+  - Added health check endpoint for Google Cloud monitoring and load balancing
+  - Created comprehensive deployment documentation with cost optimization and security best practices
+  - Configured Secret Manager integration for secure credential management
+  - Set up Cloud SQL PostgreSQL with automated backups and VPC connector for private networking
+  - Production-ready architecture supports auto-scaling from 1-100 instances with pay-per-use billing
 
 # User Preferences
 
