@@ -1601,14 +1601,23 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Buyer purchase history route
-  app.get("/api/buyers/:id/purchases", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/buyers/:id/purchases", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.id);
+      if (isNaN(buyerId)) {
+        console.log("Invalid buyer ID:", req.params.id);
+        return res.status(400).json({ message: "Invalid buyer ID" });
+      }
+      
+      console.log(`User:`, req.user);
+      console.log(`Fetching purchase history for buyer ${buyerId}, tenant ${req.user.tenantId}`);
+      
       const purchases = await storage.getBuyerPurchaseHistory(buyerId, req.user.tenantId);
+      console.log(`Found ${purchases.length} purchases for buyer ${buyerId}`);
       res.json(purchases);
     } catch (error) {
       console.error("Error fetching buyer purchases:", error);
-      res.status(500).json({ message: "Failed to fetch buyer purchases" });
+      res.status(500).json({ message: "Failed to fetch buyer purchases", error: error.message });
     }
   });
 
@@ -2048,93 +2057,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Buyer purchase tracking - get buyer's purchase history and payment status
-  app.get('/api/buyers/:buyerId/purchases', requireAuth, requireTenant, async (req, res) => {
-    try {
-      const buyerId = parseInt(req.params.buyerId);
-      const tenantId = req.user?.tenantId!;
-
-      const purchases = await db
-        .select({
-          lotId: lots.id,
-          lotNumber: lots.lotNumber,
-          farmerName: farmers.name,
-          numberOfBags: lots.numberOfBags,
-          varietyGrade: lots.varietyGrade,
-          grade: lots.grade,
-          status: lots.status,
-          billGenerated: lots.billGenerated,
-          billGeneratedAt: lots.billGeneratedAt,
-          paymentStatus: lots.paymentStatus,
-          amountDue: lots.amountDue,
-          amountPaid: lots.amountPaid,
-          paymentDate: lots.paymentDate,
-          createdAt: lots.createdAt,
-        })
-        .from(lots)
-        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
-        .where(
-          and(
-            eq(lots.buyerId, buyerId),
-            eq(lots.tenantId, tenantId)
-          )
-        )
-        .orderBy(desc(lots.createdAt));
-
-      res.json(purchases);
-    } catch (error) {
-      console.error('Error fetching buyer purchases:', error);
-      res.status(500).json({ message: 'Failed to fetch buyer purchases' });
-    }
-  });
-
-  // Get all buyers with their purchase summary
-  app.get('/api/buyers/summary', requireAuth, requireTenant, async (req, res) => {
-    try {
-      const tenantId = req.user?.tenantId!;
-      const { search } = req.query;
-
-      let whereCondition = eq(buyers.tenantId, tenantId);
-      
-      if (search) {
-        whereCondition = and(
-          whereCondition,
-          or(
-            ilike(buyers.name, `%${search}%`),
-            ilike(buyers.mobile, `%${search}%`),
-            ilike(buyers.contactPerson, `%${search}%`)
-          )
-        );
-      }
-
-      const buyerSummaries = await db
-        .select({
-          buyerId: buyers.id,
-          buyerName: buyers.name,
-          buyerMobile: buyers.mobile,
-          buyerContact: buyers.contactPerson,
-          totalLots: sql<number>`COUNT(${lots.id})::int`,
-          completedLots: sql<number>`COUNT(CASE WHEN ${lots.status} = 'completed' THEN 1 END)::int`,
-          billGeneratedLots: sql<number>`COUNT(CASE WHEN ${lots.billGenerated} = true THEN 1 END)::int`,
-          pendingBills: sql<number>`COUNT(CASE WHEN ${lots.status} = 'completed' AND ${lots.billGenerated} = false THEN 1 END)::int`,
-          totalAmountDue: sql<string>`COALESCE(SUM(${lots.amountDue}), 0)`,
-          totalAmountPaid: sql<string>`COALESCE(SUM(${lots.amountPaid}), 0)`,
-          pendingPayments: sql<number>`COUNT(CASE WHEN ${lots.paymentStatus} = 'pending' AND ${lots.billGenerated} = true THEN 1 END)::int`,
-        })
-        .from(buyers)
-        .leftJoin(lots, and(eq(buyers.id, lots.buyerId), eq(lots.tenantId, tenantId)))
-        .where(whereCondition)
-        .groupBy(buyers.id, buyers.name, buyers.mobile, buyers.contactPerson)
-        .orderBy(buyers.name);
-
-      res.json(buyerSummaries);
-    } catch (error) {
-      console.error('Error fetching buyer summaries:', error);
-      res.status(500).json({ message: 'Failed to fetch buyer summaries' });
-    }
-  });
-
-  // Update payment status for a lot
+  // Payment status update for buyer purchases  
   app.patch('/api/lots/:lotId/payment', requireAuth, requireTenant, async (req, res) => {
     try {
       const lotId = parseInt(req.params.lotId);
@@ -2161,6 +2084,8 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: 'Failed to update payment status' });
     }
   });
+
+  // REMOVED DUPLICATE - keeping the endpoint above
 
   // Mark tax invoice as generated and calculate amount due
   app.patch('/api/tax-invoice/:buyerId/mark-generated', requireAuth, requireTenant, async (req, res) => {
