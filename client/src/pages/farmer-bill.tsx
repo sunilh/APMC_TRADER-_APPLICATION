@@ -770,7 +770,7 @@ export default function FarmerBill() {
                                       emptyBagCharges: parseFloat(billCheck.bill?.emptyBagCharges || "0"),
                                       advance: parseFloat(billCheck.bill?.advance || "0"),
                                       other: parseFloat(billCheck.bill?.other || "0"),
-                                      rok: parseFloat(billCheck.bill?.commission || "0"),
+                                      rok: parseFloat(billCheck.bill?.rok || "0"),
                                     });
                                   }}
                                   variant="outline"
