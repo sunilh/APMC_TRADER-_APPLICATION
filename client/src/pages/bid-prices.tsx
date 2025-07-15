@@ -660,8 +660,8 @@ export default function BidPrices() {
                   </DialogHeader>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-                  <div className="p-4 space-y-4">
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {/* Simplified Dalal Name Selection */}
                   <div className="space-y-2">
                     <Label htmlFor="dalalName" className="text-base font-medium">Select Supplier/Dalal *</Label>
@@ -840,24 +840,24 @@ export default function BidPrices() {
                     )}
                   </div>
                   </div>
-
-                  {/* Submit Button */}
-                  <div className="sticky bottom-0 bg-white p-4 -m-4 mt-4 border-t">
-                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                  
+                  {/* Submit Button - Fixed at bottom */}
+                  <div className="bg-white p-4 border-t border-gray-200">
+                    <div className="flex flex-col gap-3 w-full">
+                      <Button 
+                        type="submit" 
+                        disabled={createBidMutation.isPending}
+                        className="w-full min-h-[52px] text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+                      >
+                        {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "CREATE BID")}
+                      </Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         onClick={() => setBidDialog(false)}
-                        className="w-full sm:w-auto min-h-[48px] text-base"
+                        className="w-full min-h-[44px] text-base"
                       >
                         Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createBidMutation.isPending}
-                        className="w-full sm:w-auto min-h-[48px] text-base font-semibold"
-                      >
-                        {createBidMutation.isPending ? "Saving..." : (editingBid ? "Update Bid" : "Create Bid")}
                       </Button>
                     </div>
                   </div>
