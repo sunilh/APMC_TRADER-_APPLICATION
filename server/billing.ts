@@ -622,7 +622,7 @@ export async function generateTaxInvoice(
         bagCount = allocatedBags.length;
         weightKg = allocatedBags.reduce((sum: number, bag: any) => sum + (bag.weight || 0), 0);
       } else {
-        // Regular lot assignment - get all bags
+        // Regular lot assignment - get all bags for this specific lot ID
         const bagData = await db
           .select({
             bagCount: sql<number>`COUNT(*)`,
@@ -637,17 +637,18 @@ export async function generateTaxInvoice(
       }
 
       const lotPrice = Number(lot.lotPrice) || 0;
-      const amountInRupees = (weightKg / 100) * lotPrice;
-
-
+      // Convert grams to kilograms, then to quintals (1 quintal = 100 kg)
+      const weightKgConverted = weightKg / 1000; // Convert grams to kg
+      const weightQuintals = weightKgConverted / 100; // Convert kg to quintals
+      const amountInRupees = weightQuintals * lotPrice;
 
       items.push({
         lotNo: lot.lotNumber,
         itemName: (lot.varietyGrade || 'AGRICULTURAL PRODUCE').toUpperCase(),
         hsnCode: buyer.hsnCode,
         bags: bagCount,
-        weightKg: weightKg,
-        weightQuintals: weightKg / 100,
+        weightKg: weightKgConverted,
+        weightQuintals: weightQuintals,
         ratePerQuintal: lotPrice,
         basicAmount: amountInRupees,
       });
