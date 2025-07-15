@@ -994,6 +994,35 @@ export function registerRoutes(app: Express): Server {
         // Continue with response even if accounting fails
       }
 
+      // Update lot billGenerated status for all lots in this invoice
+      const lotNumbers = taxInvoice.items.map(item => item.lotNo);
+      console.log("Updating billGenerated status for lots:", lotNumbers);
+      
+      try {
+        // Update each lot individually to ensure proper SQL syntax
+        for (const lotNumber of lotNumbers) {
+          await db
+            .update(lots)
+            .set({
+              billGenerated: true,
+              billGeneratedAt: new Date(),
+              amountDue: (taxInvoice.calculations.totalAmount / taxInvoice.items.length).toString(), // Split total amount across lots
+            })
+            .where(
+              and(
+                eq(lots.buyerId, buyerId),
+                eq(lots.tenantId, tenantId),
+                eq(lots.lotNumber, lotNumber)
+              )
+            );
+        }
+        
+        console.log("Successfully updated billGenerated status for lots");
+      } catch (error) {
+        console.error("Error updating lot billGenerated status:", error);
+        // Continue with response even if this update fails
+      }
+
       res.json({ 
         message: "Tax invoice generated and saved successfully",
         invoiceId: savedInvoice[0].id,
