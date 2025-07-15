@@ -458,6 +458,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added color-coded status alerts (red for incomplete, green for complete) with detailed breakdown
   - Enhanced missing bag details display with individual bag numbers and action buttons
   - Included direct navigation link to Lots page for immediate action on incomplete entries
+- July 15, 2025: Enhanced downloadable bag entry forms with intelligent auto-scaling for single-page printing
+  - Implemented auto-scaling PDF generation that fits any lot size on single A4 page
+  - Small lots (≤20 bags): Larger boxes with 4-5 columns for easy manual entry
+  - Medium lots (≤100 bags): Standard 7-column layout with optimal box size
+  - Large lots (≤300 bags): Compact 10-column layout for efficient space usage
+  - Very large lots (500+ bags): Micro-grid with 12-15 columns maintaining readability
+  - Added intelligent font scaling and minimum size constraints to ensure usability
+  - Enhanced form with grid information display showing columns, rows, and total bag count
+  - System automatically optimizes layout while maintaining minimum 12mm×8mm cell size for practical use
 
 # User Preferences
 

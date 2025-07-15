@@ -323,12 +323,13 @@ export default function BagEntry() {
     }
   };
 
-  // Download compact bag entry form
+  // Download auto-scaling bag entry form that fits on single page
   const generateCompactBagForm = () => {
     if (!lot) return;
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
     
     // Header
@@ -351,18 +352,65 @@ export default function BagEntry() {
     
     doc.text(details.join("  |  "), margin, yPos);
     
-    // Create compact grid for weights
+    // Calculate auto-scaling dimensions
     yPos = 55;
-    const cellWidth = 25;
-    const cellHeight = 15;
-    const cols = 7; // 7 columns of weight entries per row
-    const rows = Math.ceil(lot.numberOfBags / cols);
+    const footerHeight = 25; // Space for signature
+    const availableWidth = pageWidth - (margin * 2);
+    const availableHeight = pageHeight - yPos - footerHeight - margin;
+    
+    // Auto-scale based on number of bags
+    let cols, rows, cellWidth, cellHeight;
+    
+    if (lot.numberOfBags <= 20) {
+      // Small lots: bigger boxes (4-5 columns)
+      cols = Math.min(5, lot.numberOfBags);
+      rows = Math.ceil(lot.numberOfBags / cols);
+      cellWidth = availableWidth / cols;
+      cellHeight = Math.min(availableHeight / rows, 25); // Max 25mm height
+    } else if (lot.numberOfBags <= 100) {
+      // Medium lots: standard size (6-8 columns)
+      cols = 7;
+      rows = Math.ceil(lot.numberOfBags / cols);
+      cellWidth = availableWidth / cols;
+      cellHeight = availableHeight / rows;
+    } else if (lot.numberOfBags <= 300) {
+      // Large lots: smaller boxes (8-10 columns)
+      cols = 10;
+      rows = Math.ceil(lot.numberOfBags / cols);
+      cellWidth = availableWidth / cols;
+      cellHeight = availableHeight / rows;
+    } else {
+      // Very large lots: tiny boxes (12+ columns)
+      cols = Math.min(15, Math.ceil(Math.sqrt(lot.numberOfBags * 1.5)));
+      rows = Math.ceil(lot.numberOfBags / cols);
+      cellWidth = availableWidth / cols;
+      cellHeight = availableHeight / rows;
+    }
+    
+    // Ensure minimum readable size
+    cellWidth = Math.max(cellWidth, 12); // Min 12mm width
+    cellHeight = Math.max(cellHeight, 8); // Min 8mm height
+    
+    // If still doesn't fit, recalculate with minimum sizes
+    if (rows * cellHeight > availableHeight) {
+      cellHeight = availableHeight / rows;
+      if (cellHeight < 6) {
+        // If too small, increase columns
+        cols = Math.ceil(Math.sqrt(lot.numberOfBags * 2));
+        rows = Math.ceil(lot.numberOfBags / cols);
+        cellWidth = availableWidth / cols;
+        cellHeight = availableHeight / rows;
+      }
+    }
     
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.text("WEIGHT ENTRY (KG):", margin, yPos - 5);
     
-    // Draw grid
+    // Draw auto-scaled grid
+    const fontSize = Math.max(4, Math.min(8, cellHeight / 3)); // Scale font with cell size
+    doc.setFontSize(fontSize);
+    
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const bagNum = row * cols + col + 1;
@@ -374,28 +422,40 @@ export default function BagEntry() {
         // Draw cell border
         doc.rect(x, y, cellWidth, cellHeight);
         
-        // Add small bag indicator (just a dot)
-        doc.setFontSize(6);
-        doc.text("•", x + 2, y + 8);
+        // Add bag indicator (scale with cell size)
+        if (cellWidth > 15) {
+          // For larger cells, add bag number
+          doc.setFontSize(Math.max(4, fontSize - 1));
+          doc.text(bagNum.toString(), x + 1, y + fontSize + 2);
+        } else {
+          // For smaller cells, just a dot
+          doc.setFontSize(Math.max(3, fontSize - 2));
+          doc.text("•", x + 1, y + fontSize + 1);
+        }
         
-        // Weight line
-        doc.line(x + 5, y + 10, x + cellWidth - 2, y + 10);
+        // Weight line (scale with cell size)
+        const lineY = y + cellHeight - 3;
+        doc.line(x + 2, lineY, x + cellWidth - 2, lineY);
       }
     }
     
     // Footer with signature
-    const footerY = yPos + rows * cellHeight + 20;
+    const footerY = yPos + rows * cellHeight + 10;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("Signature: ___________________", margin, footerY);
     doc.text("Date: ___________", pageWidth - margin - 40, footerY);
+    
+    // Add scaling info
+    doc.setFontSize(7);
+    doc.text(`Grid: ${cols} cols × ${rows} rows | Total: ${lot.numberOfBags} bags`, margin, footerY + 8);
     
     // Download
     doc.save(`${lot.lotNumber}_BagEntry_Form.pdf`);
     
     toast({
       title: "Downloaded",
-      description: "Compact bag entry form downloaded successfully",
+      description: `Auto-scaled form: ${cols}×${rows} grid for ${lot.numberOfBags} bags`,
     });
   };
 
