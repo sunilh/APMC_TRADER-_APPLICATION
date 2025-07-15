@@ -637,8 +637,8 @@ export async function generateTaxInvoice(
       }
 
       const lotPrice = Number(lot.lotPrice) || 0;
-      // Convert grams to kilograms, then to quintals (1 quintal = 100 kg)
-      const weightKgConverted = weightKg / 1000; // Convert grams to kg
+      // Weights are already stored in KG, convert to quintals (1 quintal = 100 kg)
+      const weightKgConverted = weightKg; // Already in kg, no conversion needed
       const weightQuintals = weightKgConverted / 100; // Convert kg to quintals
       const amountInRupees = weightQuintals * lotPrice;
 

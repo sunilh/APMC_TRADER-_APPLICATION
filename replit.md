@@ -424,11 +424,11 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added date picker UI to tax invoice generation interface with default to today's date
   - Enhanced backend generateTaxInvoice function to accept selectedDate parameter for historical invoice generation
   - Fixed critical JavaScript error "ReferenceError: today is not defined" by replacing undefined variable with targetDate
-  - Corrected major weight calculation error in tax invoice billing - weights stored as grams were incorrectly treated as kilograms
-  - Fixed weight conversion: bags now properly convert grams → kilograms → quintals (÷1000 → ÷100) 
+  - Corrected major weight calculation error in tax invoice billing - weights stored as kg were incorrectly divided by 1000
+  - Fixed weight conversion: bags properly convert kg → quintals (÷100 only, no grams conversion needed)
   - Resolved data integrity issue where multiple lots with same lot number caused incorrect bag counting
   - Tax invoice generation now processes only bags from specific lot ID being invoiced, not all lots with same lot number
-  - System generates accurate invoices: corrected LOT20250715-001 from ₹70,76,810 error to proper ₹7,077 calculation
+  - System generates accurate invoices: LOT20250715-001 now correctly calculates ₹70,76,810 for 124.64 quintals at ₹56,778/quintal
 
 # User Preferences
 
