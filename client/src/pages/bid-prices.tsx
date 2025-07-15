@@ -246,11 +246,17 @@ export default function BidPrices() {
     
     // Prevent multiple submissions
     if (createBidMutation.isPending) {
+      console.log("Form submission blocked - mutation in progress");
       return;
     }
     
     // Validate required fields
     if (!bidForm.dalalName || !bidForm.lotNumber || !bidForm.bidPrice) {
+      console.log("Form validation failed:", {
+        dalalName: bidForm.dalalName,
+        lotNumber: bidForm.lotNumber,
+        bidPrice: bidForm.bidPrice
+      });
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields: Dalal Name, Lot Number, and Bid Price.",
@@ -262,6 +268,7 @@ export default function BidPrices() {
     // Validate bid price is a valid number
     const priceNumber = parseFloat(bidForm.bidPrice);
     if (isNaN(priceNumber) || priceNumber <= 0) {
+      console.log("Price validation failed:", bidForm.bidPrice);
       toast({
         title: "Validation Error",
         description: "Bid price must be a valid positive number.",
@@ -270,11 +277,12 @@ export default function BidPrices() {
       return;
     }
 
-    console.log("Submitting bid price:", {
+    console.log("Submitting bid price with photos:", {
       dalalName: bidForm.dalalName,
       lotNumber: bidForm.lotNumber,
       bidPrice: bidForm.bidPrice,
-      notes: bidForm.notes
+      notes: bidForm.notes,
+      photosCount: bidForm.chiliPhotos.length
     });
 
     createBidMutation.mutate(bidForm);
@@ -342,6 +350,12 @@ export default function BidPrices() {
       return;
     }
     
+    console.log("Photo upload starting with:", {
+      dalalName: bidForm.dalalName,
+      lotNumber: bidForm.lotNumber,
+      files: files.length
+    });
+    
     try {
       const formData = new FormData();
       Array.from(files).forEach(file => {
@@ -376,7 +390,10 @@ export default function BidPrices() {
         title: "Success",
         description: `${photos.length} photo(s) uploaded for ${bidForm.dalalName} - Lot ${bidForm.lotNumber}`,
       });
+      
+      console.log("Photos uploaded successfully:", photos.length);
     } catch (error) {
+      console.error("Photo upload error:", error);
       toast({
         title: "Upload Error",
         description: "Failed to upload photos. Please try again.",
@@ -582,88 +599,10 @@ export default function BidPrices() {
             <BackToDashboard />
             
             {/* Create Supplier Button */}
-            <Dialog open={createDalalOpen} onOpenChange={setCreateDalalOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => setCreateDalalOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Supplier
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Dalal/Trader</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Dalal Name *</Label>
-                    <Input
-                      type="text"
-                      value={dalalForm.name}
-                      onChange={(e) => setDalalForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter dalal name"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Contact Person</Label>
-                    <Input
-                      type="text"
-                      value={dalalForm.contactPerson}
-                      onChange={(e) => setDalalForm(prev => ({ ...prev, contactPerson: e.target.value }))}
-                      placeholder="Enter contact person name"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Mobile Number</Label>
-                    <Input
-                      type="text"
-                      value={dalalForm.mobile}
-                      onChange={(e) => setDalalForm(prev => ({ ...prev, mobile: e.target.value }))}
-                      placeholder="Enter mobile number"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Address</Label>
-                    <Input
-                      type="text"
-                      value={dalalForm.address}
-                      onChange={(e) => setDalalForm(prev => ({ ...prev, address: e.target.value }))}
-                      placeholder="Enter address"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={() => {
-                        if (!dalalForm.name) {
-                          toast({ title: "Error", description: "Dalal name is required", variant: "destructive" });
-                          return;
-                        }
-                        
-                        createDalalMutation.mutate(dalalForm);
-                      }}
-                      disabled={createDalalMutation.isPending}
-                      className="flex-1"
-                    >
-                      {createDalalMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      Add Dalal
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setCreateDalalOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="outline" onClick={() => setCreateDalalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Supplier
+            </Button>
 
             {/* New Bid Button */}
             <Dialog open={bidDialog} onOpenChange={setBidDialog}>
