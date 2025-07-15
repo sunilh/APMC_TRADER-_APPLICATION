@@ -25,7 +25,7 @@ interface FarmerBillData {
   emptyBagCharges: number;
   advance: number;
   other: number;
-  commission: number;
+  rok: number;
 }
 
 interface FarmerBillRecord {
@@ -64,7 +64,7 @@ export default function FarmerBill() {
     emptyBagCharges: 0,
     advance: 0,
     other: 0,
-    commission: 0,
+    rok: 0,
   });
   
   const [editingDeductions, setEditingDeductions] = useState(false);
@@ -74,7 +74,7 @@ export default function FarmerBill() {
     emptyBagCharges: 0,
     advance: 0,
     other: 0,
-    commission: 0,
+    rok: 0,
   });
 
   // Set default date to today
@@ -85,6 +85,19 @@ export default function FarmerBill() {
     setStartDate(todayStr);
     setEndDate(todayStr);
   }, []);
+
+  // Update hamali calculation when settings or lots change
+  useEffect(() => {
+    if (settings?.gstSettings?.hamali && farmerLots.length > 0) {
+      const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
+      const calculatedHamali = settings.gstSettings.hamali * totalBags;
+      
+      setBillData(prev => ({
+        ...prev,
+        hamali: calculatedHamali
+      }));
+    }
+  }, [settings, farmerLots]);
 
   // Auto-generate unique patti number each time
   const generatePattiNumber = () => {
@@ -98,6 +111,12 @@ export default function FarmerBill() {
   // Fetch all farmers for dropdown
   const { data: farmers = [], isLoading: farmersLoading } = useQuery<Farmer[]>({
     queryKey: ["/api/farmers"],
+    enabled: !!user?.tenantId,
+  });
+
+  // Fetch tenant settings for hamali calculation
+  const { data: settings } = useQuery({
+    queryKey: ["/api/settings"],
     enabled: !!user?.tenantId,
   });
 
@@ -881,22 +900,22 @@ export default function FarmerBill() {
                                   </div>
                                   
                                   <div>
-                                    <Label htmlFor="edit-commission">Commission (₹)</Label>
+                                    <Label htmlFor="edit-rok">Rok (₹)</Label>
                                     <div className="flex gap-2">
                                       <Input
-                                        id="edit-commission"
+                                        id="edit-rok"
                                         type="number"
-                                        value={editBillData.commission}
+                                        value={editBillData.rok}
                                         onChange={(e) => setEditBillData(prev => ({ 
                                           ...prev, 
-                                          commission: parseFloat(e.target.value) || 0 
+                                          rok: parseFloat(e.target.value) || 0 
                                         }))}
                                         className="flex-1"
                                       />
                                       <VoiceInput
                                         onResult={(value) => setEditBillData(prev => ({ 
                                           ...prev, 
-                                          commission: parseFloat(value) || 0 
+                                          rok: parseFloat(value) || 0 
                                         }))}
                                         type="number"
                                         className="w-10 h-10"
@@ -914,7 +933,7 @@ export default function FarmerBill() {
                                     <div className="flex justify-between">
                                       <span>Total Deductions:</span>
                                       <span className="font-bold text-red-600">
-                                        -{formatCurrency(editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.commission)}
+                                        -{formatCurrency(editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.rok)}
                                       </span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold border-t pt-2">
@@ -922,7 +941,7 @@ export default function FarmerBill() {
                                       <span className="text-green-600">
                                         {formatCurrency(
                                           parseFloat(billCheck.bill?.totalAmount || "0") - 
-                                          (editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.commission)
+                                          (editBillData.hamali + editBillData.vehicleRent + editBillData.emptyBagCharges + editBillData.advance + editBillData.other + editBillData.rok)
                                         )}
                                       </span>
                                     </div>
@@ -1024,26 +1043,26 @@ export default function FarmerBill() {
                                       </div>
                                     </div>
                                     <div>
-                                      <Label htmlFor="hamali">Hamali (₹)</Label>
+                                      <Label htmlFor="hamali">
+                                        Hamali (₹) - Auto-calculated from settings
+                                        {settings?.gstSettings?.hamali && (
+                                          <span className="text-xs text-gray-500 ml-1">
+                                            (₹{settings.gstSettings.hamali}/bag)
+                                          </span>
+                                        )}
+                                      </Label>
                                       <div className="flex gap-2">
                                         <Input
                                           id="hamali"
                                           type="number"
                                           value={billData.hamali}
-                                          onChange={(e) => setBillData(prev => ({ 
-                                            ...prev, 
-                                            hamali: parseFloat(e.target.value) || 0 
-                                          }))}
-                                          className="flex-1"
+                                          readOnly
+                                          className="flex-1 bg-gray-50"
+                                          title="Calculated from settings: hamali rate per bag × total bags"
                                         />
-                                        <VoiceInput
-                                          onResult={(value) => setBillData(prev => ({ 
-                                            ...prev, 
-                                            hamali: parseFloat(value) || 0 
-                                          }))}
-                                          type="number"
-                                          className="w-10 h-10"
-                                        />
+                                        <div className="w-10 h-10 bg-gray-50 border rounded flex items-center justify-center">
+                                          <span className="text-xs text-gray-500">Auto</span>
+                                        </div>
                                       </div>
                                     </div>
                                     <div>
@@ -1153,8 +1172,9 @@ export default function FarmerBill() {
                                           const quintals = weight / 100;
                                           return sum + (quintals * price);
                                         }, 0);
-                                        const commission = totalAmount * 0.03; // 3% commission
-                                        const totalDeductions = billData.hamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + commission;
+                                        const hamaliFromSettings = settings?.gstSettings?.hamali || 0;
+                                        const calculatedHamali = hamaliFromSettings * totalBags;
+                                        const totalDeductions = calculatedHamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + billData.rok;
                                         const netPayable = totalAmount - totalDeductions;
                                         
                                         return (
@@ -1163,11 +1183,11 @@ export default function FarmerBill() {
                                             <div className="flex justify-between"><span>Total Weight:</span><span>{totalWeight.toFixed(2)} kg</span></div>
                                             <div className="flex justify-between"><span>Gross Amount:</span><span className="font-bold">{formatCurrency(totalAmount)}</span></div>
                                             <div className="border-t pt-1 mt-2">
-                                              <div className="flex justify-between text-red-600"><span>Hamali:</span><span>-{formatCurrency(billData.hamali)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Hamali ({totalBags} bags × ₹{hamaliFromSettings}):</span><span>-{formatCurrency(calculatedHamali)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Vehicle Rent:</span><span>-{formatCurrency(billData.vehicleRent)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Empty Bags:</span><span>-{formatCurrency(billData.emptyBagCharges)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Advance:</span><span>-{formatCurrency(billData.advance)}</span></div>
-                                              <div className="flex justify-between text-red-600"><span>Commission (3%):</span><span>-{formatCurrency(commission)}</span></div>
+                                              <div className="flex justify-between text-red-600"><span>Rok:</span><span>-{formatCurrency(billData.rok)}</span></div>
                                               <div className="flex justify-between text-red-600"><span>Other:</span><span>-{formatCurrency(billData.other)}</span></div>
                                               <div className="flex justify-between font-bold text-red-600 border-t pt-1"><span>Total Deductions:</span><span>-{formatCurrency(totalDeductions)}</span></div>
                                             </div>
@@ -1212,6 +1232,7 @@ export default function FarmerBill() {
                                         pattiNumber: finalPattiNumber,
                                         billData: {
                                           ...billData,
+                                          hamali: (settings?.gstSettings?.hamali || 0) * totalBags,
                                           totalAmount,
                                           totalBags,
                                           totalWeight,

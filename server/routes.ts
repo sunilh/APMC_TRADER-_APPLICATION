@@ -648,7 +648,7 @@ export function registerRoutes(app: Express): Server {
         vehicleRent: bill.vehicleRent || '0',
         emptyBagCharges: bill.emptyBagCharges || '0',
         advance: bill.advance || '0',
-        commission: bill.commission || '0',
+        rok: bill.rok || '0',
         other: bill.otherCharges || '0',
         totalBags: bill.totalBags || 0,
         totalWeight: bill.totalWeight || '0',
@@ -788,7 +788,7 @@ export function registerRoutes(app: Express): Server {
           savedBill[0].id,
           farmerId,
           parseFloat(totalAmount.toString()),
-          parseFloat(billData.commission.toString()),
+          parseFloat(billData.rok.toString()),
           tenantId,
           req.user.id
         );
@@ -923,10 +923,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Invalid deductions data" });
       }
 
-      const { hamali, vehicleRent, emptyBagCharges, advance, other, commission } = deductions;
+      const { hamali, vehicleRent, emptyBagCharges, advance, other, rok } = deductions;
 
       // Validate all deduction amounts are numbers
-      const deductionValues = [hamali, vehicleRent, emptyBagCharges, advance, other, commission];
+      const deductionValues = [hamali, vehicleRent, emptyBagCharges, advance, other, rok];
       if (deductionValues.some(val => typeof val !== 'number' || val < 0)) {
         return res.status(400).json({ message: "All deduction amounts must be valid positive numbers" });
       }
@@ -943,7 +943,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Calculate new totals
-      const totalDeductions = hamali + vehicleRent + emptyBagCharges + advance + other + commission;
+      const totalDeductions = hamali + vehicleRent + emptyBagCharges + advance + other + rok;
       const totalAmount = parseFloat(currentBill.totalAmount.toString());
       const newNetPayable = totalAmount - totalDeductions;
 
@@ -956,7 +956,7 @@ export function registerRoutes(app: Express): Server {
           emptyBagCharges: emptyBagCharges.toString(),
           advance: advance.toString(),
           otherCharges: other.toString(),
-          commission: commission.toString(),
+          rok: rok.toString(),
           totalDeductions: totalDeductions.toString(),
           netPayable: newNetPayable.toString(),
           updatedAt: new Date()
@@ -972,7 +972,7 @@ export function registerRoutes(app: Express): Server {
           emptyBagCharges,
           advance,
           other: other,
-          commission,
+          rok,
           totalDeductions,
           netPayable: newNetPayable
         }

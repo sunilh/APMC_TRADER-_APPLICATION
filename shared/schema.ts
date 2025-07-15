@@ -327,7 +327,7 @@ export const farmerBills = pgTable("farmer_bills", {
   vehicleRent: decimal("vehicle_rent", { precision: 10, scale: 2 }).default('0'),
   emptyBagCharges: decimal("empty_bag_charges", { precision: 10, scale: 2 }).default('0'),
   advance: decimal("advance", { precision: 10, scale: 2 }).default('0'),
-  commission: decimal("commission", { precision: 10, scale: 2 }).default('0'),
+  rok: decimal("rok", { precision: 10, scale: 2 }).default('0'),
   otherCharges: decimal("other_charges", { precision: 10, scale: 2 }).default('0'),
   totalDeductions: decimal("total_deductions", { precision: 12, scale: 2 }).notNull(),
   netPayable: decimal("net_payable", { precision: 12, scale: 2 }).notNull(),

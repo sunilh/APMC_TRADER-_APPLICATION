@@ -75,7 +75,7 @@ export async function recordFarmerBillTransaction(
   farmerBillId: number,
   farmerId: number,
   totalAmount: number,
-  commission: number,
+  rok: number,
   tenantId: number,
   userId: number
 ) {
@@ -109,8 +109,8 @@ export async function recordFarmerBillTransaction(
     userId
   );
 
-  // Record commission income if any
-  if (commission > 0) {
+  // Record rok income if any
+  if (rok > 0) {
     await recordTransaction(
       tenantId,
       'income',
@@ -119,9 +119,9 @@ export async function recordFarmerBillTransaction(
       'farmer_bill',
       farmerBillId,
       0,
-      commission,
-      `Commission income - Bill #${farmerBillId}`,
-      'commission_income',
+      rok,
+      `Rok income - Bill #${farmerBillId}`,
+      'rok_income',
       userId
     );
   }
