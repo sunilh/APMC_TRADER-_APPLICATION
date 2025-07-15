@@ -247,46 +247,46 @@ export default function FinalAccounts() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <BackToDashboard />
         
         {/* Debug Info */}
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="mb-4 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
           <h3 className="font-semibold text-green-800">✓ Final Accounts Page Loaded Successfully!</h3>
           <p className="text-green-700">Current Fiscal Year: {currentFiscalYear}</p>
           <p className="text-green-700">Data loaded: {finalAccounts ? 'Yes' : 'No'}</p>
         </div>
         
         {/* Header */}
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Final Accounts</h1>
-          <p className="text-muted-foreground">
-            Comprehensive accounting and financial management system
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Select value={selectedFiscalYear || currentFiscalYear} onValueChange={setSelectedFiscalYear}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select fiscal year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2024-25">FY 2024-25</SelectItem>
-              <SelectItem value="2023-24">FY 2023-24</SelectItem>
-              <SelectItem value="2022-23">FY 2022-23</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col space-y-3 sm:space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div>
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight">Final Accounts</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Comprehensive accounting and financial management system
+            </p>
+          </div>
           
-          <Button onClick={() => downloadReport("Final Accounts")} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download Report
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <Select value={selectedFiscalYear || currentFiscalYear} onValueChange={setSelectedFiscalYear}>
+              <SelectTrigger className="w-full sm:w-48 min-h-[44px]">
+                <SelectValue placeholder="Select fiscal year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024-25">FY 2024-25</SelectItem>
+                <SelectItem value="2023-24">FY 2023-24</SelectItem>
+                <SelectItem value="2022-23">FY 2022-23</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button onClick={() => downloadReport("Final Accounts")} variant="outline" className="w-full sm:w-auto min-h-[44px]">
+              <Download className="h-4 w-4 mr-2" />
+              Download Report
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Key Financial Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Key Financial Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
@@ -350,21 +350,21 @@ export default function FinalAccounts() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <div className="overflow-x-auto -mx-4 px-4">
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4">
           <TabsList className="flex w-max min-w-full justify-start gap-1 bg-muted p-1 rounded-md">
-            <TabsTrigger value="overview" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Overview</TabsTrigger>
-            <TabsTrigger value="profit-loss" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">P&L</TabsTrigger>
-            <TabsTrigger value="balance-sheet" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Balance Sheet</TabsTrigger>
-            <TabsTrigger value="cash-flow" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Cash Flow</TabsTrigger>
-            <TabsTrigger value="profitability" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Profitability</TabsTrigger>
-            <TabsTrigger value="transactions" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Transactions</TabsTrigger>
-            <TabsTrigger value="expenses" className="text-xs md:text-sm px-3 py-2 whitespace-nowrap">Expenses</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Overview</TabsTrigger>
+            <TabsTrigger value="profit-loss" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">P&L</TabsTrigger>
+            <TabsTrigger value="balance-sheet" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Balance Sheet</TabsTrigger>
+            <TabsTrigger value="cash-flow" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Cash Flow</TabsTrigger>
+            <TabsTrigger value="profitability" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Profitability</TabsTrigger>
+            <TabsTrigger value="transactions" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Transactions</TabsTrigger>
+            <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap min-h-[40px]">Expenses</TabsTrigger>
           </TabsList>
         </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
             {/* Revenue Breakdown */}
             <Card>
               <CardHeader>
@@ -860,7 +860,7 @@ export default function FinalAccounts() {
 
         {/* Profitability Analysis Tab */}
         <TabsContent value="profitability" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
             {/* Farmer Profitability */}
             <Card>
               <CardHeader>

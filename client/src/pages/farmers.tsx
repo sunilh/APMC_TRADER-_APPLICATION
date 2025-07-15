@@ -70,31 +70,31 @@ export default function Farmers() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         <BackToDashboard />
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Farmer Management</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Farmer Management</h1>
           
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="relative">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search farmers by name, mobile, or place..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full sm:w-80"
+                className="pl-10 w-full sm:w-80 min-h-[44px]"
               />
             </div>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
+                <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Farmer
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingFarmer ? "Edit Farmer" : "Add New Farmer"}
@@ -109,16 +109,16 @@ export default function Farmers() {
           </div>
         </div>
 
-        {/* Farmers Grid */}
+        {/* Farmers Grid - Mobile Optimized */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
-                <CardHeader>
+                <CardHeader className="pb-2 sm:pb-3">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <div className="space-y-2">
                     <div className="h-3 bg-gray-200 rounded"></div>
                     <div className="h-3 bg-gray-200 rounded w-5/6"></div>
@@ -128,15 +128,15 @@ export default function Farmers() {
             ))}
           </div>
         ) : farmers && farmers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {farmers.map((farmer) => (
               <Card key={farmer.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{farmer.name}</CardTitle>
+                <CardHeader className="pb-2 sm:pb-3">
+                  <CardTitle className="text-base sm:text-lg">{farmer.name}</CardTitle>
                   <p className="text-sm text-gray-600">{farmer.place}</p>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
+                <CardContent className="pt-0">
+                  <div className="space-y-1.5 sm:space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Mobile:</span>
                       <span className="font-medium">{farmer.mobile}</span>
@@ -144,13 +144,13 @@ export default function Farmers() {
                     {farmer.bankName && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Bank:</span>
-                        <span className="font-medium">{farmer.bankName}</span>
+                        <span className="font-medium truncate ml-2">{farmer.bankName}</span>
                       </div>
                     )}
                     {farmer.nameAsInBank && (
                       <div className="flex justify-between">
                         <span className="text-gray-500">Bank Name:</span>
-                        <span className="font-medium">{farmer.nameAsInBank}</span>
+                        <span className="font-medium truncate ml-2">{farmer.nameAsInBank}</span>
                       </div>
                     )}
                     {farmer.bankAccountNumber && (
@@ -163,25 +163,25 @@ export default function Farmers() {
                     )}
                   </div>
                   
-                  <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+                  <div className="flex justify-end space-x-1 sm:space-x-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(farmer)}
-                      className="text-primary hover:text-primary/80"
+                      className="text-primary hover:text-primary/80 min-h-[36px] px-2 sm:px-3"
                     >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
+                      <Edit className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Edit</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(farmer.id)}
-                      className="text-destructive hover:text-destructive/80"
+                      className="text-destructive hover:text-destructive/80 min-h-[36px] px-2 sm:px-3"
                       disabled={deleteMutation.isPending}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
+                      <Trash2 className="h-4 w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">Delete</span>
                     </Button>
                   </div>
                 </CardContent>

@@ -51,15 +51,15 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-6 lg:px-8">
+        <div className="sm:px-0">
           <BackToDashboard />
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <SettingsIcon className="h-8 w-8 mr-3 text-primary" />
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center">
+              <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary" />
               Settings
             </h1>
-            <p className="mt-2 text-gray-600">Configure your APMC trading settings</p>
+            <p className="mt-2 text-sm sm:text-base text-gray-600">Configure your APMC trading settings</p>
           </div>
 
           <SettingsContent />

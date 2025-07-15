@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { BackToDashboard } from "@/components/back-to-dashboard";
+import { Navigation } from "@/components/navigation";
 
 interface FarmerBillData {
   hamali: number;
@@ -587,25 +588,26 @@ export default function FarmerBill() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <BackToDashboard />
-      
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <FileText className="h-6 w-6 text-green-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Farmer Bill Management</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+        <BackToDashboard />
+        
+        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4 sm:mb-6">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Farmer Bill Management</h1>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="generate" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Generate Bill
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="generate" className="flex items-center justify-center gap-1 sm:gap-2 py-3 text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Generate</span> Bill
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Bill History
+              <TabsTrigger value="history" className="flex items-center justify-center gap-1 sm:gap-2 py-3 text-xs sm:text-sm">
+                <History className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Bill</span> History
               </TabsTrigger>
             </TabsList>
 
@@ -617,14 +619,14 @@ export default function FarmerBill() {
                     Select a farmer to generate bill for completed lots
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label htmlFor="farmer">Select Farmer</Label>
+                    <Label htmlFor="farmer" className="text-sm sm:text-base">Select Farmer</Label>
                     <Select
                       value={selectedFarmerId}
                       onValueChange={setSelectedFarmerId}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="min-h-[44px]">
                         <SelectValue placeholder="Choose a farmer..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -658,7 +660,7 @@ export default function FarmerBill() {
                               <CardTitle className="text-lg">Existing Bill</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-sm">
                                 <div>
                                   <span className="font-medium">Patti Number:</span>
                                   <div>{billCheck.bill?.pattiNumber}</div>
@@ -681,11 +683,11 @@ export default function FarmerBill() {
                                 </div>
                               </div>
                               
-                              <div className="flex gap-2">
+                              <div className="flex flex-col sm:flex-row gap-2">
                                 <Button
                                   onClick={() => downloadFarmerBillPDF(billCheck.bill)}
                                   variant="outline"
-                                  size="sm"
+                                  className="w-full sm:w-auto min-h-[44px]"
                                 >
                                   <Download className="h-4 w-4 mr-2" />
                                   Download PDF
@@ -693,7 +695,7 @@ export default function FarmerBill() {
                                 <Button
                                   onClick={() => printFarmerBill(billCheck.bill)}
                                   variant="outline"
-                                  size="sm"
+                                  className="w-full sm:w-auto min-h-[44px]"
                                 >
                                   <Printer className="h-4 w-4 mr-2" />
                                   Print

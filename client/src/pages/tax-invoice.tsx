@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { BackToDashboard } from "@/components/back-to-dashboard";
+import { Navigation } from "@/components/navigation";
 
 // Tax Invoice Interface
 interface TaxInvoice {
@@ -473,25 +474,26 @@ export default function TaxInvoice() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <BackToDashboard />
-      
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Tax Invoice Management</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+        <BackToDashboard />
+        
+        <div className="bg-white rounded-lg shadow-sm border p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4 sm:mb-6">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tax Invoice Management</h1>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="generate" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Generate Invoice
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="generate" className="flex items-center justify-center gap-1 sm:gap-2 py-3 text-xs sm:text-sm">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Generate</span> Invoice
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Invoice History
+              <TabsTrigger value="history" className="flex items-center justify-center gap-1 sm:gap-2 py-3 text-xs sm:text-sm">
+                <History className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Invoice</span> History
               </TabsTrigger>
             </TabsList>
 
@@ -503,14 +505,14 @@ export default function TaxInvoice() {
                     Select a buyer to generate tax invoice for today's completed lots
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4">
                   <div>
-                    <Label htmlFor="buyer">Select Buyer</Label>
+                    <Label htmlFor="buyer" className="text-sm sm:text-base">Select Buyer</Label>
                     <Select
                       value={selectedBuyerId?.toString() || ""}
                       onValueChange={(value) => setSelectedBuyerId(parseInt(value))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="min-h-[44px]">
                         <SelectValue placeholder="Choose a buyer..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -545,7 +547,7 @@ export default function TaxInvoice() {
                                 <CardTitle className="text-lg">Latest Invoice</CardTitle>
                               </CardHeader>
                               <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-sm">
                                   <div>
                                     <span className="font-medium">Invoice Number:</span>
                                     <div>{taxInvoice.invoiceNumber}</div>

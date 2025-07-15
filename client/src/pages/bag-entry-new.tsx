@@ -441,18 +441,18 @@ export default function BagEntryNew() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         <BackToDashboard />
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={() => setLocation("/lots")}
-            className="text-primary hover:text-primary/80 mb-4"
+            className="text-primary hover:text-primary/80 mb-3 sm:mb-4 w-full sm:w-auto min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Lots
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
             Bag Entry - {lot.lotNumber}
           </h1>
         </div>

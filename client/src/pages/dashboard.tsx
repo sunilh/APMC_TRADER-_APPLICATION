@@ -51,30 +51,30 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
-              <p className="text-muted-foreground mt-2">
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold">Super Admin Dashboard</h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2">
                 Welcome, {user.fullName || user.username}! Manage tenant organizations here.
               </p>
             </div>
             
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-1">
               <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-1">
                       <h3 className="text-lg font-semibold">Tenant Management</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                         Create and manage APMC organizations
                       </p>
                     </div>
-                    <Building2 className="h-8 w-8 text-primary" />
+                    <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
                   </div>
                   <div className="mt-4">
                     <Link href="/tenant-onboarding">
-                      <Button className="w-full">
+                      <Button className="w-full min-h-[44px] text-sm sm:text-base">
                         <Plus className="h-4 w-4 mr-2" />
                         Create New Tenant
                       </Button>
@@ -108,21 +108,21 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
 
-        {/* Dashboard Overview */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Dashboard Overview - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Dashboard Overview</h1>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <Card className="bg-white shadow-sm border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Users className="h-8 w-8 text-primary" />
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-shrink-0 order-2 sm:order-1">
+                    <Users className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Farmers</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                  <div className="flex-1 order-1 sm:order-2 sm:ml-4">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Total Farmers</p>
+                    <p className="text-lg sm:text-2xl font-semibold text-gray-900">
                       {statsLoading ? "-" : stats?.totalFarmers || 0}
                     </p>
                   </div>
@@ -131,14 +131,14 @@ export default function Dashboard() {
             </Card>
 
             <Card className="bg-white shadow-sm border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Package className="h-8 w-8 text-secondary" />
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-shrink-0 order-2 sm:order-1">
+                    <Package className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Active Lots</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                  <div className="flex-1 order-1 sm:order-2 sm:ml-4">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Active Lots</p>
+                    <p className="text-lg sm:text-2xl font-semibold text-gray-900">
                       {statsLoading ? "-" : stats?.activeLots || 0}
                     </p>
                   </div>
@@ -147,14 +147,14 @@ export default function Dashboard() {
             </Card>
 
             <Card className="bg-white shadow-sm border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Weight className="h-8 w-8 text-warning" />
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-shrink-0 order-2 sm:order-1">
+                    <Weight className="h-6 w-6 sm:h-8 sm:w-8 text-warning" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Total Bags Today</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                  <div className="flex-1 order-1 sm:order-2 sm:ml-4">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Total Bags Today</p>
+                    <p className="text-lg sm:text-2xl font-semibold text-gray-900">
                       {statsLoading ? "-" : stats?.totalBagsToday || 0}
                     </p>
                   </div>
@@ -163,14 +163,14 @@ export default function Dashboard() {
             </Card>
 
             <Card className="bg-white shadow-sm border border-gray-200">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <DollarSign className="h-8 w-8 text-success" />
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex-shrink-0 order-2 sm:order-1">
+                    <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-500">Revenue Today</p>
-                    <p className="text-2xl font-semibold text-gray-900">
+                  <div className="flex-1 order-1 sm:order-2 sm:ml-4">
+                    <p className="text-xs sm:text-sm font-medium text-gray-500">Revenue Today</p>
+                    <p className="text-lg sm:text-2xl font-semibold text-gray-900">
                       ₹{statsLoading ? "-" : (stats?.revenueToday || 0).toLocaleString()}
                     </p>
                   </div>
@@ -180,16 +180,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Missing Bags Alert */}
+        {/* Missing Bags Alert - Mobile Optimized */}
         {!completionLoading && lotCompletion.some(lot => lot.missingBags > 0) && (
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Card className="bg-red-50 border-red-200">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-3">
-                  <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-red-900 mb-2">Missing Bags Detected</h3>
-                    <p className="text-red-700 mb-4">Some lots have incomplete bag entries that need attention:</p>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base sm:text-lg font-semibold text-red-900 mb-2">Missing Bags Detected</h3>
+                    <p className="text-sm sm:text-base text-red-700 mb-3 sm:mb-4">Some lots have incomplete bag entries that need attention:</p>
                     <div className="space-y-2">
                       {lotCompletion
                         .filter(lot => lot.missingBags > 0)

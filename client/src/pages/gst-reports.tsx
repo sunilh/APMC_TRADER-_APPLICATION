@@ -9,6 +9,7 @@ import { CalendarIcon, Download, TrendingUp, IndianRupee } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BackToDashboard } from "@/components/back-to-dashboard";
+import { Navigation } from "@/components/navigation";
 
 interface GstReportData {
   period: string;
@@ -110,30 +111,33 @@ export default function GstReports() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <BackToDashboard />
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">GST Reports</h1>
-        <div className="flex items-center space-x-3">
-          <Button 
-            onClick={generateReport} 
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Generating...' : 'Generate Report'}
-          </Button>
-          <Button 
-            onClick={downloadReport} 
-            variant="outline"
-            disabled={!gstReport}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download CSV
-          </Button>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <BackToDashboard />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">GST Reports</h1>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button 
+              onClick={generateReport} 
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto min-h-[44px]"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Generating...' : 'Generate Report'}
+            </Button>
+            <Button 
+              onClick={downloadReport} 
+              variant="outline"
+              disabled={!gstReport}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Report Configuration */}
+        {/* Report Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -141,7 +145,7 @@ export default function GstReports() {
             Report Configuration
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <Label htmlFor="reportType">Report Type</Label>
             <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
@@ -196,7 +200,7 @@ export default function GstReports() {
       {gstReport && (
         <div className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
@@ -298,7 +302,46 @@ export default function GstReports() {
 
                 <TabsContent value="detailed">
                   <div className="overflow-x-auto">
-                    <Table>
+                    <div className="min-w-full">
+                      {/* Mobile Card View */}
+                      <div className="grid gap-3 md:hidden">
+                        {gstReport.transactions.map((transaction, index) => (
+                          <Card key={index} className="p-3">
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">{transaction.lotNumber}</span>
+                                <span className="text-sm text-gray-500">{transaction.date}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                  <span className="text-gray-500">Weight:</span>
+                                  <div>{transaction.weight.toFixed(2)} kg</div>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Quintals:</span>
+                                  <div>{transaction.weightQuintals.toFixed(2)}</div>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Basic:</span>
+                                  <div>{formatCurrency(transaction.basicAmount)}</div>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500">Total GST:</span>
+                                  <div className="text-blue-600 font-semibold">{formatCurrency(transaction.totalGstAmount)}</div>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-gray-200">
+                                <span className="text-gray-500 text-sm">Total Amount:</span>
+                                <div className="font-bold text-lg">{formatCurrency(transaction.totalAmount)}</div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                      
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block">
+                        <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Date</TableHead>
@@ -327,7 +370,9 @@ export default function GstReports() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                        </Table>
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -336,12 +381,13 @@ export default function GstReports() {
         </div>
       )}
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Generating GST report...</span>
-        </div>
-      )}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2">Generating GST report...</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

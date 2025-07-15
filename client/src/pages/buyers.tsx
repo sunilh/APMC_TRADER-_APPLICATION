@@ -251,11 +251,11 @@ export default function Buyers() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <BackToDashboard />
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Search className="h-5 w-5" />
               Buyers Management & Purchase Tracking
             </CardTitle>
@@ -273,6 +273,7 @@ export default function Buyers() {
                 });
                 setIsDialogOpen(true);
               }}
+              className="w-full sm:w-auto min-h-[44px]"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Buyer
