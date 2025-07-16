@@ -53,6 +53,7 @@ export const farmers = pgTable("farmers", {
   bankName: text("bank_name"),
   bankAccountNumber: text("bank_account_number"),
   ifscCode: text("ifsc_code"),
+  accountHolderName: text("account_holder_name"),
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

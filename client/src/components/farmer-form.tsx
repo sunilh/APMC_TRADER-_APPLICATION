@@ -27,7 +27,7 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
       name: "",
       mobile: "",
       place: "",
-      bankAccount: "",
+      bankAccountNumber: "",
       ifscCode: "",
       bankName: "",
       accountHolderName: "",
@@ -131,16 +131,16 @@ export function FarmerForm({ farmer, onSuccess }: FarmerFormProps) {
 
         {/* Bank Account Number */}
         <div className="space-y-2">
-          <Label htmlFor="bankAccount">{t('farmer.bankAccount')}</Label>
+          <Label htmlFor="bankAccountNumber">{t('farmer.bankAccount')}</Label>
           <UnifiedInput
-            {...form.register("bankAccount")}
+            {...form.register("bankAccountNumber")}
             placeholder={t('farmer.bankAccountPlaceholder')}
             type="text"
             voiceType="number"
           />
-          {form.formState.errors.bankAccount && (
+          {form.formState.errors.bankAccountNumber && (
             <p className="text-sm text-destructive">
-              {form.formState.errors.bankAccount.message}
+              {form.formState.errors.bankAccountNumber.message}
             </p>
           )}
         </div>
