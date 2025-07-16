@@ -1809,6 +1809,16 @@ export function registerRoutes(app: Express): Server {
       
       const purchases = await storage.getBuyerPurchaseHistory(buyerId, req.user.tenantId);
       console.log(`Found ${purchases.length} purchases for buyer ${buyerId}`);
+      
+      // Debug: Log the first purchase to see actual amount calculation
+      if (purchases.length > 0) {
+        console.log('First purchase debug:', {
+          lotNumber: purchases[0].lotNumber,
+          amountDue: purchases[0].amountDue,
+          amountPaid: purchases[0].amountPaid
+        });
+      }
+      
       res.json(purchases);
     } catch (error) {
       console.error("Error fetching buyer purchases:", error);
