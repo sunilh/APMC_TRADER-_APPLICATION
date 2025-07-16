@@ -44,7 +44,7 @@ import {
   bidPrices,
   suppliers,
 } from "@shared/schema";
-import { getSimpleFinalAccounts } from "./finalAccountsSimple";
+import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange } from "./finalAccountsSimple";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -197,12 +197,24 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get final accounts without fiscal year parameter
+  // Get final accounts without fiscal year parameter (with optional date range)
   app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const fiscalYear = getCurrentFiscalYear();
-      const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
-      res.json(finalAccounts);
+      const { startDate, endDate } = req.query;
+      let fiscalYear = getCurrentFiscalYear();
+      
+      // If custom date range provided, use that instead of fiscal year
+      if (startDate && endDate) {
+        const finalAccounts = await getSimpleFinalAccountsDateRange(
+          req.user.tenantId, 
+          new Date(startDate as string), 
+          new Date(endDate as string)
+        );
+        res.json(finalAccounts);
+      } else {
+        const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
+        res.json(finalAccounts);
+      }
     } catch (error) {
       console.error("Error generating final accounts:", error);
       res.status(500).json({ message: "Failed to generate final accounts" });

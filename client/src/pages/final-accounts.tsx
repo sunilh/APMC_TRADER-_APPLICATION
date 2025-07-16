@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { 
   TrendingUp, 
@@ -64,6 +65,11 @@ export default function FinalAccounts() {
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<string>("");
   const [paymentDialog, setPaymentDialog] = useState<{ type: 'received' | 'made', open: boolean }>({ type: 'received', open: false });
   const [expenseDialog, setExpenseDialog] = useState(false);
+  
+  // Date Range Selection State
+  const [dateRangeMode, setDateRangeMode] = useState<'fiscal' | 'custom'>('fiscal');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
 
   // Simple test to ensure component loads
   console.log("Final Accounts component is loading...");
@@ -76,10 +82,54 @@ export default function FinalAccounts() {
 
   const currentFiscalYear = fiscalYearData?.fiscalYear || "2024-25";
 
+  // Helper function to get preset date ranges
+  const getPresetDateRange = (preset: string) => {
+    const today = new Date();
+    const startDate = new Date();
+    
+    switch (preset) {
+      case 'last30days':
+        startDate.setDate(today.getDate() - 30);
+        break;
+      case 'last3months':
+        startDate.setMonth(today.getMonth() - 3);
+        break;
+      case 'last6months':
+        startDate.setMonth(today.getMonth() - 6);
+        break;
+      case 'thisMonth':
+        startDate.setDate(1);
+        break;
+      case 'thisQuarter':
+        const quarterStart = Math.floor(today.getMonth() / 3) * 3;
+        startDate.setMonth(quarterStart, 1);
+        break;
+      default:
+        return null;
+    }
+    
+    setCustomStartDate(startDate.toISOString().split('T')[0]);
+    setCustomEndDate(today.toISOString().split('T')[0]);
+    setDateRangeMode('custom');
+  };
+
   // Get final accounts data
   const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
-    queryKey: ["/api/accounting/final-accounts", selectedFiscalYear || currentFiscalYear],
-    enabled: !!(selectedFiscalYear || currentFiscalYear),
+    queryKey: dateRangeMode === 'custom' && customStartDate && customEndDate 
+      ? ["/api/accounting/final-accounts", `custom-${customStartDate}-${customEndDate}`]
+      : ["/api/accounting/final-accounts", selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        const response = await fetch(`/api/accounting/final-accounts?startDate=${customStartDate}&endDate=${customEndDate}`);
+        if (!response.ok) throw new Error('Failed to fetch');
+        return response.json();
+      } else {
+        const response = await fetch(`/api/accounting/final-accounts`);
+        if (!response.ok) throw new Error('Failed to fetch');
+        return response.json();
+      }
+    },
+    enabled: !!(selectedFiscalYear || currentFiscalYear || (customStartDate && customEndDate)),
     retry: 1,
   });
 
@@ -250,11 +300,25 @@ export default function FinalAccounts() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <BackToDashboard />
         
-        {/* Debug Info */}
-        <div className="mb-4 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
-          <h3 className="font-semibold text-green-800">✓ Final Accounts Page Loaded Successfully!</h3>
-          <p className="text-green-700">Current Fiscal Year: {currentFiscalYear}</p>
-          <p className="text-green-700">Data loaded: {finalAccounts ? 'Yes' : 'No'}</p>
+        {/* Period Info */}
+        <div className="mb-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-800">📊 Final Accounts - {dateRangeMode === 'fiscal' ? 'Fiscal Year Mode' : 'Custom Date Range Mode'}</h3>
+          {dateRangeMode === 'fiscal' ? (
+            <p className="text-blue-700">Viewing: {selectedFiscalYear || currentFiscalYear}</p>
+          ) : (
+            <p className="text-blue-700">
+              {customStartDate && customEndDate 
+                ? `Custom Range: ${customStartDate} to ${customEndDate}`
+                : 'Select start and end dates to view custom period'
+              }
+            </p>
+          )}
+          <p className="text-blue-700">
+            {finalAccounts?.fiscalYear && finalAccounts.fiscalYear.startsWith('Custom') 
+              ? finalAccounts.fiscalYear
+              : `Period: ${finalAccounts?.fiscalYear || currentFiscalYear}`
+            }
+          </p>
         </div>
         
         {/* Header */}
@@ -267,16 +331,86 @@ export default function FinalAccounts() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <Select value={selectedFiscalYear || currentFiscalYear} onValueChange={setSelectedFiscalYear}>
-              <SelectTrigger className="w-full sm:w-48 min-h-[44px]">
-                <SelectValue placeholder="Select fiscal year" />
+            {/* Date Range Mode Toggle */}
+            <Select value={dateRangeMode} onValueChange={(value: 'fiscal' | 'custom') => {
+              setDateRangeMode(value);
+              if (value === 'fiscal') {
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }
+            }}>
+              <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024-25">FY 2024-25</SelectItem>
-                <SelectItem value="2023-24">FY 2023-24</SelectItem>
-                <SelectItem value="2022-23">FY 2022-23</SelectItem>
+                <SelectItem value="fiscal">Fiscal Year</SelectItem>
+                <SelectItem value="custom">Date Range</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Fiscal Year Selection (when fiscal mode) */}
+            {dateRangeMode === 'fiscal' && (
+              <Select value={selectedFiscalYear || currentFiscalYear} onValueChange={setSelectedFiscalYear}>
+                <SelectTrigger className="w-full sm:w-48 min-h-[44px]">
+                  <SelectValue placeholder="Select fiscal year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025-26">FY 2025-26</SelectItem>
+                  <SelectItem value="2024-25">FY 2024-25</SelectItem>
+                  <SelectItem value="2023-24">FY 2023-24</SelectItem>
+                  <SelectItem value="2022-23">FY 2022-23</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Custom Date Range (when custom mode) */}
+            {dateRangeMode === 'custom' && (
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-40 min-h-[44px] justify-start">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Quick Select
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48">
+                    <div className="space-y-2">
+                      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => getPresetDateRange('last30days')}>
+                        Last 30 Days
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => getPresetDateRange('last3months')}>
+                        Last 3 Months
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => getPresetDateRange('last6months')}>
+                        Last 6 Months
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => getPresetDateRange('thisMonth')}>
+                        This Month
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => getPresetDateRange('thisQuarter')}>
+                        This Quarter
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                <Input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full sm:w-36 min-h-[44px]"
+                  placeholder="Start Date"
+                />
+                
+                <Input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full sm:w-36 min-h-[44px]"
+                  placeholder="End Date"
+                />
+              </>
+            )}
             
             <Button onClick={() => downloadReport("Final Accounts")} variant="outline" className="w-full sm:w-auto min-h-[44px]">
               <Download className="h-4 w-4 mr-2" />
