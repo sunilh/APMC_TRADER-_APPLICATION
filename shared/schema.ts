@@ -85,7 +85,7 @@ export const lots = pgTable("lots", {
   numberOfBags: integer("number_of_bags").notNull(),
   vehicleRent: decimal("vehicle_rent", { precision: 10, scale: 2 }),
   advance: decimal("advance", { precision: 10, scale: 2 }),
-  varietyGrade: text("variety_grade").notNull(),
+  varietyGrade: text("variety_grade"),
   grade: text("grade"),
   unloadHamali: decimal("unload_hamali", { precision: 10, scale: 2 }),
   lotPrice: decimal("lot_price", { precision: 10, scale: 2 }),

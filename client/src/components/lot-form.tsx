@@ -32,7 +32,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
   const form = useForm<Omit<InsertLot, 'lotNumber' | 'tenantId' | 'lotPrice'>>({
     resolver: zodResolver(insertLotSchema.omit({ lotNumber: true, tenantId: true, lotPrice: true }).extend({
       farmerId: z.number().min(1, "Please select a farmer"),
-      varietyGrade: z.string().min(1, "Please select variety/grade"),
+      varietyGrade: z.string().optional(),
     })),
     defaultValues: {
       farmerId: undefined as any,
@@ -140,14 +140,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
       });
       return;
     }
-    if (!data.varietyGrade) {
-      toast({
-        title: t('messages.error'),
-        description: "Please select variety/grade",
-        variant: "destructive",
-      });
-      return;
-    }
+
     createMutation.mutate(data);
   };
 
@@ -167,12 +160,16 @@ export function LotForm({ onSuccess }: LotFormProps) {
   };
 
   const varietyOptions = [
-    { value: "arabica-a", label: "Arabica A" },
-    { value: "arabica-b", label: "Arabica B" },
-    { value: "robusta-a", label: "Robusta A" },
-    { value: "robusta-b", label: "Robusta B" },
-    { value: "coffee-cherry", label: "Coffee Cherry" },
-    { value: "parchment", label: "Parchment" },
+    { value: "premium", label: "Premium Grade" },
+    { value: "super", label: "Super Grade" },
+    { value: "grade-a", label: "Grade A" },
+    { value: "grade-b", label: "Grade B" },
+    { value: "grade-c", label: "Grade C" },
+    { value: "export-quality", label: "Export Quality" },
+    { value: "local-market", label: "Local Market" },
+    { value: "machine-clean", label: "Machine Clean" },
+    { value: "hand-picked", label: "Hand Picked" },
+    { value: "mixed-grade", label: "Mixed Grade" },
   ];
 
   return (
@@ -314,7 +311,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="varietyGrade">{t('lot.varietyGrade')} *</Label>
+          <Label htmlFor="varietyGrade">{t('lot.varietyGrade')}</Label>
           <Select
             value={form.watch("varietyGrade")}
             onValueChange={(value) => form.setValue("varietyGrade", value)}
