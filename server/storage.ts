@@ -779,6 +779,10 @@ export class DatabaseStorage implements IStorage {
         console.log(`Using basic calculation for lot ${row.lotNumber}: ₹${calculatedAmount}`);
       }
 
+      // Calculate remaining amount due (total - paid)
+      const amountPaid = parseFloat(row.amountPaid?.toString() || '0');
+      const remainingDue = Math.max(0, calculatedAmount - amountPaid);
+
       return {
         ...row,
         farmerName: row.farmerName || '',
@@ -786,7 +790,7 @@ export class DatabaseStorage implements IStorage {
         billGeneratedAt: row.billGeneratedAt?.toISOString() || '',
         paymentDate: row.paymentDate?.toISOString() || '',
         createdAt: row.createdAt?.toISOString() || '',
-        amountDue: calculatedAmount.toFixed(2),
+        amountDue: remainingDue.toFixed(2), // Show remaining balance, not total
         amountPaid: row.amountPaid?.toString() || '0',
         paymentStatus: row.paymentStatus || 'pending',
       };
