@@ -494,13 +494,16 @@ export default function BagEntryNew() {
           </CardContent>
         </Card>
 
-        {/* Buyer Allocation */}
+        {/* Buyer Allocation - 3 Buyer Support */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Buyer Allocation
+              Buyer Allocation (Up to 3 Buyers)
             </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Allocate bags to different buyers. At least one buyer is mandatory.
+            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -537,9 +540,10 @@ export default function BagEntryNew() {
               </div>
             </div>
 
+            {/* Buyer 2 Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <Label htmlFor="buyer2">Buyer 2</Label>
+                <Label htmlFor="buyer2">Buyer 2 (Optional)</Label>
                 <Select value={buyer2} onValueChange={setBuyer2}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select buyer 2" />
@@ -568,9 +572,10 @@ export default function BagEntryNew() {
               </div>
             </div>
 
+            {/* Buyer 3 Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <Label htmlFor="buyer3">Buyer 3</Label>
+                <Label htmlFor="buyer3">Buyer 3 (Optional)</Label>
                 <Select value={buyer3} onValueChange={setBuyer3}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select buyer 3" />
