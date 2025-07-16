@@ -752,9 +752,25 @@ export class DatabaseStorage implements IStorage {
       // Find invoice that contains this lot ID
       const taxInvoice = allTaxInvoices.find(invoice => {
         try {
-          const lotIds = JSON.parse(invoice.lotIds as string);
-          return Array.isArray(lotIds) && lotIds.includes(row.lotId);
-        } catch {
+          let lotIdsStr = invoice.lotIds as string;
+          console.log(`Debug: Original lotIds string: ${lotIdsStr}`);
+          
+          // Handle multiple levels of JSON escaping
+          while (lotIdsStr.startsWith('"') && lotIdsStr.endsWith('"')) {
+            lotIdsStr = lotIdsStr.slice(1, -1);
+            lotIdsStr = lotIdsStr.replace(/\\"/g, '"');
+          }
+          
+          console.log(`Debug: Cleaned lotIds string: ${lotIdsStr}`);
+          const lotIds = JSON.parse(lotIdsStr);
+          console.log(`Debug: Parsed lotIds array:`, lotIds);
+          console.log(`Debug: Checking if array contains lot: ${row.lotNumber}`);
+          
+          const isIncluded = Array.isArray(lotIds) && lotIds.includes(row.lotNumber);
+          console.log(`Debug: Lot ${row.lotNumber} included in invoice: ${isIncluded}`);
+          return isIncluded;
+        } catch (e) {
+          console.log(`Failed to parse lotIds for invoice: ${invoice.lotIds}`, e);
           return false;
         }
       });
