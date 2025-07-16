@@ -144,6 +144,12 @@ export default function BagEntryNew() {
     };
   }, [storageKey, saveDraftMutation, toast]);
 
+  // Get existing bags for update logic
+  const { data: existingBags = [] } = useQuery({
+    queryKey: [`/api/lots/${lotId}/bags`],
+    enabled: !isNaN(lotId),
+  });
+
   // Save mutation
   const saveAllMutation = useMutation({
     mutationFn: async () => {
@@ -162,20 +168,38 @@ export default function BagEntryNew() {
         throw new Error("No bags with weight to save");
       }
 
-      // Update lot with price and grade
+      // Update lot with price, grade, and buyer (for single buyer scenarios)
+      const primaryBuyerId = buyer1 ? parseInt(buyer1) : undefined;
       await apiRequest("PUT", `/api/lots/${lotId}`, {
         lotPrice: lotPrice, // Keep as string for schema validation
         grade: lotGrade,
+        buyerId: primaryBuyerId, // Set primary buyer for lot
+        finalNotes: finalNotes,
       });
 
-      // Save all bags
-      const promises = validBags.map(bag =>
-        apiRequest("POST", `/api/lots/${lotId}/bags`, {
-          bagNumber: bag.bagNumber,
-          weight: bag.weight?.toString(),
-          buyerId: bag.buyerId,
-        })
-      );
+      // Save all bags - use UPDATE for existing bags, CREATE for new ones
+      const promises = validBags.map(bag => {
+        // Ensure buyer ID is set for each bag before saving
+        const buyer = getBuyerForBag(bag.bagNumber);
+        const buyerId = bag.buyerId || buyer?.buyerId;
+        
+        const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
+        
+        if (existingBag) {
+          // Update existing bag
+          return apiRequest("PUT", `/api/bags/${existingBag.id}`, {
+            weight: bag.weight?.toString(),
+            buyerId: buyerId,
+          });
+        } else {
+          // Create new bag
+          return apiRequest("POST", `/api/lots/${lotId}/bags`, {
+            bagNumber: bag.bagNumber,
+            weight: bag.weight?.toString(),
+            buyerId: buyerId,
+          });
+        }
+      });
 
       await Promise.all(promises);
     },
