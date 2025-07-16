@@ -176,16 +176,64 @@ export default function FinalAccounts() {
 
   // Get profitability analysis
   const { data: farmerProfitability } = useQuery({
-    queryKey: ["/api/accounting/profitability/farmers", selectedFiscalYear || currentFiscalYear],
+    queryKey: ["/api/accounting/profitability/farmers", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate);
+        console.log('🔍 Fetching farmer profitability with date range:', { startDate: customStartDate, endDate: customEndDate });
+      } else {
+        params.set('fiscalYear', selectedFiscalYear || currentFiscalYear);
+        console.log('🔍 Fetching farmer profitability with fiscal year:', selectedFiscalYear || currentFiscalYear);
+      }
+      
+      const response = await fetch(`/api/accounting/profitability/farmers?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch farmer profitability');
+      return response.json();
+    },
   });
 
   const { data: buyerProfitability } = useQuery({
-    queryKey: ["/api/accounting/profitability/buyers", selectedFiscalYear || currentFiscalYear],
+    queryKey: ["/api/accounting/profitability/buyers", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate);
+        console.log('🔍 Fetching buyer profitability with date range:', { startDate: customStartDate, endDate: customEndDate });
+      } else {
+        params.set('fiscalYear', selectedFiscalYear || currentFiscalYear);
+        console.log('🔍 Fetching buyer profitability with fiscal year:', selectedFiscalYear || currentFiscalYear);
+      }
+      
+      const response = await fetch(`/api/accounting/profitability/buyers?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch buyer profitability');
+      return response.json();
+    },
   });
 
   // Get GST liability
   const { data: gstLiability } = useQuery({
-    queryKey: ["/api/accounting/gst-liability", selectedFiscalYear || currentFiscalYear],
+    queryKey: ["/api/accounting/gst-liability", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate);
+        console.log('🔍 Fetching GST liability with date range:', { startDate: customStartDate, endDate: customEndDate });
+      } else {
+        params.set('fiscalYear', selectedFiscalYear || currentFiscalYear);
+        console.log('🔍 Fetching GST liability with fiscal year:', selectedFiscalYear || currentFiscalYear);
+      }
+      
+      const response = await fetch(`/api/accounting/gst-liability?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch GST liability');
+      return response.json();
+    },
   });
 
   // Get expense categories

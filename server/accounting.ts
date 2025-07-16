@@ -531,9 +531,21 @@ export async function generateCashFlowReport(tenantId: number, fiscalYear?: stri
 }
 
 // Profitability analysis functions
-export async function analyzeProfitabilityByFarmer(tenantId: number, fiscalYear?: string) {
-  const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
-  const { startDate, endDate } = getFiscalYearDates(currentFiscalYear);
+export async function analyzeProfitabilityByFarmer(tenantId: number, fiscalYear?: string, startDateParam?: string, endDateParam?: string) {
+  // Use date range if provided, otherwise fall back to fiscal year
+  let startDate: Date, endDate: Date;
+  
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+    console.log('📅 Using DATE RANGE mode for farmer profitability:', { startDate: startDateParam, endDate: endDateParam });
+  } else {
+    const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
+    const fiscalDates = getFiscalYearDates(currentFiscalYear);
+    startDate = fiscalDates.startDate;
+    endDate = fiscalDates.endDate;
+    console.log('📅 Using FISCAL YEAR mode for farmer profitability:', { fiscalYear: currentFiscalYear });
+  }
 
   const farmerProfits = await db
     .select({
@@ -563,9 +575,21 @@ export async function analyzeProfitabilityByFarmer(tenantId: number, fiscalYear?
   }));
 }
 
-export async function analyzeProfitabilityByBuyer(tenantId: number, fiscalYear?: string) {
-  const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
-  const { startDate, endDate } = getFiscalYearDates(currentFiscalYear);
+export async function analyzeProfitabilityByBuyer(tenantId: number, fiscalYear?: string, startDateParam?: string, endDateParam?: string) {
+  // Use date range if provided, otherwise fall back to fiscal year
+  let startDate: Date, endDate: Date;
+  
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+    console.log('📅 Using DATE RANGE mode for buyer profitability:', { startDate: startDateParam, endDate: endDateParam });
+  } else {
+    const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
+    const fiscalDates = getFiscalYearDates(currentFiscalYear);
+    startDate = fiscalDates.startDate;
+    endDate = fiscalDates.endDate;
+    console.log('📅 Using FISCAL YEAR mode for buyer profitability:', { fiscalYear: currentFiscalYear });
+  }
 
   const buyerProfits = await db
     .select({
@@ -594,9 +618,21 @@ export async function analyzeProfitabilityByBuyer(tenantId: number, fiscalYear?:
 }
 
 // GST and tax compliance functions
-export async function calculateGSTLiability(tenantId: number, fiscalYear?: string) {
-  const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
-  const { startDate, endDate } = getFiscalYearDates(currentFiscalYear);
+export async function calculateGSTLiability(tenantId: number, fiscalYear?: string, startDateParam?: string, endDateParam?: string) {
+  // Use date range if provided, otherwise fall back to fiscal year
+  let startDate: Date, endDate: Date;
+  
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+    console.log('📅 Using DATE RANGE mode for GST liability:', { startDate: startDateParam, endDate: endDateParam });
+  } else {
+    const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
+    const fiscalDates = getFiscalYearDates(currentFiscalYear);
+    startDate = fiscalDates.startDate;
+    endDate = fiscalDates.endDate;
+    console.log('📅 Using FISCAL YEAR mode for GST liability:', { fiscalYear: currentFiscalYear });
+  }
 
   // Get all tax invoices for the period
   const gstData = await db

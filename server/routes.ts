@@ -2529,9 +2529,11 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/profitability/farmers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { fiscalYear } = req.query;
+      const { fiscalYear, startDate, endDate } = req.query;
       
-      const analysis = await analyzeProfitabilityByFarmer(tenantId, fiscalYear);
+      console.log('🔍 Farmer Profitability API called with:', { fiscalYear, startDate, endDate, tenantId });
+      
+      const analysis = await analyzeProfitabilityByFarmer(tenantId, fiscalYear, startDate, endDate);
       res.json(analysis);
     } catch (error) {
       console.error('Error analyzing farmer profitability:', error);
@@ -2543,9 +2545,11 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/profitability/buyers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { fiscalYear } = req.query;
+      const { fiscalYear, startDate, endDate } = req.query;
       
-      const analysis = await analyzeProfitabilityByBuyer(tenantId, fiscalYear);
+      console.log('🔍 Buyer Profitability API called with:', { fiscalYear, startDate, endDate, tenantId });
+      
+      const analysis = await analyzeProfitabilityByBuyer(tenantId, fiscalYear, startDate, endDate);
       res.json(analysis);
     } catch (error) {
       console.error('Error analyzing buyer profitability:', error);
@@ -2557,9 +2561,11 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/gst-liability", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const tenantId = req.user.tenantId;
-      const { fiscalYear } = req.query;
+      const { fiscalYear, startDate, endDate } = req.query;
       
-      const liability = await calculateGSTLiability(tenantId, fiscalYear);
+      console.log('🔍 GST Liability API called with:', { fiscalYear, startDate, endDate, tenantId });
+      
+      const liability = await calculateGSTLiability(tenantId, fiscalYear, startDate, endDate);
       res.json(liability);
     } catch (error) {
       console.error('Error calculating GST liability:', error);
