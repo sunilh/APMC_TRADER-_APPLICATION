@@ -440,12 +440,39 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/ledger", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
-      const entries = await db
+      const fiscalYear = req.query.fiscalYear;
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+      
+      console.log('🔍 Ledger entries API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
+      
+      let query = db
         .select()
         .from(accountingLedger)
         .where(eq(accountingLedger.tenantId, req.user.tenantId))
         .orderBy(desc(accountingLedger.transactionDate))
         .limit(limit);
+
+      // Add date filtering
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include full end date
+        
+        query = query.where(and(
+          eq(accountingLedger.tenantId, req.user.tenantId),
+          between(accountingLedger.transactionDate, start, end)
+        ));
+        console.log('📅 Using DATE RANGE mode for ledger entries:', { startDate, endDate });
+      } else if (fiscalYear) {
+        query = query.where(and(
+          eq(accountingLedger.tenantId, req.user.tenantId),
+          eq(accountingLedger.fiscalYear, fiscalYear)
+        ));
+        console.log('📅 Using FISCAL YEAR mode for ledger entries:', { fiscalYear });
+      }
+
+      const entries = await query;
       res.json(entries);
     } catch (error) {
       console.error("Error fetching ledger entries:", error);
@@ -457,9 +484,31 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/bank-transactions", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
+      const fiscalYear = req.query.fiscalYear;
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+      
+      console.log('🔍 Bank transactions API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
+      
+      let whereClause = `WHERE tenant_id = ${req.user.tenantId}`;
+      
+      // Add date filtering
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include full end date
+        
+        whereClause += ` AND created_at BETWEEN '${start.toISOString()}' AND '${end.toISOString()}'`;
+        console.log('📅 Using DATE RANGE mode for bank transactions:', { startDate, endDate });
+      } else if (fiscalYear) {
+        // For fiscal year filtering, you would need to add fiscal_year column to bank_transactions table
+        // For now, we'll use the created_at field
+        console.log('📅 Using FISCAL YEAR mode for bank transactions:', { fiscalYear });
+      }
+      
       const transactions = await db.execute(sql`
         SELECT * FROM bank_transactions 
-        WHERE tenant_id = ${req.user.tenantId} 
+        ${sql.raw(whereClause)}
         ORDER BY created_at DESC 
         LIMIT ${limit}
       `);

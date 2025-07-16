@@ -267,12 +267,60 @@ export default function FinalAccounts() {
 
   // Get recent ledger entries
   const { data: ledgerEntries } = useQuery({
-    queryKey: ["/api/accounting/ledger"],
+    queryKey: ["/api/accounting/ledger", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate);
+        console.log('🔍 Fetching ledger entries with date range:', { startDate: customStartDate, endDate: customEndDate });
+      } else {
+        params.set('fiscalYear', selectedFiscalYear || currentFiscalYear);
+        console.log('🔍 Fetching ledger entries with fiscal year:', selectedFiscalYear || currentFiscalYear);
+      }
+      
+      const response = await fetch(`/api/accounting/ledger?${params}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch ledger entries');
+      return response.json();
+    },
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Get bank transactions
   const { data: bankTransactions } = useQuery({
-    queryKey: ["/api/accounting/bank-transactions"],
+    queryKey: ["/api/accounting/bank-transactions", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear || currentFiscalYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+        params.set('startDate', customStartDate);
+        params.set('endDate', customEndDate);
+        console.log('🔍 Fetching bank transactions with date range:', { startDate: customStartDate, endDate: customEndDate });
+      } else {
+        params.set('fiscalYear', selectedFiscalYear || currentFiscalYear);
+        console.log('🔍 Fetching bank transactions with fiscal year:', selectedFiscalYear || currentFiscalYear);
+      }
+      
+      const response = await fetch(`/api/accounting/bank-transactions?${params}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch bank transactions');
+      return response.json();
+    },
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Record payment received
