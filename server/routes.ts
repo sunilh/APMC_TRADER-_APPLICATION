@@ -306,20 +306,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get GST liability
-  app.get("/api/accounting/gst-liability/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
-    try {
-      const fiscalYear = req.params.fiscalYear || req.query.fiscalYear;
-      const startDate = req.query.startDate;
-      const endDate = req.query.endDate;
-      console.log('🔍 GST liability API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
-      
-      const gstLiability = await calculateGSTLiability(req.user.tenantId, fiscalYear, startDate, endDate);
-      res.json(gstLiability);
-    } catch (error) {
-      console.error("Error calculating GST liability:", error);
-      res.status(500).json({ message: "Failed to calculate GST liability" });
-    }
-  });
+
 
   // Get current fiscal year
   app.get("/api/accounting/fiscal-year", requireAuth, async (req: any, res) => {
@@ -2725,67 +2712,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get accounting ledger entries (for audit and review)
-  app.get("/api/accounting/ledger", requireAuth, requireTenant, async (req: any, res) => {
-    try {
-      const tenantId = req.user.tenantId;
-      const { fiscalYear, accountHead, entityType, limit = 100 } = req.query;
-      
-      let query = db
-        .select()
-        .from(accountingLedger)
-        .where(eq(accountingLedger.tenantId, tenantId))
-        .orderBy(desc(accountingLedger.transactionDate))
-        .limit(parseInt(limit as string));
 
-      if (fiscalYear) {
-        query = query.where(and(
-          eq(accountingLedger.tenantId, tenantId),
-          eq(accountingLedger.fiscalYear, fiscalYear as string)
-        ));
-      }
 
-      if (accountHead) {
-        query = query.where(and(
-          eq(accountingLedger.tenantId, tenantId),
-          eq(accountingLedger.accountHead, accountHead as string)
-        ));
-      }
 
-      if (entityType) {
-        query = query.where(and(
-          eq(accountingLedger.tenantId, tenantId),
-          eq(accountingLedger.entityType, entityType as string)
-        ));
-      }
-
-      const entries = await query;
-      res.json(entries);
-    } catch (error) {
-      console.error('Error fetching ledger entries:', error);
-      res.status(500).json({ message: 'Failed to fetch ledger entries' });
-    }
-  });
-
-  // Get bank transactions
-  app.get("/api/accounting/bank-transactions", requireAuth, requireTenant, async (req: any, res) => {
-    try {
-      const tenantId = req.user.tenantId;
-      const { limit = 50 } = req.query;
-      
-      const transactions = await db
-        .select()
-        .from(bankTransactions)
-        .where(eq(bankTransactions.tenantId, tenantId))
-        .orderBy(desc(bankTransactions.createdAt))
-        .limit(parseInt(limit as string));
-
-      res.json(transactions);
-    } catch (error) {
-      console.error('Error fetching bank transactions:', error);
-      res.status(500).json({ message: 'Failed to fetch bank transactions' });
-    }
-  });
 
   // Add expense category
   app.post("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
