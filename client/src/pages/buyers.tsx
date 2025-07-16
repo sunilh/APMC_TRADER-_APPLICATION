@@ -89,8 +89,12 @@ export default function Buyers() {
 
   // Helper functions
   const formatCurrency = (amount: string | number) => {
+    console.log('formatCurrency input:', { amount, type: typeof amount });
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return isNaN(num) ? '₹0' : `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    console.log('formatCurrency parsed:', { num, isNaN: isNaN(num) });
+    const formatted = isNaN(num) ? '₹0' : `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    console.log('formatCurrency result:', formatted);
+    return formatted;
   };
 
   const formatDate = (dateString: string) => {
