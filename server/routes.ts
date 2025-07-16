@@ -983,16 +983,38 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Check if tax invoice already exists for buyer
+  // Check if tax invoice already exists for buyer on specific date
   app.get("/api/tax-invoice/:buyerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
       const tenantId = req.user.tenantId;
+      const { date } = req.query; // Get selected date from query parameter
 
-      const existingInvoice = await db.select()
+      let query = db.select()
         .from(taxInvoices)
-        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
-        .limit(1);
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+
+      // If date is provided, filter by that specific date
+      if (date) {
+        const targetDate = new Date(date as string);
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        query = query.where(and(
+          eq(taxInvoices.buyerId, buyerId),
+          eq(taxInvoices.tenantId, tenantId),
+          gte(taxInvoices.invoiceDate, startOfDay),
+          lte(taxInvoices.invoiceDate, endOfDay)
+        ));
+
+        console.log(`Checking for tax invoice on specific date: ${date} for buyer ${buyerId}`);
+      } else {
+        console.log(`Checking for any tax invoice for buyer ${buyerId} (no date filter)`);
+      }
+
+      const existingInvoice = await query.limit(1);
 
       res.json({ 
         exists: existingInvoice.length > 0,
@@ -1145,12 +1167,33 @@ export function registerRoutes(app: Express): Server {
     try {
       const buyerId = parseInt(req.params.buyerId);
       const tenantId = req.user.tenantId;
+      const { date } = req.query; // Get selected date from query parameter
 
-      const savedInvoice = await db.select()
+      let query = db.select()
         .from(taxInvoices)
-        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
-        .orderBy(desc(taxInvoices.createdAt))
-        .limit(1);
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+
+      // If date is provided, filter by that specific date
+      if (date) {
+        const targetDate = new Date(date as string);
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        query = query.where(and(
+          eq(taxInvoices.buyerId, buyerId),
+          eq(taxInvoices.tenantId, tenantId),
+          gte(taxInvoices.invoiceDate, startOfDay),
+          lte(taxInvoices.invoiceDate, endOfDay)
+        ));
+
+        console.log(`Fetching tax invoice for specific date: ${date} for buyer ${buyerId}`);
+      } else {
+        console.log(`Fetching latest tax invoice for buyer ${buyerId} (no date filter)`);
+      }
+
+      const savedInvoice = await query.orderBy(desc(taxInvoices.createdAt)).limit(1);
 
       if (savedInvoice.length === 0) {
         return res.status(404).json({ message: "No tax invoice found for this buyer" });

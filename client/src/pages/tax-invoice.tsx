@@ -119,12 +119,12 @@ export default function TaxInvoice() {
     queryKey: ["/api/buyers"],
   });
 
-  // Check if tax invoice already exists for selected buyer
+  // Check if tax invoice already exists for selected buyer on selected date
   const { data: invoiceCheck, isLoading: checkLoading } = useQuery({
-    queryKey: ["/api/tax-invoice", selectedBuyerId, "check"],
+    queryKey: ["/api/tax-invoice", selectedBuyerId, "check", selectedDate],
     queryFn: async () => {
       if (!selectedBuyerId) return null;
-      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}/check`, {
+      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}/check?date=${selectedDate}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -135,12 +135,12 @@ export default function TaxInvoice() {
     enabled: !!selectedBuyerId,
   });
 
-  // Fetch tax invoice for selected buyer (only if exists)
+  // Fetch tax invoice for selected buyer on selected date (only if exists)
   const { data: taxInvoice, isLoading: invoiceLoading } = useQuery<TaxInvoice>({
-    queryKey: ["/api/tax-invoice", selectedBuyerId],
+    queryKey: ["/api/tax-invoice", selectedBuyerId, selectedDate],
     queryFn: async () => {
-      if (!selectedBuyerId) return null;
-      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}`, {
+      if (!selectedBuyerId || !invoiceCheck?.exists) return null;
+      const response = await fetch(`/api/tax-invoice/${selectedBuyerId}?date=${selectedDate}`, {
         credentials: "include",
       });
       if (!response.ok) {
