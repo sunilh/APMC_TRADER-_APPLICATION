@@ -77,9 +77,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex flex-col lg:flex-row">
       {/* Left side - Auth forms */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center mb-8">
             <Sprout className="h-12 w-12 text-secondary mr-3" />
@@ -101,6 +101,18 @@ export default function AuthPage() {
                   <CardTitle>Sign In</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {loginMutation.error && (
+                    <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md shadow-sm">
+                      <p className="text-sm sm:text-base text-red-800 font-medium leading-relaxed">
+                        {loginMutation.error.message}
+                      </p>
+                      {loginMutation.error.message.includes("deactivated") && (
+                        <p className="text-xs sm:text-sm text-red-600 mt-2 leading-relaxed">
+                          💡 Contact your organization admin to reactivate your account access.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="login-username">Username</Label>
@@ -250,7 +262,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Hero section */}
-      <div className="flex-1 bg-gradient-to-br from-primary to-secondary p-8 text-white flex items-center justify-center">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary to-secondary p-8 text-white items-center justify-center">
         <div className="max-w-lg text-center">
           <h2 className="text-3xl font-bold mb-6">
             Modern APMC Management System

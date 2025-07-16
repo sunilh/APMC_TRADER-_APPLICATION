@@ -477,6 +477,9 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Farmer creation and editing now works properly with all bank details displaying and saving correctly
   - Fixed buyer edit functionality with same HTTP method mismatch - changed frontend from PATCH to PUT
   - Both farmer and buyer editing now work properly with consistent API method usage
+  - Enhanced inactive user login error messages to show clear admin contact guidance
+  - Improved mobile responsiveness of login page with better error display and layout
+  - Added prominent error notifications for deactivated accounts with helpful instructions
 
 # User Preferences
 

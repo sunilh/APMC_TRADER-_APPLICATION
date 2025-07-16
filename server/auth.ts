@@ -53,7 +53,7 @@ export function setupAuth(app: Express) {
         if (await comparePasswords(password, user.password)) {
           // Check if user account is active
           if (!user.isActive) {
-            return done(null, false, { message: "Your account has been deactivated. Please contact your admin." });
+            return done(null, false, { message: "Your account has been deactivated. Please contact your admin to reactivate your account." });
           }
           return done(null, user);
         }
