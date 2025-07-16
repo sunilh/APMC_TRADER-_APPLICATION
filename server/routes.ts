@@ -185,17 +185,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Get final accounts for fiscal year
-  app.get("/api/accounting/final-accounts/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
-    try {
-      const fiscalYear = req.params.fiscalYear || getCurrentFiscalYear();
-      const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
-      res.json(finalAccounts);
-    } catch (error) {
-      console.error("Error generating final accounts:", error);
-      res.status(500).json({ message: "Failed to generate final accounts" });
-    }
-  });
+  // Removed duplicate route - consolidated into single route below
 
   // Get final accounts without fiscal year parameter (with optional date range)
   app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
