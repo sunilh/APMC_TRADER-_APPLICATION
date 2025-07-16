@@ -115,16 +115,15 @@ export default function FinalAccounts() {
 
   // Get final accounts data
   const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
-    queryKey: dateRangeMode === 'custom' && customStartDate && customEndDate 
-      ? ["/api/accounting/final-accounts", "custom", customStartDate, customEndDate, Date.now()]
-      : ["/api/accounting/final-accounts", "fiscal", selectedFiscalYear || currentFiscalYear, Date.now()],
+    queryKey: ["/api/accounting/final-accounts", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear, currentFiscalYear, Date.now()],
     queryFn: async () => {
       const timestamp = Date.now();
-      console.log('🔍 Making Final Accounts API call:', { 
+      console.log('🔍 Frontend Query Function:', { 
         dateRangeMode, 
         customStartDate, 
         customEndDate, 
-        timestamp 
+        timestamp,
+        condition: dateRangeMode === 'custom' && customStartDate && customEndDate
       });
       
       if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
@@ -140,7 +139,7 @@ export default function FinalAccounts() {
         });
         if (!response.ok) throw new Error('Failed to fetch');
         const result = await response.json();
-        console.log('📊 API Response:', { netProfit: result.netProfit, totalIncome: result.totalIncome });
+        console.log('📊 API Response (Date Range):', { netProfit: result.netProfit, totalIncome: result.totalIncome });
         return result;
       } else {
         const url = `/api/accounting/final-accounts?_t=${timestamp}`;
@@ -155,11 +154,11 @@ export default function FinalAccounts() {
         });
         if (!response.ok) throw new Error('Failed to fetch');
         const result = await response.json();
-        console.log('📊 API Response:', { netProfit: result.netProfit, totalIncome: result.totalIncome });
+        console.log('📊 API Response (Fiscal):', { netProfit: result.netProfit, totalIncome: result.totalIncome });
         return result;
       }
     },
-    enabled: !!(selectedFiscalYear || currentFiscalYear || (customStartDate && customEndDate)),
+    enabled: true, // Always enabled
     retry: 1,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
