@@ -232,6 +232,9 @@ export default function Buyers() {
       
       if (Array.isArray(data) && data.length > 0) {
         console.log('First purchase item:', data[0]);
+        console.log('First purchase amountDue type:', typeof data[0].amountDue);
+        console.log('First purchase amountDue value:', data[0].amountDue);
+        console.log('Formatted currency test:', formatCurrency(data[0].amountDue));
         setPurchases(data);
         toast({
           title: "Success",
