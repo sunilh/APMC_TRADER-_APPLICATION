@@ -804,11 +804,10 @@ export class DatabaseStorage implements IStorage {
     amountPaid: number | null;
     paymentDate: string | null;
   }): Promise<void> {
-    // For partial payments, we need to ADD to existing amount, not replace it
     let finalAmountPaid = paymentData.amountPaid;
     
     if (paymentData.paymentStatus === 'partial' && paymentData.amountPaid) {
-      // Get current amount paid
+      // For partial payments, ADD to existing amount
       const [currentLot] = await db
         .select({ amountPaid: lots.amountPaid })
         .from(lots)
@@ -817,7 +816,31 @@ export class DatabaseStorage implements IStorage {
       if (currentLot) {
         const currentPaid = parseFloat(currentLot.amountPaid?.toString() || '0');
         finalAmountPaid = currentPaid + paymentData.amountPaid;
-        console.log(`Adding payment: ${currentPaid} + ${paymentData.amountPaid} = ${finalAmountPaid}`);
+        console.log(`Adding partial payment: ${currentPaid} + ${paymentData.amountPaid} = ${finalAmountPaid}`);
+      }
+    } else if (paymentData.paymentStatus === 'paid') {
+      // For "paid" status, get the full invoice amount from tax invoice
+      const lotDate = await db
+        .select({ createdAt: lots.createdAt, buyerId: lots.buyerId })
+        .from(lots)
+        .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)));
+      
+      if (lotDate.length > 0) {
+        const taxInvoice = await db
+          .select({ totalAmount: taxInvoices.totalAmount })
+          .from(taxInvoices)
+          .where(and(
+            eq(taxInvoices.buyerId, lotDate[0].buyerId),
+            eq(taxInvoices.tenantId, tenantId),
+            gte(taxInvoices.invoiceDate, new Date(lotDate[0].createdAt.toDateString())),
+            lte(taxInvoices.invoiceDate, new Date(new Date(lotDate[0].createdAt.toDateString()).getTime() + 86400000))
+          ))
+          .limit(1);
+        
+        if (taxInvoice.length > 0) {
+          finalAmountPaid = parseFloat(taxInvoice[0].totalAmount);
+          console.log(`Setting full payment amount from tax invoice: ${finalAmountPaid}`);
+        }
       }
     }
 
