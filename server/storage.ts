@@ -752,22 +752,36 @@ export class DatabaseStorage implements IStorage {
       // Find invoice that contains this lot ID
       const taxInvoice = allTaxInvoices.find(invoice => {
         try {
-          let lotIdsStr = invoice.lotIds as string;
-          console.log(`Debug: Original lotIds string: ${lotIdsStr}`);
+          let lotIds: string[];
+          const lotIdsRaw = invoice.lotIds;
           
-          // Handle multiple levels of JSON escaping
-          while (lotIdsStr.startsWith('"') && lotIdsStr.endsWith('"')) {
-            lotIdsStr = lotIdsStr.slice(1, -1);
-            lotIdsStr = lotIdsStr.replace(/\\"/g, '"');
+          if (typeof lotIdsRaw === 'string') {
+            // Handle comma-separated string format
+            if (lotIdsRaw.includes(',')) {
+              lotIds = lotIdsRaw.split(',').map(id => id.trim());
+            } else {
+              // Try JSON parsing for array format
+              try {
+                let lotIdsStr = lotIdsRaw;
+                // Handle escaped JSON
+                while (lotIdsStr.startsWith('"') && lotIdsStr.endsWith('"')) {
+                  lotIdsStr = lotIdsStr.slice(1, -1);
+                  lotIdsStr = lotIdsStr.replace(/\\"/g, '"');
+                }
+                const parsed = JSON.parse(lotIdsStr);
+                lotIds = Array.isArray(parsed) ? parsed : [lotIdsStr];
+              } catch {
+                lotIds = [lotIdsRaw];
+              }
+            }
+          } else if (Array.isArray(lotIdsRaw)) {
+            lotIds = lotIdsRaw;
+          } else {
+            lotIds = [];
           }
           
-          console.log(`Debug: Cleaned lotIds string: ${lotIdsStr}`);
-          const lotIds = JSON.parse(lotIdsStr);
-          console.log(`Debug: Parsed lotIds array:`, lotIds);
-          console.log(`Debug: Checking if array contains lot: ${row.lotNumber}`);
-          
-          const isIncluded = Array.isArray(lotIds) && lotIds.includes(row.lotNumber);
-          console.log(`Debug: Lot ${row.lotNumber} included in invoice: ${isIncluded}`);
+          const isIncluded = lotIds.includes(row.lotNumber);
+          console.log(`Debug: Lot ${row.lotNumber} found in invoice lotIds: ${lotIds.join(', ')} - ${isIncluded}`);
           return isIncluded;
         } catch (e) {
           console.log(`Failed to parse lotIds for invoice: ${invoice.lotIds}`, e);
@@ -778,9 +792,23 @@ export class DatabaseStorage implements IStorage {
       let calculatedAmount: number;
 
       if (taxInvoice) {
-        // Parse the lot IDs from the JSON array and calculate proportional amount
-        const lotIds = JSON.parse(taxInvoice.lotIds as string);
+        // Use tax invoice amount (includes all taxes and charges)
         const totalInvoiceAmount = parseFloat(taxInvoice.totalAmount);
+        
+        // Parse lot IDs to calculate proportional amount for multi-lot invoices
+        let lotIds: string[] = [];
+        try {
+          const lotIdsRaw = taxInvoice.lotIds;
+          if (typeof lotIdsRaw === 'string' && lotIdsRaw.includes(',')) {
+            lotIds = lotIdsRaw.split(',').map(id => id.trim());
+          } else if (Array.isArray(lotIdsRaw)) {
+            lotIds = lotIdsRaw;
+          } else {
+            lotIds = [row.lotNumber]; // Single lot
+          }
+        } catch {
+          lotIds = [row.lotNumber];
+        }
         
         // If multiple lots in the invoice, calculate proportional amount based on bag count
         if (lotIds.length > 1) {
@@ -788,17 +816,21 @@ export class DatabaseStorage implements IStorage {
           const allLotsInInvoice = await db
             .select({
               lotId: lots.id,
+              lotNumber: lots.lotNumber,
               numberOfBags: lots.numberOfBags,
             })
             .from(lots)
-            .where(sql`${lots.id} IN (${lotIds.join(',')})`);
+            .where(and(
+              eq(lots.tenantId, tenantId),
+              sql`${lots.lotNumber} IN (${lotIds.map(id => `'${id}'`).join(',')})`
+            ));
           
           const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + lot.numberOfBags, 0);
-          const thisLotBags = allLotsInInvoice.find(lot => lot.lotId === row.lotId)?.numberOfBags || 0;
-          const proportionalAmount = (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount;
+          const thisLotBags = allLotsInInvoice.find(lot => lot.lotNumber === row.lotNumber)?.numberOfBags || row.numberOfBags;
+          const proportionalAmount = totalBagsInInvoice > 0 ? (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount : totalInvoiceAmount;
           
           calculatedAmount = proportionalAmount;
-          console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount} (${thisLotBags}/${totalBagsInInvoice} bags)`);
+          console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${thisLotBags}/${totalBagsInInvoice} bags, total: ₹${totalInvoiceAmount})`);
         } else {
           // Single lot in invoice
           calculatedAmount = totalInvoiceAmount;
