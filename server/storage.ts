@@ -635,31 +635,45 @@ export class DatabaseStorage implements IStorage {
         eq(lots.tenantId, tenantId)
       ));
 
-    // Calculate total amount due based on actual bag weights
-    const lotsWithPrices = await db
+    // Calculate total amount due including taxes from tax invoices
+    const taxInvoicesTotal = await db
       .select({
-        lotId: lots.id,
-        lotPrice: lots.lotPrice,
+        totalTaxInvoiceAmount: sql<string>`COALESCE(SUM(CAST(${taxInvoices.totalAmount} AS DECIMAL)), 0)`,
       })
-      .from(lots)
+      .from(taxInvoices)
       .where(and(
-        eq(lots.buyerId, buyerId),
-        eq(lots.tenantId, tenantId)
+        eq(taxInvoices.buyerId, buyerId),
+        eq(taxInvoices.tenantId, tenantId)
       ));
 
-    let totalAmountDue = 0;
-    for (const lot of lotsWithPrices) {
-      const bagWeights = await db
-        .select({
-          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
-        })
-        .from(bags)
-        .where(eq(bags.lotId, lot.lotId));
+    let totalAmountDue = parseFloat(taxInvoicesTotal[0]?.totalTaxInvoiceAmount || '0');
 
-      const totalWeightKg = bagWeights[0]?.totalWeight || 0;
-      const totalWeightQuintals = totalWeightKg / 100; // Convert kg to quintals
-      const lotPrice = parseFloat(lot.lotPrice || '0');
-      totalAmountDue += totalWeightQuintals * lotPrice;
+    // If no tax invoices exist, fall back to basic calculation
+    if (totalAmountDue === 0) {
+      const lotsWithPrices = await db
+        .select({
+          lotId: lots.id,
+          lotPrice: lots.lotPrice,
+        })
+        .from(lots)
+        .where(and(
+          eq(lots.buyerId, buyerId),
+          eq(lots.tenantId, tenantId)
+        ));
+
+      for (const lot of lotsWithPrices) {
+        const bagWeights = await db
+          .select({
+            totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+          })
+          .from(bags)
+          .where(eq(bags.lotId, lot.lotId));
+
+        const totalWeightKg = bagWeights[0]?.totalWeight || 0;
+        const totalWeightQuintals = totalWeightKg / 100;
+        const lotPrice = parseFloat(lot.lotPrice || '0');
+        totalAmountDue += totalWeightQuintals * lotPrice;
+      }
     }
 
     const stats = result[0];
@@ -717,20 +731,50 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(desc(lots.createdAt));
 
-    // Calculate amount due based on actual bag weights
+    // Calculate amount due including taxes from tax invoices
     const enrichedResult = await Promise.all(result.map(async (row) => {
-      // Get total weight of bags for this lot
-      const bagWeights = await db
-        .select({
-          totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
-        })
-        .from(bags)
-        .where(eq(bags.lotId, row.lotId));
+      // First check if this lot has a tax invoice (which includes taxes)
+      const lotDate = new Date(row.createdAt!);
+      const startOfDay = new Date(lotDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(lotDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      const totalWeightKg = bagWeights[0]?.totalWeight || 0;
-      const totalWeightQuintals = totalWeightKg / 100; // Convert kg to quintals
-      const lotPrice = parseFloat(row.lotPrice || '0');
-      const calculatedAmount = totalWeightQuintals * lotPrice;
+      const taxInvoice = await db
+        .select({
+          totalAmount: taxInvoices.totalAmount,
+          basicAmount: taxInvoices.basicAmount,
+        })
+        .from(taxInvoices)
+        .where(and(
+          eq(taxInvoices.buyerId, buyerId),
+          eq(taxInvoices.tenantId, tenantId),
+          gte(taxInvoices.invoiceDate, startOfDay),
+          lte(taxInvoices.invoiceDate, endOfDay)
+        ))
+        .limit(1);
+
+      let calculatedAmount: number;
+
+      if (taxInvoice.length > 0) {
+        // Use tax invoice total amount (includes taxes)
+        calculatedAmount = parseFloat(taxInvoice[0].totalAmount);
+        console.log(`Using tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+      } else {
+        // Fallback to basic calculation for lots without tax invoice
+        const bagWeights = await db
+          .select({
+            totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+          })
+          .from(bags)
+          .where(eq(bags.lotId, row.lotId));
+
+        const totalWeightKg = bagWeights[0]?.totalWeight || 0;
+        const totalWeightQuintals = totalWeightKg / 100;
+        const lotPrice = parseFloat(row.lotPrice || '0');
+        calculatedAmount = totalWeightQuintals * lotPrice;
+        console.log(`Using basic calculation for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+      }
 
       return {
         ...row,
