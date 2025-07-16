@@ -116,8 +116,8 @@ export default function FinalAccounts() {
   // Get final accounts data
   const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
     queryKey: dateRangeMode === 'custom' && customStartDate && customEndDate 
-      ? ["/api/accounting/final-accounts", `custom-${customStartDate}-${customEndDate}`]
-      : ["/api/accounting/final-accounts", selectedFiscalYear || currentFiscalYear],
+      ? ["/api/accounting/final-accounts", "custom", customStartDate, customEndDate]
+      : ["/api/accounting/final-accounts", "fiscal", selectedFiscalYear || currentFiscalYear],
     queryFn: async () => {
       if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
         const response = await fetch(`/api/accounting/final-accounts?startDate=${customStartDate}&endDate=${customEndDate}`);
@@ -367,7 +367,14 @@ export default function FinalAccounts() {
               if (value === 'fiscal') {
                 setCustomStartDate('');
                 setCustomEndDate('');
+              } else if (value === 'custom') {
+                // Set to today's date by default
+                const today = new Date().toISOString().split('T')[0];
+                setCustomStartDate(today);
+                setCustomEndDate(today);
               }
+              // Invalidate cache when switching modes
+              queryClient.invalidateQueries({ queryKey: ["/api/accounting/final-accounts"] });
             }}>
               <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
                 <SelectValue />
@@ -427,7 +434,13 @@ export default function FinalAccounts() {
                 <Input
                   type="date"
                   value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setCustomStartDate(e.target.value);
+                    // Invalidate cache when changing dates
+                    if (customEndDate) {
+                      queryClient.invalidateQueries({ queryKey: ["/api/accounting/final-accounts"] });
+                    }
+                  }}
                   className="w-full sm:w-36 min-h-[44px]"
                   placeholder="Start Date"
                 />
@@ -435,7 +448,13 @@ export default function FinalAccounts() {
                 <Input
                   type="date"
                   value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  onChange={(e) => {
+                    setCustomEndDate(e.target.value);
+                    // Invalidate cache when changing dates
+                    if (customStartDate) {
+                      queryClient.invalidateQueries({ queryKey: ["/api/accounting/final-accounts"] });
+                    }
+                  }}
                   className="w-full sm:w-36 min-h-[44px]"
                   placeholder="End Date"
                 />
