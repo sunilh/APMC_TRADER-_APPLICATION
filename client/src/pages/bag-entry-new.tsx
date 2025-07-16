@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Navigation } from "@/components/navigation";
-import { VoiceInput } from "@/components/voice-input";
+import { UnifiedInput } from "@/components/ui/unified-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -394,6 +394,14 @@ export default function BagEntryNew() {
     }));
   };
 
+  const updateBagNotes = (bagNumber: number, notes: string) => {
+    setBagEntries(prev => prev.map(bag => 
+      bag.bagNumber === bagNumber 
+        ? { ...bag, notes }
+        : bag
+    ));
+  };;
+
   if (isNaN(lotId)) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -524,7 +532,7 @@ export default function BagEntryNew() {
               </div>
               <div>
                 <Label htmlFor="buyer1Count">Buyer 1 Bags</Label>
-                <VoiceInput
+                <UnifiedInput
                   id="buyer1Count"
                   type="number"
                   voiceType="number"
@@ -532,12 +540,6 @@ export default function BagEntryNew() {
                   max={lot.numberOfBags}
                   value={buyer1Count}
                   onChange={(e) => setBuyer1Count(e.target.value)}
-                  onResult={(text) => {
-                    const count = parseInt(text.replace(/\D/g, ''));
-                    if (!isNaN(count) && count >= 0 && count <= lot.numberOfBags) {
-                      setBuyer1Count(count.toString());
-                    }
-                  }}
                   placeholder="Number of bags"
                 />
               </div>
@@ -561,7 +563,7 @@ export default function BagEntryNew() {
               </div>
               <div>
                 <Label htmlFor="buyer2Count">Buyer 2 Bags</Label>
-                <VoiceInput
+                <UnifiedInput
                   id="buyer2Count"
                   type="number"
                   voiceType="number"
@@ -569,12 +571,6 @@ export default function BagEntryNew() {
                   max={lot.numberOfBags}
                   value={buyer2Count}
                   onChange={(e) => setBuyer2Count(e.target.value)}
-                  onResult={(text) => {
-                    const count = parseInt(text.replace(/\D/g, ''));
-                    if (!isNaN(count) && count >= 0 && count <= lot.numberOfBags) {
-                      setBuyer2Count(count.toString());
-                    }
-                  }}
                   placeholder="Number of bags"
                 />
               </div>
@@ -626,19 +622,13 @@ export default function BagEntryNew() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="lotPrice">Lot Price (₹ per quintal) *</Label>
-                <VoiceInput
+                <UnifiedInput
                   id="lotPrice"
                   type="number"
                   voiceType="currency"
                   step="0.01"
                   value={lotPrice}
                   onChange={(e) => setLotPrice(e.target.value)}
-                  onResult={(text) => {
-                    const price = parseFloat(text.replace(/[^\d.]/g, ''));
-                    if (!isNaN(price)) {
-                      setLotPrice(price.toString());
-                    }
-                  }}
                   placeholder="Enter price per quintal"
                   className={!lotPrice ? "border-red-300" : ""}
                   required
@@ -649,12 +639,11 @@ export default function BagEntryNew() {
               </div>
               <div>
                 <Label htmlFor="lotGrade">Grade</Label>
-                <VoiceInput
+                <UnifiedInput
                   id="lotGrade"
                   voiceType="text"
                   value={lotGrade}
                   onChange={(e) => setLotGrade(e.target.value)}
-                  onResult={(text) => setLotGrade(text)}
                   placeholder="Enter grade"
                 />
               </div>
@@ -691,7 +680,7 @@ export default function BagEntryNew() {
                         </span>
                       )}
                     </div>
-                    <VoiceInput
+                    <UnifiedInput
                       type="number"
                       voiceType="number"
                       step="0.5"
@@ -705,12 +694,6 @@ export default function BagEntryNew() {
                           bag.bagNumber,
                           value === "" ? undefined : parseFloat(value)
                         );
-                      }}
-                      onResult={(text) => {
-                        const weight = parseFloat(text);
-                        if (!isNaN(weight)) {
-                          updateBagWeight(bag.bagNumber, weight);
-                        }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -733,22 +716,20 @@ export default function BagEntryNew() {
           </CardContent>
         </Card>
 
-        {/* Final Notes */}
+        {/* Notes for All Bag Weights */}
         <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div>
-              <Label htmlFor="finalNotes">Final Notes</Label>
-              <VoiceInput
-                id="finalNotes"
-                voiceType="text"
-                value={finalNotes}
-                onChange={(e) => setFinalNotes(e.target.value)}
-                onResult={(text) => setFinalNotes(text)}
-                placeholder="Enter any final notes for this lot..."
-                rows={3}
-                isTextarea={true}
-              />
-            </div>
+          <CardHeader>
+            <CardTitle>Notes for Bag Weights</CardTitle>
+            <p className="text-sm text-gray-600">Add any notes about the bag weights for this lot</p>
+          </CardHeader>
+          <CardContent>
+            <UnifiedInput
+              id="finalNotes"
+              voiceType="text"
+              value={finalNotes}
+              onChange={(e) => setFinalNotes(e.target.value)}
+              placeholder="Enter notes about bag weights, quality, or any observations..."
+            />
           </CardContent>
         </Card>
 
