@@ -627,7 +627,7 @@ export class DatabaseStorage implements IStorage {
         completedLots: sql<number>`count(case when ${lots.status} = 'completed' then 1 end)`,
         billGeneratedLots: sql<number>`count(case when ${lots.billGenerated} = true then 1 end)`,
         totalAmountPaid: sql<string>`coalesce(sum(${lots.amountPaid}), 0)`,
-        pendingPayments: sql<number>`count(case when ${lots.status} = 'completed' and (${lots.paymentStatus} = 'pending' or ${lots.paymentStatus} is null) then 1 end)`,
+        pendingPayments: sql<number>`count(case when ${lots.status} = 'completed' and (${lots.paymentStatus} = 'pending' or ${lots.paymentStatus} = 'partial' or ${lots.paymentStatus} is null) then 1 end)`,
       })
       .from(lots)
       .where(and(
