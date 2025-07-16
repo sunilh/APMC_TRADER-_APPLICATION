@@ -812,18 +812,26 @@ export class DatabaseStorage implements IStorage {
         
         // If multiple lots in the invoice, calculate proportional amount based on bag count
         if (lotIds.length > 1) {
-          // Get bag counts for all lots in this invoice
-          const allLotsInInvoice = await db
-            .select({
-              lotId: lots.id,
-              lotNumber: lots.lotNumber,
-              numberOfBags: lots.numberOfBags,
+          // Get bag counts for all lots in this invoice using proper parameter binding
+          const allLotsInInvoice = await Promise.all(
+            lotIds.map(async (lotNumber) => {
+              const result = await db
+                .select({
+                  lotId: lots.id,
+                  lotNumber: lots.lotNumber,
+                  numberOfBags: lots.numberOfBags,
+                })
+                .from(lots)
+                .where(and(
+                  eq(lots.tenantId, tenantId),
+                  eq(lots.lotNumber, lotNumber)
+                ))
+                .limit(1);
+              return result[0];
             })
-            .from(lots)
-            .where(and(
-              eq(lots.tenantId, tenantId),
-              sql`${lots.lotNumber} IN (${lotIds.map(id => `'${id}'`).join(',')})`
-            ));
+          ).then(results => results.filter(Boolean));
+          
+          console.log(`Debug: SQL query for lots with tenantId=${tenantId}, lotIds: ${lotIds.join(', ')}`);
           
           console.log(`Debug: Found ${allLotsInInvoice.length} lots in invoice:`, allLotsInInvoice);
           
