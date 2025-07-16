@@ -480,6 +480,16 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced inactive user login error messages to show clear admin contact guidance
   - Improved mobile responsiveness of login page with better error display and layout
   - Added prominent error notifications for deactivated accounts with helpful instructions
+- July 16, 2025: Enhanced bag entry screen with mandatory validations and unified voice input system
+  - Added mandatory lot price validation with red border indicators and clear error messaging
+  - Implemented mandatory buyer selection requirement with at least one buyer before saving bags
+  - Enhanced multiple buyer selection with automatic bag distribution calculation across up to 3 buyers
+  - Replaced all separate voice input buttons with unified VoiceInput component for seamless operation
+  - Added voice input support for lot price (currency), grade (text), buyer bag counts (number), bag weights (number), and final notes (text)
+  - Implemented smart save button with contextual messages: "Enter Price First", "Select Buyer First", or "Save All (X bags)"
+  - Added comprehensive validation preventing save operations without mandatory fields being completed
+  - Enhanced auto-calculation logic automatically distributing bags across selected buyers with live preview
+  - System now enforces proper agricultural trading workflow with price and buyer allocation before bag entry
 
 # User Preferences
 

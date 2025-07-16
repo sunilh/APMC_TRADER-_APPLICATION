@@ -146,6 +146,15 @@ export default function BagEntryNew() {
   // Save mutation
   const saveAllMutation = useMutation({
     mutationFn: async () => {
+      // Mandatory validation
+      if (!lotPrice) {
+        throw new Error("Lot price is mandatory before saving bags");
+      }
+
+      if (!buyer1) {
+        throw new Error("At least one buyer selection is mandatory before saving bags");
+      }
+
       const validBags = bagEntries.filter(bag => bag.weight && bag.weight > 0);
       
       if (validBags.length === 0) {
@@ -153,12 +162,10 @@ export default function BagEntryNew() {
       }
 
       // Update lot with price and grade
-      if (lotPrice) {
-        await apiRequest("PUT", `/api/lots/${lotId}`, {
-          lotPrice: lotPrice, // Keep as string for schema validation
-          grade: lotGrade,
-        });
-      }
+      await apiRequest("PUT", `/api/lots/${lotId}`, {
+        lotPrice: lotPrice, // Keep as string for schema validation
+        grade: lotGrade,
+      });
 
       // Save all bags
       const promises = validBags.map(bag =>
@@ -498,9 +505,9 @@ export default function BagEntryNew() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <Label htmlFor="buyer1">Buyer 1</Label>
+                <Label htmlFor="buyer1">Buyer 1 *</Label>
                 <Select value={buyer1} onValueChange={setBuyer1}>
-                  <SelectTrigger>
+                  <SelectTrigger className={!buyer1 ? "border-red-300" : ""}>
                     <SelectValue placeholder="Select buyer 1" />
                   </SelectTrigger>
                   <SelectContent>
@@ -511,16 +518,26 @@ export default function BagEntryNew() {
                     ))}
                   </SelectContent>
                 </Select>
+                {!buyer1 && (
+                  <p className="text-sm text-red-500 mt-1">At least one buyer is mandatory</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="buyer1Count">Buyer 1 Bags</Label>
-                <Input
+                <VoiceInput
                   id="buyer1Count"
                   type="number"
+                  voiceType="number"
                   min="0"
                   max={lot.numberOfBags}
                   value={buyer1Count}
                   onChange={(e) => setBuyer1Count(e.target.value)}
+                  onResult={(text) => {
+                    const count = parseInt(text.replace(/\D/g, ''));
+                    if (!isNaN(count) && count >= 0 && count <= lot.numberOfBags) {
+                      setBuyer1Count(count.toString());
+                    }
+                  }}
                   placeholder="Number of bags"
                 />
               </div>
@@ -544,13 +561,20 @@ export default function BagEntryNew() {
               </div>
               <div>
                 <Label htmlFor="buyer2Count">Buyer 2 Bags</Label>
-                <Input
+                <VoiceInput
                   id="buyer2Count"
                   type="number"
+                  voiceType="number"
                   min="0"
                   max={lot.numberOfBags}
                   value={buyer2Count}
                   onChange={(e) => setBuyer2Count(e.target.value)}
+                  onResult={(text) => {
+                    const count = parseInt(text.replace(/\D/g, ''));
+                    if (!isNaN(count) && count >= 0 && count <= lot.numberOfBags) {
+                      setBuyer2Count(count.toString());
+                    }
+                  }}
                   placeholder="Number of bags"
                 />
               </div>
@@ -601,22 +625,36 @@ export default function BagEntryNew() {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="lotPrice">Lot Price (₹ per quintal)</Label>
-                <Input
+                <Label htmlFor="lotPrice">Lot Price (₹ per quintal) *</Label>
+                <VoiceInput
                   id="lotPrice"
                   type="number"
+                  voiceType="currency"
                   step="0.01"
                   value={lotPrice}
                   onChange={(e) => setLotPrice(e.target.value)}
+                  onResult={(text) => {
+                    const price = parseFloat(text.replace(/[^\d.]/g, ''));
+                    if (!isNaN(price)) {
+                      setLotPrice(price.toString());
+                    }
+                  }}
                   placeholder="Enter price per quintal"
+                  className={!lotPrice ? "border-red-300" : ""}
+                  required
                 />
+                {!lotPrice && (
+                  <p className="text-sm text-red-500 mt-1">Lot price is mandatory</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="lotGrade">Grade</Label>
-                <Input
+                <VoiceInput
                   id="lotGrade"
+                  voiceType="text"
                   value={lotGrade}
                   onChange={(e) => setLotGrade(e.target.value)}
+                  onResult={(text) => setLotGrade(text)}
                   placeholder="Enter grade"
                 />
               </div>
@@ -653,46 +691,41 @@ export default function BagEntryNew() {
                         </span>
                       )}
                     </div>
-                    <div className="flex space-x-2">
-                      <Input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        placeholder="Weight (kg)"
-                        value={bag.weight || ""}
-                        data-bag={bag.bagNumber}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updateBagWeight(
-                            bag.bagNumber,
-                            value === "" ? undefined : parseFloat(value)
-                          );
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const value = (e.target as HTMLInputElement).value;
-                            if (value) {
-                              updateBagWeight(
-                                bag.bagNumber,
-                                value === "" ? undefined : parseFloat(value)
-                              );
-                            }
+                    <VoiceInput
+                      type="number"
+                      voiceType="number"
+                      step="0.5"
+                      min="0"
+                      placeholder="Weight (kg)"
+                      value={bag.weight || ""}
+                      data-bag={bag.bagNumber}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateBagWeight(
+                          bag.bagNumber,
+                          value === "" ? undefined : parseFloat(value)
+                        );
+                      }}
+                      onResult={(text) => {
+                        const weight = parseFloat(text);
+                        if (!isNaN(weight)) {
+                          updateBagWeight(bag.bagNumber, weight);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const value = (e.target as HTMLInputElement).value;
+                          if (value) {
+                            updateBagWeight(
+                              bag.bagNumber,
+                              value === "" ? undefined : parseFloat(value)
+                            );
                           }
-                        }}
-                        className="flex-1"
-                      />
-                      <VoiceInput
-                        onResult={(text) => {
-                          const weight = parseFloat(text);
-                          if (!isNaN(weight)) {
-                            updateBagWeight(bag.bagNumber, weight);
-                          }
-                        }}
-                        type="number"
-                        className="w-10 h-10"
-                      />
-                    </div>
+                        }
+                      }}
+                      className="w-full"
+                    />
                   </div>
                 );
               })}
@@ -705,12 +738,15 @@ export default function BagEntryNew() {
           <CardContent className="pt-6">
             <div>
               <Label htmlFor="finalNotes">Final Notes</Label>
-              <Textarea
+              <VoiceInput
                 id="finalNotes"
+                voiceType="text"
                 value={finalNotes}
                 onChange={(e) => setFinalNotes(e.target.value)}
+                onResult={(text) => setFinalNotes(text)}
                 placeholder="Enter any final notes for this lot..."
                 rows={3}
+                isTextarea={true}
               />
             </div>
           </CardContent>
@@ -769,12 +805,23 @@ export default function BagEntryNew() {
                   
                   <Button
                     onClick={() => saveAllMutation.mutate()}
-                    disabled={saveAllMutation.isPending || totalWeighedBags === 0}
-                    className="bg-green-600 hover:bg-green-700 px-8 py-6 text-lg font-semibold"
+                    disabled={saveAllMutation.isPending || totalWeighedBags === 0 || !lotPrice || !buyer1}
+                    className={`px-8 py-6 text-lg font-semibold ${
+                      !lotPrice || !buyer1 
+                        ? "bg-gray-400 cursor-not-allowed" 
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
                     size="lg"
                   >
                     <Save className="h-5 w-5 mr-2" />
-                    {saveAllMutation.isPending ? "Saving..." : `Save All (${totalWeighedBags} bags)`}
+                    {saveAllMutation.isPending 
+                      ? "Saving..." 
+                      : !lotPrice 
+                        ? "Enter Price First"
+                        : !buyer1
+                          ? "Select Buyer First"
+                          : `Save All (${totalWeighedBags} bags)`
+                    }
                   </Button>
                 </div>
               </div>
