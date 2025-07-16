@@ -510,6 +510,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - VERIFIED SYSTEM WORKING CORRECTLY: ₹3,98,450 Net Profit shown is authentic data from user's July 9th & 12th trading sessions
   - Historical data confirmed: 15 real transactions (₹5,00,000 sales, ₹16,750 commission, ₹1,18,300 expenses) from actual tax invoices
   - Added historical data indicator explaining fiscal year shows cumulative authentic data while custom date range shows period-specific data
+- July 16, 2025: Completed comprehensive Final Accounts date range filtering system for all sub-tabs
+  - Fixed critical GST liability variable scope error preventing proper date range calculations
+  - Updated all profitability API routes (/api/accounting/profitability/farmers, /api/accounting/profitability/buyers, /api/accounting/gst-liability) to accept startDate and endDate query parameters
+  - Added cache-busting headers and staleTime: 0 to prevent cached fiscal year data from appearing in date range mode
+  - Enhanced backend functions (analyzeProfitabilityByFarmer, analyzeProfitabilityByBuyer, calculateGSTLiability) with proper date range parameter handling
+  - VERIFIED COMPLETE FUNCTIONALITY: All three sub-tabs (Profitability, Transactions, GST/CESS Summary) now properly respect date range selection
+  - System correctly shows empty results for dates with no transactions and accumulated authentic data for fiscal year view
+  - Date range filtering works seamlessly across main cards and all sub-tabs with proper "DATE RANGE mode" vs "FISCAL YEAR mode" API calls
 
 # User Preferences
 
