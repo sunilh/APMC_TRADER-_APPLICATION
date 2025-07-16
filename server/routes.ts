@@ -203,16 +203,42 @@ export function registerRoutes(app: Express): Server {
       const { startDate, endDate } = req.query;
       let fiscalYear = getCurrentFiscalYear();
       
+      console.log('🔍 Final Accounts API called with:', { 
+        startDate, 
+        endDate, 
+        fiscalYear, 
+        tenantId: req.user.tenantId,
+        queryParams: req.query 
+      });
+      
       // If custom date range provided, use that instead of fiscal year
       if (startDate && endDate) {
+        console.log('📅 Using DATE RANGE mode:', { startDate, endDate });
         const finalAccounts = await getSimpleFinalAccountsDateRange(
           req.user.tenantId, 
           new Date(startDate as string), 
           new Date(endDate as string)
         );
+        console.log('📊 Date range result:', { 
+          netProfit: finalAccounts.netProfit, 
+          totalIncome: finalAccounts.totalIncome,
+          fiscalYear: finalAccounts.fiscalYear 
+        });
+        
+        // Add cache-control headers to prevent caching
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
         res.json(finalAccounts);
       } else {
+        console.log('🗓️ Using FISCAL YEAR mode:', { fiscalYear });
         const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
+        console.log('📊 Fiscal year result:', { 
+          netProfit: finalAccounts.netProfit, 
+          totalIncome: finalAccounts.totalIncome,
+          fiscalYear: finalAccounts.fiscalYear 
+        });
         res.json(finalAccounts);
       }
     } catch (error) {
