@@ -116,21 +116,55 @@ export default function FinalAccounts() {
   // Get final accounts data
   const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
     queryKey: dateRangeMode === 'custom' && customStartDate && customEndDate 
-      ? ["/api/accounting/final-accounts", "custom", customStartDate, customEndDate]
-      : ["/api/accounting/final-accounts", "fiscal", selectedFiscalYear || currentFiscalYear],
+      ? ["/api/accounting/final-accounts", "custom", customStartDate, customEndDate, Date.now()]
+      : ["/api/accounting/final-accounts", "fiscal", selectedFiscalYear || currentFiscalYear, Date.now()],
     queryFn: async () => {
+      const timestamp = Date.now();
+      console.log('🔍 Making Final Accounts API call:', { 
+        dateRangeMode, 
+        customStartDate, 
+        customEndDate, 
+        timestamp 
+      });
+      
       if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
-        const response = await fetch(`/api/accounting/final-accounts?startDate=${customStartDate}&endDate=${customEndDate}`);
+        const url = `/api/accounting/final-accounts?startDate=${customStartDate}&endDate=${customEndDate}&_t=${timestamp}`;
+        console.log('📅 Custom date range URL:', url);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (!response.ok) throw new Error('Failed to fetch');
-        return response.json();
+        const result = await response.json();
+        console.log('📊 API Response:', { netProfit: result.netProfit, totalIncome: result.totalIncome });
+        return result;
       } else {
-        const response = await fetch(`/api/accounting/final-accounts`);
+        const url = `/api/accounting/final-accounts?_t=${timestamp}`;
+        console.log('🗓️ Fiscal year URL:', url);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (!response.ok) throw new Error('Failed to fetch');
-        return response.json();
+        const result = await response.json();
+        console.log('📊 API Response:', { netProfit: result.netProfit, totalIncome: result.totalIncome });
+        return result;
       }
     },
     enabled: !!(selectedFiscalYear || currentFiscalYear || (customStartDate && customEndDate)),
     retry: 1,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache responses
   });
 
   // Get profitability analysis
