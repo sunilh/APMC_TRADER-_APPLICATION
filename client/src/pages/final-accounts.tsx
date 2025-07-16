@@ -71,6 +71,14 @@ export default function FinalAccounts() {
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
 
+  // Debug state values on every render
+  console.log('🏠 Final Accounts State:', { 
+    dateRangeMode, 
+    customStartDate, 
+    customEndDate,
+    condition: dateRangeMode === 'custom' && customStartDate && customEndDate
+  });
+
   // Simple test to ensure component loads
   console.log("Final Accounts component is loading...");
 
@@ -396,13 +404,16 @@ export default function FinalAccounts() {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             {/* Date Range Mode Toggle */}
             <Select value={dateRangeMode} onValueChange={(value: 'fiscal' | 'custom') => {
+              console.log('🔄 Switching mode to:', value);
               setDateRangeMode(value);
               if (value === 'fiscal') {
+                console.log('📊 Setting fiscal mode - clearing dates');
                 setCustomStartDate('');
                 setCustomEndDate('');
               } else if (value === 'custom') {
                 // Set to today's date by default
                 const today = new Date().toISOString().split('T')[0];
+                console.log('📅 Setting custom mode with today:', today);
                 setCustomStartDate(today);
                 setCustomEndDate(today);
               }
@@ -468,6 +479,7 @@ export default function FinalAccounts() {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => {
+                    console.log('📅 Start date changed to:', e.target.value);
                     setCustomStartDate(e.target.value);
                     // Invalidate cache when changing dates
                     if (customEndDate) {
@@ -482,6 +494,7 @@ export default function FinalAccounts() {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => {
+                    console.log('📅 End date changed to:', e.target.value);
                     setCustomEndDate(e.target.value);
                     // Invalidate cache when changing dates
                     if (customStartDate) {
