@@ -112,12 +112,14 @@ export const bags = pgTable("bags", {
   bagNumber: integer("bag_number").notNull(),
   weight: decimal("weight", { precision: 8, scale: 2 }),
   notes: text("notes"),
+  buyerId: integer("buyer_id").references(() => buyers.id), // Add buyer assignment to individual bags
   tenantId: integer("tenant_id").notNull().references(() => tenants.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   lotBagIdx: uniqueIndex("lot_bag_number_idx").on(table.lotId, table.bagNumber),
   tenantIdx: index("bag_tenant_idx").on(table.tenantId),
+  buyerIdx: index("bag_buyer_idx").on(table.buyerId),
 }));
 
 // Draft storage for bag entry cross-device syncing
@@ -221,6 +223,10 @@ export const bagRelations = relations(bags, ({ one }) => ({
   lot: one(lots, {
     fields: [bags.lotId],
     references: [lots.id],
+  }),
+  buyer: one(buyers, {
+    fields: [bags.buyerId],
+    references: [buyers.id],
   }),
   tenant: one(tenants, {
     fields: [bags.tenantId],
