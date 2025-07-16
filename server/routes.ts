@@ -1374,6 +1374,49 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get farmer's outstanding balance for payment calculation
+  app.get("/api/accounting/farmer-balance/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const farmerId = parseInt(req.params.farmerId);
+      const tenantId = req.user.tenantId;
+
+      // Calculate total amount earned by farmer from all farmer bills
+      const farmerBillsResult = await db.select({
+        totalEarned: sql<number>`COALESCE(SUM(CAST(${farmerBills.billData}->'netAmount' AS DECIMAL)), 0)`
+      })
+      .from(farmerBills)
+      .where(and(eq(farmerBills.farmerId, farmerId), eq(farmerBills.tenantId, tenantId)));
+
+      const totalEarned = farmerBillsResult[0]?.totalEarned || 0;
+
+      // Calculate total amount paid to farmer from accounting ledger
+      const paymentsResult = await db.select({
+        totalPaid: sql<number>`COALESCE(SUM(${accountingLedger.amount}), 0)`
+      })
+      .from(accountingLedger)
+      .where(and(
+        eq(accountingLedger.tenantId, tenantId),
+        eq(accountingLedger.transactionType, 'payment_made'),
+        sql`${accountingLedger.description} LIKE '%Farmer ID: ${farmerId}%'`
+      ));
+
+      const totalPaid = paymentsResult[0]?.totalPaid || 0;
+
+      // Calculate outstanding balance (what farmer should receive minus what was already paid)
+      const outstandingBalance = Math.max(0, totalEarned - totalPaid);
+
+      res.json({
+        farmerId,
+        totalEarned,
+        totalPaid,
+        outstandingBalance
+      });
+    } catch (error) {
+      console.error("Error calculating farmer balance:", error);
+      res.status(500).json({ message: "Failed to calculate farmer balance" });
+    }
+  });
+
   // Get all farmer bills for a farmer with date range filtering  
   app.get("/api/farmer-bills/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {

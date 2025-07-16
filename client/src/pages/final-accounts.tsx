@@ -74,6 +74,8 @@ export default function FinalAccounts() {
   const [farmerSearch, setFarmerSearch] = useState("");
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
   const [showFarmerDropdown, setShowFarmerDropdown] = useState(false);
+  const [suggestedAmount, setSuggestedAmount] = useState<number>(0);
+  const [paymentAmount, setPaymentAmount] = useState<string>("");
   const farmerDropdownRef = useRef<HTMLDivElement>(null);
   
   // Date Range Selection State
@@ -103,6 +105,13 @@ export default function FinalAccounts() {
     queryKey: ["/api/farmers", farmerSearch],
     enabled: farmerSearch.length > 0,
     staleTime: 30000, // 30 seconds
+  });
+
+  // Fetch farmer's outstanding balance when farmer is selected
+  const { data: farmerBalance } = useQuery({
+    queryKey: ["/api/accounting/farmer-balance", selectedFarmer?.id],
+    enabled: !!selectedFarmer,
+    staleTime: 10000, // 10 seconds
   });
 
   const currentFiscalYear = fiscalYearData?.fiscalYear || "2024-25";
@@ -375,6 +384,17 @@ export default function FinalAccounts() {
     setShowFarmerDropdown(false);
   };
 
+  // Update suggested amount when farmer balance is fetched
+  useEffect(() => {
+    if (farmerBalance && farmerBalance.outstandingBalance > 0) {
+      setSuggestedAmount(farmerBalance.outstandingBalance);
+      setPaymentAmount(farmerBalance.outstandingBalance.toString());
+    } else {
+      setSuggestedAmount(0);
+      setPaymentAmount("");
+    }
+  }, [farmerBalance]);
+
   const handleFarmerSearchChange = (value: string) => {
     setFarmerSearch(value);
     setShowFarmerDropdown(value.length > 0);
@@ -410,7 +430,7 @@ export default function FinalAccounts() {
 
       const data = {
         farmerId: selectedFarmer.id,
-        amount: formData.get('amount'),
+        amount: parseFloat(paymentAmount),
         paymentMethod: formData.get('paymentMethod'),
         referenceNumber: formData.get('referenceNumber'),
       };
@@ -425,6 +445,8 @@ export default function FinalAccounts() {
       setPaymentDialog({ type: 'made', open: false });
       setSelectedFarmer(null);
       setFarmerSearch("");
+      setPaymentAmount("");
+      setSuggestedAmount(0);
       queryClient.invalidateQueries({ queryKey: ["/api/accounting"] });
     } catch (error) {
       toast({
@@ -865,7 +887,17 @@ export default function FinalAccounts() {
                 </Dialog>
 
                 <Dialog open={paymentDialog.open && paymentDialog.type === 'made'} 
-                       onOpenChange={(open) => setPaymentDialog({ type: 'made', open })}>
+                       onOpenChange={(open) => {
+                         setPaymentDialog({ type: 'made', open });
+                         if (!open) {
+                           // Reset form state when dialog closes
+                           setSelectedFarmer(null);
+                           setFarmerSearch("");
+                           setPaymentAmount("");
+                           setSuggestedAmount(0);
+                           setShowFarmerDropdown(false);
+                         }
+                       }}>
                   <DialogTrigger asChild>
                     <Button className="w-full" variant="outline">
                       <BanknoteIcon className="h-4 w-4 mr-2" />
@@ -941,6 +973,11 @@ export default function FinalAccounts() {
                                   <div className="text-sm text-green-600">
                                     {selectedFarmer.mobile} • {selectedFarmer.place}
                                   </div>
+                                  {farmerBalance && (
+                                    <div className="text-xs text-green-700 mt-1">
+                                      Outstanding Balance: ₹{farmerBalance.outstandingBalance?.toFixed(2) || '0.00'}
+                                    </div>
+                                  )}
                                 </div>
                                 <Check className="h-5 w-5 text-green-500" />
                               </div>
@@ -958,9 +995,25 @@ export default function FinalAccounts() {
                         </div>
                         <div>
                           <Label htmlFor="amount">Amount</Label>
-                          <Input id="amount" name="amount" type="number" step="0.01" required />
+                          <div className="relative">
+                            <Input 
+                              id="amount" 
+                              name="amount" 
+                              type="number" 
+                              step="0.01" 
+                              value={paymentAmount}
+                              onChange={(e) => setPaymentAmount(e.target.value)}
+                              placeholder={suggestedAmount > 0 ? `Suggested: ₹${suggestedAmount.toFixed(2)}` : "Enter amount"}
+                              required 
+                            />
+                            {suggestedAmount > 0 && (
+                              <div className="absolute -bottom-6 left-0 text-xs text-blue-600">
+                                Auto-filled: ₹{suggestedAmount.toFixed(2)} (outstanding balance)
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div>
+                        <div className="mt-6">
                           <Label htmlFor="paymentMethod">Payment Method</Label>
                           <Select name="paymentMethod" required>
                             <SelectTrigger>
