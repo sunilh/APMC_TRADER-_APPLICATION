@@ -181,8 +181,8 @@ export default function TaxInvoice() {
         title: "Success",
         description: "Tax invoice generated and saved successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId, "check"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId, "check", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tax-invoice", selectedBuyerId, selectedDate] });
       queryClient.invalidateQueries({ queryKey: ["/api/tax-invoices", selectedBuyerId] });
     },
     onError: (error: any) => {

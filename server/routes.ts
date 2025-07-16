@@ -1032,24 +1032,40 @@ export function registerRoutes(app: Express): Server {
       const buyerId = parseInt(req.params.buyerId);
       const tenantId = req.user.tenantId;
 
-      // Check if invoice already exists
-      const existingInvoice = await db.select()
+      // Get selected date from request body (optional, defaults to today)
+      const selectedDate = req.body.selectedDate ? new Date(req.body.selectedDate) : new Date();
+      console.log(`Checking for existing invoice on date: ${selectedDate.toISOString().split('T')[0]} for buyer ${buyerId}`);
+
+      // Check if invoice already exists for this specific date
+      let existingQuery = db.select()
         .from(taxInvoices)
-        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)))
-        .limit(1);
+        .where(and(eq(taxInvoices.buyerId, buyerId), eq(taxInvoices.tenantId, tenantId)));
+
+      // Filter by the specific date
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      existingQuery = existingQuery.where(and(
+        eq(taxInvoices.buyerId, buyerId),
+        eq(taxInvoices.tenantId, tenantId),
+        gte(taxInvoices.invoiceDate, startOfDay),
+        lte(taxInvoices.invoiceDate, endOfDay)
+      ));
+
+      const existingInvoice = await existingQuery.limit(1);
 
       if (existingInvoice.length > 0) {
         return res.status(400).json({ 
-          message: "Tax invoice already generated for this buyer",
+          message: `Tax invoice already generated for this buyer on ${selectedDate.toISOString().split('T')[0]}`,
           invoiceId: existingInvoice[0].id
         });
       }
 
       console.log(`Generating tax invoice for buyer ${buyerId}, tenant ${tenantId}`);
       try {
-        // Get selected date from request body (optional, defaults to today)
-        const selectedDate = req.body.selectedDate ? new Date(req.body.selectedDate) : undefined;
-        console.log(`Selected date for invoice: ${selectedDate ? selectedDate.toISOString().split('T')[0] : 'today'}`);
+        console.log(`Selected date for invoice: ${selectedDate.toISOString().split('T')[0]}`);
         
         const taxInvoice = await generateTaxInvoice(buyerId, tenantId, selectedDate);
         
