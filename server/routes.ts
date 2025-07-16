@@ -2507,19 +2507,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Generate Final Accounts (comprehensive)
-  app.get("/api/accounting/final-accounts", requireAuth, requireTenant, async (req: any, res) => {
-    try {
-      const tenantId = req.user.tenantId;
-      const { fiscalYear } = req.query;
-      
-      const accounts = await generateFinalAccounts(tenantId, fiscalYear);
-      res.json(accounts);
-    } catch (error) {
-      console.error('Error generating final accounts:', error);
-      res.status(500).json({ message: 'Failed to generate final accounts' });
-    }
-  });
+
 
   // Profitability Analysis by Farmer
   app.get("/api/accounting/profitability/farmers", requireAuth, requireTenant, async (req: any, res) => {
