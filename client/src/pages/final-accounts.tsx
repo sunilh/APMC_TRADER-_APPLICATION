@@ -123,7 +123,7 @@ export default function FinalAccounts() {
 
   // Get final accounts data
   const { data: finalAccounts, isLoading: finalAccountsLoading, error: finalAccountsError } = useQuery({
-    queryKey: ["/api/accounting/final-accounts", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear, currentFiscalYear, Date.now()],
+    queryKey: ["/api/accounting/final-accounts", dateRangeMode, customStartDate, customEndDate, selectedFiscalYear, currentFiscalYear],
     queryFn: async () => {
       const timestamp = Date.now();
       console.log('🔍 Frontend Query Function:', { 
@@ -169,9 +169,9 @@ export default function FinalAccounts() {
     enabled: true, // Always enabled
     retry: 1,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache responses
+    refetchOnWindowFocus: false,
+    staleTime: 5000, // Consider data stale after 5 seconds
+    cacheTime: 60000, // Cache for 1 minute
   });
 
   // Get profitability analysis
