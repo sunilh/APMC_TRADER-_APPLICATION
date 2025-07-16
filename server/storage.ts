@@ -736,33 +736,58 @@ export class DatabaseStorage implements IStorage {
 
     // Calculate amount due including taxes from tax invoices
     const enrichedResult = await Promise.all(result.map(async (row) => {
-      // First check if this lot has a tax invoice (which includes taxes)
-      const lotDate = new Date(row.createdAt!);
-      const startOfDay = new Date(lotDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(lotDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const taxInvoice = await db
+      // Check if this specific lot has a tax invoice by looking in lotIds JSON array
+      const allTaxInvoices = await db
         .select({
           totalAmount: taxInvoices.totalAmount,
           basicAmount: taxInvoices.basicAmount,
+          lotIds: taxInvoices.lotIds,
         })
         .from(taxInvoices)
         .where(and(
           eq(taxInvoices.buyerId, buyerId),
-          eq(taxInvoices.tenantId, tenantId),
-          gte(taxInvoices.invoiceDate, startOfDay),
-          lte(taxInvoices.invoiceDate, endOfDay)
-        ))
-        .limit(1);
+          eq(taxInvoices.tenantId, tenantId)
+        ));
+
+      // Find invoice that contains this lot ID
+      const taxInvoice = allTaxInvoices.find(invoice => {
+        try {
+          const lotIds = JSON.parse(invoice.lotIds as string);
+          return Array.isArray(lotIds) && lotIds.includes(row.lotId);
+        } catch {
+          return false;
+        }
+      });
 
       let calculatedAmount: number;
 
-      if (taxInvoice.length > 0) {
-        // Use tax invoice total amount (includes taxes)
-        calculatedAmount = parseFloat(taxInvoice[0].totalAmount);
-        console.log(`Using tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+      if (taxInvoice) {
+        // Parse the lot IDs from the JSON array and calculate proportional amount
+        const lotIds = JSON.parse(taxInvoice.lotIds as string);
+        const totalInvoiceAmount = parseFloat(taxInvoice.totalAmount);
+        
+        // If multiple lots in the invoice, calculate proportional amount based on bag count
+        if (lotIds.length > 1) {
+          // Get bag counts for all lots in this invoice
+          const allLotsInInvoice = await db
+            .select({
+              lotId: lots.id,
+              numberOfBags: lots.numberOfBags,
+            })
+            .from(lots)
+            .where(sql`${lots.id} IN (${lotIds.join(',')})`);
+          
+          const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + lot.numberOfBags, 0);
+          const thisLotBags = allLotsInInvoice.find(lot => lot.lotId === row.lotId)?.numberOfBags || 0;
+          const proportionalAmount = (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount;
+          
+          calculatedAmount = proportionalAmount;
+          console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount} (${thisLotBags}/${totalBagsInInvoice} bags)`);
+        } else {
+          // Single lot in invoice
+          calculatedAmount = totalInvoiceAmount;
+          console.log(`Using full tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+        }
       } else {
         // Fallback to basic calculation for lots without tax invoice
         const bagWeights = await db
