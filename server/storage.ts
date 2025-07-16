@@ -781,7 +781,6 @@ export class DatabaseStorage implements IStorage {
           }
           
           const isIncluded = lotIds.includes(row.lotNumber);
-          console.log(`Debug: Lot ${row.lotNumber} found in invoice lotIds: ${lotIds.join(', ')} - ${isIncluded}`);
           return isIncluded;
         } catch (e) {
           console.log(`Failed to parse lotIds for invoice: ${invoice.lotIds}`, e);
@@ -831,31 +830,27 @@ export class DatabaseStorage implements IStorage {
             })
           ).then(results => results.filter(Boolean));
           
-          console.log(`Debug: SQL query for lots with tenantId=${tenantId}, lotIds: ${lotIds.join(', ')}`);
-          
-          console.log(`Debug: Found ${allLotsInInvoice.length} lots in invoice:`, allLotsInInvoice);
+
           
           const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + (lot.numberOfBags || 0), 0);
           const thisLotBags = allLotsInInvoice.find(lot => lot.lotNumber === row.lotNumber)?.numberOfBags || row.numberOfBags || 0;
           
-          console.log(`Debug: Total bags in invoice: ${totalBagsInInvoice}, This lot bags: ${thisLotBags}`);
+
           
           if (totalBagsInInvoice > 0) {
             const proportionalAmount = (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount;
             calculatedAmount = proportionalAmount;
-            console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${thisLotBags}/${totalBagsInInvoice} bags, total: ₹${totalInvoiceAmount})`);
           } else {
             // Fallback: split equally among lots
             calculatedAmount = totalInvoiceAmount / lotIds.length;
-            console.log(`Fallback: Equal split for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${lotIds.length} lots)`);
           }
         } else {
           // Single lot in invoice
           calculatedAmount = totalInvoiceAmount;
-          console.log(`Using full tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+
         }
       } else {
-        // Fallback to basic calculation for lots without tax invoice
+        // Calculate with taxes using GST settings from database
         const bagWeights = await db
           .select({
             totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
@@ -866,8 +861,30 @@ export class DatabaseStorage implements IStorage {
         const totalWeightKg = bagWeights[0]?.totalWeight || 0;
         const totalWeightQuintals = totalWeightKg / 100;
         const lotPrice = parseFloat(row.lotPrice || '0');
-        calculatedAmount = totalWeightQuintals * lotPrice;
-        console.log(`Using basic calculation for lot ${row.lotNumber}: ₹${calculatedAmount}`);
+        const basicAmount = totalWeightQuintals * lotPrice;
+        
+        // Get GST settings for this tenant
+        const gstSettings = await db
+          .select({
+            sgst: tenants.sgst,
+            cgst: tenants.cgst,
+            cess: tenants.cess,
+          })
+          .from(tenants)
+          .where(eq(tenants.id, tenantId))
+          .limit(1);
+        
+        const sgstRate = parseFloat(gstSettings[0]?.sgst || '2.5');
+        const cgstRate = parseFloat(gstSettings[0]?.cgst || '2.5');
+        const cessRate = parseFloat(gstSettings[0]?.cess || '0.6');
+        
+        // Calculate taxes
+        const sgstAmount = (basicAmount * sgstRate) / 100;
+        const cgstAmount = (basicAmount * cgstRate) / 100;
+        const cessAmount = (basicAmount * cessRate) / 100;
+        
+        calculatedAmount = basicAmount + sgstAmount + cgstAmount + cessAmount;
+
       }
 
       // Calculate remaining amount due (total - paid)

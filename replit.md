@@ -516,8 +516,16 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added cache-busting headers and staleTime: 0 to prevent cached fiscal year data from appearing in date range mode
   - Enhanced backend functions (analyzeProfitabilityByFarmer, analyzeProfitabilityByBuyer, calculateGSTLiability) with proper date range parameter handling
   - VERIFIED COMPLETE FUNCTIONALITY: All three sub-tabs (Profitability, Transactions, GST/CESS Summary) now properly respect date range selection
-  - System correctly shows empty results for dates with no transactions and accumulated authentic data for fiscal year view
+  - System correctly shows empty results for dates with no transactions and accumulated data for fiscal year view
   - Date range filtering works seamlessly across main cards and all sub-tabs with proper "DATE RANGE mode" vs "FISCAL YEAR mode" API calls
+- July 16, 2025: Fixed buyer purchase calculation system with proportional tax invoice amounts and individual lot tax calculations
+  - Resolved critical JSON parsing issue in tax invoice lot_ids field that was preventing proper lot matching
+  - Fixed SQL query construction to properly find lots by lot number using parameter binding instead of dynamic IN clauses
+  - Implemented proportional amount calculation for multi-lot tax invoices based on bag count distribution
+  - Enhanced fallback tax calculation system using tenant GST settings (SGST 2.5%, CGST 2.5%, CESS 0.6%) for lots without tax invoices
+  - System now correctly shows different amounts for different lots: LOT20250716-003 (2 bags) vs LOT20250716-002 (3 bags)
+  - Purchase history displays authentic tax-inclusive amounts instead of basic lot prices
+  - Cleaned up debug logging for production readiness while maintaining calculation accuracy
 
 # User Preferences
 
