@@ -1,7 +1,7 @@
 import { 
   users, farmers, lots, bags, buyers, tenants, auditLogs, bagEntryDrafts,
   purchaseInvoices, purchaseInvoiceItems, stockInventory, stockMovements, 
-  ocrExtractionLogs, suppliers,
+  ocrExtractionLogs, suppliers, taxInvoices,
   type User, type InsertUser, type Farmer, type InsertFarmer,
   type Lot, type InsertLot, type Bag, type InsertBag,
   type Buyer, type InsertBuyer, type Tenant, type InsertTenant,
