@@ -800,11 +800,28 @@ export class DatabaseStorage implements IStorage {
     amountPaid: number | null;
     paymentDate: string | null;
   }): Promise<void> {
+    // For partial payments, we need to ADD to existing amount, not replace it
+    let finalAmountPaid = paymentData.amountPaid;
+    
+    if (paymentData.paymentStatus === 'partial' && paymentData.amountPaid) {
+      // Get current amount paid
+      const [currentLot] = await db
+        .select({ amountPaid: lots.amountPaid })
+        .from(lots)
+        .where(and(eq(lots.id, lotId), eq(lots.tenantId, tenantId)));
+      
+      if (currentLot) {
+        const currentPaid = parseFloat(currentLot.amountPaid?.toString() || '0');
+        finalAmountPaid = currentPaid + paymentData.amountPaid;
+        console.log(`Adding payment: ${currentPaid} + ${paymentData.amountPaid} = ${finalAmountPaid}`);
+      }
+    }
+
     await db
       .update(lots)
       .set({
         paymentStatus: paymentData.paymentStatus,
-        amountPaid: paymentData.amountPaid,
+        amountPaid: finalAmountPaid,
         paymentDate: paymentData.paymentDate ? new Date(paymentData.paymentDate) : null,
       })
       .where(and(
