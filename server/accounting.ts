@@ -620,14 +620,15 @@ export async function analyzeProfitabilityByBuyer(tenantId: number, fiscalYear?:
 // GST and tax compliance functions
 export async function calculateGSTLiability(tenantId: number, fiscalYear?: string, startDateParam?: string, endDateParam?: string) {
   // Use date range if provided, otherwise fall back to fiscal year
-  let startDate: Date, endDate: Date;
+  let startDate: Date, endDate: Date, currentFiscalYear: string;
   
   if (startDateParam && endDateParam) {
     startDate = new Date(startDateParam);
     endDate = new Date(endDateParam);
+    currentFiscalYear = `Custom Range: ${startDateParam} to ${endDateParam}`;
     console.log('📅 Using DATE RANGE mode for GST liability:', { startDate: startDateParam, endDate: endDateParam });
   } else {
-    const currentFiscalYear = fiscalYear || getCurrentFiscalYear();
+    currentFiscalYear = fiscalYear || getCurrentFiscalYear();
     const fiscalDates = getFiscalYearDates(currentFiscalYear);
     startDate = fiscalDates.startDate;
     endDate = fiscalDates.endDate;

@@ -189,10 +189,18 @@ export default function FinalAccounts() {
         console.log('🔍 Fetching farmer profitability with fiscal year:', selectedFiscalYear || currentFiscalYear);
       }
       
-      const response = await fetch(`/api/accounting/profitability/farmers?${params}`);
+      const response = await fetch(`/api/accounting/profitability/farmers?${params}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch farmer profitability');
       return response.json();
     },
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: buyerProfitability } = useQuery({
@@ -209,10 +217,18 @@ export default function FinalAccounts() {
         console.log('🔍 Fetching buyer profitability with fiscal year:', selectedFiscalYear || currentFiscalYear);
       }
       
-      const response = await fetch(`/api/accounting/profitability/buyers?${params}`);
+      const response = await fetch(`/api/accounting/profitability/buyers?${params}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch buyer profitability');
       return response.json();
     },
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Get GST liability
@@ -230,10 +246,18 @@ export default function FinalAccounts() {
         console.log('🔍 Fetching GST liability with fiscal year:', selectedFiscalYear || currentFiscalYear);
       }
       
-      const response = await fetch(`/api/accounting/gst-liability?${params}`);
+      const response = await fetch(`/api/accounting/gst-liability?${params}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch GST liability');
       return response.json();
     },
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Get expense categories
@@ -531,7 +555,7 @@ export default function FinalAccounts() {
                     setCustomStartDate(e.target.value);
                     // Invalidate cache when changing dates
                     if (customEndDate) {
-                      queryClient.invalidateQueries({ queryKey: ["/api/accounting/final-accounts"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/accounting"] });
                     }
                   }}
                   className="w-full sm:w-36 min-h-[44px]"
@@ -546,7 +570,7 @@ export default function FinalAccounts() {
                     setCustomEndDate(e.target.value);
                     // Invalidate cache when changing dates
                     if (customStartDate) {
-                      queryClient.invalidateQueries({ queryKey: ["/api/accounting/final-accounts"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/accounting"] });
                     }
                   }}
                   className="w-full sm:w-36 min-h-[44px]"
