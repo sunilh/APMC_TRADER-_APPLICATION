@@ -475,6 +475,8 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Updated both farmer-form.tsx and farmer-form-new.tsx to ensure consistent field mapping
   - Fixed form field registration to use correct database column names throughout
   - Farmer creation and editing now works properly with all bank details displaying and saving correctly
+  - Fixed buyer edit functionality with same HTTP method mismatch - changed frontend from PATCH to PUT
+  - Both farmer and buyer editing now work properly with consistent API method usage
 
 # User Preferences
 

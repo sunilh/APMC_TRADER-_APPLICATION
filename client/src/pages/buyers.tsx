@@ -161,7 +161,7 @@ export default function Buyers() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: InsertBuyer) =>
-      apiRequest("PATCH", `/api/buyers/${editingBuyer?.id}`, data),
+      apiRequest("PUT", `/api/buyers/${editingBuyer?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers/summary"] });
       setIsDialogOpen(false);
