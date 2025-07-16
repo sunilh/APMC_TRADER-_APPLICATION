@@ -300,7 +300,7 @@ export default function FinalAccounts() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <BackToDashboard />
         
-        {/* Period Info */}
+        {/* Period Info & Data Status */}
         <div className="mb-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="font-semibold text-blue-800">📊 Final Accounts - {dateRangeMode === 'fiscal' ? 'Fiscal Year Mode' : 'Custom Date Range Mode'}</h3>
           {dateRangeMode === 'fiscal' ? (
@@ -319,6 +319,24 @@ export default function FinalAccounts() {
               : `Period: ${finalAccounts?.fiscalYear || currentFiscalYear}`
             }
           </p>
+          
+          {/* Data Source Status */}
+          <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm">
+            <span className="font-semibold text-green-800">✓ AUTHENTIC DATA ONLY:</span>
+            <span className="text-green-700"> All figures calculated from real transactions - no mock or demo data included</span>
+          </div>
+          
+          {/* Zero Data Notice */}
+          {finalAccounts && (
+            finalAccounts.totalSales === 0 && 
+            finalAccounts.commissionIncome === 0 && 
+            finalAccounts.totalExpenses === 0
+          ) && (
+            <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+              <span className="font-semibold text-yellow-800">ℹ️ NO TRANSACTIONS:</span>
+              <span className="text-yellow-700"> No trading activity found for selected period. All values show zero.</span>
+            </div>
+          )}
         </div>
         
         {/* Header */}

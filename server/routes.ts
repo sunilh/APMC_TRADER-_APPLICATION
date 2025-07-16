@@ -44,7 +44,7 @@ import {
   bidPrices,
   suppliers,
 } from "@shared/schema";
-import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange } from "./finalAccountsSimple";
+import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange } from "./finalAccountsReal";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
