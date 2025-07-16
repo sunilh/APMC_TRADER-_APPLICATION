@@ -467,6 +467,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added intelligent font scaling and minimum size constraints to ensure usability
   - Enhanced form with grid information display showing columns, rows, and total bag count
   - System automatically optimizes layout while maintaining minimum 12mm×8mm cell size for practical use
+- July 16, 2025: Fixed critical farmer edit functionality and enhanced form placeholders across all languages
+  - Resolved database schema mismatch where form used bankAccount but database expected bankAccountNumber
+  - Added missing accountHolderName field to farmers database table and updated schema properly
+  - Fixed HTTP method mismatch where frontend used PATCH but backend expected PUT for farmer updates
+  - Enhanced all placeholder text in English, Hindi, and Kannada with detailed, helpful instructions
+  - Updated both farmer-form.tsx and farmer-form-new.tsx to ensure consistent field mapping
+  - Fixed form field registration to use correct database column names throughout
+  - Farmer creation and editing now works properly with all bank details displaying and saving correctly
 
 # User Preferences
 
