@@ -447,61 +447,66 @@ export default function BagEntryNew() {
 
   // Generate downloadable bag entry form
   const generateCompactBagForm = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF('p', 'mm', 'a4'); // Explicitly set A4 size
     
-    // Calculate optimal layout
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10;
-    const availableWidth = pageWidth - 2 * margin;
-    const availableHeight = pageHeight - 50; // Reserve space for header and footer
+    // A4 dimensions in mm: 210 x 297
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 15; // Increased margin for better printing
+    const availableWidth = pageWidth - 2 * margin; // 180mm
+    const headerHeight = 40; // Space for header
+    const footerHeight = 15; // Space for footer
+    const availableHeight = pageHeight - headerHeight - footerHeight - margin; // ~227mm
     
-    // Auto-scale based on bag count for single-page fit
+    // Calculate grid to fit A4 properly
     let cols: number;
-    let fontSize: number;
+    let cellWidth: number;
+    let cellHeight: number;
     
+    // Determine optimal columns based on bag count
     if (lot.numberOfBags <= 20) {
-      cols = Math.min(5, lot.numberOfBags); // Large boxes for small lots
-      fontSize = 10;
+      cols = Math.min(4, Math.ceil(Math.sqrt(lot.numberOfBags))); // Large cells
+    } else if (lot.numberOfBags <= 50) {
+      cols = 5; // Medium cells
     } else if (lot.numberOfBags <= 100) {
       cols = 7; // Standard layout
-      fontSize = 8;
-    } else if (lot.numberOfBags <= 300) {
+    } else if (lot.numberOfBags <= 200) {
       cols = 10; // Compact layout
-      fontSize = 7;
+    } else if (lot.numberOfBags <= 400) {
+      cols = 12; // Dense layout
     } else {
-      cols = Math.min(15, Math.ceil(Math.sqrt(lot.numberOfBags * 1.5))); // Very compact
-      fontSize = 6;
+      cols = 15; // Very dense for large lots
     }
     
-    const cellWidth = availableWidth / cols;
+    cellWidth = availableWidth / cols;
     const rows = Math.ceil(lot.numberOfBags / cols);
-    const cellHeight = Math.min(cellWidth * 0.8, availableHeight / rows); // Maintain aspect ratio
+    cellHeight = Math.min(cellWidth * 0.7, availableHeight / rows); // Ensure it fits vertically
     
-    // Ensure minimum usable size
-    const minCellSize = 8; // Minimum 8mm
-    if (cellWidth < minCellSize || cellHeight < minCellSize) {
+    // Ensure minimum readable size (at least 10mm x 8mm)
+    const minCellWidth = 10;
+    const minCellHeight = 8;
+    
+    if (cellWidth < minCellWidth || cellHeight < minCellHeight) {
       // Recalculate with minimum constraints
-      const maxCols = Math.floor(availableWidth / minCellSize);
-      const maxRows = Math.floor(availableHeight / minCellSize);
-      cols = Math.min(maxCols, Math.ceil(lot.numberOfBags / maxRows));
-      fontSize = Math.max(4, fontSize - 1);
+      cols = Math.floor(availableWidth / minCellWidth);
+      cellWidth = availableWidth / cols;
+      cellHeight = Math.max(minCellHeight, availableHeight / Math.ceil(lot.numberOfBags / cols));
     }
     
     // Header
-    doc.setFontSize(14);
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("BAG ENTRY FORM", pageWidth / 2, 20, { align: "center" });
     
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`Lot: ${lot.lotNumber}`, margin, 30);
     doc.text(`Farmer: ${lot.farmer.name}`, margin, 35);
-    doc.text(`Total Bags: ${lot.numberOfBags}`, pageWidth - margin - 40, 30);
-    doc.text(`Mobile: ${lot.farmer.mobile}`, pageWidth - margin - 40, 35);
+    doc.text(`Total Bags: ${lot.numberOfBags}`, pageWidth - margin - 50, 30);
+    doc.text(`Mobile: ${lot.farmer.mobile}`, pageWidth - margin - 50, 35);
     
-    // Grid
-    const startY = 45;
+    // Grid starts after header
+    const startY = headerHeight + margin;
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const bagNum = row * cols + col + 1;
@@ -521,16 +526,18 @@ export default function BagEntryNew() {
       }
     }
     
-    // Footer
-    const footerY = startY + rows * cellHeight + 10;
-    doc.setFontSize(8);
+    // Footer - ensure it stays within page bounds
+    const gridEndY = startY + rows * cellHeight;
+    const footerY = Math.min(gridEndY + 10, pageHeight - 20); // Ensure footer fits on page
+    
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("Signature: ___________________", margin, footerY);
-    doc.text("Date: ___________", pageWidth - margin - 30, footerY);
+    doc.text("Signature: ____________________", margin, footerY);
+    doc.text("Date: ____________", pageWidth - margin - 40, footerY);
     
     // Grid info
-    doc.setFontSize(6);
-    doc.text(`Layout: ${cols} cols × ${rows} rows | Auto-scaled for ${lot.numberOfBags} bags`, margin, footerY + 6);
+    doc.setFontSize(8);
+    doc.text(`${cols} columns × ${rows} rows | Total: ${lot.numberOfBags} bags`, margin, footerY + 8);
     
     // Download
     doc.save(`${lot.lotNumber}_BagEntry_Form.pdf`);
