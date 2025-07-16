@@ -678,6 +678,8 @@ export class DatabaseStorage implements IStorage {
 
     const stats = result[0];
     const pendingBills = stats.totalLots - stats.billGeneratedLots;
+    const totalPaid = parseFloat(stats.totalAmountPaid || '0');
+    const remainingAmount = Math.max(0, totalAmountDue - totalPaid);
 
     return {
       totalLots: stats.totalLots,
@@ -686,6 +688,7 @@ export class DatabaseStorage implements IStorage {
       pendingBills,
       totalAmountDue: totalAmountDue.toFixed(2),
       totalAmountPaid: stats.totalAmountPaid || '0',
+      remainingAmount: remainingAmount.toFixed(2),
       pendingPayments: stats.pendingPayments,
     };
   }

@@ -535,8 +535,11 @@ export default function Buyers() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-sm">Due: {formatCurrency(buyer.totalAmountDue)}</div>
+                          <div className="text-sm">Total: {formatCurrency(buyer.totalAmountDue)}</div>
                           <div className="text-sm text-green-600">Paid: {formatCurrency(buyer.totalAmountPaid)}</div>
+                          <div className="text-sm font-semibold text-orange-600">
+                            Remaining: {formatCurrency(buyer.remainingAmount || '0')}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
