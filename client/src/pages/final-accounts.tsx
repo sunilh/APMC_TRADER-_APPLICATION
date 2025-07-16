@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,13 +29,17 @@ import {
   Users,
   Download,
   Plus,
-  Eye
+  Eye,
+  Search,
+  Check,
+  ChevronDown
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Navigation } from "@/components/navigation";
 import { BackToDashboard } from "@/components/back-to-dashboard";
+import type { Farmer } from "@shared/schema";
 
 // Format currency values
 const formatCurrency = (amount: number | string) => {
@@ -66,6 +70,12 @@ export default function FinalAccounts() {
   const [paymentDialog, setPaymentDialog] = useState<{ type: 'received' | 'made', open: boolean }>({ type: 'received', open: false });
   const [expenseDialog, setExpenseDialog] = useState(false);
   
+  // Farmer search state for payment made dialog
+  const [farmerSearch, setFarmerSearch] = useState("");
+  const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
+  const [showFarmerDropdown, setShowFarmerDropdown] = useState(false);
+  const farmerDropdownRef = useRef<HTMLDivElement>(null);
+  
   // Date Range Selection State
   const [dateRangeMode, setDateRangeMode] = useState<'fiscal' | 'custom'>('fiscal');
   const [customStartDate, setCustomStartDate] = useState<string>('');
@@ -86,6 +96,13 @@ export default function FinalAccounts() {
   const { data: fiscalYearData } = useQuery({
     queryKey: ["/api/accounting/fiscal-year"],
     staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  // Fetch farmers for search suggestions
+  const { data: farmers } = useQuery({
+    queryKey: ["/api/farmers", farmerSearch],
+    enabled: farmerSearch.length > 0,
+    staleTime: 30000, // 30 seconds
   });
 
   const currentFiscalYear = fiscalYearData?.fiscalYear || "2024-25";
@@ -351,11 +368,48 @@ export default function FinalAccounts() {
     }
   };
 
+  // Farmer selection helpers
+  const handleFarmerSelect = (farmer: Farmer) => {
+    setSelectedFarmer(farmer);
+    setFarmerSearch(farmer.name);
+    setShowFarmerDropdown(false);
+  };
+
+  const handleFarmerSearchChange = (value: string) => {
+    setFarmerSearch(value);
+    setShowFarmerDropdown(value.length > 0);
+    if (value.length === 0) {
+      setSelectedFarmer(null);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (farmerDropdownRef.current && !farmerDropdownRef.current.contains(event.target as Node)) {
+        setShowFarmerDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Record payment made
   const handlePaymentMade = async (formData: FormData) => {
     try {
+      if (!selectedFarmer) {
+        toast({
+          title: "Error",
+          description: "Please select a farmer first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const data = {
-        farmerId: formData.get('farmerId'),
+        farmerId: selectedFarmer.id,
         amount: formData.get('amount'),
         paymentMethod: formData.get('paymentMethod'),
         referenceNumber: formData.get('referenceNumber'),
@@ -365,10 +419,12 @@ export default function FinalAccounts() {
       
       toast({
         title: "Payment Recorded",
-        description: "Payment made has been recorded successfully.",
+        description: `Payment made to ${selectedFarmer.name} has been recorded successfully.`,
       });
 
       setPaymentDialog({ type: 'made', open: false });
+      setSelectedFarmer(null);
+      setFarmerSearch("");
       queryClient.invalidateQueries({ queryKey: ["/api/accounting"] });
     } catch (error) {
       toast({
@@ -828,9 +884,77 @@ export default function FinalAccounts() {
                       handlePaymentMade(new FormData(e.currentTarget));
                     }}>
                       <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="farmerId">Farmer ID</Label>
-                          <Input id="farmerId" name="farmerId" type="number" required />
+                        <div className="relative" ref={farmerDropdownRef}>
+                          <Label htmlFor="farmerSearch">Select Farmer</Label>
+                          <div className="relative">
+                            <Input
+                              id="farmerSearch"
+                              value={farmerSearch}
+                              onChange={(e) => handleFarmerSearchChange(e.target.value)}
+                              placeholder="Search farmers by name, mobile, or place..."
+                              className="pl-10 pr-8"
+                              onFocus={() => setShowFarmerDropdown(farmerSearch.length > 0)}
+                              required
+                            />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            {selectedFarmer && (
+                              <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                            )}
+                          </div>
+                          
+                          {/* Farmer Search Dropdown */}
+                          {showFarmerDropdown && farmers && farmers.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                              {farmers.map((farmer: Farmer) => (
+                                <div
+                                  key={farmer.id}
+                                  onClick={() => handleFarmerSelect(farmer)}
+                                  className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <div className="font-medium text-gray-900">{farmer.name}</div>
+                                      <div className="text-sm text-gray-500">
+                                        {farmer.mobile} • {farmer.place}
+                                      </div>
+                                      {farmer.bankName && (
+                                        <div className="text-xs text-gray-400">
+                                          Bank: {farmer.bankName}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {selectedFarmer?.id === farmer.id && (
+                                      <Check className="h-4 w-4 text-green-500" />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Selected Farmer Display */}
+                          {selectedFarmer && (
+                            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-green-800">{selectedFarmer.name}</div>
+                                  <div className="text-sm text-green-600">
+                                    {selectedFarmer.mobile} • {selectedFarmer.place}
+                                  </div>
+                                </div>
+                                <Check className="h-5 w-5 text-green-500" />
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* No Results Message */}
+                          {showFarmerDropdown && farmerSearch.length > 0 && (!farmers || farmers.length === 0) && (
+                            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-3">
+                              <div className="text-center text-gray-500">
+                                No farmers found for "{farmerSearch}"
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="amount">Amount</Label>
