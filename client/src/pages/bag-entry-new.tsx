@@ -394,14 +394,6 @@ export default function BagEntryNew() {
     }));
   };
 
-  const updateBagNotes = (bagNumber: number, notes: string) => {
-    setBagEntries(prev => prev.map(bag => 
-      bag.bagNumber === bagNumber 
-        ? { ...bag, notes }
-        : bag
-    ));
-  };;
-
   if (isNaN(lotId)) {
     return (
       <div className="min-h-screen bg-gray-50">
