@@ -825,12 +825,22 @@ export class DatabaseStorage implements IStorage {
               sql`${lots.lotNumber} IN (${lotIds.map(id => `'${id}'`).join(',')})`
             ));
           
-          const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + lot.numberOfBags, 0);
-          const thisLotBags = allLotsInInvoice.find(lot => lot.lotNumber === row.lotNumber)?.numberOfBags || row.numberOfBags;
-          const proportionalAmount = totalBagsInInvoice > 0 ? (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount : totalInvoiceAmount;
+          console.log(`Debug: Found ${allLotsInInvoice.length} lots in invoice:`, allLotsInInvoice);
           
-          calculatedAmount = proportionalAmount;
-          console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${thisLotBags}/${totalBagsInInvoice} bags, total: ₹${totalInvoiceAmount})`);
+          const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + (lot.numberOfBags || 0), 0);
+          const thisLotBags = allLotsInInvoice.find(lot => lot.lotNumber === row.lotNumber)?.numberOfBags || row.numberOfBags || 0;
+          
+          console.log(`Debug: Total bags in invoice: ${totalBagsInInvoice}, This lot bags: ${thisLotBags}`);
+          
+          if (totalBagsInInvoice > 0) {
+            const proportionalAmount = (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount;
+            calculatedAmount = proportionalAmount;
+            console.log(`Using proportional tax invoice amount for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${thisLotBags}/${totalBagsInInvoice} bags, total: ₹${totalInvoiceAmount})`);
+          } else {
+            // Fallback: split equally among lots
+            calculatedAmount = totalInvoiceAmount / lotIds.length;
+            console.log(`Fallback: Equal split for lot ${row.lotNumber}: ₹${calculatedAmount.toFixed(2)} (${lotIds.length} lots)`);
+          }
         } else {
           // Single lot in invoice
           calculatedAmount = totalInvoiceAmount;
