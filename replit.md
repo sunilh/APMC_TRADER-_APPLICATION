@@ -490,6 +490,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added comprehensive validation preventing save operations without mandatory fields being completed
   - Enhanced auto-calculation logic automatically distributing bags across selected buyers with live preview
   - System now enforces proper agricultural trading workflow with price and buyer allocation before bag entry
+- July 16, 2025: Fixed bag entry routing and added intelligent downloadable form generation
+  - Resolved routing issue where old bag-entry.tsx was loading instead of new bag-entry-new.tsx component
+  - Fixed App.tsx routing to use BagEntryNew component eliminating individual bag notes and separate voice buttons
+  - Added intelligent auto-scaling PDF form generation with Download Form button in bag entry interface
+  - Implemented smart layout calculation that optimizes grid size based on total bag count for single-page printing
+  - Enhanced form generation: small lots (≤20 bags) use large boxes, medium lots (≤100) use standard layout, large lots (≤300) use compact grid
+  - Added minimum size constraints ensuring forms remain readable while maximizing bag count per page
+  - System generates downloadable PDF forms with lot information, farmer details, and numbered grid cells for manual weight entry
+  - Users can now print forms for offline data collection and later input weights into digital system
 
 # User Preferences
 

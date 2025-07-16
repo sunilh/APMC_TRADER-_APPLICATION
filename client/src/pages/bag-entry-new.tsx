@@ -15,11 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Users, Package } from "lucide-react";
+import { ArrowLeft, Save, Users, Package, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { BackToDashboard } from "@/components/back-to-dashboard";
 import type { Lot, Bag, Buyer } from "@shared/schema";
+import jsPDF from "jspdf";
 
 interface LotWithDetails extends Lot {
   farmer: {
@@ -444,6 +445,109 @@ export default function BagEntryNew() {
   const totalWeighedBags = bagEntries.filter(bag => bag.weight && bag.weight > 0).length;
   const totalWeight = bagEntries.reduce((sum, bag) => sum + (bag.weight || 0), 0);
 
+  // Generate downloadable bag entry form
+  const generateCompactBagForm = () => {
+    const doc = new jsPDF();
+    
+    // Calculate optimal layout
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const availableWidth = pageWidth - 2 * margin;
+    const availableHeight = pageHeight - 50; // Reserve space for header and footer
+    
+    // Auto-scale based on bag count for single-page fit
+    let cols: number;
+    let fontSize: number;
+    
+    if (lot.numberOfBags <= 20) {
+      cols = Math.min(5, lot.numberOfBags); // Large boxes for small lots
+      fontSize = 10;
+    } else if (lot.numberOfBags <= 100) {
+      cols = 7; // Standard layout
+      fontSize = 8;
+    } else if (lot.numberOfBags <= 300) {
+      cols = 10; // Compact layout
+      fontSize = 7;
+    } else {
+      cols = Math.min(15, Math.ceil(Math.sqrt(lot.numberOfBags * 1.5))); // Very compact
+      fontSize = 6;
+    }
+    
+    const cellWidth = availableWidth / cols;
+    const rows = Math.ceil(lot.numberOfBags / cols);
+    const cellHeight = Math.min(cellWidth * 0.8, availableHeight / rows); // Maintain aspect ratio
+    
+    // Ensure minimum usable size
+    const minCellSize = 8; // Minimum 8mm
+    if (cellWidth < minCellSize || cellHeight < minCellSize) {
+      // Recalculate with minimum constraints
+      const maxCols = Math.floor(availableWidth / minCellSize);
+      const maxRows = Math.floor(availableHeight / minCellSize);
+      cols = Math.min(maxCols, Math.ceil(lot.numberOfBags / maxRows));
+      fontSize = Math.max(4, fontSize - 1);
+    }
+    
+    // Header
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("BAG ENTRY FORM", pageWidth / 2, 20, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Lot: ${lot.lotNumber}`, margin, 30);
+    doc.text(`Farmer: ${lot.farmer.name}`, margin, 35);
+    doc.text(`Total Bags: ${lot.numberOfBags}`, pageWidth - margin - 40, 30);
+    doc.text(`Mobile: ${lot.farmer.mobile}`, pageWidth - margin - 40, 35);
+    
+    // Grid
+    const startY = 45;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const bagNum = row * cols + col + 1;
+        if (bagNum > lot.numberOfBags) break;
+        
+        const x = margin + col * cellWidth;
+        const y = startY + row * cellHeight;
+        
+        // Draw cell border
+        doc.rect(x, y, cellWidth, cellHeight);
+        
+        // Add bag number (scale with cell size)
+        if (cellWidth > 15) {
+          doc.setFontSize(Math.max(6, fontSize));
+          doc.text(`#${bagNum}`, x + 1, y + fontSize + 2);
+        } else {
+          doc.setFontSize(Math.max(4, fontSize - 1));
+          doc.text(`${bagNum}`, x + 0.5, y + fontSize + 1);
+        }
+        
+        // Weight line (scale with cell size)
+        const lineY = y + cellHeight - 3;
+        doc.line(x + 2, lineY, x + cellWidth - 2, lineY);
+      }
+    }
+    
+    // Footer
+    const footerY = startY + rows * cellHeight + 10;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("Signature: ___________________", margin, footerY);
+    doc.text("Date: ___________", pageWidth - margin - 30, footerY);
+    
+    // Grid info
+    doc.setFontSize(6);
+    doc.text(`Layout: ${cols} cols × ${rows} rows | Auto-scaled for ${lot.numberOfBags} bags`, margin, footerY + 6);
+    
+    // Download
+    doc.save(`${lot.lotNumber}_BagEntry_Form.pdf`);
+    
+    toast({
+      title: "Form Downloaded",
+      description: `Downloadable bag entry form generated for ${lot.numberOfBags} bags`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -451,14 +555,24 @@ export default function BagEntryNew() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         <BackToDashboard />
         <div className="mb-4 sm:mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => setLocation("/lots")}
-            className="text-primary hover:text-primary/80 mb-3 sm:mb-4 w-full sm:w-auto min-h-[44px]"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Lots
-          </Button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/lots")}
+              className="text-primary hover:text-primary/80 w-full sm:w-auto min-h-[44px]"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Lots
+            </Button>
+            <Button
+              variant="outline"
+              onClick={generateCompactBagForm}
+              className="gap-2 w-full sm:w-auto min-h-[44px]"
+            >
+              <Download className="h-4 w-4" />
+              Download Form
+            </Button>
+          </div>
           <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
             Bag Entry - {lot.lotNumber}
           </h1>
