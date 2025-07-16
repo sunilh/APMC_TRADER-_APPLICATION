@@ -513,14 +513,7 @@ export default function BagEntryNew() {
         // Draw cell border
         doc.rect(x, y, cellWidth, cellHeight);
         
-        // Add bag number (scale with cell size)
-        if (cellWidth > 15) {
-          doc.setFontSize(Math.max(6, fontSize));
-          doc.text(`#${bagNum}`, x + 1, y + fontSize + 2);
-        } else {
-          doc.setFontSize(Math.max(4, fontSize - 1));
-          doc.text(`${bagNum}`, x + 0.5, y + fontSize + 1);
-        }
+        // Empty cell - no bag numbers as requested
         
         // Weight line (scale with cell size)
         const lineY = y + cellHeight - 3;
