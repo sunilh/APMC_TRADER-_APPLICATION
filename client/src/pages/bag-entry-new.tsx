@@ -526,18 +526,12 @@ export default function BagEntryNew() {
       }
     }
     
-    // Footer - ensure it stays within page bounds
+    // Footer - just grid info, no signature/date as requested
     const gridEndY = startY + rows * cellHeight;
-    const footerY = Math.min(gridEndY + 10, pageHeight - 20); // Ensure footer fits on page
+    const footerY = Math.min(gridEndY + 10, pageHeight - 15);
     
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Signature: ____________________", margin, footerY);
-    doc.text("Date: ____________", pageWidth - margin - 40, footerY);
-    
-    // Grid info
     doc.setFontSize(8);
-    doc.text(`${cols} columns × ${rows} rows | Total: ${lot.numberOfBags} bags`, margin, footerY + 8);
+    doc.text(`${cols} columns × ${rows} rows | Total: ${lot.numberOfBags} bags`, margin, footerY);
     
     // Download
     doc.save(`${lot.lotNumber}_BagEntry_Form.pdf`);
