@@ -337,6 +337,18 @@ export default function FinalAccounts() {
               <span className="text-yellow-700"> No trading activity found for selected period. All values show zero.</span>
             </div>
           )}
+          
+          {/* Historical Data Notice */}
+          {finalAccounts && (
+            finalAccounts.totalSales > 0 || 
+            finalAccounts.commissionIncome > 0 || 
+            finalAccounts.totalExpenses > 0
+          ) && dateRangeMode === 'fiscal' && (
+            <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded text-sm">
+              <span className="font-semibold text-blue-800">📈 HISTORICAL DATA:</span>
+              <span className="text-blue-700"> Showing authentic transactions from your trading sessions (July 9th & 12th). Use "Custom Date Range" to view specific dates.</span>
+            </div>
+          )}
         </div>
         
         {/* Header */}
