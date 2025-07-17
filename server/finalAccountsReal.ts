@@ -39,10 +39,10 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           fb.vehicle_rent,
           fb.empty_bag_charges,
           fb.advance,
-          fb.commission_amount as rok,
-          fb.other_deductions,
-          fb.net_amount as net_payable,
-          (fb.total_amount - fb.net_amount) as total_deductions
+          fb.rok,
+          fb.other_charges as other_deductions,
+          fb.net_payable,
+          (fb.total_amount - fb.net_payable) as total_deductions
         FROM farmer_bills fb
         JOIN farmers f ON fb.farmer_id = f.id
         WHERE fb.tenant_id = ${tenantId} 
@@ -82,10 +82,10 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           fb.vehicle_rent,
           fb.empty_bag_charges,
           fb.advance,
-          fb.commission_amount as rok,
-          fb.other_deductions,
-          fb.net_amount as net_payable,
-          (fb.total_amount - fb.net_amount) as total_deductions
+          fb.rok,
+          fb.other_charges as other_deductions,
+          fb.net_payable,
+          (fb.total_amount - fb.net_payable) as total_deductions
         FROM farmer_bills fb
         JOIN farmers f ON fb.farmer_id = f.id
         WHERE fb.tenant_id = ${tenantId} 
@@ -123,10 +123,10 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           fb.vehicle_rent,
           fb.empty_bag_charges,
           fb.advance,
-          fb.commission_amount as rok,
-          fb.other_deductions,
-          fb.net_amount as net_payable,
-          (fb.total_amount - fb.net_amount) as total_deductions
+          fb.rok,
+          fb.other_charges as other_deductions,
+          fb.net_payable,
+          (fb.total_amount - fb.net_payable) as total_deductions
         FROM farmer_bills fb
         JOIN farmers f ON fb.farmer_id = f.id
         WHERE fb.tenant_id = ${tenantId}
