@@ -295,29 +295,117 @@ export default function TaxInvoice() {
             <meta charset="utf-8">
             <title>Tax Invoice - ${invoice.invoiceNumber}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; line-height: 1.3; }
-              .header { text-align: center; margin-bottom: 20px; }
-              .invoice-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
-              .invoice-details { font-size: 12px; margin-bottom: 5px; }
-              .hsn-code { font-size: 12px; margin-bottom: 15px; }
-              .company-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
-              .seller, .buyer { width: 48%; font-size: 10px; }
-              .section-title { font-weight: bold; margin-bottom: 8px; text-align: center; background-color: #f0f0f0; padding: 5px; }
-              .item-details-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 12px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
-              th, td { border: 1px solid #000; padding: 6px; text-align: center; }
-              th { background-color: #f0f0f0; font-weight: bold; font-size: 9px; }
-              .calculations-section { display: flex; justify-content: space-between; margin-top: 20px; }
-              .calculations { width: 48%; }
-              .bank-details { width: 48%; }
-              .calc-title, .bank-title { font-weight: bold; margin-bottom: 10px; text-align: center; background-color: #f0f0f0; padding: 5px; font-size: 11px; }
-              .calc-table, .bank-table { width: 100%; font-size: 9px; }
-              .calc-table td, .bank-table td { border: none; padding: 2px 5px; }
-              .total-payable { font-weight: bold; border-top: 2px solid #000; padding-top: 5px; font-size: 11px; }
-              .terms { margin-top: 15px; font-size: 8px; }
-              .signature { text-align: right; margin-top: 40px; padding-right: 50px; }
-              .signature-line { border-top: 1px solid #000; width: 150px; margin-left: auto; padding-top: 5px; font-size: 10px; }
-              @media print { body { margin: 0; } }
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                font-size: 12px; 
+                line-height: 1.4; 
+                color: #000;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+              }
+              .invoice-title { 
+                font-size: 18px; 
+                font-weight: bold; 
+                margin-bottom: 8px; 
+                letter-spacing: 2px;
+              }
+              .invoice-details { 
+                font-size: 14px; 
+                margin-bottom: 8px; 
+              }
+              .hsn-code { 
+                font-size: 14px; 
+                margin-bottom: 25px; 
+              }
+              .company-info { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-bottom: 30px; 
+                min-height: 160px;
+              }
+              .seller, .buyer { 
+                width: 48%; 
+                font-size: 11px; 
+              }
+              .section-title { 
+                font-weight: bold; 
+                margin-bottom: 10px; 
+                font-size: 12px;
+                text-decoration: underline;
+              }
+              .company-field {
+                margin-bottom: 4px;
+                line-height: 1.5;
+              }
+              .item-details-title { 
+                font-weight: bold; 
+                margin: 25px 0 15px 0; 
+                font-size: 12px; 
+              }
+              .items-table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-bottom: 25px; 
+                font-size: 11px; 
+              }
+              .items-table th, .items-table td { 
+                border: 1px solid #000; 
+                padding: 8px; 
+                text-align: center; 
+              }
+              .items-table th { 
+                background-color: #f0f0f0; 
+                font-weight: bold; 
+                font-size: 10px; 
+              }
+              .calculations-section { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-top: 25px; 
+              }
+              .calculations { 
+                width: 45%; 
+              }
+              .bank-details { 
+                width: 45%; 
+              }
+              .calc-title, .bank-title { 
+                font-weight: bold; 
+                margin-bottom: 15px; 
+                font-size: 12px; 
+                text-decoration: underline;
+              }
+              .calc-line, .bank-line { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-bottom: 3px; 
+                font-size: 11px; 
+              }
+              .total-payable { 
+                font-weight: bold; 
+                font-size: 13px; 
+                margin-top: 8px; 
+                padding-top: 8px; 
+                border-top: 1px solid #000;
+              }
+              .terms { 
+                margin-top: 20px; 
+                font-size: 10px; 
+                line-height: 1.4;
+              }
+              .signature { 
+                text-align: right; 
+                margin-top: 50px; 
+                padding-right: 0px; 
+                font-size: 11px;
+              }
+              @media print { 
+                body { margin: 10px; } 
+                .calculations-section { page-break-inside: avoid; }
+              }
             </style>
           </head>
           <body>
@@ -330,30 +418,31 @@ export default function TaxInvoice() {
             <div class="company-info">
               <div class="seller">
                 <div class="section-title">SELLER DETAILS</div>
-                <div><strong>Company:</strong> ${invoiceData.seller?.companyName || 'N/A'}</div>
-                <div><strong>APMC:</strong> ${invoiceData.seller?.apmcCode || 'N/A'}</div>
-                <div><strong>Address:</strong> ${invoiceData.seller?.address || 'N/A'}</div>
-                <div><strong>Mobile:</strong> ${invoiceData.seller?.mobile || 'N/A'}</div>
-                <div><strong>GSTIN:</strong> ${invoiceData.seller?.gstin || 'N/A'}</div>
-                <div><strong>PAN:</strong> ${invoiceData.seller?.pan || 'N/A'}</div>
-                <div><strong>FSSAI:</strong> ${invoiceData.seller?.fssai || 'N/A'}</div>
+                <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.companyName || 'N/A'}</div>
+                <div class="company-field"><strong>APMC:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.apmcCode || 'N/A'}</div>
+                <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.address || 'N/A'}</div>
+                <div class="company-field">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.mobile || 'N/A'}</div>
+                <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.gstin || 'N/A'}</div>
+                <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.pan || 'N/A'}</div>
+                <div class="company-field"><strong>FSSAI:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.fssai || 'N/A'}</div>
               </div>
               <div class="buyer">
                 <div class="section-title">BUYER DETAILS</div>
-                <div><strong>Company:</strong> ${invoiceData.buyer?.companyName || 'N/A'}</div>
-                <div><strong>Contact:</strong> ${invoiceData.buyer?.contactPerson || 'N/A'}</div>
-                <div><strong>Address:</strong> ${invoiceData.buyer?.address || 'N/A'}</div>
-                <div><strong>Mobile:</strong> ${invoiceData.buyer?.mobile || 'N/A'}</div>
-                <div><strong>GSTIN:</strong> ${invoiceData.buyer?.gstin || 'N/A'}</div>
-                <div><strong>PAN:</strong> ${invoiceData.buyer?.pan || 'N/A'}</div>
+                <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.companyName || 'N/A'}</div>
+                <div class="company-field"><strong>Contact:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.contactPerson || 'N/A'}</div>
+                <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.address || 'N/A'}</div>
+                <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.mobile || 'N/A'}</div>
+                <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.gstin || 'N/A'}</div>
+                <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.pan || 'N/A'}</div>
               </div>
             </div>
             
             <div class="item-details-title">
-              ITEM DETAILS:
+               ITEM DETAILS:
             </div>
 
-            <table>
+            <table class="items-table">
               <thead>
                 <tr>
                   <th>LOT NO</th>
@@ -368,13 +457,13 @@ export default function TaxInvoice() {
               <tbody>
                 ${invoiceData.items?.map(item => `
                   <tr>
-                    <td style="text-align: center;">${item.lotNo || ''}</td>
-                    <td style="text-align: center;">${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
-                    <td style="text-align: center;">09042110</td>
-                    <td style="text-align: center;">${item.bags || 0}</td>
-                    <td style="text-align: center;">${item.weightKg || 0}</td>
-                    <td style="text-align: center;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN')}</td>
-                    <td style="text-align: center;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td>${item.lotNo || ''}</td>
+                    <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
+                    <td>09042110</td>
+                    <td>${item.bags || 0}</td>
+                    <td>${item.weightKg || 0}</td>
+                    <td>₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td>₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                   </tr>
                 `).join('') || ''}
               </tbody>
@@ -383,31 +472,79 @@ export default function TaxInvoice() {
             <div class="calculations-section">
               <div class="calculations">
                 <div class="calc-title">AMOUNT CALCULATIONS</div>
-                <table class="calc-table">
-                  <tr><td>Basic Amount</td><td style="text-align: right;">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ Packaging (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</td><td style="text-align: right;">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ Hamali (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</td><td style="text-align: right;">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ Weighing (${invoiceData.calculations?.totalBags || 0} bags)</td><td style="text-align: right;">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ Commission</td><td style="text-align: right;">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ Cess @ 0.6% (on basic amount)</td><td style="text-align: right;">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>Taxable Amount</td><td style="text-align: right;">₹${((invoiceData.calculations?.basicAmount || 0) + (invoiceData.calculations?.packaging || 0) + (invoiceData.calculations?.hamali || 0) + (invoiceData.calculations?.weighingCharges || 0) + (invoiceData.calculations?.commission || 0) + (invoiceData.calculations?.cess || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ SGST (2.5%)</td><td style="text-align: right;">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>+ CGST (2.5%)</td><td style="text-align: right;">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr><td>Total GST</td><td style="text-align: right;">₹${((invoiceData.calculations?.sgst || 0) + (invoiceData.calculations?.cgst || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
-                  <tr class="total-payable"><td><strong>TOTAL PAYABLE</strong></td><td style="text-align: right;"><strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td></tr>
-                </table>
+                <div class="calc-line">
+                  <span>Basic Amount</span>
+                  <span>₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ Packaging (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</span>
+                  <span>₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ Hamali (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</span>
+                  <span>₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ Weighing (${invoiceData.calculations?.totalBags || 0} bags)</span>
+                  <span>₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ Commission</span>
+                  <span>₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ Cess @ 0.6% (on basic amount)</span>
+                  <span>₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>Taxable Amount</span>
+                  <span>₹${((invoiceData.calculations?.basicAmount || 0) + (invoiceData.calculations?.packaging || 0) + (invoiceData.calculations?.hamali || 0) + (invoiceData.calculations?.weighingCharges || 0) + (invoiceData.calculations?.commission || 0) + (invoiceData.calculations?.cess || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ SGST (2.5%)</span>
+                  <span>₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>+ CGST (2.5%)</span>
+                  <span>₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="calc-line">
+                  <span>Total GST</span>
+                  <span>₹${((invoiceData.calculations?.sgst || 0) + (invoiceData.calculations?.cgst || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+                <br>
+                <div class="calc-line total-payable">
+                  <span><strong>TOTAL PAYABLE</strong></span>
+                  <span><strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></span>
+                </div>
               </div>
               
               <div class="bank-details">
                 <div class="bank-title">BANK DETAILS FOR PAYMENT</div>
-                <table class="bank-table">
-                  <tr><td><strong>Bank:</strong></td><td>${invoiceData.bankDetails?.bankName || 'N/A'}</td></tr>
-                  <tr><td><strong>A/C No:</strong></td><td>${invoiceData.bankDetails?.accountNumber || 'N/A'}</td></tr>
-                  <tr><td><strong>IFSC:</strong></td><td>${invoiceData.bankDetails?.ifscCode || 'N/A'}</td></tr>
-                  <tr><td><strong>Holder:</strong></td><td>${invoiceData.bankDetails?.accountHolder || 'N/A'}</td></tr>
-                  <tr><td><strong>Branch:</strong></td><td>${invoiceData.bankDetails?.branchName || ''}</td></tr>
-                  <tr><td><strong>Branch Address:</strong></td><td>${invoiceData.bankDetails?.branchAddress || ''}</td></tr>
-                </table>
+                <div class="bank-line">
+                  <span><strong>Bank:</strong></span>
+                  <span>${invoiceData.bankDetails?.bankName || 'N/A'}</span>
+                </div>
+                <div class="bank-line">
+                  <span><strong>A/C No:</strong></span>
+                  <span>${invoiceData.bankDetails?.accountNumber || 'N/A'}</span>
+                </div>
+                <div class="bank-line">
+                  <span><strong>IFSC:</strong></span>
+                  <span>${invoiceData.bankDetails?.ifscCode || 'N/A'}</span>
+                </div>
+                <div class="bank-line">
+                  <span><strong>Holder:</strong></span>
+                  <span>${invoiceData.bankDetails?.accountHolder || 'N/A'}</span>
+                </div>
+                <div class="bank-line">
+                  <span><strong>Branch:</strong></span>
+                  <span>${invoiceData.bankDetails?.branchName || ''}</span>
+                </div>
+                <div class="bank-line">
+                  <span><strong>Branch Address:</strong></span>
+                  <span>${invoiceData.bankDetails?.branchAddress || ''}</span>
+                </div>
                 
                 <div class="terms">
                   <div>Terms: Payment due within 30 days</div>
@@ -457,29 +594,117 @@ export default function TaxInvoice() {
           <meta charset="utf-8">
           <title>Tax Invoice - ${taxInvoice.invoiceNumber}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; line-height: 1.3; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .invoice-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
-            .invoice-details { font-size: 12px; margin-bottom: 5px; }
-            .hsn-code { font-size: 12px; margin-bottom: 15px; }
-            .company-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .seller, .buyer { width: 48%; font-size: 10px; }
-            .section-title { font-weight: bold; margin-bottom: 8px; text-align: center; background-color: #f0f0f0; padding: 5px; }
-            .item-details-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 12px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
-            th, td { border: 1px solid #000; padding: 6px; text-align: center; }
-            th { background-color: #f0f0f0; font-weight: bold; font-size: 9px; }
-            .calculations-section { display: flex; justify-content: space-between; margin-top: 20px; }
-            .calculations { width: 48%; }
-            .bank-details { width: 48%; }
-            .calc-title, .bank-title { font-weight: bold; margin-bottom: 10px; text-align: center; background-color: #f0f0f0; padding: 5px; font-size: 11px; }
-            .calc-table, .bank-table { width: 100%; font-size: 9px; }
-            .calc-table td, .bank-table td { border: none; padding: 2px 5px; }
-            .total-payable { font-weight: bold; border-top: 2px solid #000; padding-top: 5px; font-size: 11px; }
-            .terms { margin-top: 15px; font-size: 8px; }
-            .signature { text-align: right; margin-top: 40px; padding-right: 50px; }
-            .signature-line { border-top: 1px solid #000; width: 150px; margin-left: auto; padding-top: 5px; font-size: 10px; }
-            @media print { body { margin: 0; } }
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              font-size: 12px; 
+              line-height: 1.4; 
+              color: #000;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+            }
+            .invoice-title { 
+              font-size: 18px; 
+              font-weight: bold; 
+              margin-bottom: 8px; 
+              letter-spacing: 2px;
+            }
+            .invoice-details { 
+              font-size: 14px; 
+              margin-bottom: 8px; 
+            }
+            .hsn-code { 
+              font-size: 14px; 
+              margin-bottom: 25px; 
+            }
+            .company-info { 
+              display: flex; 
+              justify-content: space-between; 
+              margin-bottom: 30px; 
+              min-height: 160px;
+            }
+            .seller, .buyer { 
+              width: 48%; 
+              font-size: 11px; 
+            }
+            .section-title { 
+              font-weight: bold; 
+              margin-bottom: 10px; 
+              font-size: 12px;
+              text-decoration: underline;
+            }
+            .company-field {
+              margin-bottom: 4px;
+              line-height: 1.5;
+            }
+            .item-details-title { 
+              font-weight: bold; 
+              margin: 25px 0 15px 0; 
+              font-size: 12px; 
+            }
+            .items-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 25px; 
+              font-size: 11px; 
+            }
+            .items-table th, .items-table td { 
+              border: 1px solid #000; 
+              padding: 8px; 
+              text-align: center; 
+            }
+            .items-table th { 
+              background-color: #f0f0f0; 
+              font-weight: bold; 
+              font-size: 10px; 
+            }
+            .calculations-section { 
+              display: flex; 
+              justify-content: space-between; 
+              margin-top: 25px; 
+            }
+            .calculations { 
+              width: 45%; 
+            }
+            .bank-details { 
+              width: 45%; 
+            }
+            .calc-title, .bank-title { 
+              font-weight: bold; 
+              margin-bottom: 15px; 
+              font-size: 12px; 
+              text-decoration: underline;
+            }
+            .calc-line, .bank-line { 
+              display: flex; 
+              justify-content: space-between; 
+              margin-bottom: 3px; 
+              font-size: 11px; 
+            }
+            .total-payable { 
+              font-weight: bold; 
+              font-size: 13px; 
+              margin-top: 8px; 
+              padding-top: 8px; 
+              border-top: 1px solid #000;
+            }
+            .terms { 
+              margin-top: 20px; 
+              font-size: 10px; 
+              line-height: 1.4;
+            }
+            .signature { 
+              text-align: right; 
+              margin-top: 50px; 
+              padding-right: 0px; 
+              font-size: 11px;
+            }
+            @media print { 
+              body { margin: 10px; } 
+              .calculations-section { page-break-inside: avoid; }
+            }
           </style>
         </head>
         <body>
@@ -492,30 +717,31 @@ export default function TaxInvoice() {
           <div class="company-info">
             <div class="seller">
               <div class="section-title">SELLER DETAILS</div>
-              <div><strong>Company:</strong> ${taxInvoice.seller.companyName}</div>
-              <div><strong>APMC:</strong> ${taxInvoice.seller.apmcCode}</div>
-              <div><strong>Address:</strong> ${taxInvoice.seller.address}</div>
-              <div><strong>Mobile:</strong> ${taxInvoice.seller.mobile}</div>
-              <div><strong>GSTIN:</strong> ${taxInvoice.seller.gstin}</div>
-              <div><strong>PAN:</strong> ${taxInvoice.seller.pan}</div>
-              <div><strong>FSSAI:</strong> ${taxInvoice.seller.fssai}</div>
+              <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.companyName}</div>
+              <div class="company-field"><strong>APMC:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.apmcCode}</div>
+              <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.address}</div>
+              <div class="company-field">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+              <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.mobile}</div>
+              <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.gstin}</div>
+              <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.pan}</div>
+              <div class="company-field"><strong>FSSAI:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.seller.fssai}</div>
             </div>
             <div class="buyer">
               <div class="section-title">BUYER DETAILS</div>
-              <div><strong>Company:</strong> ${taxInvoice.buyer.companyName}</div>
-              <div><strong>Contact:</strong> ${taxInvoice.buyer.contactPerson}</div>
-              <div><strong>Address:</strong> ${taxInvoice.buyer.address}</div>
-              <div><strong>Mobile:</strong> ${taxInvoice.buyer.mobile}</div>
-              <div><strong>GSTIN:</strong> ${taxInvoice.buyer.gstin}</div>
-              <div><strong>PAN:</strong> ${taxInvoice.buyer.pan || 'N/A'}</div>
+              <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.companyName}</div>
+              <div class="company-field"><strong>Contact:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.contactPerson}</div>
+              <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.address}</div>
+              <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.mobile}</div>
+              <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.gstin}</div>
+              <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${taxInvoice.buyer.pan || 'N/A'}</div>
             </div>
           </div>
           
           <div class="item-details-title">
-            ITEM DETAILS:
+             ITEM DETAILS:
           </div>
 
-          <table>
+          <table class="items-table">
             <thead>
               <tr>
                 <th>LOT NO</th>
@@ -530,13 +756,13 @@ export default function TaxInvoice() {
             <tbody>
               ${taxInvoice.items.map(item => `
                 <tr>
-                  <td style="text-align: center;">${item.lotNo}</td>
-                  <td style="text-align: center;">${item.itemName}</td>
-                  <td style="text-align: center;">${item.hsnCode}</td>
-                  <td style="text-align: center;">${item.bags}</td>
-                  <td style="text-align: center;">${item.weightKg}</td>
-                  <td style="text-align: center;">${formatCurrency(item.ratePerQuintal)}</td>
-                  <td style="text-align: center;">${formatCurrency(item.basicAmount)}</td>
+                  <td>${item.lotNo}</td>
+                  <td>${item.itemName}</td>
+                  <td>09042110</td>
+                  <td>${item.bags}</td>
+                  <td>${item.weightKg}</td>
+                  <td>₹${formatCurrency(item.ratePerQuintal)}</td>
+                  <td>₹${formatCurrency(item.basicAmount)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -545,31 +771,79 @@ export default function TaxInvoice() {
           <div class="calculations-section">
             <div class="calculations">
               <div class="calc-title">AMOUNT CALCULATIONS</div>
-              <table class="calc-table">
-                <tr><td>Basic Amount</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount)}</td></tr>
-                <tr><td>+ Packaging (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.packaging)}</td></tr>
-                <tr><td>+ Hamali (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.hamali)}</td></tr>
-                <tr><td>+ Weighing (${taxInvoice.calculations.totalBags} bags)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.weighingCharges)}</td></tr>
-                <tr><td>+ Commission</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.commission)}</td></tr>
-                <tr><td>+ Cess @ 0.6% (on basic amount)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.cess)}</td></tr>
-                <tr><td>Taxable Amount</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount + taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission + taxInvoice.calculations.cess)}</td></tr>
-                <tr><td>+ SGST (2.5%)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.sgst)}</td></tr>
-                <tr><td>+ CGST (2.5%)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.cgst)}</td></tr>
-                <tr><td>Total GST</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.sgst + taxInvoice.calculations.cgst)}</td></tr>
-                <tr class="total-payable"><td><strong>TOTAL PAYABLE</strong></td><td style="text-align: right;"><strong>${formatCurrency(taxInvoice.calculations.totalAmount)}</strong></td></tr>
-              </table>
+              <div class="calc-line">
+                <span>Basic Amount</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.basicAmount)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ Packaging (${taxInvoice.calculations.totalBags} bags × ₹5)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.packaging)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ Hamali (${taxInvoice.calculations.totalBags} bags × ₹5)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.hamali)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ Weighing (${taxInvoice.calculations.totalBags} bags)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.weighingCharges)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ Commission</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.commission)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ Cess @ 0.6% (on basic amount)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.cess)}</span>
+              </div>
+              <div class="calc-line">
+                <span>Taxable Amount</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.basicAmount + taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission + taxInvoice.calculations.cess)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ SGST (2.5%)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.sgst)}</span>
+              </div>
+              <div class="calc-line">
+                <span>+ CGST (2.5%)</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.cgst)}</span>
+              </div>
+              <div class="calc-line">
+                <span>Total GST</span>
+                <span>₹${formatCurrency(taxInvoice.calculations.sgst + taxInvoice.calculations.cgst)}</span>
+              </div>
+              <br>
+              <div class="calc-line total-payable">
+                <span><strong>TOTAL PAYABLE</strong></span>
+                <span><strong>₹${formatCurrency(taxInvoice.calculations.totalAmount)}</strong></span>
+              </div>
             </div>
             
             <div class="bank-details">
               <div class="bank-title">BANK DETAILS FOR PAYMENT</div>
-              <table class="bank-table">
-                <tr><td><strong>Bank:</strong></td><td>${taxInvoice.bankDetails.bankName}</td></tr>
-                <tr><td><strong>A/C No:</strong></td><td>${taxInvoice.bankDetails.accountNumber}</td></tr>
-                <tr><td><strong>IFSC:</strong></td><td>${taxInvoice.bankDetails.ifscCode}</td></tr>
-                <tr><td><strong>Holder:</strong></td><td>${taxInvoice.bankDetails.accountHolder}</td></tr>
-                <tr><td><strong>Branch:</strong></td><td>${taxInvoice.bankDetails.branchName || ''}</td></tr>
-                <tr><td><strong>Branch Address:</strong></td><td>${taxInvoice.bankDetails.branchAddress || ''}</td></tr>
-              </table>
+              <div class="bank-line">
+                <span><strong>Bank:</strong></span>
+                <span>${taxInvoice.bankDetails.bankName}</span>
+              </div>
+              <div class="bank-line">
+                <span><strong>A/C No:</strong></span>
+                <span>${taxInvoice.bankDetails.accountNumber}</span>
+              </div>
+              <div class="bank-line">
+                <span><strong>IFSC:</strong></span>
+                <span>${taxInvoice.bankDetails.ifscCode}</span>
+              </div>
+              <div class="bank-line">
+                <span><strong>Holder:</strong></span>
+                <span>${taxInvoice.bankDetails.accountHolder}</span>
+              </div>
+              <div class="bank-line">
+                <span><strong>Branch:</strong></span>
+                <span>${taxInvoice.bankDetails.branchName || ''}</span>
+              </div>
+              <div class="bank-line">
+                <span><strong>Branch Address:</strong></span>
+                <span>${taxInvoice.bankDetails.branchAddress || ''}</span>
+              </div>
               
               <div class="terms">
                 <div>Terms: Payment due within 30 days</div>
@@ -579,9 +853,7 @@ export default function TaxInvoice() {
           </div>
           
           <div class="signature">
-            <div class="signature-line">
-              Authorized Signature
-            </div>
+            Authorized Signature
           </div>
         </body>
       </html>
