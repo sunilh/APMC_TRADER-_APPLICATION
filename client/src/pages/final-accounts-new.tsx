@@ -921,7 +921,7 @@ function LedgerTab({ dateRange }: { dateRange: any }) {
       date: today,
       account: 'Cost of Goods Sold',
       description: 'Purchase from VISHWANATH',
-      debit: 0,
+      debit: Math.round(cashOutflow),
       credit: 0,
       type: 'purchase'
     });
@@ -933,7 +933,7 @@ function LedgerTab({ dateRange }: { dateRange: any }) {
       account: 'Cash/Bank',
       description: 'Payment to VISHWANATH',
       debit: 0,
-      credit: 0,
+      credit: Math.round(cashOutflow),
       type: 'payment'
     });
   }
