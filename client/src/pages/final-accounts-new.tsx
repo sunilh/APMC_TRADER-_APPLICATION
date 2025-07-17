@@ -873,11 +873,11 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
             </div>
             <div className="flex justify-between">
               <span>Taxes Collected:</span>
-              <span className="font-medium text-blue-600">{formatCurrency(taxesCollected)}</span>
+              <span className="font-medium text-blue-600">{formatCurrency(gstCessPayable)}</span>
             </div>
             <div className="flex justify-between font-semibold border-t pt-1">
-              <span>Net Position:</span>
-              <span className="text-green-600">{formatCurrency(cashPosition)}</span>
+              <span>Net Cash Position:</span>
+              <span className="text-green-600">{formatCurrency(cash)}</span>
             </div>
           </div>
         </div>
