@@ -794,68 +794,36 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
         <CardDescription>Financial position from trading operations</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-bold text-center mb-6">Corrected One-Period Balance Sheet</h3>
-          
-          <div className="grid grid-cols-2 gap-8">
-            {/* Assets Column */}
-            <div>
-              <div className="flex justify-between font-bold border-b pb-2 mb-4">
-                <span>Assets</span>
-                <span>₹</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-blue-600 mb-3">ASSETS</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Cash</span>
+                <span>{formatCurrency(cash)}</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Cash</span>
-                  <span className="text-right">{Math.round(cash).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-              <div className="flex justify-between font-bold border-t pt-2 mt-4">
+              <div className="flex justify-between font-semibold border-t pt-2">
                 <span>Total Assets</span>
-                <span className="text-right">{Math.round(totalAssets).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-
-            {/* Liabilities & Equity Column */}
-            <div>
-              <div className="flex justify-between font-bold border-b pb-2 mb-4">
-                <span>Liabilities & Equity</span>
-                <span>₹</span>
-              </div>
-              
-              {/* Liabilities Section */}
-              <div className="mb-4">
-                <div className="font-semibold mb-2">Liabilities</div>
-                <div className="flex justify-between pl-4">
-                  <span>GST & Cess Payable</span>
-                  <span className="text-right">{Math.round(gstCessPayable).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-              
-              {/* Equity Section */}
-              <div className="mb-4">
-                <div className="font-semibold mb-2">Equity</div>
-                <div className="flex justify-between pl-4">
-                  <span>Retained Earnings (Net Profit)</span>
-                  <span className="text-right">{Math.round(retainedEarnings).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between font-bold border-t pt-2">
-                <span>Total Liab & Equity</span>
-                <span className="text-right">{Math.round(totalLiabilitiesAndEquity).toLocaleString('en-IN')}</span>
+                <span>{formatCurrency(totalAssets)}</span>
               </div>
             </div>
           </div>
           
-          {/* Balance Check */}
-          <div className="mt-6 p-3 bg-green-50 rounded">
-            <div className="text-center text-sm">
-              <span className="font-medium">Balance Check: </span>
-              <span className={totalAssets === totalLiabilitiesAndEquity ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-                ₹{Math.round(totalAssets).toLocaleString('en-IN')} = ₹{Math.round(totalLiabilitiesAndEquity).toLocaleString('en-IN')}
-                {totalAssets === totalLiabilitiesAndEquity ? " ✓ BALANCED" : " ✗ NOT BALANCED"}
-              </span>
+          <div>
+            <h3 className="font-semibold text-red-600 mb-3">LIABILITIES & EQUITY</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>GST & CESS Payable</span>
+                <span>{formatCurrency(gstCessPayable)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Retained Earnings (Net Profit)</span>
+                <span>{formatCurrency(retainedEarnings)}</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t pt-2">
+                <span>Total Liab & Equity</span>
+                <span>{formatCurrency(totalLiabilitiesAndEquity)}</span>
+              </div>
             </div>
           </div>
         </div>
