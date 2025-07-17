@@ -12,7 +12,8 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
         COALESCE(SUM(CASE WHEN account_head = 'service_charges' THEN credit_amount ELSE 0 END), 0) as service_charges,
         COALESCE(SUM(CASE WHEN account_head = 'purchases' THEN debit_amount ELSE 0 END), 0) as total_purchases,
         COALESCE(SUM(CASE WHEN account_head = 'operating_expenses' THEN debit_amount ELSE 0 END), 0) as operating_expenses,
-        COALESCE(SUM(CASE WHEN account_head = 'bank_charges' THEN debit_amount ELSE 0 END), 0) as bank_charges
+        COALESCE(SUM(CASE WHEN account_head = 'bank_charges' THEN debit_amount ELSE 0 END), 0) as bank_charges,
+        COALESCE(SUM(CASE WHEN account_head = 'accounts_payable' THEN debit_amount ELSE 0 END), 0) as farmer_payments
       FROM accounting_ledger 
       WHERE tenant_id = ${tenantId} AND fiscal_year = ${fiscalYear}
     `);
@@ -24,10 +25,12 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
     const totalPurchases = parseFloat(row.total_purchases || '0');
     const operatingExpenses = parseFloat(row.operating_expenses || '0');
     const bankCharges = parseFloat(row.bank_charges || '0');
+    const farmerPayments = parseFloat(row.farmer_payments || '0');
 
     const totalRevenue = totalSales + commissionIncome + serviceCharges;
-    const totalExpenses = operatingExpenses + bankCharges;
+    const totalExpenses = operatingExpenses + bankCharges + farmerPayments;
     const grossProfit = totalSales - totalPurchases;
+    // Net profit = Total Income - All Expenses (including farmer payments)
     const netProfit = totalRevenue - totalExpenses - totalPurchases;
 
     // Get GST data from actual tax invoices only
@@ -74,6 +77,7 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
       totalIncome: totalRevenue,
       operatingExpenses,
       bankCharges,
+      farmerPayments,
       totalExpenses,
       netProfit,
       cash,
@@ -113,7 +117,8 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
         COALESCE(SUM(CASE WHEN account_head = 'service_charges' THEN credit_amount ELSE 0 END), 0) as service_charges,
         COALESCE(SUM(CASE WHEN account_head = 'purchases' THEN debit_amount ELSE 0 END), 0) as total_purchases,
         COALESCE(SUM(CASE WHEN account_head = 'operating_expenses' THEN debit_amount ELSE 0 END), 0) as operating_expenses,
-        COALESCE(SUM(CASE WHEN account_head = 'bank_charges' THEN debit_amount ELSE 0 END), 0) as bank_charges
+        COALESCE(SUM(CASE WHEN account_head = 'bank_charges' THEN debit_amount ELSE 0 END), 0) as bank_charges,
+        COALESCE(SUM(CASE WHEN account_head = 'accounts_payable' THEN debit_amount ELSE 0 END), 0) as farmer_payments
       FROM accounting_ledger 
       WHERE tenant_id = ${tenantId} 
       AND transaction_date >= ${startDateStr}
@@ -127,10 +132,12 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
     const totalPurchases = parseFloat(row.total_purchases || '0');
     const operatingExpenses = parseFloat(row.operating_expenses || '0');
     const bankCharges = parseFloat(row.bank_charges || '0');
+    const farmerPayments = parseFloat(row.farmer_payments || '0');
 
     const totalRevenue = totalSales + commissionIncome + serviceCharges;
-    const totalExpenses = operatingExpenses + bankCharges;
+    const totalExpenses = operatingExpenses + bankCharges + farmerPayments;
     const grossProfit = totalSales - totalPurchases;
+    // Net profit = Total Income - All Expenses (including farmer payments)
     const netProfit = totalRevenue - totalExpenses - totalPurchases;
 
     // Get GST data for date range - AUTHENTIC DATA ONLY
@@ -141,8 +148,8 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
         COALESCE(SUM(cess), 0) as total_cess
       FROM tax_invoices 
       WHERE tenant_id = ${tenantId} 
-      AND invoice_date >= ${startDateStr}
-      AND invoice_date <= ${endDateStr}
+      AND DATE(invoice_date) >= ${startDateStr}
+      AND DATE(invoice_date) <= ${endDateStr}
     `);
 
     const gstRow = gstData.rows[0] as any;
@@ -182,6 +189,7 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
       totalIncome: totalRevenue,
       operatingExpenses,
       bankCharges,
+      farmerPayments,
       totalExpenses,
       netProfit,
       cash,
