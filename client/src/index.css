@@ -75,6 +75,147 @@
     align-items: center;
   }
   
+  /* Professional Tax Invoice Print Styles - Override Cache */
+  .tax-invoice-print {
+    font-family: Arial, sans-serif !important;
+    margin: 20px !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #000 !important;
+  }
+  
+  .tax-invoice-print .header {
+    text-align: center !important;
+    margin-bottom: 30px !important;
+  }
+  
+  .tax-invoice-print .invoice-title {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin-bottom: 8px !important;
+    letter-spacing: 2px !important;
+  }
+  
+  .tax-invoice-print .invoice-details {
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .tax-invoice-print .hsn-code {
+    font-size: 14px !important;
+    margin-bottom: 25px !important;
+  }
+  
+  .tax-invoice-print .company-info {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 30px !important;
+    min-height: 160px !important;
+  }
+  
+  .tax-invoice-print .seller, .tax-invoice-print .buyer {
+    width: 48% !important;
+    font-size: 11px !important;
+  }
+  
+  .tax-invoice-print .section-title {
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+    font-size: 12px !important;
+    text-decoration: underline !important;
+  }
+  
+  .tax-invoice-print .company-field {
+    margin-bottom: 4px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .tax-invoice-print .item-details-title {
+    font-weight: bold !important;
+    margin: 25px 0 15px 0 !important;
+    font-size: 12px !important;
+  }
+  
+  .tax-invoice-print .items-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 25px !important;
+    font-size: 11px !important;
+  }
+  
+  .tax-invoice-print .items-table th, 
+  .tax-invoice-print .items-table td {
+    border: 1px solid #000 !important;
+    padding: 8px !important;
+    text-align: center !important;
+  }
+  
+  .tax-invoice-print .items-table th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    font-size: 10px !important;
+  }
+  
+  .tax-invoice-print .calculations-section {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 25px !important;
+  }
+  
+  .tax-invoice-print .calculations {
+    width: 45% !important;
+  }
+  
+  .tax-invoice-print .bank-details {
+    width: 45% !important;
+  }
+  
+  .tax-invoice-print .calc-title, 
+  .tax-invoice-print .bank-title {
+    font-weight: bold !important;
+    margin-bottom: 15px !important;
+    font-size: 12px !important;
+    text-decoration: underline !important;
+  }
+  
+  .tax-invoice-print .calc-line, 
+  .tax-invoice-print .bank-line {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 3px !important;
+    font-size: 11px !important;
+  }
+  
+  .tax-invoice-print .total-payable {
+    font-weight: bold !important;
+    font-size: 13px !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #000 !important;
+  }
+  
+  .tax-invoice-print .terms {
+    margin-top: 20px !important;
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+  
+  .tax-invoice-print .signature {
+    text-align: right !important;
+    margin-top: 50px !important;
+    padding-right: 0px !important;
+    font-size: 11px !important;
+  }
+  
+  @media print {
+    .tax-invoice-print {
+      margin: 10px !important;
+    }
+    .tax-invoice-print .calculations-section {
+      page-break-inside: avoid !important;
+    }
+  }
+  
   /* Better mobile dropdown spacing */
   .mobile-dropdown {
     padding: 0.5rem 0;

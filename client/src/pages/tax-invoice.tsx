@@ -408,7 +408,7 @@ export default function TaxInvoice() {
               }
             </style>
           </head>
-          <body>
+          <body class="tax-invoice-print">
             <div class="header">
               <div class="invoice-title">TAX INVOICE</div>
               <div class="invoice-details">Invoice No: ${invoice.invoiceNumber} Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}</div>
@@ -707,7 +707,7 @@ export default function TaxInvoice() {
             }
           </style>
         </head>
-        <body>
+        <body class="tax-invoice-print">
           <div class="header">
             <div class="invoice-title">TAX INVOICE</div>
             <div class="invoice-details">Invoice No: ${taxInvoice.invoiceNumber} Date: ${new Date(taxInvoice.invoiceDate).toLocaleDateString('en-GB')}</div>

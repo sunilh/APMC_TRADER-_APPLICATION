@@ -539,6 +539,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Final balance sheet shows: Cash ₹3,66,752, Total Assets ₹3,66,752, Total Liabilities ₹17,341.50 (GST + CESS only)
   - Net Worth ₹3,49,410.50 reflecting successful completion of all trading transactions with only tax obligations remaining
   - System accurately reflects complete agricultural trading cycle with authentic double-entry bookkeeping
+- July 17, 2025: Completed professional tax invoice format update to match user's exact PDF requirements
+  - Updated both printTaxInvoice and generatePrintableInvoice functions with enhanced professional typography
+  - Enhanced company field alignment with proper spacing throughout seller and buyer details sections
+  - Modernized calculations section with clean flex layout using calc-line and bank-line classes
+  - Added global CSS styles in index.css with !important declarations to override browser caching issues
+  - Implemented tax-invoice-print CSS class for consistent formatting across all print functions
+  - Tax invoice format now perfectly matches uploaded PDF with smart arrangement and improved visual appearance
 
 # User Preferences
 
