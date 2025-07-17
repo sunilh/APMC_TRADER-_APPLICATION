@@ -46,7 +46,7 @@ import {
 } from "@shared/schema";
 import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange } from "./finalAccountsReal";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray, between } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import { OCRService } from "./ocr-service";
@@ -448,7 +448,8 @@ export function registerRoutes(app: Express): Server {
         
         query = query.where(and(
           eq(accountingLedger.tenantId, req.user.tenantId),
-          between(accountingLedger.transactionDate, start, end)
+          gte(accountingLedger.transactionDate, start),
+          lte(accountingLedger.transactionDate, end)
         ));
         console.log('📅 Using DATE RANGE mode for ledger entries:', { startDate, endDate });
       } else if (fiscalYear) {
@@ -2773,20 +2774,21 @@ export function registerRoutes(app: Express): Server {
       }).returning();
 
       // Record in accounting ledger
-      await recordTransaction(
+      await db.insert(accountingLedger).values({
         tenantId,
-        'expense',
-        'expense',
-        expense[0].id,
-        'manual_entry',
-        expense[0].id,
-        parseFloat(amount),
-        0,
-        description || 'Business expense',
-        'expenses',
-        userId,
-        expense[0].expenseDate
-      );
+        transactionType: 'expense',
+        entityType: 'expense',
+        entityId: expense[0].id,
+        referenceType: 'manual_entry',
+        referenceId: expense[0].id,
+        debitAmount: parseFloat(amount),
+        creditAmount: 0,
+        description: description || 'Business expense',
+        accountHead: 'expenses',
+        createdBy: userId,
+        transactionDate: expense[0].expenseDate,
+        fiscalYear: getCurrentFiscalYear(),
+      });
 
       await createAuditLog(req, "create", "expense", expense[0].id, null, expense[0]);
       res.status(201).json(expense[0]);
