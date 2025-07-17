@@ -50,10 +50,11 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
     const cess = parseFloat(gstRow.total_cess || '0');
 
     // Get real balance sheet data from accounting ledger - NO MOCK DATA
+    // Fix sign conventions: Assets use debit-credit, Liabilities use credit-debit
     const balanceData = await db.execute(sql`
       SELECT 
-        COALESCE(SUM(CASE WHEN account_head = 'cash' THEN (credit_amount - debit_amount) ELSE 0 END), 0) as cash,
-        COALESCE(SUM(CASE WHEN account_head = 'bank' THEN (credit_amount - debit_amount) ELSE 0 END), 0) as bank_balance,
+        COALESCE(SUM(CASE WHEN account_head = 'cash' THEN (debit_amount - credit_amount) ELSE 0 END), 0) as cash,
+        COALESCE(SUM(CASE WHEN account_head = 'bank' THEN (debit_amount - credit_amount) ELSE 0 END), 0) as bank_balance,
         COALESCE(SUM(CASE WHEN account_head = 'accounts_receivable' THEN (debit_amount - credit_amount) ELSE 0 END), 0) as accounts_receivable,
         COALESCE(SUM(CASE WHEN account_head = 'accounts_payable' THEN (credit_amount - debit_amount) ELSE 0 END), 0) as accounts_payable
       FROM accounting_ledger 
