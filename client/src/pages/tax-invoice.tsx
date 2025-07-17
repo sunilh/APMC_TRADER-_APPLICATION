@@ -381,80 +381,103 @@ export default function TaxInvoice() {
         <body>
           <div class="header">
             <div class="invoice-title">TAX INVOICE</div>
-            <div>Invoice No: ${taxInvoice.invoiceNumber} | Date: ${taxInvoice.invoiceDate}</div>
+            <div>Invoice No: ${taxInvoice.invoiceNumber} Date: ${taxInvoice.invoiceDate}</div>
+            <div>HSN Code: 09042110</div>
           </div>
 
           <div class="company-info">
             <div class="seller">
               <div class="section-title">SELLER DETAILS</div>
-              <div><strong>${taxInvoice.seller.companyName}</strong></div>
-              <div>APMC Code: ${taxInvoice.seller.apmcCode}</div>
-              <div>${taxInvoice.seller.address}</div>
-              <div>Mobile: ${taxInvoice.seller.mobile}</div>
-              <div>GSTIN: ${taxInvoice.seller.gstin}</div>
-              <div>PAN: ${taxInvoice.seller.pan}</div>
-              <div>FSSAI: ${taxInvoice.seller.fssai}</div>
+              <div><strong>Company:</strong> ${taxInvoice.seller.companyName}</div>
+              <div><strong>APMC:</strong> ${taxInvoice.seller.apmcCode}</div>
+              <div><strong>Address:</strong> ${taxInvoice.seller.address}</div>
+              <div><strong>Mobile:</strong> ${taxInvoice.seller.mobile}</div>
+              <div><strong>GSTIN:</strong> ${taxInvoice.seller.gstin}</div>
+              <div><strong>PAN:</strong> ${taxInvoice.seller.pan}</div>
+              <div><strong>FSSAI:</strong> ${taxInvoice.seller.fssai}</div>
             </div>
             <div class="buyer">
               <div class="section-title">BUYER DETAILS</div>
-              <div><strong>${taxInvoice.buyer.companyName}</strong></div>
-              <div>Contact: ${taxInvoice.buyer.contactPerson}</div>
-              <div>${taxInvoice.buyer.address}</div>
-              <div>Mobile: ${taxInvoice.buyer.mobile}</div>
-              <div>GSTIN: ${taxInvoice.buyer.gstin}</div>
-              <div>PAN: ${taxInvoice.buyer.pan}</div>
+              <div><strong>Company:</strong> ${taxInvoice.buyer.companyName}</div>
+              <div><strong>Contact:</strong> ${taxInvoice.buyer.contactPerson}</div>
+              <div><strong>Address:</strong> ${taxInvoice.buyer.address}</div>
+              <div><strong>Mobile:</strong> ${taxInvoice.buyer.mobile}</div>
+              <div><strong>GSTIN:</strong> ${taxInvoice.buyer.gstin}</div>
+              <div><strong>PAN:</strong> ${taxInvoice.buyer.pan || 'N/A'}</div>
             </div>
+          </div>
+          
+          <div style="text-align: center; margin: 20px 0; font-weight: bold;">
+            ITEM DETAILS:
           </div>
 
           <table>
             <thead>
               <tr>
-                <th>Lot No</th>
-                <th>Item</th>
-                <th>HSN Code</th>
-                <th>Bags</th>
-                <th>Weight (Kg)</th>
-                <th>Weight (Qtl)</th>
-                <th>Rate/Qtl</th>
-                <th>Amount</th>
+                <th>LOT NO</th>
+                <th>ITEM NAME</th>
+                <th>HSN CODE</th>
+                <th>BAGS</th>
+                <th>WEIGHT (KG)</th>
+                <th>RATE/QUINTAL</th>
+                <th>AMOUNT IN RUPEES</th>
               </tr>
             </thead>
             <tbody>
               ${taxInvoice.items.map(item => `
                 <tr>
-                  <td>${item.lotNo}</td>
-                  <td>${item.itemName}</td>
-                  <td>${item.hsnCode}</td>
-                  <td>${item.bags}</td>
-                  <td>${item.weightKg}</td>
-                  <td>${item.weightQuintals.toFixed(2)}</td>
-                  <td>${formatCurrency(item.ratePerQuintal)}</td>
-                  <td>${formatCurrency(item.basicAmount)}</td>
+                  <td style="text-align: center;">${item.lotNo}</td>
+                  <td style="text-align: center;">${item.itemName}</td>
+                  <td style="text-align: center;">${item.hsnCode}</td>
+                  <td style="text-align: center;">${item.bags}</td>
+                  <td style="text-align: center;">${item.weightKg}</td>
+                  <td style="text-align: center;">${formatCurrency(item.ratePerQuintal)}</td>
+                  <td style="text-align: center;">${formatCurrency(item.basicAmount)}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
 
-          <div class="calculations">
-            <table style="width: 50%; margin-left: auto;">
-              <tr><td>Basic Amount:</td><td>${formatCurrency(taxInvoice.calculations.basicAmount)}</td></tr>
-              <tr><td>Packaging:</td><td>${formatCurrency(taxInvoice.calculations.packaging)}</td></tr>
-              <tr><td>Hamali:</td><td>${formatCurrency(taxInvoice.calculations.hamali)}</td></tr>
-              <tr><td>Weighing Charges:</td><td>${formatCurrency(taxInvoice.calculations.weighingCharges)}</td></tr>
-              <tr><td>Commission:</td><td>${formatCurrency(taxInvoice.calculations.commission)}</td></tr>
-              <tr><td>CESS @ 0.6%:</td><td>${formatCurrency(taxInvoice.calculations.cess)}</td></tr>
-              <tr><td>SGST @ 2.5%:</td><td>${formatCurrency(taxInvoice.calculations.sgst)}</td></tr>
-              <tr><td>CGST @ 2.5%:</td><td>${formatCurrency(taxInvoice.calculations.cgst)}</td></tr>
-              <tr class="total-row"><td><strong>Total Amount:</strong></td><td><strong>${formatCurrency(taxInvoice.calculations.totalAmount)}</strong></td></tr>
-            </table>
+          <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+            <div style="width: 48%;">
+              <div class="section-title">AMOUNT CALCULATIONS</div>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 4px 8px; border: none;">Basic Amount</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ Packaging (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.packaging)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ Hamali (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.hamali)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ Weighing (${taxInvoice.calculations.totalBags} bags)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.weighingCharges)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ Commission</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.commission)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ Cess @ 0.6% (on basic amount)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.cess)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">Taxable Amount</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount + taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission + taxInvoice.calculations.cess)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ SGST (2.5%)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.sgst)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">+ CGST (2.5%)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.cgst)}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;">Total GST</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.sgst + taxInvoice.calculations.cgst)}</td></tr>
+                <tr style="font-weight: bold; border-top: 1px solid #000;"><td style="padding: 8px; border: none;">TOTAL PAYABLE</td><td style="padding: 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.totalAmount)}</td></tr>
+              </table>
+            </div>
+            
+            <div style="width: 48%;">
+              <div class="section-title">BANK DETAILS FOR PAYMENT</div>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 4px 8px; border: none;"><strong>Bank:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.bankName}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;"><strong>A/C No:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.accountNumber}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;"><strong>IFSC:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.ifscCode}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;"><strong>Holder:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.accountHolder}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;"><strong>Branch:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.branchName || ''}</td></tr>
+                <tr><td style="padding: 4px 8px; border: none;"><strong>Branch Address:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.branchAddress || ''}</td></tr>
+              </table>
+              
+              <div style="margin-top: 20px; font-size: 11px;">
+                <div>Terms: Payment due within 30 days</div>
+                <div>Goods once sold will not be taken back</div>
+              </div>
+            </div>
           </div>
-
-          <div class="bank-details">
-            <div class="section-title">BANK DETAILS</div>
-            <div>Bank: ${taxInvoice.bankDetails.bankName}</div>
-            <div>Account No: ${taxInvoice.bankDetails.accountNumber}</div>
-            <div>IFSC: ${taxInvoice.bankDetails.ifscCode}</div>
-            <div>Account Holder: ${taxInvoice.bankDetails.accountHolder}</div>
+          
+          <div style="text-align: right; margin-top: 40px; padding-right: 50px;">
+            <div style="border-top: 1px solid #000; width: 200px; margin-left: auto; padding-top: 5px;">
+              Authorized Signature
+            </div>
           </div>
         </body>
       </html>
