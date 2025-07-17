@@ -272,7 +272,7 @@ export default function TaxInvoice() {
     }
   };
 
-  // Function to print tax invoice
+  // Function to print tax invoice using new format
   const printTaxInvoice = async (invoice: InvoiceRecord) => {
     try {
       const response = await fetch(`/api/tax-invoice-data/${invoice.id}`, {
@@ -285,61 +285,155 @@ export default function TaxInvoice() {
       
       const invoiceData = await response.json();
       
-      const printContent = `
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+
+      const invoiceHtml = `
         <!DOCTYPE html>
         <html>
-        <head>
-          <title>Tax Invoice - ${invoice.invoiceNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .details { margin-bottom: 20px; }
-            .summary { border-collapse: collapse; width: 100%; }
-            .summary th, .summary td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            .summary th { background-color: #f2f2f2; }
-            .total { font-weight: bold; background-color: #e8f5e8; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>TAX INVOICE</h2>
-            <p>Invoice Number: ${invoice.invoiceNumber} | Date: ${formatDate(invoice.invoiceDate)}</p>
-          </div>
-          
-          <div class="details">
-            <h3>Seller Details:</h3>
-            <p><strong>Company:</strong> ${invoiceData.seller?.companyName || 'N/A'}</p>
-            <p><strong>GSTIN:</strong> ${invoiceData.seller?.gstin || 'N/A'}</p>
+          <head>
+            <meta charset="utf-8">
+            <title>Tax Invoice - ${invoice.invoiceNumber}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; line-height: 1.3; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .invoice-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+              .invoice-details { font-size: 12px; margin-bottom: 5px; }
+              .hsn-code { font-size: 12px; margin-bottom: 15px; }
+              .company-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+              .seller, .buyer { width: 48%; font-size: 10px; }
+              .section-title { font-weight: bold; margin-bottom: 8px; text-align: center; background-color: #f0f0f0; padding: 5px; }
+              .item-details-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 12px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
+              th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+              th { background-color: #f0f0f0; font-weight: bold; font-size: 9px; }
+              .calculations-section { display: flex; justify-content: space-between; margin-top: 20px; }
+              .calculations { width: 48%; }
+              .bank-details { width: 48%; }
+              .calc-title, .bank-title { font-weight: bold; margin-bottom: 10px; text-align: center; background-color: #f0f0f0; padding: 5px; font-size: 11px; }
+              .calc-table, .bank-table { width: 100%; font-size: 9px; }
+              .calc-table td, .bank-table td { border: none; padding: 2px 5px; }
+              .total-payable { font-weight: bold; border-top: 2px solid #000; padding-top: 5px; font-size: 11px; }
+              .terms { margin-top: 15px; font-size: 8px; }
+              .signature { text-align: right; margin-top: 40px; padding-right: 50px; }
+              .signature-line { border-top: 1px solid #000; width: 150px; margin-left: auto; padding-top: 5px; font-size: 10px; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="invoice-title">TAX INVOICE</div>
+              <div class="invoice-details">Invoice No: ${invoice.invoiceNumber} Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}</div>
+              <div class="hsn-code">HSN Code: 09042110</div>
+            </div>
+
+            <div class="company-info">
+              <div class="seller">
+                <div class="section-title">SELLER DETAILS</div>
+                <div><strong>Company:</strong> ${invoiceData.seller?.companyName || 'N/A'}</div>
+                <div><strong>APMC:</strong> ${invoiceData.seller?.apmcCode || 'N/A'}</div>
+                <div><strong>Address:</strong> ${invoiceData.seller?.address || 'N/A'}</div>
+                <div><strong>Mobile:</strong> ${invoiceData.seller?.mobile || 'N/A'}</div>
+                <div><strong>GSTIN:</strong> ${invoiceData.seller?.gstin || 'N/A'}</div>
+                <div><strong>PAN:</strong> ${invoiceData.seller?.pan || 'N/A'}</div>
+                <div><strong>FSSAI:</strong> ${invoiceData.seller?.fssai || 'N/A'}</div>
+              </div>
+              <div class="buyer">
+                <div class="section-title">BUYER DETAILS</div>
+                <div><strong>Company:</strong> ${invoiceData.buyer?.companyName || 'N/A'}</div>
+                <div><strong>Contact:</strong> ${invoiceData.buyer?.contactPerson || 'N/A'}</div>
+                <div><strong>Address:</strong> ${invoiceData.buyer?.address || 'N/A'}</div>
+                <div><strong>Mobile:</strong> ${invoiceData.buyer?.mobile || 'N/A'}</div>
+                <div><strong>GSTIN:</strong> ${invoiceData.buyer?.gstin || 'N/A'}</div>
+                <div><strong>PAN:</strong> ${invoiceData.buyer?.pan || 'N/A'}</div>
+              </div>
+            </div>
             
-            <h3>Buyer Details:</h3>
-            <p><strong>Company:</strong> ${invoiceData.buyer?.companyName || 'N/A'}</p>
-            <p><strong>GSTIN:</strong> ${invoiceData.buyer?.gstin || 'N/A'}</p>
-          </div>
-          
-          <table class="summary">
-            <tr><th>Description</th><th>Details</th></tr>
-            <tr><td>Invoice Number</td><td>${invoice.invoiceNumber}</td></tr>
-            <tr><td>Basic Amount</td><td>${formatCurrency(invoice.basicAmount)}</td></tr>
-            <tr><td>Total Bags</td><td>${invoice.totalBags}</td></tr>
-            <tr><td>Total Weight</td><td>${invoice.totalWeight} kg</td></tr>
-            <tr class="total"><td><strong>Total Amount</strong></td><td><strong>${formatCurrency(invoice.totalAmount)}</strong></td></tr>
-          </table>
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 100);
-            }
-          </script>
-        </body>
+            <div class="item-details-title">
+              ITEM DETAILS:
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>LOT NO</th>
+                  <th>ITEM NAME</th>
+                  <th>HSN CODE</th>
+                  <th>BAGS</th>
+                  <th>WEIGHT (KG)</th>
+                  <th>RATE/QUINTAL</th>
+                  <th>AMOUNT IN RUPEES</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoiceData.items?.map(item => `
+                  <tr>
+                    <td style="text-align: center;">${item.lotNo || ''}</td>
+                    <td style="text-align: center;">${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
+                    <td style="text-align: center;">09042110</td>
+                    <td style="text-align: center;">${item.bags || 0}</td>
+                    <td style="text-align: center;">${item.weightKg || 0}</td>
+                    <td style="text-align: center;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN')}</td>
+                    <td style="text-align: center;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  </tr>
+                `).join('') || ''}
+              </tbody>
+            </table>
+
+            <div class="calculations-section">
+              <div class="calculations">
+                <div class="calc-title">AMOUNT CALCULATIONS</div>
+                <table class="calc-table">
+                  <tr><td>Basic Amount</td><td style="text-align: right;">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ Packaging (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</td><td style="text-align: right;">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ Hamali (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</td><td style="text-align: right;">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ Weighing (${invoiceData.calculations?.totalBags || 0} bags)</td><td style="text-align: right;">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ Commission</td><td style="text-align: right;">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ Cess @ 0.6% (on basic amount)</td><td style="text-align: right;">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>Taxable Amount</td><td style="text-align: right;">₹${((invoiceData.calculations?.basicAmount || 0) + (invoiceData.calculations?.packaging || 0) + (invoiceData.calculations?.hamali || 0) + (invoiceData.calculations?.weighingCharges || 0) + (invoiceData.calculations?.commission || 0) + (invoiceData.calculations?.cess || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ SGST (2.5%)</td><td style="text-align: right;">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>+ CGST (2.5%)</td><td style="text-align: right;">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr><td>Total GST</td><td style="text-align: right;">₹${((invoiceData.calculations?.sgst || 0) + (invoiceData.calculations?.cgst || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td></tr>
+                  <tr class="total-payable"><td><strong>TOTAL PAYABLE</strong></td><td style="text-align: right;"><strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td></tr>
+                </table>
+              </div>
+              
+              <div class="bank-details">
+                <div class="bank-title">BANK DETAILS FOR PAYMENT</div>
+                <table class="bank-table">
+                  <tr><td><strong>Bank:</strong></td><td>${invoiceData.bankDetails?.bankName || 'N/A'}</td></tr>
+                  <tr><td><strong>A/C No:</strong></td><td>${invoiceData.bankDetails?.accountNumber || 'N/A'}</td></tr>
+                  <tr><td><strong>IFSC:</strong></td><td>${invoiceData.bankDetails?.ifscCode || 'N/A'}</td></tr>
+                  <tr><td><strong>Holder:</strong></td><td>${invoiceData.bankDetails?.accountHolder || 'N/A'}</td></tr>
+                  <tr><td><strong>Branch:</strong></td><td>${invoiceData.bankDetails?.branchName || ''}</td></tr>
+                  <tr><td><strong>Branch Address:</strong></td><td>${invoiceData.bankDetails?.branchAddress || ''}</td></tr>
+                </table>
+                
+                <div class="terms">
+                  <div>Terms: Payment due within 30 days</div>
+                  <div>Goods once sold will not be taken back</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="signature">
+              <div class="signature-line">
+                Authorized Signature
+              </div>
+            </div>
+            
+            <script>
+              window.onload = function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 100);
+              }
+            </script>
+          </body>
         </html>
       `;
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-      }
+
+      printWindow.document.write(invoiceHtml);
+      printWindow.document.close();
     } catch (error) {
       console.error("Error printing invoice:", error);
       toast({
