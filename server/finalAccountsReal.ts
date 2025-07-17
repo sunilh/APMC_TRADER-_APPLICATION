@@ -4,60 +4,135 @@ import { getCurrentFiscalYear } from "./accounting";
 
 export async function getTradingDetails(tenantId: number, startDate?: string, endDate?: string, fiscalYear?: string) {
   try {
-    // Build date filter for tax invoices and farmer bills
-    let invoiceDateFilter = '';
-    let billDateFilter = '';
-    
+    let buyerInvoicesData;
+    let farmerBillsData;
+
     if (startDate && endDate) {
-      invoiceDateFilter = `AND DATE(ti.invoice_date) BETWEEN '${startDate}' AND '${endDate}'`;
-      billDateFilter = `AND DATE(fb.bill_date) BETWEEN '${startDate}' AND '${endDate}'`;
+      // Date range query
+      buyerInvoicesData = await db.execute(sql`
+        SELECT 
+          ti.buyer_id,
+          b.name as buyer_name,
+          ti.invoice_number,
+          ti.invoice_date,
+          ti.basic_amount,
+          ti.total_amount,
+          ti.sgst,
+          ti.cgst,
+          ti.cess,
+          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+        FROM tax_invoices ti
+        JOIN buyers b ON ti.buyer_id = b.id
+        WHERE ti.tenant_id = ${tenantId} 
+        AND DATE(ti.invoice_date) BETWEEN ${startDate} AND ${endDate}
+        ORDER BY ti.invoice_date DESC
+      `);
+
+      farmerBillsData = await db.execute(sql`
+        SELECT 
+          fb.farmer_id,
+          f.name as farmer_name,
+          fb.patti_number,
+          fb.bill_date,
+          fb.total_amount as gross_amount,
+          fb.hamali,
+          fb.vehicle_rent,
+          fb.empty_bag_charges,
+          fb.advance,
+          fb.commission_amount as rok,
+          fb.other_deductions,
+          fb.net_amount as net_payable,
+          (fb.total_amount - fb.net_amount) as total_deductions
+        FROM farmer_bills fb
+        JOIN farmers f ON fb.farmer_id = f.id
+        WHERE fb.tenant_id = ${tenantId} 
+        AND DATE(fb.bill_date) BETWEEN ${startDate} AND ${endDate}
+        ORDER BY fb.bill_date DESC
+      `);
     } else if (fiscalYear) {
-      // For fiscal year, extract year from invoice_date and bill_date
-      const year = fiscalYear.split('-')[0];
-      invoiceDateFilter = `AND EXTRACT(YEAR FROM ti.invoice_date) = ${year}`;
-      billDateFilter = `AND EXTRACT(YEAR FROM fb.bill_date) = ${year}`;
+      // Fiscal year query
+      const year = parseInt(fiscalYear.split('-')[0]);
+      buyerInvoicesData = await db.execute(sql`
+        SELECT 
+          ti.buyer_id,
+          b.name as buyer_name,
+          ti.invoice_number,
+          ti.invoice_date,
+          ti.basic_amount,
+          ti.total_amount,
+          ti.sgst,
+          ti.cgst,
+          ti.cess,
+          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+        FROM tax_invoices ti
+        JOIN buyers b ON ti.buyer_id = b.id
+        WHERE ti.tenant_id = ${tenantId} 
+        AND EXTRACT(YEAR FROM ti.invoice_date) = ${year}
+        ORDER BY ti.invoice_date DESC
+      `);
+
+      farmerBillsData = await db.execute(sql`
+        SELECT 
+          fb.farmer_id,
+          f.name as farmer_name,
+          fb.patti_number,
+          fb.bill_date,
+          fb.total_amount as gross_amount,
+          fb.hamali,
+          fb.vehicle_rent,
+          fb.empty_bag_charges,
+          fb.advance,
+          fb.commission_amount as rok,
+          fb.other_deductions,
+          fb.net_amount as net_payable,
+          (fb.total_amount - fb.net_amount) as total_deductions
+        FROM farmer_bills fb
+        JOIN farmers f ON fb.farmer_id = f.id
+        WHERE fb.tenant_id = ${tenantId} 
+        AND EXTRACT(YEAR FROM fb.bill_date) = ${year}
+        ORDER BY fb.bill_date DESC
+      `);
+    } else {
+      // All data for tenant
+      buyerInvoicesData = await db.execute(sql`
+        SELECT 
+          ti.buyer_id,
+          b.name as buyer_name,
+          ti.invoice_number,
+          ti.invoice_date,
+          ti.basic_amount,
+          ti.total_amount,
+          ti.sgst,
+          ti.cgst,
+          ti.cess,
+          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+        FROM tax_invoices ti
+        JOIN buyers b ON ti.buyer_id = b.id
+        WHERE ti.tenant_id = ${tenantId}
+        ORDER BY ti.invoice_date DESC
+      `);
+
+      farmerBillsData = await db.execute(sql`
+        SELECT 
+          fb.farmer_id,
+          f.name as farmer_name,
+          fb.patti_number,
+          fb.bill_date,
+          fb.total_amount as gross_amount,
+          fb.hamali,
+          fb.vehicle_rent,
+          fb.empty_bag_charges,
+          fb.advance,
+          fb.commission_amount as rok,
+          fb.other_deductions,
+          fb.net_amount as net_payable,
+          (fb.total_amount - fb.net_amount) as total_deductions
+        FROM farmer_bills fb
+        JOIN farmers f ON fb.farmer_id = f.id
+        WHERE fb.tenant_id = ${tenantId}
+        ORDER BY fb.bill_date DESC
+      `);
     }
-
-    // Get buyer invoices (tax invoices) - Cash Inflow
-    const buyerInvoicesData = await db.execute(sql`
-      SELECT 
-        ti.buyer_id,
-        b.name as buyer_name,
-        ti.invoice_number,
-        ti.invoice_date,
-        ti.basic_amount,
-        ti.total_amount,
-        ti.sgst,
-        ti.cgst,
-        ti.cess,
-        (ti.total_amount - ti.basic_amount) as total_taxes_collected
-      FROM tax_invoices ti
-      JOIN buyers b ON ti.buyer_id = b.id
-      WHERE ti.tenant_id = ${tenantId} ${invoiceDateFilter}
-      ORDER BY ti.invoice_date DESC
-    `);
-
-    // Get farmer bills - Cash Outflow
-    const farmerBillsData = await db.execute(sql`
-      SELECT 
-        fb.farmer_id,
-        f.name as farmer_name,
-        fb.patti_number,
-        fb.bill_date,
-        fb.total_amount as gross_amount,
-        fb.hamali,
-        fb.vehicle_rent,
-        fb.empty_bag_charges,
-        fb.advance,
-        fb.commission_amount as rok,
-        fb.other_deductions,
-        fb.net_amount as net_payable,
-        (fb.total_amount - fb.net_amount) as total_deductions
-      FROM farmer_bills fb
-      JOIN farmers f ON fb.farmer_id = f.id
-      WHERE fb.tenant_id = ${tenantId} ${billDateFilter}
-      ORDER BY fb.bill_date DESC
-    `);
 
     // Calculate totals
     const buyerInvoices = buyerInvoicesData.rows.map(row => ({
