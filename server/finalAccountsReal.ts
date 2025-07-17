@@ -20,7 +20,7 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           ti.sgst,
           ti.cgst,
           ti.cess,
-          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+          (ti.sgst + ti.cgst + ti.cess) as total_taxes_collected
         FROM tax_invoices ti
         JOIN buyers b ON ti.buyer_id = b.id
         WHERE ti.tenant_id = ${tenantId} 
@@ -63,7 +63,7 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           ti.sgst,
           ti.cgst,
           ti.cess,
-          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+          (ti.sgst + ti.cgst + ti.cess) as total_taxes_collected
         FROM tax_invoices ti
         JOIN buyers b ON ti.buyer_id = b.id
         WHERE ti.tenant_id = ${tenantId} 
@@ -105,7 +105,7 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
           ti.sgst,
           ti.cgst,
           ti.cess,
-          (ti.total_amount - ti.basic_amount) as total_taxes_collected
+          (ti.sgst + ti.cgst + ti.cess) as total_taxes_collected
         FROM tax_invoices ti
         JOIN buyers b ON ti.buyer_id = b.id
         WHERE ti.tenant_id = ${tenantId}
