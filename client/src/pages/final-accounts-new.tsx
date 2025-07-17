@@ -575,7 +575,7 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
 
   const queryClient = useQueryClient();
 
-  // Use your existing trading data instead of separate expense APIs
+  // Use the same working trading data API
   const queryParams = new URLSearchParams();
   if (dateRange.fiscalYear) {
     queryParams.append('fiscalYear', dateRange.fiscalYear);
@@ -585,7 +585,7 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
   }
 
   const { data: tradingData } = useQuery({
-    queryKey: ['/api/accounting/profitability?' + queryParams.toString()],
+    queryKey: ['/api/accounting/trading-details?' + queryParams.toString()],
     staleTime: 0
   });
 
@@ -746,7 +746,7 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
 
 // Balance Sheet Component
 function BalanceSheetTab({ dateRange }: { dateRange: any }) {
-  // Use existing trading data instead of separate accounting API
+  // Use the same trading data API that's working
   const queryParams = new URLSearchParams();
   if (dateRange.fiscalYear) {
     queryParams.append('fiscalYear', dateRange.fiscalYear);
@@ -756,7 +756,7 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
   }
 
   const { data: tradingData } = useQuery({
-    queryKey: ['/api/accounting/profitability/balance-sheet', queryParams.toString()],
+    queryKey: ['/api/accounting/trading-details?' + queryParams.toString()],
     staleTime: 0
   });
 
@@ -857,7 +857,7 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
 
 // Ledger Component
 function LedgerTab({ dateRange }: { dateRange: any }) {
-  // Use your existing trading data
+  // Use the same working trading data API
   const queryParams = new URLSearchParams();
   if (dateRange.fiscalYear) {
     queryParams.append('fiscalYear', dateRange.fiscalYear);
@@ -867,7 +867,7 @@ function LedgerTab({ dateRange }: { dateRange: any }) {
   }
 
   const { data: tradingData } = useQuery({
-    queryKey: ['/api/accounting/profitability?' + queryParams.toString()],
+    queryKey: ['/api/accounting/trading-details?' + queryParams.toString()],
     staleTime: 0
   });
 
