@@ -141,6 +141,7 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
     const netProfit = totalRevenue - totalExpenses - totalPurchases;
 
     // Get GST data for date range - AUTHENTIC DATA ONLY
+    console.log(`🔍 GST Query Debug: tenantId=${tenantId}, startDate=${startDateStr}, endDate=${endDateStr}`);
     const gstData = await db.execute(sql`
       SELECT 
         COALESCE(SUM(sgst), 0) as total_sgst,
@@ -151,6 +152,7 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
       AND DATE(invoice_date) >= ${startDateStr}
       AND DATE(invoice_date) <= ${endDateStr}
     `);
+    console.log(`📊 GST Data Result:`, gstData.rows[0]);
 
     const gstRow = gstData.rows[0] as any;
     const sgst = parseFloat(gstRow.total_sgst || '0');
