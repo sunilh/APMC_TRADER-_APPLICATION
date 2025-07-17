@@ -2,36 +2,154 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 import { getCurrentFiscalYear } from "./accounting";
 
-export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: string) {
+export async function getTradingDetails(tenantId: number, startDate?: string, endDate?: string, fiscalYear?: string) {
   try {
-    // Calculate totals directly from actual data only
-    const salesData = await db.execute(sql`
+    // Build date filter for tax invoices and farmer bills
+    let invoiceDateFilter = '';
+    let billDateFilter = '';
+    
+    if (startDate && endDate) {
+      invoiceDateFilter = `AND DATE(ti.invoice_date) BETWEEN '${startDate}' AND '${endDate}'`;
+      billDateFilter = `AND DATE(fb.bill_date) BETWEEN '${startDate}' AND '${endDate}'`;
+    } else if (fiscalYear) {
+      // For fiscal year, extract year from invoice_date and bill_date
+      const year = fiscalYear.split('-')[0];
+      invoiceDateFilter = `AND EXTRACT(YEAR FROM ti.invoice_date) = ${year}`;
+      billDateFilter = `AND EXTRACT(YEAR FROM fb.bill_date) = ${year}`;
+    }
+
+    // Get buyer invoices (tax invoices) - Cash Inflow
+    const buyerInvoicesData = await db.execute(sql`
       SELECT 
-        COALESCE(SUM(CASE WHEN account_head = 'sales' THEN credit_amount ELSE 0 END), 0) as total_sales,
-        COALESCE(SUM(CASE WHEN account_head = 'commission_income' THEN credit_amount ELSE 0 END), 0) as commission_income,
-        COALESCE(SUM(CASE WHEN account_head = 'service_charges' THEN credit_amount ELSE 0 END), 0) as service_charges,
-        COALESCE(SUM(CASE WHEN account_head = 'purchases' THEN debit_amount ELSE 0 END), 0) as total_purchases,
-        COALESCE(SUM(CASE WHEN account_head = 'operating_expenses' THEN debit_amount ELSE 0 END), 0) as operating_expenses,
-        COALESCE(SUM(CASE WHEN account_head = 'bank_charges' THEN debit_amount ELSE 0 END), 0) as bank_charges,
-        COALESCE(SUM(CASE WHEN account_head = 'accounts_payable' THEN debit_amount ELSE 0 END), 0) as farmer_payments
-      FROM accounting_ledger 
-      WHERE tenant_id = ${tenantId} AND fiscal_year = ${fiscalYear}
+        ti.buyer_id,
+        b.name as buyer_name,
+        ti.invoice_number,
+        ti.invoice_date,
+        ti.basic_amount,
+        ti.total_amount,
+        ti.sgst,
+        ti.cgst,
+        ti.cess,
+        (ti.total_amount - ti.basic_amount) as total_taxes_collected
+      FROM tax_invoices ti
+      JOIN buyers b ON ti.buyer_id = b.id
+      WHERE ti.tenant_id = ${tenantId} ${invoiceDateFilter}
+      ORDER BY ti.invoice_date DESC
     `);
 
-    const row = salesData.rows[0] as any;
-    const totalSales = parseFloat(row.total_sales || '0');
-    const commissionIncome = parseFloat(row.commission_income || '0');
-    const serviceCharges = parseFloat(row.service_charges || '0');
-    const totalPurchases = parseFloat(row.total_purchases || '0');
-    const operatingExpenses = parseFloat(row.operating_expenses || '0');
-    const bankCharges = parseFloat(row.bank_charges || '0');
-    const farmerPayments = parseFloat(row.farmer_payments || '0');
+    // Get farmer bills - Cash Outflow
+    const farmerBillsData = await db.execute(sql`
+      SELECT 
+        fb.farmer_id,
+        f.name as farmer_name,
+        fb.patti_number,
+        fb.bill_date,
+        fb.total_amount as gross_amount,
+        fb.hamali,
+        fb.vehicle_rent,
+        fb.empty_bag_charges,
+        fb.advance,
+        fb.commission_amount as rok,
+        fb.other_deductions,
+        fb.net_amount as net_payable,
+        (fb.total_amount - fb.net_amount) as total_deductions
+      FROM farmer_bills fb
+      JOIN farmers f ON fb.farmer_id = f.id
+      WHERE fb.tenant_id = ${tenantId} ${billDateFilter}
+      ORDER BY fb.bill_date DESC
+    `);
 
-    const totalRevenue = totalSales + commissionIncome + serviceCharges;
-    const totalExpenses = operatingExpenses + bankCharges + farmerPayments;
-    const grossProfit = totalSales - totalPurchases;
-    // Net profit = Total Income - All Expenses (including farmer payments)
-    const netProfit = totalRevenue - totalExpenses - totalPurchases;
+    // Calculate totals
+    const buyerInvoices = buyerInvoicesData.rows.map(row => ({
+      buyer_id: row.buyer_id,
+      buyer_name: row.buyer_name,
+      invoice_number: row.invoice_number,
+      invoice_date: row.invoice_date,
+      basic_amount: parseFloat(row.basic_amount || '0'),
+      total_amount: parseFloat(row.total_amount || '0'),
+      sgst: parseFloat(row.sgst || '0'),
+      cgst: parseFloat(row.cgst || '0'),
+      cess: parseFloat(row.cess || '0'),
+      total_taxes_collected: parseFloat(row.total_taxes_collected || '0')
+    }));
+
+    const farmerBills = farmerBillsData.rows.map(row => ({
+      farmer_id: row.farmer_id,
+      farmer_name: row.farmer_name,
+      patti_number: row.patti_number,
+      bill_date: row.bill_date,
+      gross_amount: parseFloat(row.gross_amount || '0'),
+      hamali: parseFloat(row.hamali || '0'),
+      vehicle_rent: parseFloat(row.vehicle_rent || '0'),
+      empty_bag_charges: parseFloat(row.empty_bag_charges || '0'),
+      advance: parseFloat(row.advance || '0'),
+      rok: parseFloat(row.rok || '0'),
+      other_deductions: parseFloat(row.other_deductions || '0'),
+      net_payable: parseFloat(row.net_payable || '0'),
+      total_deductions: parseFloat(row.total_deductions || '0')
+    }));
+
+    // Calculate summary totals
+    const totalCashInflow = buyerInvoices.reduce((sum, invoice) => sum + invoice.total_amount, 0);
+    const totalBasicAmount = buyerInvoices.reduce((sum, invoice) => sum + invoice.basic_amount, 0);
+    const totalTaxesCollected = buyerInvoices.reduce((sum, invoice) => sum + invoice.total_taxes_collected, 0);
+    const totalGSTCollected = buyerInvoices.reduce((sum, invoice) => sum + invoice.sgst + invoice.cgst, 0);
+    const totalCessCollected = buyerInvoices.reduce((sum, invoice) => sum + invoice.cess, 0);
+    
+    const totalCashOutflow = farmerBills.reduce((sum, bill) => sum + bill.net_payable, 0);
+    const totalGrossAmount = farmerBills.reduce((sum, bill) => sum + bill.gross_amount, 0);
+    const totalDeductions = farmerBills.reduce((sum, bill) => sum + bill.total_deductions, 0);
+    
+    // Calculate individual deduction components
+    const totalHamali = farmerBills.reduce((sum, bill) => sum + bill.hamali, 0);
+    const totalVehicleRent = farmerBills.reduce((sum, bill) => sum + bill.vehicle_rent, 0);
+    const totalEmptyBags = farmerBills.reduce((sum, bill) => sum + bill.empty_bag_charges, 0);
+    const totalAdvance = farmerBills.reduce((sum, bill) => sum + bill.advance, 0);
+    const totalRok = farmerBills.reduce((sum, bill) => sum + bill.rok, 0);
+    const totalOther = farmerBills.reduce((sum, bill) => sum + bill.other_deductions, 0);
+    
+    // Cash difference and net profit calculations
+    const cashDifference = totalCashInflow - totalCashOutflow;
+    
+    // Net profit is the trading margin (total deductions from farmers)
+    // This represents the trader's actual profit from operations
+    const netProfit = totalDeductions;
+    
+    return {
+      summary: {
+        total_cash_inflow: totalCashInflow,
+        total_basic_amount: totalBasicAmount,
+        total_taxes_collected: totalTaxesCollected,
+        total_gst_collected: totalGSTCollected,
+        total_cess_collected: totalCessCollected,
+        total_cash_outflow: totalCashOutflow,
+        total_gross_amount: totalGrossAmount,
+        total_deductions: totalDeductions,
+        cash_difference: cashDifference,
+        net_profit: netProfit
+      },
+      trading_margin_breakdown: {
+        hamali: totalHamali,
+        vehicle_rent: totalVehicleRent,
+        empty_bags: totalEmptyBags,
+        advance: totalAdvance,
+        rok_commission: totalRok,
+        other: totalOther,
+        total: totalDeductions
+      },
+      buyer_invoices: buyerInvoices,
+      farmer_bills: farmerBills
+    };
+  } catch (error) {
+    console.error('Error getting trading details:', error);
+    throw error;
+  }
+}
+
+export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: string) {
+  try {
+    // Use the new trading details for consistent calculation
+    const tradingData = await getTradingDetails(tenantId, undefined, undefined, fiscalYear);
 
     // Get GST data from actual tax invoices only
     const gstData = await db.execute(sql`

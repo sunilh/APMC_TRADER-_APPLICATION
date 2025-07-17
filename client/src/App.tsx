@@ -18,7 +18,7 @@ import TaxInvoice from "@/pages/tax-invoice";
 import FarmerBill from "@/pages/farmer-bill";
 import CessReports from "@/pages/cess-reports";
 import GstReports from "@/pages/gst-reports";
-import FinalAccounts from "@/pages/final-accounts";
+import FinalAccounts from "@/pages/final-accounts-new";
 import BidPrices from "@/pages/bid-prices";
 import InventoryIn from "@/pages/inventory-in";
 import InvoiceReports from "@/pages/invoice-reports";

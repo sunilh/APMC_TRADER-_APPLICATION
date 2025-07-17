@@ -1,0 +1,536 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, TrendingUp, TrendingDown, DollarSign, Receipt, Users, Calculator } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Navigation } from "@/components/navigation";
+import { BackToDashboard } from "@/components/back-to-dashboard";
+
+// Format currency values
+const formatCurrency = (amount: number | string) => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+  }).format(num);
+};
+
+// Format date
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-GB');
+};
+
+export default function FinalAccountsNew() {
+  const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("today");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+
+  // Calculate date range based on selected period
+  const getDateRange = () => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    switch (selectedPeriod) {
+      case "today":
+        return { startDate: todayStr, endDate: todayStr };
+      case "this_week":
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        return { 
+          startDate: startOfWeek.toISOString().split('T')[0], 
+          endDate: todayStr 
+        };
+      case "this_month":
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { 
+          startDate: startOfMonth.toISOString().split('T')[0], 
+          endDate: todayStr 
+        };
+      case "this_quarter":
+        const currentQuarter = Math.floor(today.getMonth() / 3);
+        const startOfQuarter = new Date(today.getFullYear(), currentQuarter * 3, 1);
+        return { 
+          startDate: startOfQuarter.toISOString().split('T')[0], 
+          endDate: todayStr 
+        };
+      case "fiscal_year":
+        return { fiscalYear: "2025-26" };
+      case "custom":
+        return { startDate: customStartDate, endDate: customEndDate };
+      default:
+        return { startDate: todayStr, endDate: todayStr };
+    }
+  };
+
+  const dateRange = getDateRange();
+
+  // Fetch trading details data
+  const { data: tradingData, isLoading, error } = useQuery({
+    queryKey: ["trading-details", dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (dateRange.startDate) params.set('startDate', dateRange.startDate);
+      if (dateRange.endDate) params.set('endDate', dateRange.endDate);
+      if (dateRange.fiscalYear) params.set('fiscalYear', dateRange.fiscalYear);
+      
+      const response = await fetch(`/api/accounting/trading-details?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch trading details');
+      return response.json();
+    },
+    enabled: !!user && (!!dateRange.startDate || !!dateRange.fiscalYear),
+  });
+
+  const getPeriodTitle = () => {
+    switch (selectedPeriod) {
+      case "today": return "Today's Trading Details";
+      case "this_week": return "This Week's Trading Details";
+      case "this_month": return "This Month's Trading Details";
+      case "this_quarter": return "This Quarter's Trading Details";
+      case "fiscal_year": return "Fiscal Year Trading Details";
+      case "custom": return "Custom Period Trading Details";
+      default: return "Trading Details";
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">Loading trading details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-red-600">Error loading trading details</div>
+        </div>
+      </div>
+    );
+  }
+
+  const summary = tradingData?.summary || {};
+  const marginBreakdown = tradingData?.trading_margin_breakdown || {};
+  const buyerInvoices = tradingData?.buyer_invoices || [];
+  const farmerBills = tradingData?.farmer_bills || [];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Final Accounts</h1>
+            <p className="text-gray-600 mt-1">{getPeriodTitle()}</p>
+          </div>
+          <BackToDashboard />
+        </div>
+
+        {/* Period Selection */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              Select Period
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Period
+                </label>
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="this_week">This Week</SelectItem>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                    <SelectItem value="this_quarter">This Quarter</SelectItem>
+                    <SelectItem value="fiscal_year">Fiscal Year 2025-26</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedPeriod === "custom" && (
+                <>
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Cash Inflow */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cash Inflow (Buyers)</CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(summary.total_cash_inflow || 0)}
+              </div>
+              <p className="text-xs text-gray-600">
+                Basic: {formatCurrency(summary.total_basic_amount || 0)}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Cash Outflow */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cash Outflow (Farmers)</CardTitle>
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(summary.total_cash_outflow || 0)}
+              </div>
+              <p className="text-xs text-gray-600">
+                Gross: {formatCurrency(summary.total_gross_amount || 0)}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Tax Collected */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tax Collected</CardTitle>
+              <Receipt className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(summary.total_taxes_collected || 0)}
+              </div>
+              <p className="text-xs text-gray-600">
+                GST + CESS collected
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Net Profit */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Profit (Margin)</CardTitle>
+              <DollarSign className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                {formatCurrency(summary.net_profit || 0)}
+              </div>
+              <p className="text-xs text-gray-600">
+                Trading margin earned
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="breakdown" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="breakdown">Trading Breakdown</TabsTrigger>
+            <TabsTrigger value="invoices">Buyer Invoices</TabsTrigger>
+            <TabsTrigger value="bills">Farmer Bills</TabsTrigger>
+            <TabsTrigger value="margin">Margin Analysis</TabsTrigger>
+          </TabsList>
+
+          {/* Trading Breakdown */}
+          <TabsContent value="breakdown">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Cash Flow Analysis */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cash Flow Analysis</CardTitle>
+                  <CardDescription>Trader's P&L on transactions</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <span className="font-medium">Cash Inflow from Buyers:</span>
+                    <span className="font-bold text-green-600">
+                      {formatCurrency(summary.total_cash_inflow || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                    <span className="font-medium">Cash Outflow to Farmers:</span>
+                    <span className="font-bold text-red-600">
+                      {formatCurrency(summary.total_cash_outflow || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border-t-2 border-gray-300">
+                    <span className="font-medium">Difference (Inflows - Outflows):</span>
+                    <span className="font-bold text-purple-600">
+                      {formatCurrency(summary.cash_difference || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-2">Breakdown:</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Tax Collected (GST + CESS):</span>
+                        <span className="font-medium">{formatCurrency(summary.total_taxes_collected || 0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Trading Margin (sum of deductions):</span>
+                        <span className="font-medium">{formatCurrency(summary.total_deductions || 0)}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-semibold">
+                        <span>Net Profit (Trader's Margin):</span>
+                        <span className="text-green-600">{formatCurrency(summary.net_profit || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tax Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tax Summary</CardTitle>
+                  <CardDescription>GST and CESS collected</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span className="font-medium">Total GST Collected:</span>
+                    <span className="font-bold text-blue-600">
+                      {formatCurrency(summary.total_gst_collected || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                    <span className="font-medium">Total CESS Collected:</span>
+                    <span className="font-bold text-indigo-600">
+                      {formatCurrency(summary.total_cess_collected || 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border-t-2 border-gray-300">
+                    <span className="font-medium">Total Tax Collected:</span>
+                    <span className="font-bold text-purple-600">
+                      {formatCurrency(summary.total_taxes_collected || 0)}
+                    </span>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note:</strong> Taxes are eventually remitted to the government. 
+                      Your true net profit is the trading margin: <strong>{formatCurrency(summary.net_profit || 0)}</strong>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Buyer Invoices */}
+          <TabsContent value="invoices">
+            <Card>
+              <CardHeader>
+                <CardTitle>Buyer Invoices (Cash Inflow)</CardTitle>
+                <CardDescription>Tax invoices generated for buyers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {buyerInvoices.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Invoice #</TableHead>
+                        <TableHead>Buyer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Basic Amount</TableHead>
+                        <TableHead>Total Amount</TableHead>
+                        <TableHead>Tax Collected</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {buyerInvoices.map((invoice, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono">{invoice.invoice_number}</TableCell>
+                          <TableCell>{invoice.buyer_name}</TableCell>
+                          <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
+                          <TableCell>{formatCurrency(invoice.basic_amount)}</TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            {formatCurrency(invoice.total_amount)}
+                          </TableCell>
+                          <TableCell className="font-semibold text-blue-600">
+                            {formatCurrency(invoice.total_taxes_collected)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No buyer invoices found for the selected period
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Farmer Bills */}
+          <TabsContent value="bills">
+            <Card>
+              <CardHeader>
+                <CardTitle>Farmer Bills (Cash Outflow)</CardTitle>
+                <CardDescription>Payment bills generated for farmers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {farmerBills.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patti #</TableHead>
+                        <TableHead>Farmer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Gross Amount</TableHead>
+                        <TableHead>Total Deductions</TableHead>
+                        <TableHead>Net Payable</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {farmerBills.map((bill, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono">{bill.patti_number}</TableCell>
+                          <TableCell>{bill.farmer_name}</TableCell>
+                          <TableCell>{formatDate(bill.bill_date)}</TableCell>
+                          <TableCell>{formatCurrency(bill.gross_amount)}</TableCell>
+                          <TableCell className="font-semibold text-orange-600">
+                            {formatCurrency(bill.total_deductions)}
+                          </TableCell>
+                          <TableCell className="font-semibold text-red-600">
+                            {formatCurrency(bill.net_payable)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No farmer bills found for the selected period
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Margin Analysis */}
+          <TabsContent value="margin">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trading Margin Breakdown</CardTitle>
+                <CardDescription>Detailed breakdown of your trading profit</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Deduction Sources</h4>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Hamali:</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.hamali || 0)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Vehicle Rent:</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.vehicle_rent || 0)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Empty Bags:</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.empty_bags || 0)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Advance:</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.advance || 0)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Rok Commission (3%):</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.rok_commission || 0)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span>Other Deductions:</span>
+                      <span className="font-medium">{formatCurrency(marginBreakdown.other || 0)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900">Summary</h4>
+                    
+                    <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">Total Trading Margin:</span>
+                        <span className="font-bold text-green-600 text-lg">
+                          {formatCurrency(marginBreakdown.total || 0)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        This is your actual profit from trading operations
+                      </p>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h5 className="font-semibold text-blue-900 mb-2">Profit Calculation:</h5>
+                      <div className="text-sm space-y-1">
+                        <div>• Revenue from deductions charged to farmers</div>
+                        <div>• Commission on total trading volume</div>
+                        <div>• Service charges for facilities provided</div>
+                        <div className="font-semibold text-blue-800 pt-2">
+                          = Net Trading Profit: {formatCurrency(marginBreakdown.total || 0)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

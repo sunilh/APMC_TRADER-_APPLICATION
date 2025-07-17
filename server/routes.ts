@@ -44,7 +44,7 @@ import {
   bidPrices,
   suppliers,
 } from "@shared/schema";
-import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange } from "./finalAccountsReal";
+import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange, getTradingDetails } from "./finalAccountsReal";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray, between } from "drizzle-orm";
 import { z } from "zod";
@@ -270,6 +270,38 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error generating cash flow report:", error);
       res.status(500).json({ message: "Failed to generate cash flow report" });
+    }
+  });
+
+  // Get trading details breakdown  
+  app.get("/api/accounting/trading-details", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate, fiscalYear } = req.query;
+      
+      console.log('🔍 Trading Details API called with:', { 
+        startDate, 
+        endDate, 
+        fiscalYear, 
+        tenantId: req.user.tenantId 
+      });
+      
+      const tradingDetails = await getTradingDetails(
+        req.user.tenantId, 
+        startDate as string, 
+        endDate as string, 
+        fiscalYear as string
+      );
+      
+      console.log('📊 Trading details result:', { 
+        cashInflow: tradingDetails.summary.total_cash_inflow, 
+        cashOutflow: tradingDetails.summary.total_cash_outflow,
+        netProfit: tradingDetails.summary.net_profit 
+      });
+      
+      res.json(tradingDetails);
+    } catch (error) {
+      console.error("Error getting trading details:", error);
+      res.status(500).json({ message: "Failed to get trading details" });
     }
   });
 
