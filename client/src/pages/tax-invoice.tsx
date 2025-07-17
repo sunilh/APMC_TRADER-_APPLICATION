@@ -363,26 +363,36 @@ export default function TaxInvoice() {
           <meta charset="utf-8">
           <title>Tax Invoice - ${taxInvoice.invoiceNumber}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; line-height: 1.4; }
-            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-            .invoice-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 11px; line-height: 1.3; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .invoice-title { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+            .invoice-details { font-size: 12px; margin-bottom: 5px; }
+            .hsn-code { font-size: 12px; margin-bottom: 15px; }
             .company-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .seller, .buyer { width: 48%; }
-            .section-title { font-weight: bold; margin-bottom: 5px; text-decoration: underline; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-            th { background-color: #f0f0f0; font-weight: bold; }
-            .calculations { margin-top: 20px; }
-            .total-row { font-weight: bold; background-color: #f0f0f0; }
-            .bank-details { margin-top: 20px; border: 1px solid #000; padding: 10px; }
+            .seller, .buyer { width: 48%; font-size: 10px; }
+            .section-title { font-weight: bold; margin-bottom: 8px; text-align: center; background-color: #f0f0f0; padding: 5px; }
+            .item-details-title { text-align: center; font-weight: bold; margin: 20px 0 10px 0; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
+            th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+            th { background-color: #f0f0f0; font-weight: bold; font-size: 9px; }
+            .calculations-section { display: flex; justify-content: space-between; margin-top: 20px; }
+            .calculations { width: 48%; }
+            .bank-details { width: 48%; }
+            .calc-title, .bank-title { font-weight: bold; margin-bottom: 10px; text-align: center; background-color: #f0f0f0; padding: 5px; font-size: 11px; }
+            .calc-table, .bank-table { width: 100%; font-size: 9px; }
+            .calc-table td, .bank-table td { border: none; padding: 2px 5px; }
+            .total-payable { font-weight: bold; border-top: 2px solid #000; padding-top: 5px; font-size: 11px; }
+            .terms { margin-top: 15px; font-size: 8px; }
+            .signature { text-align: right; margin-top: 40px; padding-right: 50px; }
+            .signature-line { border-top: 1px solid #000; width: 150px; margin-left: auto; padding-top: 5px; font-size: 10px; }
             @media print { body { margin: 0; } }
           </style>
         </head>
         <body>
           <div class="header">
             <div class="invoice-title">TAX INVOICE</div>
-            <div>Invoice No: ${taxInvoice.invoiceNumber} Date: ${taxInvoice.invoiceDate}</div>
-            <div>HSN Code: 09042110</div>
+            <div class="invoice-details">Invoice No: ${taxInvoice.invoiceNumber} Date: ${new Date(taxInvoice.invoiceDate).toLocaleDateString('en-GB')}</div>
+            <div class="hsn-code">HSN Code: 09042110</div>
           </div>
 
           <div class="company-info">
@@ -407,7 +417,7 @@ export default function TaxInvoice() {
             </div>
           </div>
           
-          <div style="text-align: center; margin: 20px 0; font-weight: bold;">
+          <div class="item-details-title">
             ITEM DETAILS:
           </div>
 
@@ -438,44 +448,44 @@ export default function TaxInvoice() {
             </tbody>
           </table>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-            <div style="width: 48%;">
-              <div class="section-title">AMOUNT CALCULATIONS</div>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 4px 8px; border: none;">Basic Amount</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ Packaging (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.packaging)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ Hamali (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.hamali)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ Weighing (${taxInvoice.calculations.totalBags} bags)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.weighingCharges)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ Commission</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.commission)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ Cess @ 0.6% (on basic amount)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.cess)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">Taxable Amount</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount + taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission + taxInvoice.calculations.cess)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ SGST (2.5%)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.sgst)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">+ CGST (2.5%)</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.cgst)}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;">Total GST</td><td style="padding: 4px 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.sgst + taxInvoice.calculations.cgst)}</td></tr>
-                <tr style="font-weight: bold; border-top: 1px solid #000;"><td style="padding: 8px; border: none;">TOTAL PAYABLE</td><td style="padding: 8px; border: none; text-align: right;">${formatCurrency(taxInvoice.calculations.totalAmount)}</td></tr>
+          <div class="calculations-section">
+            <div class="calculations">
+              <div class="calc-title">AMOUNT CALCULATIONS</div>
+              <table class="calc-table">
+                <tr><td>Basic Amount</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount)}</td></tr>
+                <tr><td>+ Packaging (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.packaging)}</td></tr>
+                <tr><td>+ Hamali (${taxInvoice.calculations.totalBags} bags × ₹5)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.hamali)}</td></tr>
+                <tr><td>+ Weighing (${taxInvoice.calculations.totalBags} bags)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.weighingCharges)}</td></tr>
+                <tr><td>+ Commission</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.commission)}</td></tr>
+                <tr><td>+ Cess @ 0.6% (on basic amount)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.cess)}</td></tr>
+                <tr><td>Taxable Amount</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.basicAmount + taxInvoice.calculations.packaging + taxInvoice.calculations.hamali + taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission + taxInvoice.calculations.cess)}</td></tr>
+                <tr><td>+ SGST (2.5%)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.sgst)}</td></tr>
+                <tr><td>+ CGST (2.5%)</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.cgst)}</td></tr>
+                <tr><td>Total GST</td><td style="text-align: right;">${formatCurrency(taxInvoice.calculations.sgst + taxInvoice.calculations.cgst)}</td></tr>
+                <tr class="total-payable"><td><strong>TOTAL PAYABLE</strong></td><td style="text-align: right;"><strong>${formatCurrency(taxInvoice.calculations.totalAmount)}</strong></td></tr>
               </table>
             </div>
             
-            <div style="width: 48%;">
-              <div class="section-title">BANK DETAILS FOR PAYMENT</div>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 4px 8px; border: none;"><strong>Bank:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.bankName}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;"><strong>A/C No:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.accountNumber}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;"><strong>IFSC:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.ifscCode}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;"><strong>Holder:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.accountHolder}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;"><strong>Branch:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.branchName || ''}</td></tr>
-                <tr><td style="padding: 4px 8px; border: none;"><strong>Branch Address:</strong></td><td style="padding: 4px 8px; border: none;">${taxInvoice.bankDetails.branchAddress || ''}</td></tr>
+            <div class="bank-details">
+              <div class="bank-title">BANK DETAILS FOR PAYMENT</div>
+              <table class="bank-table">
+                <tr><td><strong>Bank:</strong></td><td>${taxInvoice.bankDetails.bankName}</td></tr>
+                <tr><td><strong>A/C No:</strong></td><td>${taxInvoice.bankDetails.accountNumber}</td></tr>
+                <tr><td><strong>IFSC:</strong></td><td>${taxInvoice.bankDetails.ifscCode}</td></tr>
+                <tr><td><strong>Holder:</strong></td><td>${taxInvoice.bankDetails.accountHolder}</td></tr>
+                <tr><td><strong>Branch:</strong></td><td>${taxInvoice.bankDetails.branchName || ''}</td></tr>
+                <tr><td><strong>Branch Address:</strong></td><td>${taxInvoice.bankDetails.branchAddress || ''}</td></tr>
               </table>
               
-              <div style="margin-top: 20px; font-size: 11px;">
+              <div class="terms">
                 <div>Terms: Payment due within 30 days</div>
                 <div>Goods once sold will not be taken back</div>
               </div>
             </div>
           </div>
           
-          <div style="text-align: right; margin-top: 40px; padding-right: 50px;">
-            <div style="border-top: 1px solid #000; width: 200px; margin-left: auto; padding-top: 5px;">
+          <div class="signature">
+            <div class="signature-line">
               Authorized Signature
             </div>
           </div>
