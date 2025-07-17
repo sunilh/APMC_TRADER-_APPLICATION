@@ -546,6 +546,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Added global CSS styles in index.css with !important declarations to override browser caching issues
   - Implemented tax-invoice-print CSS class for consistent formatting across all print functions
   - Tax invoice format now perfectly matches uploaded PDF with smart arrangement and improved visual appearance
+- July 17, 2025: Integrated comprehensive accounting features into existing Final Accounts page
+  - Fixed runtime date formatting error that was causing crashes in ledger display
+  - Added 3 new tabs to Final Accounts: Expenses, Balance Sheet, and Ledger alongside existing trading tabs
+  - Connected accounting tabs to existing trading data instead of separate empty accounting APIs
+  - Balance Sheet now shows real cash position from buyer payments and farmer bills with tax liabilities
+  - Ledger displays actual trading transactions (sales, purchases, payments, taxes) from completed lots
+  - Expenses tab shows trading cost analysis using existing deduction and profit data
+  - Maintained existing workflow while providing advanced accounting insights from authentic trading data
+  - System now provides unified financial management with 7 tabs: Trading Breakdown, Buyer Invoices, Farmer Bills, Margin Analysis, Expenses, Balance Sheet, and Ledger
 
 # User Preferences
 

@@ -575,15 +575,17 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
 
   const queryClient = useQueryClient();
 
-  // Expenses Summary Query
-  const { data: expensesSummary } = useQuery({
-    queryKey: ['/api/accounting/expenses/summary', dateRange.startDate, dateRange.endDate],
-    staleTime: 0
-  });
+  // Use your existing trading data instead of separate expense APIs
+  const queryParams = new URLSearchParams();
+  if (dateRange.fiscalYear) {
+    queryParams.append('fiscalYear', dateRange.fiscalYear);
+  } else {
+    queryParams.append('startDate', dateRange.startDate);
+    queryParams.append('endDate', dateRange.endDate);
+  }
 
-  // Detailed Expenses Query
-  const { data: detailedExpenses } = useQuery({
-    queryKey: ['/api/accounting/expenses/detailed', dateRange.startDate, dateRange.endDate],
+  const { data: tradingData } = useQuery({
+    queryKey: ['/api/accounting/profitability?' + queryParams.toString()],
     staleTime: 0
   });
 
@@ -665,52 +667,76 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
         </Dialog>
       </div>
 
-      {/* Expenses Summary */}
+      {/* Trading Expense Summary from your data */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {expensesSummary && Object.entries(expensesSummary).map(([category, amount]) => (
-          <Card key={category}>
-            <CardContent className="p-4">
-              <div className="text-sm font-medium capitalize">{category.replace('_', ' ')}</div>
-              <div className="text-2xl font-bold">{formatCurrency(amount as number)}</div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm font-medium">Trading Deductions</div>
+            <div className="text-2xl font-bold">{formatCurrency(tradingData?.summary?.total_deductions || 0)}</div>
+            <div className="text-xs text-gray-600">Service charges collected</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm font-medium">Tax Collected</div>
+            <div className="text-2xl font-bold">{formatCurrency(tradingData?.summary?.total_taxes_collected || 0)}</div>
+            <div className="text-xs text-gray-600">GST + CESS to remit</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm font-medium">Net Trading Profit</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(tradingData?.summary?.net_profit || 0)}</div>
+            <div className="text-xs text-gray-600">After all trading costs</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Detailed Expenses */}
+      {/* Trading Cost Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Expense Details</CardTitle>
+          <CardTitle>Trading Cost Analysis</CardTitle>
+          <CardDescription>Breakdown of your trading operation costs and earnings</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {detailedExpenses?.map((expense: any) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>{new Date(expense.expenseDate).toLocaleDateString()}</TableCell>
-                    <TableCell className="capitalize">{expense.category}</TableCell>
-                    <TableCell>{expense.description}</TableCell>
-                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
-                  </TableRow>
-                ))}
-                {(!detailedExpenses || detailedExpenses.length === 0) && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-gray-500">
-                      No expenses recorded for this period
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <div className="space-y-4">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <h4 className="font-semibold text-green-900 mb-2">Revenue Sources:</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Total Cash from Buyers:</span>
+                  <span className="font-medium">{formatCurrency(tradingData?.summary?.total_cash_inflow || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Service Charges Collected:</span>
+                  <span className="font-medium">{formatCurrency(tradingData?.summary?.total_deductions || 0)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-red-50 rounded-lg">
+              <h4 className="font-semibold text-red-900 mb-2">Costs & Payments:</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Payments to Farmers:</span>
+                  <span className="font-medium">{formatCurrency(tradingData?.summary?.total_cash_outflow || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax Liabilities (GST+CESS):</span>
+                  <span className="font-medium">{formatCurrency(tradingData?.summary?.total_taxes_collected || 0)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <h4 className="font-semibold text-blue-900 mb-2">Net Position:</h4>
+              <div className="flex justify-between text-lg">
+                <span>Trading Profit (Your Earnings):</span>
+                <span className="font-bold text-green-600">{formatCurrency(tradingData?.summary?.net_profit || 0)}</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -720,8 +746,17 @@ function ExpensesTab({ dateRange }: { dateRange: any }) {
 
 // Balance Sheet Component
 function BalanceSheetTab({ dateRange }: { dateRange: any }) {
-  const { data: balanceSheet } = useQuery({
-    queryKey: ['/api/accounting/balance-sheet', dateRange.endDate],
+  // Use existing trading data instead of separate accounting API
+  const queryParams = new URLSearchParams();
+  if (dateRange.fiscalYear) {
+    queryParams.append('fiscalYear', dateRange.fiscalYear);
+  } else {
+    queryParams.append('startDate', dateRange.startDate);
+    queryParams.append('endDate', dateRange.endDate);
+  }
+
+  const { data: tradingData } = useQuery({
+    queryKey: ['/api/accounting/profitability/balance-sheet', queryParams.toString()],
     staleTime: 0
   });
 
@@ -735,11 +770,22 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
     }).format(num || 0);
   };
 
+  // Calculate balance sheet from trading data
+  const cashInflow = tradingData?.summary?.total_cash_inflow || 0;
+  const cashOutflow = tradingData?.summary?.total_cash_outflow || 0;
+  const taxesCollected = tradingData?.summary?.total_taxes_collected || 0;
+  const netProfit = tradingData?.summary?.net_profit || 0;
+  
+  const cashPosition = cashInflow - cashOutflow;
+  const totalAssets = cashPosition > 0 ? cashPosition : 0;
+  const taxLiabilities = taxesCollected;
+  const netWorth = totalAssets - taxLiabilities;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Balance Sheet</CardTitle>
-        <CardDescription>Financial position snapshot</CardDescription>
+        <CardDescription>Financial position from trading operations</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -747,20 +793,16 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
             <h3 className="font-semibold text-blue-600 mb-3">ASSETS</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Cash</span>
-                <span>{formatCurrency(balanceSheet?.assets?.cash || 0)}</span>
+                <span>Cash Position (Trading)</span>
+                <span>{formatCurrency(cashPosition)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Bank Balance</span>
-                <span>{formatCurrency(balanceSheet?.assets?.bankBalance || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Accounts Receivable</span>
-                <span>{formatCurrency(balanceSheet?.assets?.accountsReceivable || 0)}</span>
+                <span>Net Profit Retained</span>
+                <span>{formatCurrency(netProfit)}</span>
               </div>
               <div className="flex justify-between font-semibold border-t pt-2">
                 <span>Total Assets</span>
-                <span>{formatCurrency(balanceSheet?.assets?.totalAssets || 0)}</span>
+                <span>{formatCurrency(totalAssets + netProfit)}</span>
               </div>
             </div>
           </div>
@@ -769,24 +811,42 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
             <h3 className="font-semibold text-red-600 mb-3">LIABILITIES & EQUITY</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Accounts Payable</span>
-                <span>{formatCurrency(balanceSheet?.liabilities?.accountsPayable || 0)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax Liabilities</span>
-                <span>{formatCurrency(balanceSheet?.liabilities?.taxLiabilities || 0)}</span>
+                <span>Tax Liabilities (GST + CESS)</span>
+                <span>{formatCurrency(taxLiabilities)}</span>
               </div>
               <div className="flex justify-between font-semibold border-t pt-2">
                 <span>Total Liabilities</span>
-                <span>{formatCurrency(balanceSheet?.liabilities?.totalLiabilities || 0)}</span>
+                <span>{formatCurrency(taxLiabilities)}</span>
               </div>
               
               <div className="mt-4">
                 <div className="flex justify-between font-semibold text-green-600">
                   <span>Net Worth</span>
-                  <span>{formatCurrency(balanceSheet?.equity?.netWorth || 0)}</span>
+                  <span>{formatCurrency(netWorth + netProfit)}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-900 mb-2">Trading Summary:</h4>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>Cash from Buyers:</span>
+              <span className="font-medium text-green-600">{formatCurrency(cashInflow)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Paid to Farmers:</span>
+              <span className="font-medium text-red-600">{formatCurrency(cashOutflow)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Taxes Collected:</span>
+              <span className="font-medium text-blue-600">{formatCurrency(taxesCollected)}</span>
+            </div>
+            <div className="flex justify-between font-semibold border-t pt-1">
+              <span>Net Position:</span>
+              <span className="text-green-600">{formatCurrency(cashPosition)}</span>
             </div>
           </div>
         </div>
@@ -797,8 +857,17 @@ function BalanceSheetTab({ dateRange }: { dateRange: any }) {
 
 // Ledger Component
 function LedgerTab({ dateRange }: { dateRange: any }) {
-  const { data: ledgerEntries } = useQuery({
-    queryKey: ['/api/accounting/ledger', dateRange.startDate, dateRange.endDate],
+  // Use your existing trading data
+  const queryParams = new URLSearchParams();
+  if (dateRange.fiscalYear) {
+    queryParams.append('fiscalYear', dateRange.fiscalYear);
+  } else {
+    queryParams.append('startDate', dateRange.startDate);
+    queryParams.append('endDate', dateRange.endDate);
+  }
+
+  const { data: tradingData } = useQuery({
+    queryKey: ['/api/accounting/profitability?' + queryParams.toString()],
     staleTime: 0
   });
 
@@ -812,11 +881,74 @@ function LedgerTab({ dateRange }: { dateRange: any }) {
     }).format(num || 0);
   };
 
+  // Generate ledger entries from trading data
+  const ledgerEntries = [];
+  const buyerInvoices = tradingData?.buyer_invoices || [];
+  const farmerBills = tradingData?.farmer_bills || [];
+
+  // Add buyer invoice entries
+  buyerInvoices.forEach((invoice: any) => {
+    ledgerEntries.push({
+      id: `buyer-${invoice.id}`,
+      date: invoice.date,
+      account: 'Accounts Receivable - Buyers',
+      description: `Invoice ${invoice.id} - ${invoice.buyer_name}`,
+      debit: invoice.total_amount,
+      credit: 0,
+      type: 'sale'
+    });
+    ledgerEntries.push({
+      id: `sale-${invoice.id}`,
+      date: invoice.date,
+      account: 'Sales Revenue',
+      description: `Sale to ${invoice.buyer_name}`,
+      debit: 0,
+      credit: invoice.basic_amount,
+      type: 'revenue'
+    });
+    if (invoice.total_tax > 0) {
+      ledgerEntries.push({
+        id: `tax-${invoice.id}`,
+        date: invoice.date,
+        account: 'Tax Collected',
+        description: `GST/CESS on sale to ${invoice.buyer_name}`,
+        debit: 0,
+        credit: invoice.total_tax,
+        type: 'tax'
+      });
+    }
+  });
+
+  // Add farmer bill entries
+  farmerBills.forEach((bill: any) => {
+    ledgerEntries.push({
+      id: `farmer-${bill.id}`,
+      date: bill.date,
+      account: 'Cost of Goods Sold',
+      description: `Purchase from ${bill.farmer_name}`,
+      debit: bill.total_amount,
+      credit: 0,
+      type: 'purchase'
+    });
+    ledgerEntries.push({
+      id: `payment-${bill.id}`,
+      date: bill.date,
+      account: 'Cash/Bank',
+      description: `Payment to ${bill.farmer_name}`,
+      debit: 0,
+      credit: bill.net_amount,
+      type: 'payment'
+    });
+  });
+
+  // Sort by date
+  ledgerEntries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>General Ledger</CardTitle>
-        <CardDescription>All accounting transactions</CardDescription>
+        <CardTitle>Trading Ledger</CardTitle>
+        <CardDescription>All trading transactions and payments</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -828,30 +960,64 @@ function LedgerTab({ dateRange }: { dateRange: any }) {
                 <TableHead>Description</TableHead>
                 <TableHead>Debit</TableHead>
                 <TableHead>Credit</TableHead>
-                <TableHead>Balance</TableHead>
+                <TableHead>Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ledgerEntries?.map((entry: any) => (
+              {ledgerEntries.map((entry: any) => (
                 <TableRow key={entry.id}>
-                  <TableCell>{entry.transactionDate ? new Date(entry.transactionDate).toLocaleDateString() : '-'}</TableCell>
-                  <TableCell>{entry.accountHead}</TableCell>
+                  <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{entry.account}</TableCell>
                   <TableCell>{entry.description}</TableCell>
-                  <TableCell>{entry.debitAmount !== '0' ? formatCurrency(entry.debitAmount) : '-'}</TableCell>
-                  <TableCell>{entry.creditAmount !== '0' ? formatCurrency(entry.creditAmount) : '-'}</TableCell>
-                  <TableCell>{formatCurrency(entry.balance)}</TableCell>
+                  <TableCell>{entry.debit > 0 ? formatCurrency(entry.debit) : '-'}</TableCell>
+                  <TableCell>{entry.credit > 0 ? formatCurrency(entry.credit) : '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      entry.type === 'sale' ? 'default' :
+                      entry.type === 'revenue' ? 'default' :
+                      entry.type === 'tax' ? 'secondary' :
+                      entry.type === 'purchase' ? 'destructive' :
+                      'outline'
+                    }>
+                      {entry.type}
+                    </Badge>
+                  </TableCell>
                 </TableRow>
               ))}
-              {(!ledgerEntries || ledgerEntries.length === 0) && (
+              {ledgerEntries.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-gray-500">
-                    No ledger entries for this period
+                    No trading transactions for this period
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </div>
+        
+        {ledgerEntries.length > 0 && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 className="font-semibold mb-2">Transaction Summary:</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Sales:</span>
+                <span className="ml-2 font-medium">{ledgerEntries.filter(e => e.type === 'sale').length}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Purchases:</span>
+                <span className="ml-2 font-medium">{ledgerEntries.filter(e => e.type === 'purchase').length}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Payments:</span>
+                <span className="ml-2 font-medium">{ledgerEntries.filter(e => e.type === 'payment').length}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Tax Records:</span>
+                <span className="ml-2 font-medium">{ledgerEntries.filter(e => e.type === 'tax').length}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
