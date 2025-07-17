@@ -353,7 +353,7 @@ export async function generateProfitLossReport(tenantId: number, fiscalYear?: st
       )
     );
 
-  // Calculate total expenses
+  // Calculate total expenses (including farmer payments and other business expenses)
   const expensesData = await db
     .select({
       total: sum(accountingLedger.debitAmount)
@@ -367,15 +367,31 @@ export async function generateProfitLossReport(tenantId: number, fiscalYear?: st
       )
     );
 
+  // Calculate farmer payments (recorded as accounts_payable debits)
+  const farmerPaymentsData = await db
+    .select({
+      total: sum(accountingLedger.debitAmount)
+    })
+    .from(accountingLedger)
+    .where(
+      and(
+        eq(accountingLedger.tenantId, tenantId),
+        eq(accountingLedger.accountHead, 'accounts_payable'),
+        between(accountingLedger.transactionDate, startDate, endDate)
+      )
+    );
+
   const totalSales = parseFloat(salesData[0]?.total || '0');
   const totalPurchases = parseFloat(purchasesData[0]?.total || '0');
   const commissionIncome = parseFloat(commissionData[0]?.total || '0');
   const serviceCharges = parseFloat(serviceChargesData[0]?.total || '0');
   const totalExpenses = parseFloat(expensesData[0]?.total || '0');
+  const farmerPayments = parseFloat(farmerPaymentsData[0]?.total || '0');
 
   const grossProfit = totalSales - totalPurchases;
   const totalIncome = totalSales + commissionIncome + serviceCharges;
-  const netProfit = totalIncome - totalPurchases - totalExpenses;
+  // Net profit = Total Income - All Expenses (including farmer payments)
+  const netProfit = totalIncome - totalPurchases - totalExpenses - farmerPayments;
 
   return {
     fiscalYear: currentFiscalYear,
@@ -388,6 +404,7 @@ export async function generateProfitLossReport(tenantId: number, fiscalYear?: st
     serviceCharges,
     totalIncome,
     totalExpenses,
+    farmerPayments,
     netProfit,
   };
 }
