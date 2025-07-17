@@ -1460,13 +1460,46 @@ export default function FinalAccounts() {
               <CardContent>
                 <ScrollArea className="h-64">
                   <div className="space-y-2">
-                    {ledgerEntries?.map((entry: any) => (
-                      <div key={entry.id} className="p-2 border rounded">
+                    {ledgerEntries?.map((entry: any) => {
+                      // Debug: Check the raw date value
+                      console.log('Raw transaction date:', entry.transactionDate, 'Type:', typeof entry.transactionDate);
+                      
+                      // Better date parsing
+                      const formatTransactionDate = (dateValue: any) => {
+                        if (!dateValue) return 'No Date';
+                        
+                        // Handle different date formats
+                        let date: Date;
+                        if (typeof dateValue === 'string') {
+                          // Handle YYYY-MM-DD format from database
+                          if (dateValue.includes('-') && dateValue.length === 10) {
+                            date = new Date(dateValue + 'T00:00:00.000Z');
+                          } else {
+                            date = new Date(dateValue);
+                          }
+                        } else {
+                          date = new Date(dateValue);
+                        }
+                        
+                        // Check if date is valid
+                        if (isNaN(date.getTime())) {
+                          return 'Invalid Date';
+                        }
+                        
+                        return date.toLocaleDateString('en-IN', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                      };
+                      
+                      return (
+                        <div key={entry.id} className="p-2 border rounded">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="font-medium">{entry.description}</div>
                             <div className="text-sm text-muted-foreground">
-                              {entry.accountHead} | {new Date(entry.transactionDate).toLocaleDateString()}
+                              {entry.accountHead} | {formatTransactionDate(entry.transactionDate)}
                             </div>
                           </div>
                           <div>
@@ -1478,8 +1511,9 @@ export default function FinalAccounts() {
                             )}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </CardContent>
