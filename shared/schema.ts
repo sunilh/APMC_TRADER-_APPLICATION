@@ -322,6 +322,37 @@ export type InsertPatti = z.infer<typeof insertPattiSchema>;
 export type LotBuyer = typeof lotBuyers.$inferSelect;
 export type InsertLotBuyer = typeof lotBuyers.$inferInsert;
 
+// Expenses table for business cost tracking
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  expenseDate: timestamp("expense_date").defaultNow(),
+  category: text("category").notNull(), // office, vehicle, utilities, staff, licenses, etc.
+  subcategory: text("subcategory"), // rent, fuel, electricity, salary, etc.
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull(), // cash, bank, cheque, upi
+  receiptNumber: text("receipt_number"),
+  vendorName: text("vendor_name"),
+  isRecurring: boolean("is_recurring").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  tenantIdx: index("expense_tenant_idx").on(table.tenantId),
+  dateIdx: index("expense_date_idx").on(table.expenseDate),
+  categoryIdx: index("expense_category_idx").on(table.category),
+}));
+
+// Ledger table for double-entry bookkeeping (already exists, just documenting structure)
+// Each transaction has both debit and credit entries
+// Assets: Debit increases, Credit decreases  
+// Liabilities: Credit increases, Debit decreases
+// Income: Credit increases, Debit decreases
+// Expenses: Debit increases, Credit decreases
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
+
 // Farmer Bill tracking table
 export const farmerBills = pgTable("farmer_bills", {
   id: serial("id").primaryKey(),
@@ -476,19 +507,7 @@ export const expenseCategories = pgTable("expense_categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Manual expenses tracking
-export const expenses = pgTable("expenses", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
-  categoryId: integer("category_id").references(() => expenseCategories.id).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  description: text("description").notNull(),
-  receiptNumber: text("receipt_number"),
-  vendorName: text("vendor_name"),
-  expenseDate: timestamp("expense_date").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-  createdBy: integer("created_by").references(() => users.id),
-});
+// Note: expenses table already defined above at line 329-347
 
 // Insert schemas for new tables
 export const insertFarmerBillSchema = createInsertSchema(farmerBills).omit({

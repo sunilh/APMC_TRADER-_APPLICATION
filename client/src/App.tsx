@@ -19,6 +19,7 @@ import FarmerBill from "@/pages/farmer-bill";
 import CessReports from "@/pages/cess-reports";
 import GstReports from "@/pages/gst-reports";
 import FinalAccounts from "@/pages/final-accounts-new";
+import FinalAccountsComplete from "@/pages/final-accounts-complete";
 import BidPrices from "@/pages/bid-prices";
 import InventoryIn from "@/pages/inventory-in";
 import InvoiceReports from "@/pages/invoice-reports";
@@ -47,6 +48,7 @@ function Router() {
       <ProtectedRoute path="/gst-reports" component={GstReports} />
       <ProtectedRoute path="/settings" component={Settings} />
       <ProtectedRoute path="/final-accounts" component={FinalAccounts} />
+      <ProtectedRoute path="/final-accounts-complete" component={FinalAccountsComplete} />
       <ProtectedRoute path="/bid-prices" component={BidPrices} />
       <ProtectedRoute path="/inventory-in" component={InventoryIn} />
       <ProtectedRoute path="/invoice-reports" component={InvoiceReports} />

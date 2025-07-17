@@ -45,6 +45,14 @@ import {
   suppliers,
 } from "@shared/schema";
 import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange, getTradingDetails } from "./finalAccountsReal";
+import { 
+  getLedgerEntries, 
+  getBalanceSheet, 
+  getExpensesSummary, 
+  getDetailedExpenses, 
+  getComprehensiveProfitLoss, 
+  getCashFlowStatement 
+} from "./accounting-complete";
 import { db } from "./db";
 import { eq, and, desc, gte, lte, or, ilike, isNull, sql, inArray, between } from "drizzle-orm";
 import { z } from "zod";
@@ -348,6 +356,109 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error getting fiscal year:", error);
       res.status(500).json({ message: "Failed to get fiscal year" });
+    }
+  });
+
+  // COMPREHENSIVE ACCOUNTING SYSTEM API ENDPOINTS
+
+  // 1. LEDGER ENDPOINTS - Detailed transaction tracking
+  app.get('/api/accounting/ledger', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const result = await getLedgerEntries(req.user.tenantId, startDate, endDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting ledger entries:', error);
+      res.status(500).json({ message: 'Failed to get ledger entries' });
+    }
+  });
+
+  // 2. BALANCE SHEET ENDPOINTS - Financial position
+  app.get('/api/accounting/balance-sheet', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { asOfDate } = req.query;
+      const result = await getBalanceSheet(req.user.tenantId, asOfDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting balance sheet:', error);
+      res.status(500).json({ message: 'Failed to get balance sheet' });
+    }
+  });
+
+  // 3. EXPENSE TRACKING ENDPOINTS - Business cost management
+  app.get('/api/accounting/expenses/summary', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const result = await getExpensesSummary(req.user.tenantId, startDate, endDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting expenses summary:', error);
+      res.status(500).json({ message: 'Failed to get expenses summary' });
+    }
+  });
+
+  app.get('/api/accounting/expenses/detailed', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const result = await getDetailedExpenses(req.user.tenantId, startDate, endDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting detailed expenses:', error);
+      res.status(500).json({ message: 'Failed to get detailed expenses' });
+    }
+  });
+
+  // Add expense endpoint
+  app.post('/api/accounting/expenses', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const expenseData = {
+        ...req.body,
+        tenantId: req.user.tenantId
+      };
+
+      const [expense] = await db.insert(expenses).values(expenseData).returning();
+      
+      // Also create accounting ledger entry
+      await db.insert(accountingLedger).values({
+        tenantId: req.user.tenantId,
+        accountHead: req.body.category,
+        description: `${req.body.category}: ${req.body.description}`,
+        debitAmount: req.body.amount,
+        creditAmount: 0,
+        referenceType: 'expense',
+        referenceId: expense.id.toString(),
+        transactionDate: req.body.expenseDate || new Date(),
+        fiscalYear: getCurrentFiscalYear()
+      });
+
+      res.json(expense);
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      res.status(500).json({ message: 'Failed to add expense' });
+    }
+  });
+
+  // 4. COMPREHENSIVE PROFIT & LOSS - True business profitability
+  app.get('/api/accounting/profit-loss-comprehensive', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const result = await getComprehensiveProfitLoss(req.user.tenantId, startDate, endDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting comprehensive P&L:', error);
+      res.status(500).json({ message: 'Failed to get comprehensive P&L' });
+    }
+  });
+
+  // 5. CASH FLOW STATEMENT - Money movement tracking
+  app.get('/api/accounting/cash-flow', requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const result = await getCashFlowStatement(req.user.tenantId, startDate, endDate);
+      res.json(result);
+    } catch (error) {
+      console.error('Error getting cash flow statement:', error);
+      res.status(500).json({ message: 'Failed to get cash flow statement' });
     }
   });
 

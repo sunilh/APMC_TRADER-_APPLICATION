@@ -150,6 +150,7 @@ export function Navigation() {
       icon: Settings,
       items: [
         { name: "Final Accounts", href: "/final-accounts", icon: IndianRupee },
+        { name: "Complete Accounting", href: "/final-accounts-complete", icon: BarChart3 },
         { name: t("nav.settings"), href: "/settings", icon: Settings },
       ],
     },
