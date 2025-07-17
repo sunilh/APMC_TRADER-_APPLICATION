@@ -190,6 +190,34 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
     // This represents the trader's actual profit from operations
     const netProfit = totalDeductions;
     
+    // Additional accounting features
+    const avgProfitPerTransaction = buyerInvoices.length > 0 ? netProfit / buyerInvoices.length : 0;
+    const avgDealSize = buyerInvoices.length > 0 ? totalCashInflow / buyerInvoices.length : 0;
+    const profitMarginPercent = totalCashInflow > 0 ? (netProfit / totalCashInflow) * 100 : 0;
+    
+    // Tax calculations for compliance
+    const taxLiability = {
+      sgst_collected: buyerInvoices.reduce((sum, invoice) => sum + invoice.sgst, 0),
+      cgst_collected: buyerInvoices.reduce((sum, invoice) => sum + invoice.cgst, 0),
+      cess_collected: buyerInvoices.reduce((sum, invoice) => sum + invoice.cess, 0),
+      total_tax_liability: totalTaxesCollected
+    };
+
+    // Outstanding tracking
+    const pendingPayments = {
+      buyers_pending: 0, // Would need payment tracking
+      farmers_pending: 0, // Would need payment tracking
+      advance_adjustments: totalAdvance
+    };
+
+    // Daily trading statistics
+    const dailyStats = {
+      total_lots_traded: farmerBills.length,
+      total_farmers_paid: farmerBills.length,
+      total_buyers_invoiced: buyerInvoices.length,
+      avg_profit_per_lot: farmerBills.length > 0 ? netProfit / farmerBills.length : 0
+    };
+
     return {
       summary: {
         total_cash_inflow: totalCashInflow,
@@ -201,7 +229,10 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
         total_gross_amount: totalGrossAmount,
         total_deductions: totalDeductions,
         cash_difference: cashDifference,
-        net_profit: netProfit
+        net_profit: netProfit,
+        profit_margin_percent: profitMarginPercent,
+        avg_deal_size: avgDealSize,
+        avg_profit_per_transaction: avgProfitPerTransaction
       },
       trading_margin_breakdown: {
         hamali: totalHamali,
@@ -212,6 +243,9 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
         other: totalOther,
         total: totalDeductions
       },
+      tax_liability: taxLiability,
+      pending_payments: pendingPayments,
+      daily_stats: dailyStats,
       buyer_invoices: buyerInvoices,
       farmer_bills: farmerBills
     };
