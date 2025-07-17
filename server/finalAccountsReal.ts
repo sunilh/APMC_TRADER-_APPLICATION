@@ -66,6 +66,11 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
     const accountsReceivable = parseFloat(balanceRow.accounts_receivable || '0');
     const accountsPayable = parseFloat(balanceRow.accounts_payable || '0');
 
+    // Fix sign handling for liabilities (they should be positive values)
+    const correctAccountsPayable = Math.abs(accountsPayable);
+    const gstPayable = sgst + cgst;
+    const totalLiabilities = correctAccountsPayable + gstPayable + cess;
+
     return {
       tenantId,
       fiscalYear,
@@ -84,10 +89,10 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
       bankBalance,
       accountsReceivable,
       totalAssets: cash + bankBalance + accountsReceivable,
-      accountsPayable,
-      totalLiabilities: accountsPayable,
-      netWorth: (cash + bankBalance + accountsReceivable) - accountsPayable,
-      gstPayable: sgst + cgst,
+      accountsPayable: correctAccountsPayable,
+      totalLiabilities,
+      netWorth: (cash + bankBalance + accountsReceivable) - totalLiabilities,
+      gstPayable,
       cessPayable: cess,
       gstLiability: {
         sgst,
@@ -178,6 +183,11 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
     const accountsReceivable = parseFloat(balanceRow.accounts_receivable || '0');
     const accountsPayable = parseFloat(balanceRow.accounts_payable || '0');
 
+    // Fix sign handling for liabilities (they should be positive values)
+    const correctAccountsPayable = Math.abs(accountsPayable);
+    const gstPayable = sgst + cgst;
+    const totalLiabilities = correctAccountsPayable + gstPayable + cess;
+
     return {
       tenantId,
       fiscalYear: `Custom Range: ${startDateStr} to ${endDateStr}`,
@@ -198,10 +208,10 @@ export async function getSimpleFinalAccountsDateRange(tenantId: number, startDat
       bankBalance,
       accountsReceivable,
       totalAssets: cash + bankBalance + accountsReceivable,
-      accountsPayable,
-      totalLiabilities: accountsPayable,
-      netWorth: (cash + bankBalance + accountsReceivable) - accountsPayable,
-      gstPayable: sgst + cgst,
+      accountsPayable: correctAccountsPayable,
+      totalLiabilities,
+      netWorth: (cash + bankBalance + accountsReceivable) - totalLiabilities,
+      gstPayable,
       cessPayable: cess,
       gstLiability: {
         sgst,
