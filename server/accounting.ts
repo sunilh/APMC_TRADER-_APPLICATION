@@ -653,6 +653,8 @@ export async function calculateGSTLiability(tenantId: number, fiscalYear?: strin
   }
 
   // Get all tax invoices for the period
+  console.log(`🔍 GST Liability Query Debug: tenantId=${tenantId}, startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+  
   const gstData = await db
     .select({
       totalSGST: sum(taxInvoices.sgst),
@@ -663,9 +665,12 @@ export async function calculateGSTLiability(tenantId: number, fiscalYear?: strin
     .where(
       and(
         eq(taxInvoices.tenantId, tenantId),
-        between(taxInvoices.invoiceDate, startDate, endDate)
+        gte(taxInvoices.invoiceDate, startDate),
+        lte(taxInvoices.invoiceDate, endDate)
       )
     );
+  
+  console.log(`📊 GST Liability Result:`, gstData[0]);
 
   const totalSGST = parseFloat(gstData[0]?.totalSGST?.toString() || '0');
   const totalCGST = parseFloat(gstData[0]?.totalCGST?.toString() || '0');
