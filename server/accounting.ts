@@ -12,7 +12,7 @@ import {
   taxInvoices,
   tenants
 } from "@shared/schema";
-import { eq, sum, desc, and, between, sql } from "drizzle-orm";
+import { eq, sum, desc, and, between, gte, lte, sql } from "drizzle-orm";
 
 // Fiscal year helper functions
 export function getCurrentFiscalYear(): string {
@@ -652,29 +652,29 @@ export async function calculateGSTLiability(tenantId: number, fiscalYear?: strin
     console.log('📅 Using FISCAL YEAR mode for GST liability:', { fiscalYear: currentFiscalYear });
   }
 
-  // Get all tax invoices for the period
+  // Get all tax invoices for the period - using SQL for better date handling
   console.log(`🔍 GST Liability Query Debug: tenantId=${tenantId}, startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
   
-  const gstData = await db
-    .select({
-      totalSGST: sum(taxInvoices.sgst),
-      totalCGST: sum(taxInvoices.cgst),
-      totalCESS: sum(taxInvoices.cess),
-    })
-    .from(taxInvoices)
-    .where(
-      and(
-        eq(taxInvoices.tenantId, tenantId),
-        gte(taxInvoices.invoiceDate, startDate),
-        lte(taxInvoices.invoiceDate, endDate)
-      )
-    );
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = endDate.toISOString().split('T')[0];
   
-  console.log(`📊 GST Liability Result:`, gstData[0]);
+  const gstData = await db.execute(sql`
+    SELECT 
+      COALESCE(SUM(sgst), 0) as total_sgst,
+      COALESCE(SUM(cgst), 0) as total_cgst,
+      COALESCE(SUM(cess), 0) as total_cess
+    FROM tax_invoices 
+    WHERE tenant_id = ${tenantId} 
+    AND DATE(invoice_date) >= ${startDateStr}
+    AND DATE(invoice_date) <= ${endDateStr}
+  `);
+  
+  console.log(`📊 GST Liability Result:`, gstData.rows[0]);
 
-  const totalSGST = parseFloat(gstData[0]?.totalSGST?.toString() || '0');
-  const totalCGST = parseFloat(gstData[0]?.totalCGST?.toString() || '0');
-  const totalCESS = parseFloat(gstData[0]?.totalCESS?.toString() || '0');
+  const row = gstData.rows[0] as any;
+  const totalSGST = parseFloat(row?.total_sgst || '0');
+  const totalCGST = parseFloat(row?.total_cgst || '0');
+  const totalCESS = parseFloat(row?.total_cess || '0');
 
   return {
     fiscalYear: currentFiscalYear,
