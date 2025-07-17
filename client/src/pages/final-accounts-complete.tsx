@@ -655,7 +655,7 @@ export default function FinalAccountsComplete() {
                     <tbody>
                       {ledgerEntries?.map((entry: LedgerEntry) => (
                         <tr key={entry.id} className="border-b">
-                          <td className="py-2">{format(new Date(entry.transactionDate), 'MMM dd, yyyy')}</td>
+                          <td className="py-2">{entry.transactionDate ? format(new Date(entry.transactionDate), 'MMM dd, yyyy') : '-'}</td>
                           <td className="py-2">{entry.accountHead}</td>
                           <td className="py-2">{entry.description}</td>
                           <td className="py-2">{entry.debitAmount !== '0' ? formatCurrency(entry.debitAmount) : '-'}</td>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnifiedInput } from "@/components/ui/unified-input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -266,11 +268,14 @@ export default function FinalAccountsNew() {
         </div>
 
         <Tabs defaultValue="breakdown" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="breakdown">Trading Breakdown</TabsTrigger>
             <TabsTrigger value="invoices">Buyer Invoices</TabsTrigger>
             <TabsTrigger value="bills">Farmer Bills</TabsTrigger>
             <TabsTrigger value="margin">Margin Analysis</TabsTrigger>
+            <TabsTrigger value="expenses">Expenses</TabsTrigger>
+            <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
+            <TabsTrigger value="ledger">Ledger</TabsTrigger>
           </TabsList>
 
           {/* Trading Breakdown */}
@@ -529,8 +534,325 @@ export default function FinalAccountsNew() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* COMPREHENSIVE ACCOUNTING TABS */}
+
+          {/* Expenses Tab */}
+          <TabsContent value="expenses">
+            <ExpensesTab dateRange={dateRange} />
+          </TabsContent>
+
+          {/* Balance Sheet Tab */}
+          <TabsContent value="balance-sheet">
+            <BalanceSheetTab dateRange={dateRange} />
+          </TabsContent>
+
+          {/* Ledger Tab */}
+          <TabsContent value="ledger">
+            <LedgerTab dateRange={dateRange} />
+          </TabsContent>
+
         </Tabs>
       </div>
     </div>
+  );
+}
+
+// COMPREHENSIVE ACCOUNTING COMPONENTS
+
+// Expenses Management Component
+function ExpensesTab({ dateRange }: { dateRange: any }) {
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
+    category: '',
+    description: '',
+    amount: '',
+    paymentMethod: 'cash',
+    receiptNumber: '',
+    vendorName: '',
+    expenseDate: new Date().toISOString().split('T')[0]
+  });
+
+  const queryClient = useQueryClient();
+
+  // Expenses Summary Query
+  const { data: expensesSummary } = useQuery({
+    queryKey: ['/api/accounting/expenses/summary', dateRange.startDate, dateRange.endDate],
+    staleTime: 0
+  });
+
+  // Detailed Expenses Query
+  const { data: detailedExpenses } = useQuery({
+    queryKey: ['/api/accounting/expenses/detailed', dateRange.startDate, dateRange.endDate],
+    staleTime: 0
+  });
+
+  const expenseCategories = [
+    { value: 'office', label: 'Office Expenses' },
+    { value: 'vehicle', label: 'Vehicle & Transport' },
+    { value: 'utilities', label: 'Utilities' },
+    { value: 'staff', label: 'Staff Expenses' },
+    { value: 'licenses', label: 'Licenses & Fees' },
+    { value: 'maintenance', label: 'Maintenance' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'other', label: 'Other Expenses' }
+  ];
+
+  const formatCurrency = (amount: number | string) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num || 0);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Business Expenses Management</h2>
+        <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
+          <DialogTrigger asChild>
+            <Button>Add New Expense</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add Business Expense</DialogTitle>
+              <DialogDescription>Record a new business expense</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Category</label>
+                <Select value={expenseForm.category} onValueChange={(value) => setExpenseForm(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {expenseCategories.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <UnifiedInput
+                  type="text"
+                  placeholder="Expense description"
+                  value={expenseForm.description}
+                  onChange={(value) => setExpenseForm(prev => ({ ...prev, description: value }))}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Amount (₹)</label>
+                <UnifiedInput
+                  type="number"
+                  placeholder="Amount"
+                  value={expenseForm.amount}
+                  onChange={(value) => setExpenseForm(prev => ({ ...prev, amount: value }))}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowExpenseDialog(false)}>Cancel</Button>
+                <Button>Add Expense</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Expenses Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {expensesSummary && Object.entries(expensesSummary).map(([category, amount]) => (
+          <Card key={category}>
+            <CardContent className="p-4">
+              <div className="text-sm font-medium capitalize">{category.replace('_', ' ')}</div>
+              <div className="text-2xl font-bold">{formatCurrency(amount as number)}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Detailed Expenses */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Expense Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {detailedExpenses?.map((expense: any) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{new Date(expense.expenseDate).toLocaleDateString()}</TableCell>
+                    <TableCell className="capitalize">{expense.category}</TableCell>
+                    <TableCell>{expense.description}</TableCell>
+                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                  </TableRow>
+                ))}
+                {(!detailedExpenses || detailedExpenses.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-gray-500">
+                      No expenses recorded for this period
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Balance Sheet Component
+function BalanceSheetTab({ dateRange }: { dateRange: any }) {
+  const { data: balanceSheet } = useQuery({
+    queryKey: ['/api/accounting/balance-sheet', dateRange.endDate],
+    staleTime: 0
+  });
+
+  const formatCurrency = (amount: number | string) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num || 0);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Balance Sheet</CardTitle>
+        <CardDescription>Financial position snapshot</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-blue-600 mb-3">ASSETS</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Cash</span>
+                <span>{formatCurrency(balanceSheet?.assets?.cash || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Bank Balance</span>
+                <span>{formatCurrency(balanceSheet?.assets?.bankBalance || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Accounts Receivable</span>
+                <span>{formatCurrency(balanceSheet?.assets?.accountsReceivable || 0)}</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t pt-2">
+                <span>Total Assets</span>
+                <span>{formatCurrency(balanceSheet?.assets?.totalAssets || 0)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold text-red-600 mb-3">LIABILITIES & EQUITY</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Accounts Payable</span>
+                <span>{formatCurrency(balanceSheet?.liabilities?.accountsPayable || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax Liabilities</span>
+                <span>{formatCurrency(balanceSheet?.liabilities?.taxLiabilities || 0)}</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t pt-2">
+                <span>Total Liabilities</span>
+                <span>{formatCurrency(balanceSheet?.liabilities?.totalLiabilities || 0)}</span>
+              </div>
+              
+              <div className="mt-4">
+                <div className="flex justify-between font-semibold text-green-600">
+                  <span>Net Worth</span>
+                  <span>{formatCurrency(balanceSheet?.equity?.netWorth || 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Ledger Component
+function LedgerTab({ dateRange }: { dateRange: any }) {
+  const { data: ledgerEntries } = useQuery({
+    queryKey: ['/api/accounting/ledger', dateRange.startDate, dateRange.endDate],
+    staleTime: 0
+  });
+
+  const formatCurrency = (amount: number | string) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num || 0);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>General Ledger</CardTitle>
+        <CardDescription>All accounting transactions</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Account</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Debit</TableHead>
+                <TableHead>Credit</TableHead>
+                <TableHead>Balance</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ledgerEntries?.map((entry: any) => (
+                <TableRow key={entry.id}>
+                  <TableCell>{entry.transactionDate ? new Date(entry.transactionDate).toLocaleDateString() : '-'}</TableCell>
+                  <TableCell>{entry.accountHead}</TableCell>
+                  <TableCell>{entry.description}</TableCell>
+                  <TableCell>{entry.debitAmount !== '0' ? formatCurrency(entry.debitAmount) : '-'}</TableCell>
+                  <TableCell>{entry.creditAmount !== '0' ? formatCurrency(entry.creditAmount) : '-'}</TableCell>
+                  <TableCell>{formatCurrency(entry.balance)}</TableCell>
+                </TableRow>
+              ))}
+              {(!ledgerEntries || ledgerEntries.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-gray-500">
+                    No ledger entries for this period
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
