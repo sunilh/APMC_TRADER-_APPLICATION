@@ -299,6 +299,19 @@ export async function getSimpleFinalAccounts(tenantId: number, fiscalYear: strin
     const gstPayable = sgst + cgst;
     const totalLiabilities = correctAccountsPayable + gstPayable + cess;
 
+    // Calculate missing variables from trading data
+    const totalSales = tradingData.summary.total_basic_amount;
+    const totalPurchases = tradingData.summary.total_cash_outflow;
+    const grossProfit = totalSales - totalPurchases;
+    const commissionIncome = tradingData.trading_margin_breakdown.rok_commission;
+    const serviceCharges = tradingData.trading_margin_breakdown.hamali + tradingData.trading_margin_breakdown.vehicle_rent;
+    const totalRevenue = totalSales + commissionIncome + serviceCharges;
+    const operatingExpenses = tradingData.trading_margin_breakdown.other;
+    const bankCharges = 0; // No bank charges in current data
+    const farmerPayments = tradingData.summary.total_cash_outflow;
+    const totalExpenses = operatingExpenses + bankCharges + farmerPayments;
+    const netProfit = tradingData.summary.net_profit;
+
     return {
       tenantId,
       fiscalYear,

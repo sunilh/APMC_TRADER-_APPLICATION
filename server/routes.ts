@@ -346,7 +346,20 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get GST liability
-
+  app.get("/api/accounting/gst-liability/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
+    try {
+      const fiscalYear = req.params.fiscalYear || req.query.fiscalYear;
+      const startDate = req.query.startDate;
+      const endDate = req.query.endDate;
+      console.log('🔍 GST liability API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
+      
+      const gstLiability = await calculateGSTLiability(req.user.tenantId, fiscalYear, startDate, endDate);
+      res.json(gstLiability);
+    } catch (error) {
+      console.error("Error calculating GST liability:", error);
+      res.status(500).json({ message: "Failed to calculate GST liability" });
+    }
+  });
 
   // Get current fiscal year
   app.get("/api/accounting/fiscal-year", requireAuth, async (req: any, res) => {
