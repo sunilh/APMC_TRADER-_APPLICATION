@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -29,10 +29,14 @@ RUN adduser -S apmc -u 1001
 # Set working directory
 WORKDIR /app
 
-# Copy built application and dependencies
-COPY --from=builder --chown=apmc:nodejs /app/dist ./dist
-COPY --from=builder --chown=apmc:nodejs /app/node_modules ./node_modules
+# Copy package files for production install
 COPY --from=builder --chown=apmc:nodejs /app/package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application
+COPY --from=builder --chown=apmc:nodejs /app/dist ./dist
 
 # Create uploads directory with proper permissions
 RUN mkdir -p uploads/invoices uploads/processed && \
