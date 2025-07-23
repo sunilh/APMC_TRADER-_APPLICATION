@@ -43,6 +43,7 @@ import {
   stockInventory,
   bidPrices,
   suppliers,
+  lotBuyers,
 } from "@shared/schema";
 import { getSimpleFinalAccounts, getSimpleFinalAccountsDateRange, getTradingDetails } from "./finalAccountsReal";
 import { 
@@ -1846,8 +1847,40 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Lot not found" });
       }
 
-      const validatedData = insertLotSchema.partial().parse(req.body);
+      const { buyerAllocations, ...lotData } = req.body;
+      const validatedData = insertLotSchema.partial().parse(lotData);
       const lot = await storage.updateLot(id, validatedData, req.user.tenantId);
+
+      // Handle buyer allocations for multi-buyer lots
+      if (buyerAllocations && Array.isArray(buyerAllocations) && buyerAllocations.length > 0) {
+        try {
+          // Clear existing lot-buyer relationships
+          await db.delete(lotBuyers).where(and(
+            eq(lotBuyers.lotId, id),
+            eq(lotBuyers.tenantId, req.user.tenantId)
+          ));
+
+          // Insert new buyer allocations
+          for (const allocation of buyerAllocations) {
+            await db.insert(lotBuyers).values({
+              lotId: id,
+              buyerId: allocation.buyerId,
+              tenantId: req.user.tenantId,
+              bagAllocation: {
+                startBag: allocation.startBag,
+                endBag: allocation.endBag,
+                bagCount: allocation.bagCount,
+                buyerName: allocation.buyerName
+              }
+            });
+          }
+          
+          console.log(`Updated buyer allocations for lot ${id}:`, buyerAllocations.length, 'buyers');
+        } catch (allocationError) {
+          console.error("Error updating buyer allocations:", allocationError);
+          // Don't fail the entire request if allocation update fails
+        }
+      }
 
       await createAuditLog(req, "update", "lot", lot.id, oldLot, lot);
 

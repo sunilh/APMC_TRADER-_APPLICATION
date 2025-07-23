@@ -175,6 +175,8 @@ export default function BagEntryNew() {
         grade: lotGrade,
         buyerId: primaryBuyerId, // Set primary buyer for lot
         finalNotes: finalNotes,
+        // Send buyer allocations for LOT_BUYERS table population
+        buyerAllocations: buyerAllocations,
       });
 
       // Save all bags - use UPDATE for existing bags, CREATE for new ones
