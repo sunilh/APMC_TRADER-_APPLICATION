@@ -225,6 +225,25 @@ export default function BagEntryNew() {
     },
   });
 
+  // Clear conflicting buyer selections
+  useEffect(() => {
+    // Clear buyer2 and buyer3 if they match buyer1
+    if (buyer1 && buyer2 === buyer1) {
+      setBuyer2("");
+      setBuyer2Count("");
+    }
+    if (buyer1 && buyer3 === buyer1) {
+      setBuyer3("");
+    }
+  }, [buyer1]);
+
+  useEffect(() => {
+    // Clear buyer3 if it matches buyer2
+    if (buyer2 && buyer3 === buyer2) {
+      setBuyer3("");
+    }
+  }, [buyer2]);
+
   // Calculate buyer allocations when buyer selection changes
   useEffect(() => {
     if (!lot || !buyer1) return;
@@ -683,11 +702,13 @@ export default function BagEntryNew() {
                     <SelectValue placeholder="Select buyer 2" />
                   </SelectTrigger>
                   <SelectContent>
-                    {buyers.map(buyer => (
-                      <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                        {buyer.name}
-                      </SelectItem>
-                    ))}
+                    {buyers
+                      .filter(buyer => buyer.id.toString() !== buyer1)
+                      .map(buyer => (
+                        <SelectItem key={buyer.id} value={buyer.id.toString()}>
+                          {buyer.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -715,11 +736,16 @@ export default function BagEntryNew() {
                     <SelectValue placeholder="Select buyer 3" />
                   </SelectTrigger>
                   <SelectContent>
-                    {buyers.map(buyer => (
-                      <SelectItem key={buyer.id} value={buyer.id.toString()}>
-                        {buyer.name}
-                      </SelectItem>
-                    ))}
+                    {buyers
+                      .filter(buyer => 
+                        buyer.id.toString() !== buyer1 && 
+                        buyer.id.toString() !== buyer2
+                      )
+                      .map(buyer => (
+                        <SelectItem key={buyer.id} value={buyer.id.toString()}>
+                          {buyer.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
