@@ -882,7 +882,7 @@ export class DatabaseStorage implements IStorage {
         billGeneratedAt: row.bill_generated_at ? new Date(row.bill_generated_at).toISOString() : '',
         paymentStatus: row.payment_status || 'pending',
         amountDue,
-        amountPaid: (row.amount_paid || 0).toFixed(2),
+        amountPaid: (parseFloat(row.amount_paid || '0')).toFixed(2),
         paymentDate: row.payment_date ? new Date(row.payment_date).toISOString() : '',
         createdAt: row.created_at ? new Date(row.created_at).toISOString() : '',
       };
