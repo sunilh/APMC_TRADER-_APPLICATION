@@ -768,273 +768,123 @@ export class DatabaseStorage implements IStorage {
     paymentDate: string;
     createdAt: string;
   }>> {
-    // Simplified approach to avoid SQL errors
-    
-    // 1. Get lots where buyer is assigned at lot level (single-buyer)
-    const singleBuyerResult = await db
-      .select({
-        lotId: lots.id,
-        lotNumber: lots.lotNumber,
-        farmerName: farmers.name,
-        numberOfBags: lots.numberOfBags,
-        varietyGrade: lots.varietyGrade,
-        grade: lots.grade,
-        status: lots.status,
-        billGenerated: lots.billGenerated,
-        billGeneratedAt: lots.billGeneratedAt,
-        paymentStatus: lots.paymentStatus,
-        lotPrice: lots.lotPrice,
-        amountPaid: lots.amountPaid,
-        paymentDate: lots.paymentDate,
-        createdAt: lots.createdAt,
-      })
-      .from(lots)
-      .leftJoin(farmers, eq(lots.farmerId, farmers.id))
-      .where(and(
-        eq(lots.buyerId, buyerId),
-        eq(lots.tenantId, tenantId)
-      ));
-
-    // 2. Get unique lot IDs where buyer has bags assigned (multi-buyer)
-    const multiBuyerLotIds = await db
-      .selectDistinct({
-        lotId: bags.lotId,
-      })
-      .from(bags)
-      .where(and(
-        eq(bags.buyerId, buyerId),
-        eq(bags.tenantId, tenantId)
-      ));
-
-    // 3. Get full lot details for multi-buyer lots
-    let multiBuyerResult: Array<{
-      lotId: number;
-      lotNumber: string;
-      farmerName: string | null;
-      numberOfBags: number | null;
-      varietyGrade: string | null;
-      grade: string | null;
-      status: string;
-      billGenerated: boolean | null;
-      billGeneratedAt: Date | null;
-      paymentStatus: string | null;
-      lotPrice: string | null;
-      amountPaid: number | null;
-      paymentDate: Date | null;
-      createdAt: Date | null;
-    }> = [];
-    
-    if (multiBuyerLotIds.length > 0) {
-      const lotIdsArray = multiBuyerLotIds.map(l => l.lotId);
-      multiBuyerResult = await db
-        .select({
-          lotId: lots.id,
-          lotNumber: lots.lotNumber,
-          farmerName: farmers.name,
-          numberOfBags: lots.numberOfBags,
-          varietyGrade: lots.varietyGrade,
-          grade: lots.grade,
-          status: lots.status,
-          billGenerated: lots.billGenerated,
-          billGeneratedAt: lots.billGeneratedAt,
-          paymentStatus: lots.paymentStatus,
-          lotPrice: lots.lotPrice,
-          amountPaid: lots.amountPaid,
-          paymentDate: lots.paymentDate,
-          createdAt: lots.createdAt,
-        })
-        .from(lots)
-        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
-        .where(and(
-          inArray(lots.id, lotIdsArray),
-          eq(lots.tenantId, tenantId)
-        ));
-    }
-
-    // 4. Combine and deduplicate (prefer multi-buyer data)
-    const allResultsMap = new Map();
-    
-    // Add single-buyer results first
-    singleBuyerResult.forEach(row => {
-      allResultsMap.set(row.lotId, { ...row, allocationType: 'single' });
-    });
-    
-    // Add multi-buyer results (will override single-buyer if same lot exists)
-    multiBuyerResult.forEach(row => {
-      allResultsMap.set(row.lotId, { ...row, allocationType: 'multi' });
-    });
-    
-    const result = Array.from(allResultsMap.values()).sort((a, b) => 
-      new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
-    );
-
-    // Calculate amount due including taxes from tax invoices
-    const enrichedResult = await Promise.all(result.map(async (row) => {
-      // Check if this specific lot has a tax invoice by looking in lotIds JSON array
-      const allTaxInvoices = await db
-        .select({
-          totalAmount: taxInvoices.totalAmount,
-          basicAmount: taxInvoices.basicAmount,
-          lotIds: taxInvoices.lotIds,
-        })
-        .from(taxInvoices)
-        .where(and(
-          eq(taxInvoices.buyerId, buyerId),
-          eq(taxInvoices.tenantId, tenantId)
-        ));
-
-      // Find invoice that contains this lot ID
-      const taxInvoice = allTaxInvoices.find(invoice => {
-        try {
-          let lotIds: string[];
-          const lotIdsRaw = invoice.lotIds;
-          
-          if (typeof lotIdsRaw === 'string') {
-            // Handle comma-separated string format
-            if (lotIdsRaw.includes(',')) {
-              lotIds = lotIdsRaw.split(',').map(id => id.trim());
-            } else {
-              // Try JSON parsing for array format
-              try {
-                let lotIdsStr = lotIdsRaw;
-                // Handle escaped JSON
-                while (lotIdsStr.startsWith('"') && lotIdsStr.endsWith('"')) {
-                  lotIdsStr = lotIdsStr.slice(1, -1);
-                  lotIdsStr = lotIdsStr.replace(/\\"/g, '"');
-                }
-                const parsed = JSON.parse(lotIdsStr);
-                lotIds = Array.isArray(parsed) ? parsed : [lotIdsStr];
-              } catch {
-                lotIds = [lotIdsRaw];
-              }
-            }
-          } else if (Array.isArray(lotIdsRaw)) {
-            lotIds = lotIdsRaw;
-          } else {
-            lotIds = [];
-          }
-          
-          const isIncluded = lotIds.includes(row.lotNumber);
-          return isIncluded;
-        } catch (e) {
-          console.log(`Failed to parse lotIds for invoice: ${invoice.lotIds}`, e);
-          return false;
-        }
-      });
-
-      let calculatedAmount: number;
-
-      if (taxInvoice) {
-        // Use tax invoice amount (includes all taxes and charges)
-        const totalInvoiceAmount = parseFloat(taxInvoice.totalAmount);
+    // Use direct SQL to avoid Drizzle ORM complexities
+    const query = `
+      WITH buyer_lots AS (
+        -- Single-buyer lots
+        SELECT DISTINCT 
+          l.id as lot_id,
+          l.lot_number,
+          f.name as farmer_name,
+          l.number_of_bags,
+          l.variety_grade,
+          l.grade,
+          l.status,
+          l.bill_generated,
+          l.bill_generated_at,
+          l.payment_status,
+          l.lot_price,
+          l.amount_paid,
+          l.payment_date,
+          l.created_at,
+          'single' as allocation_type
+        FROM lots l
+        LEFT JOIN farmers f ON l.farmer_id = f.id
+        WHERE l.buyer_id = $1 AND l.tenant_id = $2
         
-        // Parse lot IDs to calculate proportional amount for multi-lot invoices
-        let lotIds: string[] = [];
-        try {
-          const lotIdsRaw = taxInvoice.lotIds;
-          if (typeof lotIdsRaw === 'string' && lotIdsRaw.includes(',')) {
-            lotIds = lotIdsRaw.split(',').map(id => id.trim());
-          } else if (Array.isArray(lotIdsRaw)) {
-            lotIds = lotIdsRaw;
-          } else {
-            lotIds = [row.lotNumber]; // Single lot
-          }
-        } catch {
-          lotIds = [row.lotNumber];
-        }
+        UNION
         
-        // If multiple lots in the invoice, calculate proportional amount based on bag count
-        if (lotIds.length > 1) {
-          // Get bag counts for all lots in this invoice using proper parameter binding
-          const allLotsInInvoice = await Promise.all(
-            lotIds.map(async (lotNumber) => {
-              const result = await db
-                .select({
-                  lotId: lots.id,
-                  lotNumber: lots.lotNumber,
-                  numberOfBags: lots.numberOfBags,
-                })
-                .from(lots)
-                .where(and(
-                  eq(lots.tenantId, tenantId),
-                  eq(lots.lotNumber, lotNumber)
-                ))
-                .limit(1);
-              return result[0];
-            })
-          ).then(results => results.filter(Boolean));
-          
+        -- Multi-buyer lots
+        SELECT DISTINCT 
+          l.id as lot_id,
+          l.lot_number,
+          f.name as farmer_name,
+          l.number_of_bags,
+          l.variety_grade,
+          l.grade,
+          l.status,
+          l.bill_generated,
+          l.bill_generated_at,
+          l.payment_status,
+          l.lot_price,
+          l.amount_paid,
+          l.payment_date,
+          l.created_at,
+          'multi' as allocation_type
+        FROM lots l
+        LEFT JOIN farmers f ON l.farmer_id = f.id
+        INNER JOIN bags b ON b.lot_id = l.id
+        WHERE b.buyer_id = $1 AND b.tenant_id = $2 AND l.tenant_id = $2
+      )
+      SELECT * FROM buyer_lots
+      ORDER BY created_at DESC
+    `;
 
-          
-          const totalBagsInInvoice = allLotsInInvoice.reduce((sum, lot) => sum + (lot.numberOfBags || 0), 0);
-          const thisLotBags = allLotsInInvoice.find(lot => lot.lotNumber === row.lotNumber)?.numberOfBags || row.numberOfBags || 0;
-          
+    const result = await pool.query(query, [buyerId, tenantId]);
 
-          
-          if (totalBagsInInvoice > 0) {
-            const proportionalAmount = (thisLotBags / totalBagsInInvoice) * totalInvoiceAmount;
-            calculatedAmount = proportionalAmount;
-          } else {
-            // Fallback: split equally among lots
-            calculatedAmount = totalInvoiceAmount / lotIds.length;
-          }
-        } else {
-          // Single lot in invoice
-          calculatedAmount = totalInvoiceAmount;
-
-        }
+    // Calculate amount due for each lot
+    const enrichedResult = await Promise.all(result.rows.map(async (row: any) => {
+      let amountDue = '0.00';
+      
+      // Check for tax invoice first
+      const taxInvoiceQuery = `
+        SELECT total_amount 
+        FROM tax_invoices 
+        WHERE buyer_id = $1 AND tenant_id = $2 
+        AND lot_ids::text LIKE '%' || $3 || '%'
+        LIMIT 1
+      `;
+      
+      const taxInvoiceResult = await pool.query(taxInvoiceQuery, [buyerId, tenantId, row.lot_number]);
+      
+      if (taxInvoiceResult.rows.length > 0) {
+        amountDue = taxInvoiceResult.rows[0].total_amount;
       } else {
-        // Calculate with taxes using GST settings from database
-        const bagWeights = await db
-          .select({
-            totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
-          })
-          .from(bags)
-          .where(eq(bags.lotId, row.lotId));
-
-        const totalWeightKg = bagWeights[0]?.totalWeight || 0;
+        // Calculate from bag weights
+        let weightQuery: string;
+        let weightParams: any[];
+        
+        if (row.allocation_type === 'single') {
+          // Single-buyer: use all bags in the lot
+          weightQuery = `
+            SELECT COALESCE(SUM(weight), 0) as total_weight
+            FROM bags 
+            WHERE lot_id = $1 AND tenant_id = $2
+          `;
+          weightParams = [row.lot_id, tenantId];
+        } else {
+          // Multi-buyer: use only this buyer's bags
+          weightQuery = `
+            SELECT COALESCE(SUM(weight), 0) as total_weight
+            FROM bags 
+            WHERE lot_id = $1 AND buyer_id = $2 AND tenant_id = $3
+          `;
+          weightParams = [row.lot_id, buyerId, tenantId];
+        }
+        
+        const weightResult = await pool.query(weightQuery, weightParams);
+        const totalWeightKg = parseFloat(weightResult.rows[0]?.total_weight || '0');
         const totalWeightQuintals = totalWeightKg / 100;
-        const lotPrice = parseFloat(row.lotPrice || '0');
-        const basicAmount = totalWeightQuintals * lotPrice;
+        const lotPrice = parseFloat(row.lot_price || '0');
         
-        // Get GST settings for this tenant
-        const gstSettings = await db
-          .select({
-            sgst: tenants.sgst,
-            cgst: tenants.cgst,
-            cess: tenants.cess,
-          })
-          .from(tenants)
-          .where(eq(tenants.id, tenantId))
-          .limit(1);
-        
-        const sgstRate = parseFloat(gstSettings[0]?.sgst || '2.5');
-        const cgstRate = parseFloat(gstSettings[0]?.cgst || '2.5');
-        const cessRate = parseFloat(gstSettings[0]?.cess || '0.6');
-        
-        // Calculate taxes
-        const sgstAmount = (basicAmount * sgstRate) / 100;
-        const cgstAmount = (basicAmount * cgstRate) / 100;
-        const cessAmount = (basicAmount * cessRate) / 100;
-        
-        calculatedAmount = basicAmount + sgstAmount + cgstAmount + cessAmount;
-
+        amountDue = (totalWeightQuintals * lotPrice).toFixed(2);
       }
 
-      // Calculate remaining amount due (total - paid)
-      const amountPaid = parseFloat(row.amountPaid?.toString() || '0');
-      const remainingDue = Math.max(0, calculatedAmount - amountPaid);
-
       return {
-        ...row,
-        farmerName: row.farmerName || '',
+        lotId: row.lot_id,
+        lotNumber: row.lot_number,
+        farmerName: row.farmer_name || 'Unknown',
+        numberOfBags: row.number_of_bags || 0,
+        varietyGrade: row.variety_grade || '',
         grade: row.grade || '',
-        billGeneratedAt: row.billGeneratedAt?.toISOString() || '',
-        paymentDate: row.paymentDate?.toISOString() || '',
-        createdAt: row.createdAt?.toISOString() || '',
-        amountDue: remainingDue.toFixed(2), // Show remaining balance, not total
-        amountPaid: row.amountPaid?.toString() || '0',
-        paymentStatus: row.paymentStatus || 'pending',
+        status: row.status,
+        billGenerated: row.bill_generated || false,
+        billGeneratedAt: row.bill_generated_at ? new Date(row.bill_generated_at).toISOString() : '',
+        paymentStatus: row.payment_status || 'pending',
+        amountDue,
+        amountPaid: (row.amount_paid || 0).toFixed(2),
+        paymentDate: row.payment_date ? new Date(row.payment_date).toISOString() : '',
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : '',
       };
     }));
 
