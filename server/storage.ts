@@ -870,11 +870,24 @@ export class DatabaseStorage implements IStorage {
         amountDue = (totalWeightQuintals * lotPrice).toFixed(2);
       }
 
+      // Calculate buyer-specific bag count
+      let buyerBagCount = row.number_of_bags || 0;
+      if (row.allocation_type === 'multi') {
+        // For multi-buyer lots, count only this buyer's bags
+        const bagCountQuery = `
+          SELECT COUNT(*) as bag_count
+          FROM bags 
+          WHERE lot_id = $1 AND buyer_id = $2 AND tenant_id = $3
+        `;
+        const bagCountResult = await pool.query(bagCountQuery, [row.lot_id, buyerId, tenantId]);
+        buyerBagCount = parseInt(bagCountResult.rows[0]?.bag_count || '0');
+      }
+
       return {
         lotId: row.lot_id,
         lotNumber: row.lot_number,
         farmerName: row.farmer_name || 'Unknown',
-        numberOfBags: row.number_of_bags || 0,
+        numberOfBags: buyerBagCount,
         varietyGrade: row.variety_grade || '',
         grade: row.grade || '',
         status: row.status,
