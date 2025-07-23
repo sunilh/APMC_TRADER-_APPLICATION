@@ -11,7 +11,7 @@ import {
   type OcrExtractionLog, type InsertOcrExtractionLog, type Supplier, type InsertSupplier
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or, ilike } from "drizzle-orm";
+import { eq, and, desc, count, sql, gte, lte, lt, isNotNull, or, ilike, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -768,7 +768,7 @@ export class DatabaseStorage implements IStorage {
     paymentDate: string;
     createdAt: string;
   }>> {
-    // Enhanced logic to handle both single-buyer and multi-buyer scenarios
+    // Simplified approach to avoid SQL errors
     
     // 1. Get lots where buyer is assigned at lot level (single-buyer)
     const singleBuyerResult = await db
@@ -795,39 +795,63 @@ export class DatabaseStorage implements IStorage {
         eq(lots.tenantId, tenantId)
       ));
 
-    // 2. Get lots where buyer has bags assigned (multi-buyer)
-    const multiBuyerResult = await db
-      .select({
-        lotId: lots.id,
-        lotNumber: lots.lotNumber,
-        farmerName: farmers.name,
-        numberOfBags: lots.numberOfBags,
-        varietyGrade: lots.varietyGrade,
-        grade: lots.grade,
-        status: lots.status,
-        billGenerated: lots.billGenerated,
-        billGeneratedAt: lots.billGeneratedAt,
-        paymentStatus: lots.paymentStatus,
-        lotPrice: lots.lotPrice,
-        amountPaid: lots.amountPaid,
-        paymentDate: lots.paymentDate,
-        createdAt: lots.createdAt,
+    // 2. Get unique lot IDs where buyer has bags assigned (multi-buyer)
+    const multiBuyerLotIds = await db
+      .selectDistinct({
+        lotId: bags.lotId,
       })
-      .from(lots)
-      .leftJoin(farmers, eq(lots.farmerId, farmers.id))
-      .innerJoin(bags, eq(bags.lotId, lots.id))
+      .from(bags)
       .where(and(
         eq(bags.buyerId, buyerId),
-        eq(bags.tenantId, tenantId),
-        eq(lots.tenantId, tenantId)
-      ))
-      .groupBy(
-        lots.id, lots.lotNumber, farmers.name, lots.numberOfBags, lots.varietyGrade,
-        lots.grade, lots.status, lots.billGenerated, lots.billGeneratedAt,
-        lots.paymentStatus, lots.lotPrice, lots.amountPaid, lots.paymentDate, lots.createdAt
-      );
+        eq(bags.tenantId, tenantId)
+      ));
 
-    // 3. Combine and deduplicate (prefer multi-buyer data)
+    // 3. Get full lot details for multi-buyer lots
+    let multiBuyerResult: Array<{
+      lotId: number;
+      lotNumber: string;
+      farmerName: string | null;
+      numberOfBags: number | null;
+      varietyGrade: string | null;
+      grade: string | null;
+      status: string;
+      billGenerated: boolean | null;
+      billGeneratedAt: Date | null;
+      paymentStatus: string | null;
+      lotPrice: string | null;
+      amountPaid: number | null;
+      paymentDate: Date | null;
+      createdAt: Date | null;
+    }> = [];
+    
+    if (multiBuyerLotIds.length > 0) {
+      const lotIdsArray = multiBuyerLotIds.map(l => l.lotId);
+      multiBuyerResult = await db
+        .select({
+          lotId: lots.id,
+          lotNumber: lots.lotNumber,
+          farmerName: farmers.name,
+          numberOfBags: lots.numberOfBags,
+          varietyGrade: lots.varietyGrade,
+          grade: lots.grade,
+          status: lots.status,
+          billGenerated: lots.billGenerated,
+          billGeneratedAt: lots.billGeneratedAt,
+          paymentStatus: lots.paymentStatus,
+          lotPrice: lots.lotPrice,
+          amountPaid: lots.amountPaid,
+          paymentDate: lots.paymentDate,
+          createdAt: lots.createdAt,
+        })
+        .from(lots)
+        .leftJoin(farmers, eq(lots.farmerId, farmers.id))
+        .where(and(
+          inArray(lots.id, lotIdsArray),
+          eq(lots.tenantId, tenantId)
+        ));
+    }
+
+    // 4. Combine and deduplicate (prefer multi-buyer data)
     const allResultsMap = new Map();
     
     // Add single-buyer results first
