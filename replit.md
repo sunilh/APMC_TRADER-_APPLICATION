@@ -576,6 +576,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - System provides high-level professional invoices with print-optimized styles for business use
   - Fixed all syntax errors and compilation issues - system now running production-ready
   - Tested with real data (Mumbai Masala Co) confirming enhanced design works with existing workflow
+- July 25, 2025: Optimized tax invoice for A4 paper size to accommodate 6-20 lots on single page
+  - Reduced @page margins to 8mm for maximum content space utilization
+  - Compressed font sizes: header 14px, content 6px, table headers 6px for high-density layout
+  - Applied 82% scale transformation with 122% width for optimal A4 space usage
+  - Reduced padding and margins throughout: 4px container padding, 1px table cell padding
+  - Minimized spacing between sections: 6px gaps, 20px signature lines, 1px row margins
+  - Enhanced print media queries for ultra-compact single-page printing while maintaining readability
+  - System now fits 6-20 lots comfortably on single A4 page with professional appearance
 
 # User Preferences
 

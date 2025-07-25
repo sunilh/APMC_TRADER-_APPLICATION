@@ -1104,16 +1104,16 @@ export default function TaxInvoice() {
             @media print {
               @page {
                 size: A4;
-                margin: 12mm;
+                margin: 8mm;
               }
               
               body {
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 10px !important;
-                transform: scale(0.9) !important;
+                font-size: 8px !important;
+                transform: scale(0.85) !important;
                 transform-origin: top left !important;
-                width: 111% !important;
+                width: 118% !important;
               }
               
               .modern-tax-invoice {
