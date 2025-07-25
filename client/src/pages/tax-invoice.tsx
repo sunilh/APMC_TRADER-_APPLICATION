@@ -288,274 +288,498 @@ export default function TaxInvoice() {
       const printWindow = window.open('', '_blank');
       if (!printWindow) return;
 
-      const invoiceHtml = `
+      const modernInvoiceHtml = `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
             <title>Tax Invoice - ${invoice.invoiceNumber}</title>
             <style>
-              body { 
-                font-family: Arial, sans-serif; 
-                margin: 20px; 
-                font-size: 12px; 
-                line-height: 1.4; 
-                color: #000;
-              }
-              .header { 
-                text-align: center; 
-                margin-bottom: 30px; 
-              }
-              .invoice-title { 
-                font-size: 18px; 
-                font-weight: bold; 
-                margin-bottom: 8px; 
-                letter-spacing: 2px;
-              }
-              .invoice-details { 
-                font-size: 14px; 
-                margin-bottom: 8px; 
-              }
-              .hsn-code { 
-                font-size: 14px; 
-                margin-bottom: 25px; 
-              }
-              .company-info { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-bottom: 30px; 
-                min-height: 160px;
-              }
-              .seller, .buyer { 
-                width: 48%; 
-                font-size: 11px; 
-              }
-              .section-title { 
-                font-weight: bold; 
-                margin-bottom: 10px; 
-                font-size: 12px;
-                text-decoration: underline;
-              }
-              .company-field {
-                margin-bottom: 4px;
+              body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 line-height: 1.5;
+                color: #1a1a1a;
+                background: white;
+                margin: 0;
+                padding: 0;
               }
-              .item-details-title { 
-                font-weight: bold; 
-                margin: 25px 0 15px 0; 
-                font-size: 12px; 
+
+              .invoice-container {
+                max-width: 210mm;
+                margin: 0 auto;
+                background: white;
+                position: relative;
               }
-              .items-table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin-bottom: 25px; 
-                font-size: 11px; 
+
+              .invoice-header {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                color: white;
+                padding: 2rem;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
               }
-              .items-table th, .items-table td { 
-                border: 1px solid #000; 
-                padding: 8px; 
-                text-align: center; 
+
+              .invoice-title {
+                font-size: 2.5rem;
+                font-weight: 800;
+                margin-bottom: 0.5rem;
+                letter-spacing: 2px;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
               }
-              .items-table th { 
-                background-color: #f0f0f0; 
-                font-weight: bold; 
-                font-size: 10px; 
+
+              .invoice-subtitle {
+                font-size: 1.1rem;
+                font-weight: 500;
+                opacity: 0.9;
               }
-              .calculations-section { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-top: 25px; 
+
+              .invoice-content {
+                padding: 2rem;
               }
-              .calculations { 
-                width: 45%; 
+
+              .company-section {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                margin-bottom: 2rem;
+                padding: 1.5rem;
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
               }
-              .bank-details { 
-                width: 45%; 
+
+              .company-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                border-left: 4px solid #2563eb;
               }
-              .calc-title, .bank-title { 
-                font-weight: bold; 
-                margin-bottom: 15px; 
-                font-size: 12px; 
-                text-decoration: underline;
+
+              .company-card.buyer {
+                border-left-color: #16a34a;
               }
-              .calc-line, .bank-line { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-bottom: 3px; 
-                font-size: 11px; 
+
+              .company-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
               }
-              .total-payable { 
-                font-weight: bold; 
-                font-size: 13px; 
-                margin-top: 8px; 
-                padding-top: 8px; 
-                border-top: 1px solid #000;
+
+              .company-title::before {
+                content: '';
+                width: 8px;
+                height: 8px;
+                background: currentColor;
+                border-radius: 50%;
               }
-              .terms { 
-                margin-top: 20px; 
-                font-size: 10px; 
-                line-height: 1.4;
+
+              .company-field {
+                display: flex;
+                margin-bottom: 0.75rem;
+                font-size: 0.95rem;
+                align-items: flex-start;
               }
-              .signature { 
-                text-align: right; 
-                margin-top: 50px; 
-                padding-right: 0px; 
-                font-size: 11px;
+
+              .field-label {
+                font-weight: 600;
+                color: #475569;
+                min-width: 80px;
+                margin-right: 1rem;
               }
-              @media print { 
-                body { margin: 10px; } 
-                .calculations-section { page-break-inside: avoid; }
+
+              .field-value {
+                color: #1e293b;
+                flex: 1;
+                word-break: break-word;
+              }
+
+              .items-section {
+                margin: 2rem 0;
+              }
+
+              .section-title {
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                position: relative;
+                padding-bottom: 0.5rem;
+              }
+
+              .section-title::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 60px;
+                height: 3px;
+                background: linear-gradient(90deg, #2563eb, #16a34a);
+                border-radius: 2px;
+              }
+
+              .modern-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e2e8f0;
+              }
+
+              .modern-table th {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                color: white;
+                padding: 1rem 0.75rem;
+                font-weight: 600;
+                font-size: 0.9rem;
+                text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              .modern-table td {
+                padding: 1rem 0.75rem;
+                text-align: center;
+                font-size: 0.9rem;
+                color: #374151;
+                border-bottom: 1px solid #f1f5f9;
+              }
+
+              .modern-table tbody tr:last-child td {
+                border-bottom: none;
+              }
+
+              .calculations-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                margin-top: 2rem;
+              }
+
+              .calc-card, .bank-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e2e8f0;
+              }
+
+              .calc-card {
+                border-left: 4px solid #dc2626;
+              }
+
+              .bank-card {
+                border-left: 4px solid #059669;
+              }
+
+              .card-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+              }
+
+              .calc-row, .bank-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 0.9rem;
+              }
+
+              .calc-row:last-child, .bank-row:last-child {
+                border-bottom: none;
+              }
+
+              .calc-label {
+                color: #475569;
+                font-weight: 500;
+              }
+
+              .calc-value {
+                color: #1e293b;
+                font-weight: 600;
+              }
+
+              .total-row {
+                background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+                margin: 0.5rem -1.5rem -1.5rem;
+                padding: 1rem 1.5rem;
+                border-top: 2px solid #dc2626;
+                font-size: 1.1rem;
+                font-weight: 700;
+              }
+
+              .terms-section {
+                background: #f8fafc;
+                padding: 1.5rem;
+                border-radius: 12px;
+                margin-top: 2rem;
+                border-left: 4px solid #6366f1;
+              }
+
+              .terms-title {
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 0.75rem;
+                font-size: 1rem;
+              }
+
+              .terms-text {
+                font-size: 0.9rem;
+                color: #475569;
+                line-height: 1.6;
+                margin-bottom: 0.5rem;
+              }
+
+              .signature-section {
+                display: flex;
+                justify-content: flex-end;
+                align-items: flex-end;
+                margin-top: 3rem;
+                padding-top: 2rem;
+                border-top: 2px solid #e2e8f0;
+              }
+
+              .signature-box {
+                text-align: center;
+                min-width: 200px;
+              }
+
+              .signature-line {
+                border-top: 2px solid #374151;
+                margin-bottom: 0.5rem;
+                height: 60px;
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+              }
+
+              .signature-text {
+                font-size: 0.9rem;
+                color: #475569;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              @media print {
+                .invoice-container {
+                  box-shadow: none !important;
+                  border-radius: 0 !important;
+                  max-width: none !important;
+                  margin: 0 !important;
+                }
+                
+                .calc-card, .bank-card, .company-card {
+                  box-shadow: none !important;
+                  border: 1px solid #e2e8f0 !important;
+                }
+                
+                .modern-table {
+                  box-shadow: none !important;
+                }
               }
             </style>
           </head>
-          <body class="tax-invoice-print">
-            <div class="header">
-              <div class="invoice-title">TAX INVOICE</div>
-              <div class="invoice-details">Invoice No: ${invoice.invoiceNumber} Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}</div>
-              <div class="hsn-code">HSN Code: 09042110</div>
-            </div>
-
-            <div class="company-info">
-              <div class="seller">
-                <div class="section-title">SELLER DETAILS</div>
-                <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.companyName || 'N/A'}</div>
-                <div class="company-field"><strong>APMC:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.apmcCode || 'N/A'}</div>
-                <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.address || 'N/A'}</div>
-                <div class="company-field">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-                <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.mobile || 'N/A'}</div>
-                <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.gstin || 'N/A'}</div>
-                <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.pan || 'N/A'}</div>
-                <div class="company-field"><strong>FSSAI:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.seller?.fssai || 'N/A'}</div>
+          <body>
+            <div class="invoice-container">
+              <div class="invoice-header">
+                <div class="invoice-title">TAX INVOICE</div>
+                <div class="invoice-subtitle">Invoice No: ${invoice.invoiceNumber} | Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')} | HSN: 09042110</div>
               </div>
-              <div class="buyer">
-                <div class="section-title">BUYER DETAILS</div>
-                <div class="company-field"><strong>Company:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.companyName || 'N/A'}</div>
-                <div class="company-field"><strong>Contact:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.contactPerson || 'N/A'}</div>
-                <div class="company-field"><strong>Address:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.address || 'N/A'}</div>
-                <div class="company-field"><strong>Mobile:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.mobile || 'N/A'}</div>
-                <div class="company-field"><strong>GSTIN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.gstin || 'N/A'}</div>
-                <div class="company-field"><strong>PAN:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${invoiceData.buyer?.pan || 'N/A'}</div>
-              </div>
-            </div>
-            
-            <div class="item-details-title">
-               ITEM DETAILS:
-            </div>
 
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>LOT NO</th>
-                  <th>ITEM NAME</th>
-                  <th>HSN CODE</th>
-                  <th>BAGS</th>
-                  <th>WEIGHT (KG)</th>
-                  <th>RATE/QUINTAL</th>
-                  <th>AMOUNT IN RUPEES</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoiceData.items?.map(item => `
-                  <tr>
-                    <td>${item.lotNo || ''}</td>
-                    <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
-                    <td>09042110</td>
-                    <td>${item.bags || 0}</td>
-                    <td>${item.weightKg || 0}</td>
-                    <td>₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                    <td>₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  </tr>
-                `).join('') || ''}
-              </tbody>
-            </table>
-
-            <div class="calculations-section">
-              <div class="calculations">
-                <div class="calc-title">AMOUNT CALCULATIONS</div>
-                <div class="calc-line">
-                  <span>Basic Amount</span>
-                  <span>₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ Packaging (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</span>
-                  <span>₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ Hamali (${invoiceData.calculations?.totalBags || 0} bags × ₹5)</span>
-                  <span>₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ Weighing (${invoiceData.calculations?.totalBags || 0} bags)</span>
-                  <span>₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ Commission</span>
-                  <span>₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ Cess @ 0.6% (on basic amount)</span>
-                  <span>₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>Taxable Amount</span>
-                  <span>₹${((invoiceData.calculations?.basicAmount || 0) + (invoiceData.calculations?.packaging || 0) + (invoiceData.calculations?.hamali || 0) + (invoiceData.calculations?.weighingCharges || 0) + (invoiceData.calculations?.commission || 0) + (invoiceData.calculations?.cess || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ SGST (2.5%)</span>
-                  <span>₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>+ CGST (2.5%)</span>
-                  <span>₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="calc-line">
-                  <span>Total GST</span>
-                  <span>₹${((invoiceData.calculations?.sgst || 0) + (invoiceData.calculations?.cgst || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <br>
-                <div class="calc-line total-payable">
-                  <span><strong>TOTAL PAYABLE</strong></span>
-                  <span><strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></span>
-                </div>
-              </div>
-              
-              <div class="bank-details">
-                <div class="bank-title">BANK DETAILS FOR PAYMENT</div>
-                <div class="bank-line">
-                  <span><strong>Bank:</strong></span>
-                  <span>${invoiceData.bankDetails?.bankName || 'N/A'}</span>
-                </div>
-                <div class="bank-line">
-                  <span><strong>A/C No:</strong></span>
-                  <span>${invoiceData.bankDetails?.accountNumber || 'N/A'}</span>
-                </div>
-                <div class="bank-line">
-                  <span><strong>IFSC:</strong></span>
-                  <span>${invoiceData.bankDetails?.ifscCode || 'N/A'}</span>
-                </div>
-                <div class="bank-line">
-                  <span><strong>Holder:</strong></span>
-                  <span>${invoiceData.bankDetails?.accountHolder || 'N/A'}</span>
-                </div>
-                <div class="bank-line">
-                  <span><strong>Branch:</strong></span>
-                  <span>${invoiceData.bankDetails?.branchName || ''}</span>
-                </div>
-                <div class="bank-line">
-                  <span><strong>Branch Address:</strong></span>
-                  <span>${invoiceData.bankDetails?.branchAddress || ''}</span>
+              <div class="invoice-content">
+                <div class="company-section">
+                  <div class="company-card">
+                    <div class="company-title">Seller Details</div>
+                    <div class="company-field">
+                      <span class="field-label">Company:</span>
+                      <span class="field-value">${invoiceData.seller?.companyName || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">APMC:</span>
+                      <span class="field-value">${invoiceData.seller?.apmcCode || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">Address:</span>
+                      <span class="field-value">${invoiceData.seller?.address || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">Mobile:</span>
+                      <span class="field-value">${invoiceData.seller?.mobile || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">GSTIN:</span>
+                      <span class="field-value">${invoiceData.seller?.gstin || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">PAN:</span>
+                      <span class="field-value">${invoiceData.seller?.pan || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">FSSAI:</span>
+                      <span class="field-value">${invoiceData.seller?.fssai || 'N/A'}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="company-card buyer">
+                    <div class="company-title">Buyer Details</div>
+                    <div class="company-field">
+                      <span class="field-label">Company:</span>
+                      <span class="field-value">${invoiceData.buyer?.companyName || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">Contact:</span>
+                      <span class="field-value">${invoiceData.buyer?.contactPerson || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">Address:</span>
+                      <span class="field-value">${invoiceData.buyer?.address || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">Mobile:</span>
+                      <span class="field-value">${invoiceData.buyer?.mobile || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">GSTIN:</span>
+                      <span class="field-value">${invoiceData.buyer?.gstin || 'N/A'}</span>
+                    </div>
+                    <div class="company-field">
+                      <span class="field-label">PAN:</span>
+                      <span class="field-value">${invoiceData.buyer?.pan || 'N/A'}</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div class="terms">
-                  <div>Terms: Payment due within 30 days</div>
-                  <div>Goods once sold will not be taken back</div>
+                <div class="items-section">
+                  <div class="section-title">Item Details</div>
+                  <table class="modern-table">
+                    <thead>
+                      <tr>
+                        <th>Lot No</th>
+                        <th>Item Name</th>
+                        <th>HSN Code</th>
+                        <th>Bags</th>
+                        <th>Weight (KG)</th>
+                        <th>Rate/Quintal</th>
+                        <th>Amount (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${invoiceData.items?.map(item => `
+                        <tr>
+                          <td>${item.lotNo || ''}</td>
+                          <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
+                          <td>09042110</td>
+                          <td>${item.bags || 0}</td>
+                          <td>${item.weightKg || 0}</td>
+                          <td>₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                          <td>₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                      `).join('') || ''}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            </div>
-            
-            <div class="signature">
-              <div class="signature-line">
-                Authorized Signature
+
+                <div class="calculations-grid">
+                  <div class="calc-card">
+                    <div class="card-title">Amount Calculations</div>
+                    <div class="calc-row">
+                      <span class="calc-label">Basic Amount</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ Packaging (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹5)</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ Hamali (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹3)</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ Weighing (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹2)</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ Commission (5%)</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ CESS @ 0.6%</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ SGST @ 2.5%</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="calc-row">
+                      <span class="calc-label">+ CGST @ 2.5%</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="total-row">
+                      <span class="calc-label">TOTAL PAYABLE</span>
+                      <span class="calc-value">₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="bank-card">
+                    <div class="card-title">Bank Details for Payment</div>
+                    <div class="bank-row">
+                      <span class="calc-label">Bank Name:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.bankName || 'N/A'}</span>
+                    </div>
+                    <div class="bank-row">
+                      <span class="calc-label">Account No:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.accountNumber || 'N/A'}</span>
+                    </div>
+                    <div class="bank-row">
+                      <span class="calc-label">IFSC Code:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.ifscCode || 'N/A'}</span>
+                    </div>
+                    <div class="bank-row">
+                      <span class="calc-label">Account Holder:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.accountHolder || 'N/A'}</span>
+                    </div>
+                    <div class="bank-row">
+                      <span class="calc-label">Branch:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.branchName || 'N/A'}</span>
+                    </div>
+                    <div class="bank-row">
+                      <span class="calc-label">Branch Address:</span>
+                      <span class="calc-value">${invoiceData.bankDetails?.branchAddress || 'N/A'}</span>
+                    </div>
+                    
+                    <div class="terms-section">
+                      <div class="terms-title">Terms & Conditions</div>
+                      <div class="terms-text">• Payment due within 30 days</div>
+                      <div class="terms-text">• Goods once sold will not be taken back</div>
+                      <div class="terms-text">• All disputes subject to local jurisdiction</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="signature-section">
+                  <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-text">Authorized Signature</div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -569,7 +793,7 @@ export default function TaxInvoice() {
         </html>
       `;
 
-      printWindow.document.write(invoiceHtml);
+      printWindow.document.write(modernInvoiceHtml);
       printWindow.document.close();
     } catch (error) {
       console.error("Error printing invoice:", error);

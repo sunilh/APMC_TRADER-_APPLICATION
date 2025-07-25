@@ -74,6 +74,364 @@
     display: flex;
     align-items: center;
   }
+
+  /* Modern Tax Invoice Print Styles */
+  .modern-tax-invoice {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+  }
+
+  .invoice-container {
+    max-width: 210mm;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .invoice-header {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .invoice-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    animation: float 20s infinite linear;
+  }
+
+  @keyframes float {
+    0% { transform: translateX(-100px) translateY(-100px); }
+    100% { transform: translateX(100px) translateY(100px); }
+  }
+
+  .invoice-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
+  }
+
+  .invoice-subtitle {
+    font-size: 1.1rem;
+    font-weight: 500;
+    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+  }
+
+  .invoice-content {
+    padding: 2rem;
+  }
+
+  .company-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .company-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #2563eb;
+    position: relative;
+  }
+
+  .company-card.buyer {
+    border-left-color: #16a34a;
+  }
+
+  .company-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .company-title::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  .company-field {
+    display: flex;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    align-items: flex-start;
+  }
+
+  .field-label {
+    font-weight: 600;
+    color: #475569;
+    min-width: 80px;
+    margin-right: 1rem;
+  }
+
+  .field-value {
+    color: #1e293b;
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .items-section {
+    margin: 2rem 0;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #16a34a);
+    border-radius: 2px;
+  }
+
+  .modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+  }
+
+  .modern-table th {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+  }
+
+  .modern-table th:first-child {
+    border-top-left-radius: 12px;
+  }
+
+  .modern-table th:last-child {
+    border-top-right-radius: 12px;
+  }
+
+  .modern-table td {
+    padding: 1rem 0.75rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #374151;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+  }
+
+  .modern-table tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .modern-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .calculations-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .calc-card, .bank-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+  }
+
+  .calc-card {
+    border-left: 4px solid #dc2626;
+  }
+
+  .bank-card {
+    border-left: 4px solid #059669;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .calc-row, .bank-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+  }
+
+  .calc-row:last-child, .bank-row:last-child {
+    border-bottom: none;
+  }
+
+  .calc-label {
+    color: #475569;
+    font-weight: 500;
+  }
+
+  .calc-value {
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  .total-row {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    margin: 0.5rem -1.5rem -1.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 2px solid #dc2626;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .terms-section {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+    border-left: 4px solid #6366f1;
+  }
+
+  .terms-title {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .terms-text {
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+
+  .signature-section {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  .signature-box {
+    text-align: center;
+    min-width: 200px;
+  }
+
+  .signature-line {
+    border-top: 2px solid #374151;
+    margin-bottom: 0.5rem;
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .signature-text {
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Print specific styles */
+  @media print {
+    .modern-tax-invoice {
+      background: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
+    .invoice-container {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      max-width: none !important;
+      margin: 0 !important;
+    }
+    
+    .invoice-header::before {
+      display: none !important;
+    }
+    
+    * {
+      -webkit-print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    
+    .calc-card, .bank-card, .company-card {
+      box-shadow: none !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    
+    .modern-table {
+      box-shadow: none !important;
+    }
+  }
+  }
   
   /* Professional Tax Invoice Print Styles - Override Cache */
   .tax-invoice-print {
@@ -239,7 +597,6 @@
   .no-underline:visited {
     text-decoration: none !important;
   }
-}
 
 /* Custom animations for voice input */
 @keyframes pulse-mic {
