@@ -682,7 +682,7 @@ export default function TaxInvoice() {
                       </tr>
                     </thead>
                     <tbody>
-                      ${invoiceData.items?.map(item => `
+                      ${invoiceData.items?.map((item: any) => `
                         <tr>
                           <td>${item.lotNo || ''}</td>
                           <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
@@ -705,15 +705,15 @@ export default function TaxInvoice() {
                       <span class="calc-value">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div class="calc-row">
-                      <span class="calc-label">+ Packaging (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹5)</span>
+                      <span class="calc-label">+ Packaging (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹5)</span>
                       <span class="calc-value">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div class="calc-row">
-                      <span class="calc-label">+ Hamali (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹3)</span>
+                      <span class="calc-label">+ Hamali (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹3)</span>
                       <span class="calc-value">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div class="calc-row">
-                      <span class="calc-label">+ Weighing (${invoiceData.items?.reduce((sum, item) => sum + (item.bags || 0), 0) || 0} bags × ₹2)</span>
+                      <span class="calc-label">+ Weighing (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹2)</span>
                       <span class="calc-value">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div class="calc-row">
@@ -1102,13 +1102,18 @@ export default function TaxInvoice() {
             }
 
             @media print {
+              @page {
+                size: A4;
+                margin: 12mm;
+              }
+              
               body {
                 margin: 0 !important;
-                padding: 10px !important;
+                padding: 0 !important;
                 font-size: 10px !important;
-                transform: scale(0.85) !important;
+                transform: scale(0.9) !important;
                 transform-origin: top left !important;
-                width: 118% !important;
+                width: 111% !important;
               }
               
               .modern-tax-invoice {
@@ -1220,7 +1225,7 @@ export default function TaxInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    ${taxInvoice.items?.map(item => `
+                    ${taxInvoice.items?.map((item: any) => `
                       <tr>
                         <td>${item.lotNo || ''}</td>
                         <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
@@ -1240,19 +1245,19 @@ export default function TaxInvoice() {
                   <div class="card-title">Amount Calculations</div>
                   <div class="calc-row">
                     <span class="calc-label">Basic Amount</span>
-                    <span class="calc-value">₹${(taxInvoice.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    <span class="calc-value">₹${(taxInvoice.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                   <div class="calc-row">
-                    <span class="calc-label">+ Packaging (${taxInvoice.totalBags || 0} bags × ₹5)</span>
-                    <span class="calc-value">₹${(taxInvoice.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    <span class="calc-label">+ Packaging (${taxInvoice.calculations?.totalBags || 0} bags × ₹5)</span>
+                    <span class="calc-value">₹${(taxInvoice.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                   <div class="calc-row">
-                    <span class="calc-label">+ Hamali (${taxInvoice.totalBags || 0} bags × ₹3)</span>
-                    <span class="calc-value">₹${(taxInvoice.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    <span class="calc-label">+ Hamali (${taxInvoice.calculations?.totalBags || 0} bags × ₹3)</span>
+                    <span class="calc-value">₹${(taxInvoice.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                   <div class="calc-row">
-                    <span class="calc-label">+ Weighing (${taxInvoice.totalBags || 0} bags × ₹2)</span>
-                    <span class="calc-value">₹${(taxInvoice.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    <span class="calc-label">+ Weighing (${taxInvoice.calculations?.totalBags || 0} bags × ₹2)</span>
+                    <span class="calc-value">₹${(taxInvoice.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                   </div>
                   <div class="calc-row">
                     <span class="calc-label">+ Commission (5%)</span>
