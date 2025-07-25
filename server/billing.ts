@@ -550,7 +550,7 @@ export async function generateTaxInvoice(
 
     console.log("Already processed lot numbers for this date:", Array.from(processedLotNumbers));
 
-    // Get completed lots for this buyer on the selected date only
+    // Get completed lots for this buyer on the selected date - both direct assignments and bag-level assignments
     const directLots = await db
       .select()
       .from(lots)
@@ -563,13 +563,14 @@ export async function generateTaxInvoice(
         )
       );
 
-    const lotBuyerAssignments = await db
-      .select({
+    // Get lots where this buyer has individual bag assignments (multi-buyer scenarios)
+    const bagAssignedLots = await db
+      .selectDistinct({
         id: lots.id,
         lotNumber: lots.lotNumber,
         farmerId: lots.farmerId,
         tenantId: lots.tenantId,
-        buyerId: lotBuyers.buyerId,
+        buyerId: sql<number>`${buyerId}`, // Set buyer ID to the current buyer
         status: lots.status,
         lotPrice: lots.lotPrice,
         varietyGrade: lots.varietyGrade,
@@ -578,27 +579,29 @@ export async function generateTaxInvoice(
         advance: lots.advance,
         createdAt: lots.createdAt,
         updatedAt: lots.updatedAt,
-        bagAllocation: lotBuyers.bagAllocation,
+        bagAllocation: sql<boolean>`true`, // Mark as bag allocation type
       })
-      .from(lotBuyers)
-      .leftJoin(lots, eq(lotBuyers.lotId, lots.id))
+      .from(lots)
+      .innerJoin(bags, eq(bags.lotId, lots.id))
       .where(
         and(
-          eq(lotBuyers.buyerId, buyerId),
-          eq(lotBuyers.tenantId, tenantId),
+          eq(bags.buyerId, buyerId),
+          eq(bags.tenantId, tenantId),
           eq(lots.status, "completed"),
-          between(lots.createdAt, startOfDay, endOfDay)
+          between(lots.createdAt, startOfDay, endOfDay),
+          sql`${bags.weight} IS NOT NULL AND ${bags.weight} > 0`
         )
       );
 
-    // Filter out lots that are already processed
-    const filteredDirectLots = directLots.filter(lot => !processedLotNumbers.has(lot.lotNumber));
-    const filteredLotBuyerAssignments = lotBuyerAssignments.filter(lot => !processedLotNumbers.has(lot.lotNumber));
-    
-    const completedLots = [...filteredDirectLots, ...filteredLotBuyerAssignments];
+    // Combine and filter out already processed lots
+    const allLots = [...directLots, ...bagAssignedLots];
+    const uniqueLots = allLots.filter((lot, index, self) => 
+      index === self.findIndex(l => l.lotNumber === lot.lotNumber)
+    );
+    const completedLots = uniqueLots.filter(lot => !processedLotNumbers.has(lot.lotNumber));
 
     console.log(`Direct lots found: ${directLots.length}`);
-    console.log(`Lot-buyer assignments found: ${lotBuyerAssignments.length}`);
+    console.log(`Bag-assigned lots found: ${bagAssignedLots.length}`);
     console.log(`Total completed lots for buyer ${buyerId}: ${completedLots.length}`);
     completedLots.forEach(lot => {
       console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id}) - BagAllocation:`, lot.bagAllocation ? 'Yes' : 'No');
@@ -613,16 +616,30 @@ export async function generateTaxInvoice(
     let subTotal = 0;
 
     for (const lot of completedLots) {
-      let bagDetails, weightKg, bagCount;
+      let weightKg, bagCount;
 
-      // Check if this is a lot_buyers assignment with specific bag allocation
+      // Check if this is a bag-level assignment (multi-buyer scenario)
       if (lot.bagAllocation) {
-        const allocation = lot.bagAllocation as any;
-        const allocatedBags = allocation.bags || [];
-        bagCount = allocatedBags.length;
-        weightKg = allocatedBags.reduce((sum: number, bag: any) => sum + (bag.weight || 0), 0);
+        // Get only this buyer's bags from this lot
+        const bagData = await db
+          .select({
+            bagCount: sql<number>`COUNT(*)`,
+            totalWeight: sql<number>`COALESCE(SUM(${bags.weight}), 0)`,
+          })
+          .from(bags)
+          .where(
+            and(
+              eq(bags.lotId, lot.id),
+              eq(bags.buyerId, buyerId),
+              eq(bags.tenantId, tenantId)
+            )
+          );
+
+        const data = bagData[0];
+        weightKg = Number(data.totalWeight);
+        bagCount = Number(data.bagCount);
       } else {
-        // Regular lot assignment - get all bags for this specific lot ID
+        // Regular lot assignment - get all bags for this lot (single buyer)
         const bagData = await db
           .select({
             bagCount: sql<number>`COUNT(*)`,
