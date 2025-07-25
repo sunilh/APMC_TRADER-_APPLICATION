@@ -1102,6 +1102,21 @@ export default function TaxInvoice() {
             }
 
             @media print {
+              body {
+                margin: 0 !important;
+                padding: 10px !important;
+                font-size: 10px !important;
+                transform: scale(0.85) !important;
+                transform-origin: top left !important;
+                width: 118% !important;
+              }
+              
+              .modern-tax-invoice {
+                page-break-inside: avoid !important;
+                max-height: 100vh !important;
+                overflow: hidden !important;
+              }
+              
               .invoice-container {
                 box-shadow: none !important;
                 border-radius: 0 !important;

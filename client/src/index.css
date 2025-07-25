@@ -398,12 +398,16 @@
     letter-spacing: 0.5px;
   }
 
-  /* Print specific styles */
+  /* Print specific styles - Single Page Optimization */
   @media print {
     .modern-tax-invoice {
       background: white !important;
       padding: 0 !important;
       margin: 0 !important;
+      font-size: 10px !important;
+      transform: scale(0.9) !important;
+      transform-origin: top left !important;
+      width: 111% !important;
     }
     
     .invoice-container {
@@ -411,6 +415,97 @@
       border-radius: 0 !important;
       max-width: none !important;
       margin: 0 !important;
+      padding: 10px !important;
+    }
+    
+    .invoice-header {
+      margin-bottom: 15px !important;
+      padding: 15px 0 !important;
+    }
+    
+    .invoice-header h1 {
+      font-size: 18px !important;
+      margin-bottom: 8px !important;
+    }
+    
+    .company-grid {
+      gap: 15px !important;
+      margin-bottom: 15px !important;
+    }
+    
+    .company-card {
+      padding: 10px !important;
+      margin-bottom: 0 !important;
+    }
+    
+    .company-card h3 {
+      font-size: 11px !important;
+      margin-bottom: 8px !important;
+    }
+    
+    .company-card p {
+      font-size: 9px !important;
+      margin-bottom: 3px !important;
+      line-height: 1.2 !important;
+    }
+    
+    .modern-table {
+      font-size: 9px !important;
+      margin-bottom: 15px !important;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+      padding: 6px 4px !important;
+      line-height: 1.2 !important;
+    }
+    
+    .calculations-grid {
+      gap: 15px !important;
+    }
+    
+    .calc-card, .bank-card {
+      padding: 10px !important;
+      box-shadow: none !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    
+    .card-title {
+      font-size: 10px !important;
+      margin-bottom: 8px !important;
+    }
+    
+    .calc-row, .bank-row {
+      margin-bottom: 4px !important;
+      font-size: 9px !important;
+    }
+    
+    .terms-section {
+      margin-top: 15px !important;
+      padding-top: 10px !important;
+    }
+    
+    .terms-title {
+      font-size: 10px !important;
+      margin-bottom: 6px !important;
+    }
+    
+    .terms-text {
+      font-size: 8px !important;
+      margin-bottom: 3px !important;
+    }
+    
+    .signature-section {
+      margin-top: 15px !important;
+      padding-top: 10px !important;
+    }
+    
+    .signature-line {
+      height: 40px !important;
+    }
+    
+    .signature-text {
+      font-size: 9px !important;
     }
     
     .invoice-header::before {
@@ -420,15 +515,6 @@
     * {
       -webkit-print-color-adjust: exact !important;
       color-adjust: exact !important;
-    }
-    
-    .calc-card, .bank-card, .company-card {
-      box-shadow: none !important;
-      border: 1px solid #e2e8f0 !important;
-    }
-    
-    .modern-table {
-      box-shadow: none !important;
     }
   }
   }
