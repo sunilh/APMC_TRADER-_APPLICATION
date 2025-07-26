@@ -584,6 +584,14 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Minimized spacing between sections: 6px gaps, 20px signature lines, 1px row margins
   - Enhanced print media queries for ultra-compact single-page printing while maintaining readability
   - System now fits 6-20 lots comfortably on single A4 page with professional appearance
+- July 26, 2025: Updated tax invoice design to match user's exact PDF format requirements
+  - Redesigned layout to match uploaded PDF format exactly: clean header, two-column seller/buyer details
+  - Implemented bordered table format for lot details with proper HSN codes and weight calculations
+  - Created right-aligned calculations section matching PDF layout with line items and total amount
+  - Added simple bank details section with clean formatting as shown in user's PDF
+  - Maintained all existing business logic and A4 optimization while updating visual presentation
+  - Preserved workflow functionality: multi-lot consolidation, tax calculations, buyer allocation unchanged
+  - Tax invoice now perfectly matches user's format requirements while maintaining single-page A4 printing
 
 # User Preferences
 

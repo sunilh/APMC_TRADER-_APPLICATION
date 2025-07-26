@@ -599,180 +599,101 @@ export default function TaxInvoice() {
           </head>
           <body>
             <div class="invoice-container">
-              <div class="invoice-header">
-                <div class="invoice-title">TAX INVOICE</div>
-                <div class="invoice-subtitle">Invoice No: ${invoice.invoiceNumber} | Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')} | HSN: 09042110</div>
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 24px; font-weight: bold; margin: 0;">TAX INVOICE</h1>
+                <div style="margin-top: 10px; font-size: 14px; font-weight: bold;">
+                  Invoice No: ${invoice.invoiceNumber} | Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}
+                </div>
               </div>
 
-              <div class="invoice-content">
-                <div class="company-section">
-                  <div class="company-card">
-                    <div class="company-title">Seller Details</div>
-                    <div class="company-field">
-                      <span class="field-label">Company:</span>
-                      <span class="field-value">${invoiceData.seller?.companyName || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">APMC:</span>
-                      <span class="field-value">${invoiceData.seller?.apmcCode || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">Address:</span>
-                      <span class="field-value">${invoiceData.seller?.address || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">Mobile:</span>
-                      <span class="field-value">${invoiceData.seller?.mobile || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">GSTIN:</span>
-                      <span class="field-value">${invoiceData.seller?.gstin || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">PAN:</span>
-                      <span class="field-value">${invoiceData.seller?.pan || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">FSSAI:</span>
-                      <span class="field-value">${invoiceData.seller?.fssai || 'N/A'}</span>
-                    </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
+                <div>
+                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                    SELLER DETAILS
                   </div>
-                  
-                  <div class="company-card buyer">
-                    <div class="company-title">Buyer Details</div>
-                    <div class="company-field">
-                      <span class="field-label">Company:</span>
-                      <span class="field-value">${invoiceData.buyer?.companyName || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">Contact:</span>
-                      <span class="field-value">${invoiceData.buyer?.contactPerson || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">Address:</span>
-                      <span class="field-value">${invoiceData.buyer?.address || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">Mobile:</span>
-                      <span class="field-value">${invoiceData.buyer?.mobile || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">GSTIN:</span>
-                      <span class="field-value">${invoiceData.buyer?.gstin || 'N/A'}</span>
-                    </div>
-                    <div class="company-field">
-                      <span class="field-label">PAN:</span>
-                      <span class="field-value">${invoiceData.buyer?.pan || 'N/A'}</span>
-                    </div>
+                  <div style="line-height: 1.5;">
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 5px;">${invoiceData.seller?.companyName || 'N/A'}</div>
+                    <div>APMC Code: ${invoiceData.seller?.apmcCode || 'N/A'}</div>
+                    <div>${invoiceData.seller?.address || 'N/A'}</div>
+                    <div>Mobile: ${invoiceData.seller?.mobile || 'N/A'}</div>
+                    <div>GSTIN: ${invoiceData.seller?.gstin || 'N/A'}</div>
+                    <div>PAN: ${invoiceData.seller?.pan || 'N/A'}</div>
+                    <div>FSSAI: ${invoiceData.seller?.fssai || 'N/A'}</div>
                   </div>
                 </div>
                 
-                <div class="items-section">
-                  <div class="section-title">Item Details</div>
-                  <table class="modern-table">
-                    <thead>
-                      <tr>
-                        <th>Lot No</th>
-                        <th>Item Name</th>
-                        <th>HSN Code</th>
-                        <th>Bags</th>
-                        <th>Weight (KG)</th>
-                        <th>Rate/Quintal</th>
-                        <th>Amount (₹)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${invoiceData.items?.map((item: any) => `
-                        <tr>
-                          <td>${item.lotNo || ''}</td>
-                          <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
-                          <td>09042110</td>
-                          <td>${item.bags || 0}</td>
-                          <td>${item.weightKg || 0}</td>
-                          <td>₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                          <td>₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                        </tr>
-                      `).join('') || ''}
-                    </tbody>
-                  </table>
+                <div>
+                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                    BUYER DETAILS
+                  </div>
+                  <div style="line-height: 1.5;">
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 5px;">${invoiceData.buyer?.companyName || 'N/A'}</div>
+                    <div>Contact: ${invoiceData.buyer?.contactPerson || 'N/A'}</div>
+                    <div>${invoiceData.buyer?.address || 'N/A'}</div>
+                    <div>Mobile: ${invoiceData.buyer?.mobile || 'N/A'}</div>
+                    <div>GSTIN: ${invoiceData.buyer?.gstin || 'N/A'}</div>
+                    <div>PAN: ${invoiceData.buyer?.pan || 'N/A'}</div>
+                  </div>
                 </div>
+              </div>
+                
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #000;">
+                <thead>
+                  <tr style="background-color: #f8f9fa;">
+                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Lot No</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Item</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">HSN Code</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Bags</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Weight (Kg)</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Weight (Qtl)</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Rate/Qtl</th>
+                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoiceData.items?.map((item: any) => `
+                    <tr>
+                      <td style="border: 1px solid #000; padding: 8px;">${item.lotNo || ''}</td>
+                      <td style="border: 1px solid #000; padding: 8px;">${item.itemName || 'ARABICA-A'}</td>
+                      <td style="border: 1px solid #000; padding: 8px;">09042110</td>
+                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.bags || 0}</td>
+                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.weightKg || 0}</td>
+                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${(item.weightKg / 100).toFixed(2)}</td>
+                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                  `).join('') || ''}
+                </tbody>
+              </table>
 
-                <div class="calculations-grid">
-                  <div class="calc-card">
-                    <div class="card-title">Amount Calculations</div>
-                    <div class="calc-row">
-                      <span class="calc-label">Basic Amount</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ Packaging (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹5)</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ Hamali (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹3)</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ Weighing (${invoiceData.items?.reduce((sum: any, item: any) => sum + (item.bags || 0), 0) || 0} bags × ₹2)</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ Commission (5%)</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ CESS @ 0.6%</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ SGST @ 2.5%</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="calc-row">
-                      <span class="calc-label">+ CGST @ 2.5%</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="total-row">
-                      <span class="calc-label">TOTAL PAYABLE</span>
-                      <span class="calc-value">₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="bank-card">
-                    <div class="card-title">Bank Details for Payment</div>
-                    <div class="bank-row">
-                      <span class="calc-label">Bank Name:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.bankName || 'N/A'}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="calc-label">Account No:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.accountNumber || 'N/A'}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="calc-label">IFSC Code:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.ifscCode || 'N/A'}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="calc-label">Account Holder:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.accountHolder || 'N/A'}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="calc-label">Branch:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.branchName || 'N/A'}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="calc-label">Branch Address:</span>
-                      <span class="calc-value">${invoiceData.bankDetails?.branchAddress || 'N/A'}</span>
-                    </div>
-                    
-                    <div class="terms-section">
-                      <div class="terms-title">Terms & Conditions</div>
-                      <div class="terms-text">• Payment due within 30 days</div>
-                      <div class="terms-text">• Goods once sold will not be taken back</div>
-                      <div class="terms-text">• All disputes subject to local jurisdiction</div>
-                    </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
+                <div></div>
+                <div style="text-align: right; line-height: 1.8;">
+                  <div style="margin-bottom: 5px;">Basic Amount: <strong>₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">Packaging: <strong>₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">Hamali: <strong>₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">Weighing Charges: <strong>₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">Commission: <strong>₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">CESS @ 0.6%: <strong>₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">SGST @ 2.5%: <strong>₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="margin-bottom: 5px;">CGST @ 2.5%: <strong>₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                  <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px; font-size: 16px; font-weight: bold;">
+                    Total Amount: <strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong>
                   </div>
                 </div>
+              </div>
+
+              <div style="margin-bottom: 30px;">
+                <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                  BANK DETAILS
+                </div>
+                <div style="line-height: 1.5;">
+                  <div>Bank: ${invoiceData.bankDetails?.bankName || 'N/A'}</div>
+                  <div>Account No: ${invoiceData.bankDetails?.accountNumber || 'N/A'}</div>
+                  <div>IFSC: ${invoiceData.bankDetails?.ifscCode || 'N/A'}</div>
+                  <div>Account Holder: ${invoiceData.bankDetails?.accountHolder || 'N/A'}</div>
+                </div>
+              </div>
                 
                 <div class="signature-section">
                   <div class="signature-box">
