@@ -592,6 +592,15 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Maintained all existing business logic and A4 optimization while updating visual presentation
   - Preserved workflow functionality: multi-lot consolidation, tax calculations, buyer allocation unchanged
   - Tax invoice now perfectly matches user's format requirements while maintaining single-page A4 printing
+- July 26, 2025: Enhanced tax invoice with royal colors and professional table format for calculations
+  - Added royal blue gradient header with gold accent text and professional shadows
+  - Implemented colored section headers: blue for seller details, red for buyer details
+  - Created royal blue gradient table headers with white text and enhanced styling
+  - Converted calculations section to professional table format with royal blue/purple gradients
+  - Added alternating row transparency and special red gradient highlighting for total amount
+  - Enhanced bank details with green gradient background and gold accent borders
+  - Applied light blue background tints to data rows for improved readability
+  - Maintained all existing workflow functionality while adding royal, professional appearance
 
 # User Preferences
 

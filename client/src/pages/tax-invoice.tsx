@@ -599,16 +599,16 @@ export default function TaxInvoice() {
           </head>
           <body>
             <div class="invoice-container">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="font-size: 24px; font-weight: bold; margin: 0;">TAX INVOICE</h1>
-                <div style="margin-top: 10px; font-size: 14px; font-weight: bold;">
+              <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 20px; border-radius: 10px;">
+                <h1 style="font-size: 28px; font-weight: bold; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">TAX INVOICE</h1>
+                <div style="margin-top: 10px; font-size: 16px; font-weight: bold; color: #fbbf24;">
                   Invoice No: ${invoice.invoiceNumber} | Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
                 <div>
-                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 3px solid #1e3a8a; padding-bottom: 8px; color: #1e3a8a; font-size: 16px;">
                     SELLER DETAILS
                   </div>
                   <div style="line-height: 1.5;">
@@ -623,7 +623,7 @@ export default function TaxInvoice() {
                 </div>
                 
                 <div>
-                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+                  <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 3px solid #dc2626; padding-bottom: 8px; color: #dc2626; font-size: 16px;">
                     BUYER DETAILS
                   </div>
                   <div style="line-height: 1.5;">
@@ -637,30 +637,30 @@ export default function TaxInvoice() {
                 </div>
               </div>
                 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 1px solid #000;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; border: 2px solid #1e3a8a; border-radius: 8px; overflow: hidden;">
                 <thead>
-                  <tr style="background-color: #f8f9fa;">
-                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Lot No</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Item</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">HSN Code</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Bags</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Weight (Kg)</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Weight (Qtl)</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Rate/Qtl</th>
-                    <th style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">Amount</th>
+                  <tr style="background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);">
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Lot No</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Item</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">HSN Code</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Bags</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Kg)</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Qtl)</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Rate/Qtl</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 12px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${invoiceData.items?.map((item: any) => `
                     <tr>
-                      <td style="border: 1px solid #000; padding: 8px;">${item.lotNo || ''}</td>
-                      <td style="border: 1px solid #000; padding: 8px;">${item.itemName || 'ARABICA-A'}</td>
-                      <td style="border: 1px solid #000; padding: 8px;">09042110</td>
-                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.bags || 0}</td>
-                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${item.weightKg || 0}</td>
-                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">${(item.weightKg / 100).toFixed(2)}</td>
-                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td style="border: 1px solid #000; padding: 8px; text-align: right;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; background: rgba(30,58,138,0.05);">${item.lotNo || ''}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; background: rgba(30,58,138,0.05);">${item.itemName || 'ARABICA-A'}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; background: rgba(30,58,138,0.05);">09042110</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; text-align: right; background: rgba(30,58,138,0.05);">${item.bags || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; text-align: right; background: rgba(30,58,138,0.05);">${item.weightKg || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; text-align: right; background: rgba(30,58,138,0.05);">${(item.weightKg / 100).toFixed(2)}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; text-align: right; background: rgba(30,58,138,0.05);">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 10px; text-align: right; background: rgba(30,58,138,0.05); font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                     </tr>
                   `).join('') || ''}
                 </tbody>
@@ -668,30 +668,59 @@ export default function TaxInvoice() {
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
                 <div></div>
-                <div style="text-align: right; line-height: 1.8;">
-                  <div style="margin-bottom: 5px;">Basic Amount: <strong>₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">Packaging: <strong>₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">Hamali: <strong>₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">Weighing Charges: <strong>₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">Commission: <strong>₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">CESS @ 0.6%: <strong>₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">SGST @ 2.5%: <strong>₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="margin-bottom: 5px;">CGST @ 2.5%: <strong>₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
-                  <div style="border-top: 2px solid #000; padding-top: 10px; margin-top: 15px; font-size: 16px; font-weight: bold;">
-                    Total Amount: <strong>₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong>
-                  </div>
+                <div>
+                  <table style="width: 100%; border-collapse: collapse; margin-left: auto; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);">
+                    <tbody>
+                      <tr style="background: rgba(255,255,255,0.1);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">Basic Amount:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.05);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">Packaging:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.1);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">Hamali:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.05);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">Weighing Charges:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.1);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">Commission:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.05);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">CESS @ 0.6%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.1);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">SGST @ 2.5%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: rgba(255,255,255,0.05);">
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; color: white; font-weight: 500;">CGST @ 2.5%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                      <tr style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border-top: 2px solid #fbbf24;">
+                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 12px; color: white; font-weight: bold; font-size: 16px;">Total Amount:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 12px; text-align: right; color: white; font-weight: bold; font-size: 16px;">₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              <div style="margin-bottom: 30px;">
-                <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
+              <div style="margin-bottom: 30px; background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 20px; border-radius: 10px; color: white;">
+                <div style="font-weight: bold; margin-bottom: 15px; border-bottom: 3px solid #fbbf24; padding-bottom: 8px; font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                   BANK DETAILS
                 </div>
-                <div style="line-height: 1.5;">
-                  <div>Bank: ${invoiceData.bankDetails?.bankName || 'N/A'}</div>
-                  <div>Account No: ${invoiceData.bankDetails?.accountNumber || 'N/A'}</div>
-                  <div>IFSC: ${invoiceData.bankDetails?.ifscCode || 'N/A'}</div>
-                  <div>Account Holder: ${invoiceData.bankDetails?.accountHolder || 'N/A'}</div>
+                <div style="line-height: 1.8; font-weight: 500;">
+                  <div style="margin-bottom: 5px;">Bank: <strong>${invoiceData.bankDetails?.bankName || 'N/A'}</strong></div>
+                  <div style="margin-bottom: 5px;">Account No: <strong>${invoiceData.bankDetails?.accountNumber || 'N/A'}</strong></div>
+                  <div style="margin-bottom: 5px;">IFSC: <strong>${invoiceData.bankDetails?.ifscCode || 'N/A'}</strong></div>
+                  <div>Account Holder: <strong>${invoiceData.bankDetails?.accountHolder || 'N/A'}</strong></div>
                 </div>
               </div>
                 
