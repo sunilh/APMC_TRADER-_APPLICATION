@@ -273,10 +273,8 @@ export default function FarmerBill() {
           
           <div class="farmer-info">
             <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
-            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'}</p>
-            <p><strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
-            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'}</p>
-            <p><strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
+            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
           </div>
 
           <table class="lot-table">
@@ -403,10 +401,8 @@ export default function FarmerBill() {
           
           <div class="farmer-info">
             <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
-            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'}</p>
-            <p><strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
-            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'}</p>
-            <p><strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
+            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
           </div>
 
           <table class="lot-table">

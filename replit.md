@@ -622,6 +622,12 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Applied changes to both printTaxInvoice and generatePrintableInvoice functions consistently
   - Maintained professional table structure while ensuring optimal readability for business use
   - Final implementation completed with normal-colored calculations table as per user requirements
+- July 26, 2025: Enhanced farmer bill layout with horizontal farmer details display
+  - Updated farmer details section to display in horizontal format as requested by user
+  - First row now shows: Name and Mobile side by side
+  - Second row displays: Place and Bank details horizontally
+  - Applied changes to both download and print functions in farmer bill system
+  - Maintained bilingual support (English/Kannada) while improving layout efficiency
 
 # User Preferences
 
