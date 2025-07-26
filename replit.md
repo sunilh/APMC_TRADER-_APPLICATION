@@ -601,6 +601,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Enhanced bank details with green gradient background and gold accent borders
   - Applied light blue background tints to data rows for improved readability
   - Maintained all existing workflow functionality while adding royal, professional appearance
+- July 26, 2025: Optimized tax invoice calculations table for A4 paper size with royal design
+  - Compressed font sizes throughout: header (20px), content (10px), tables (10px)
+  - Reduced padding and margins: header (12px), tables (4-6px), sections (15px)
+  - Optimized royal blue gradient calculations table with compact 4-6px cell padding
+  - Maintained professional alternating row styling with space-efficient layout
+  - Enhanced A4 single-page printing capability while preserving royal color scheme
+  - System now perfectly fits 6-20 lots with royal table-formatted calculations on A4 paper
 
 # User Preferences
 
