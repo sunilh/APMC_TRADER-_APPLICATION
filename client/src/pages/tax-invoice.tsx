@@ -599,20 +599,20 @@ export default function TaxInvoice() {
           </head>
           <body>
             <div class="invoice-container">
-              <div style="text-align: center; margin-bottom: 15px; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 12px; border-radius: 8px;">
-                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">TAX INVOICE</h1>
-                <div style="margin-top: 6px; font-size: 12px; font-weight: bold; color: #fbbf24;">
+              <div style="text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); color: white; padding: 16px; border-radius: 8px;">
+                <h1 style="font-size: 24px; font-weight: bold; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">TAX INVOICE</h1>
+                <div style="margin-top: 8px; font-size: 14px; font-weight: bold; color: #fbbf24;">
                   Invoice No: ${invoice.invoiceNumber} | Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-GB')}
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px;">
                 <div>
-                  <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 2px solid #1e3a8a; padding-bottom: 4px; color: #1e3a8a; font-size: 12px;">
+                  <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 2px solid #1e3a8a; padding-bottom: 6px; color: #1e3a8a; font-size: 14px;">
                     SELLER DETAILS
                   </div>
-                  <div style="line-height: 1.3; font-size: 10px;">
-                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">${invoiceData.seller?.companyName || 'N/A'}</div>
+                  <div style="line-height: 1.5; font-size: 12px;">
+                    <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px;">${invoiceData.seller?.companyName || 'N/A'}</div>
                     <div>APMC Code: ${invoiceData.seller?.apmcCode || 'N/A'}</div>
                     <div>${invoiceData.seller?.address || 'N/A'}</div>
                     <div>Mobile: ${invoiceData.seller?.mobile || 'N/A'}</div>
@@ -623,11 +623,11 @@ export default function TaxInvoice() {
                 </div>
                 
                 <div>
-                  <div style="font-weight: bold; margin-bottom: 6px; border-bottom: 2px solid #dc2626; padding-bottom: 4px; color: #dc2626; font-size: 12px;">
+                  <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 2px solid #dc2626; padding-bottom: 6px; color: #dc2626; font-size: 14px;">
                     BUYER DETAILS
                   </div>
-                  <div style="line-height: 1.3; font-size: 10px;">
-                    <div style="font-weight: bold; font-size: 11px; margin-bottom: 3px;">${invoiceData.buyer?.companyName || 'N/A'}</div>
+                  <div style="line-height: 1.5; font-size: 12px;">
+                    <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px;">${invoiceData.buyer?.companyName || 'N/A'}</div>
                     <div>Contact: ${invoiceData.buyer?.contactPerson || 'N/A'}</div>
                     <div>${invoiceData.buyer?.address || 'N/A'}</div>
                     <div>Mobile: ${invoiceData.buyer?.mobile || 'N/A'}</div>
@@ -637,30 +637,30 @@ export default function TaxInvoice() {
                 </div>
               </div>
                 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; border: 1px solid #1e3a8a; border-radius: 6px; overflow: hidden; font-size: 10px;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #1e3a8a; border-radius: 6px; overflow: hidden; font-size: 11px;">
                 <thead>
                   <tr style="background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);">
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Lot No</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Item</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">HSN</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Bags</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Kg)</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Qtl)</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Rate/Qtl</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 6px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Amount</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Lot No</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Item</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">HSN</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Bags</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Kg)</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Qtl)</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Rate/Qtl</th>
+                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${invoiceData.items?.map((item: any) => `
                     <tr>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; background: rgba(30,58,138,0.05);">${item.lotNo || ''}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; background: rgba(30,58,138,0.05);">${item.itemName || 'ARABICA-A'}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; background: rgba(30,58,138,0.05);">09042110</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: right; background: rgba(30,58,138,0.05);">${item.bags || 0}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: right; background: rgba(30,58,138,0.05);">${item.weightKg || 0}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: right; background: rgba(30,58,138,0.05);">${(item.weightKg / 100).toFixed(2)}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: right; background: rgba(30,58,138,0.05);">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 4px; text-align: right; background: rgba(30,58,138,0.05); font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">${item.lotNo || ''}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">${item.itemName || 'ARABICA-A'}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">09042110</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${item.bags || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${item.weightKg || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${(item.weightKg / 100).toFixed(2)}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05); font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                     </tr>
                   `).join('') || ''}
                 </tbody>
@@ -669,57 +669,57 @@ export default function TaxInvoice() {
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
                 <div></div>
                 <div>
-                  <table style="width: 100%; border-collapse: collapse; margin-left: auto; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); font-size: 10px;">
+                  <table style="width: 100%; border-collapse: collapse; margin-left: auto; background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); font-size: 12px;">
                     <tbody>
                       <tr style="background: rgba(255,255,255,0.1);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">Basic Amount:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">Basic Amount:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.05);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">Packaging:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">Packaging:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.packaging || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.1);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">Hamali:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">Hamali:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.hamali || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.05);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">Weighing:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">Weighing:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.weighingCharges || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.1);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">Commission:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">Commission:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.commission || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.05);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">CESS @ 0.6%:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">CESS @ 0.6%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cess || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.1);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">SGST @ 2.5%:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">SGST @ 2.5%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.sgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: rgba(255,255,255,0.05);">
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; color: white; font-weight: 500;">CGST @ 2.5%:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 4px 6px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; color: white; font-weight: 500;">CGST @ 2.5%:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.3); padding: 6px 8px; text-align: right; color: white; font-weight: bold;">₹${(invoiceData.calculations?.cgst || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                       <tr style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border-top: 2px solid #fbbf24;">
-                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 6px; color: white; font-weight: bold; font-size: 12px;">Total Amount:</td>
-                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 6px; text-align: right; color: white; font-weight: bold; font-size: 12px;">₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 8px; color: white; font-weight: bold; font-size: 14px;">Total Amount:</td>
+                        <td style="border: 1px solid rgba(255,255,255,0.5); padding: 8px; text-align: right; color: white; font-weight: bold; font-size: 14px;">₹${(invoiceData.calculations?.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              <div style="margin-bottom: 15px; background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 12px; border-radius: 8px; color: white;">
-                <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 2px solid #fbbf24; padding-bottom: 4px; font-size: 12px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+              <div style="margin-bottom: 20px; background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 16px; border-radius: 8px; color: white;">
+                <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #fbbf24; padding-bottom: 6px; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
                   BANK DETAILS
                 </div>
-                <div style="line-height: 1.4; font-weight: 500; font-size: 10px;">
-                  <div style="margin-bottom: 3px;">Bank: <strong>${invoiceData.bankDetails?.bankName || 'N/A'}</strong></div>
-                  <div style="margin-bottom: 3px;">Account No: <strong>${invoiceData.bankDetails?.accountNumber || 'N/A'}</strong></div>
-                  <div style="margin-bottom: 3px;">IFSC: <strong>${invoiceData.bankDetails?.ifscCode || 'N/A'}</strong></div>
+                <div style="line-height: 1.6; font-weight: 500; font-size: 12px;">
+                  <div style="margin-bottom: 4px;">Bank: <strong>${invoiceData.bankDetails?.bankName || 'N/A'}</strong></div>
+                  <div style="margin-bottom: 4px;">Account No: <strong>${invoiceData.bankDetails?.accountNumber || 'N/A'}</strong></div>
+                  <div style="margin-bottom: 4px;">IFSC: <strong>${invoiceData.bankDetails?.ifscCode || 'N/A'}</strong></div>
                   <div>Account Holder: <strong>${invoiceData.bankDetails?.accountHolder || 'N/A'}</strong></div>
                 </div>
               </div>

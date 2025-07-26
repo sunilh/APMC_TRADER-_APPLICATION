@@ -608,6 +608,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Maintained professional alternating row styling with space-efficient layout
   - Enhanced A4 single-page printing capability while preserving royal color scheme
   - System now perfectly fits 6-20 lots with royal table-formatted calculations on A4 paper
+- July 26, 2025: Fixed readability issues while maintaining royal table format for calculations
+  - Enhanced font sizes for better readability: header (24px), details (12-14px), tables (11-12px)
+  - Improved spacing and padding: header (16px), tables (6-8px), sections (16-20px margins)
+  - Maintained royal blue gradient calculations table with professional alternating rows
+  - Preserved all royal colors and design elements while improving text clarity
+  - Balanced A4 optimization with readability for professional invoice appearance
+  - System provides excellent readability while keeping royal table design on single A4 page
 
 # User Preferences
 
