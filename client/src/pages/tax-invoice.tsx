@@ -637,30 +637,30 @@ export default function TaxInvoice() {
                 </div>
               </div>
                 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #1e3a8a; border-radius: 6px; overflow: hidden; font-size: 11px;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; font-size: 11px;">
                 <thead>
-                  <tr style="background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);">
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Lot No</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Item</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: left; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">HSN</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Bags</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Kg)</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Weight (Qtl)</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Rate/Qtl</th>
-                    <th style="border: 1px solid rgba(255,255,255,0.3); padding: 8px; text-align: right; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">Amount</th>
+                  <tr style="background: #f3f4f6;">
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">Lot No</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">Item</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">HSN</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Bags</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Weight (Kg)</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Weight (Qtl)</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Rate/Qtl</th>
+                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${invoiceData.items?.map((item: any) => `
                     <tr>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">${item.lotNo || ''}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">${item.itemName || 'ARABICA-A'}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: rgba(30,58,138,0.05);">09042110</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${item.bags || 0}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${item.weightKg || 0}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">${(item.weightKg / 100).toFixed(2)}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05);">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: rgba(30,58,138,0.05); font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">${item.lotNo || ''}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">${item.itemName || 'ARABICA-A'}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">09042110</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">${item.bags || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">${item.weightKg || 0}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">${(item.weightKg / 100).toFixed(2)}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                      <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151; font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                     </tr>
                   `).join('') || ''}
                 </tbody>
@@ -1162,28 +1162,28 @@ export default function TaxInvoice() {
               
               <div class="items-section">
                 <div class="section-title">Item Details</div>
-                <table class="modern-table">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e5e7eb; font-size: 11px;">
                   <thead>
-                    <tr>
-                      <th>Lot No</th>
-                      <th>Item Name</th>
-                      <th>HSN Code</th>
-                      <th>Bags</th>
-                      <th>Weight (KG)</th>
-                      <th>Rate/Quintal</th>
-                      <th>Amount (₹)</th>
+                    <tr style="background: #f3f4f6;">
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">Lot No</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">Item Name</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-weight: bold; color: #1f2937;">HSN Code</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Bags</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Weight (KG)</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Rate/Quintal</th>
+                      <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: right; font-weight: bold; color: #1f2937;">Amount (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${taxInvoice.items?.map((item: any) => `
                       <tr>
-                        <td>${item.lotNo || ''}</td>
-                        <td>${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
-                        <td>09042110</td>
-                        <td>${item.bags || 0}</td>
-                        <td>${item.weightKg || 0}</td>
-                        <td>₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                        <td>₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">${item.lotNo || ''}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">${item.itemName || 'AGRICULTURAL PRODUCE'}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; background: white; color: #374151;">09042110</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">${item.bags || 0}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">${item.weightKg || 0}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151;">₹${(item.ratePerQuintal || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 6px; text-align: right; background: white; color: #374151; font-weight: bold;">₹${(item.basicAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                       </tr>
                     `).join('') || ''}
                   </tbody>
