@@ -615,6 +615,13 @@ This is a multi-tenant APMC (Agricultural Produce Market Committee) management s
   - Preserved all royal colors and design elements while improving text clarity
   - Balanced A4 optimization with readability for professional invoice appearance
   - System provides excellent readability while keeping royal table design on single A4 page
+- July 26, 2025: Updated tax invoice calculations to use normal colors with professional table format for final implementation
+  - Changed calculations section from royal blue to normal colors for excellent readability
+  - Implemented clean white/gray table with dark text (#374151, #1f2937) and light alternating rows
+  - Updated bank details section to match normal color scheme with professional styling
+  - Applied changes to both printTaxInvoice and generatePrintableInvoice functions consistently
+  - Maintained professional table structure while ensuring optimal readability for business use
+  - Final implementation completed with normal-colored calculations table as per user requirements
 
 # User Preferences
 
