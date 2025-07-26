@@ -293,10 +293,10 @@ export default function FarmerBill() {
               ${billDetails.lots ? billDetails.lots.map(lot => `
                 <tr>
                   <td>${lot.lotNumber}</td>
-                  <td>${lot.numberOfBags}</td>
-                  <td>${lot.totalWeight}</td>
-                  <td>${formatCurrency(lot.pricePerQuintal || 0)}</td>
-                  <td>${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}</td>
+                  <td>${lot.numberOfBags || 0}</td>
+                  <td>${(lot.totalWeight || 0).toFixed(2)}</td>
+                  <td>₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 </tr>
               `).join('') : ''}
               <tr class="total-row">
@@ -423,10 +423,10 @@ export default function FarmerBill() {
               ${billDetails.lots ? billDetails.lots.map(lot => `
                 <tr>
                   <td>${lot.lotNumber}</td>
-                  <td>${lot.numberOfBags}</td>
-                  <td>${lot.totalWeight}</td>
-                  <td>${formatCurrency(lot.pricePerQuintal || 0)}</td>
-                  <td>${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}</td>
+                  <td>${lot.numberOfBags || 0}</td>
+                  <td>${(lot.totalWeight || 0).toFixed(2)}</td>
+                  <td>₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 </tr>
               `).join('') : ''}
               <tr class="total-row">
@@ -478,16 +478,16 @@ export default function FarmerBill() {
 
           ${billDetails.lots ? billDetails.lots.map(lot => `
             <div class="lot-section">
-              <h3>Lot ${lot.lotNumber} - ${lot.varietyGrade} (${lot.grade})</h3>
-              <p><strong>Total Bags:</strong> ${lot.numberOfBags} | <strong>Total Weight:</strong> ${lot.totalWeight} kg</p>
+              <h3>Lot ${lot.lotNumber} - ${lot.variety || 'N/A'} (${lot.grade || 'N/A'})</h3>
+              <p><strong>Total Bags:</strong> ${lot.numberOfBags || 0} | <strong>Total Weight:</strong> ${(lot.totalWeight || 0).toFixed(2)} kg</p>
               
               <div class="bag-grid">
                 ${lot.bags && lot.bags.length > 0 ? lot.bags.map(bag => `
                   <div class="bag-card">
                     <div class="bag-number">B${bag.bagNumber}</div>
-                    <div class="bag-weight">${bag.weight}kg</div>
+                    <div class="bag-weight">${bag.weight || 0}kg</div>
                   </div>
-                `).join('') : Array.from({length: lot.numberOfBags}, (_, i) => `
+                `).join('') : Array.from({length: lot.numberOfBags || 0}, (_, i) => `
                   <div class="bag-card">
                     <div class="bag-number">B${i + 1}</div>
                     <div class="bag-weight">--</div>
@@ -496,8 +496,8 @@ export default function FarmerBill() {
               </div>
               
               <div class="lot-summary">
-                <strong>Rate:</strong> ₹${formatCurrency(lot.pricePerQuintal || 0)}/quintal | 
-                <strong>Amount:</strong> ₹${formatCurrency((lot.totalWeight / 100) * (lot.pricePerQuintal || 0))}
+                <strong>Rate:</strong> ₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}/quintal | 
+                <strong>Amount:</strong> ₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
               </div>
             </div>
           `).join('') : ''}
