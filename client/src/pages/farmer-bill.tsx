@@ -255,7 +255,7 @@ export default function FarmerBill() {
             .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
             .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
             .section { margin: 15px 0; }
-            .farmer-info { margin: 15px 0; }
+            .farmer-info { margin: 15px 0; padding-left: 20px; }
             .lot-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
             .lot-table th, .lot-table td { border: 1px solid #000; padding: 8px; text-align: left; }
             .lot-table th { background-color: #f0f0f0; font-weight: bold; }
@@ -273,8 +273,8 @@ export default function FarmerBill() {
           
           <div class="farmer-info">
             <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
-            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
-            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
+<p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+<p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
           </div>
 
           <table class="lot-table">
@@ -383,7 +383,7 @@ export default function FarmerBill() {
             .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
             .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
             .section { margin: 15px 0; }
-            .farmer-info { margin: 15px 0; }
+            .farmer-info { margin: 15px 0; padding-left: 20px; }
             .lot-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
             .lot-table th, .lot-table td { border: 1px solid #000; padding: 8px; text-align: left; }
             .lot-table th { background-color: #f0f0f0; font-weight: bold; }
@@ -401,8 +401,8 @@ export default function FarmerBill() {
           
           <div class="farmer-info">
             <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
-            <p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
-            <p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
+<p><strong>Name / ಹೆಸರು:</strong> ${billDetails.farmerName || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Mobile / ಮೊಬೈಲ್:</strong> ${billDetails.farmerMobile || 'N/A'}</p>
+<p><strong>Place / ಸ್ಥಳ:</strong> ${billDetails.farmerPlace || 'N/A'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${billDetails.bankName || 'N/A'} - ${billDetails.accountNumber || 'N/A'}</p>
           </div>
 
           <table class="lot-table">
