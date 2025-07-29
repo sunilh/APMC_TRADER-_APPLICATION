@@ -286,11 +286,11 @@ export default function Buyers() {
   };
 
   // Filter buyers based on search term
-  const filteredBuyers = buyerSummaries.filter((buyer: any) =>
+  const filteredBuyers = Array.isArray(buyerSummaries) ? (buyerSummaries as any[]).filter((buyer: any) =>
     buyer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     buyer.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     buyer.mobile?.includes(searchTerm)
-  );
+  ) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
@@ -417,6 +417,7 @@ export default function Buyers() {
                           <FormControl>
                             <Input
                               {...field}
+                              value={field.value || ''}
                               placeholder="Enter PAN number"
                               type="text"
                             />
@@ -435,6 +436,7 @@ export default function Buyers() {
                           <FormControl>
                             <Input
                               {...field}
+                              value={field.value || ''}
                               placeholder="Enter GST number"
                               type="text"
                             />

@@ -185,7 +185,7 @@ export default function BagEntryNew() {
         const buyer = getBuyerForBag(bag.bagNumber);
         const buyerId = bag.buyerId || buyer?.buyerId;
         
-        const existingBag = existingBags.find(eb => eb.bagNumber === bag.bagNumber);
+        const existingBag = (existingBags as any[]).find((eb: any) => eb.bagNumber === bag.bagNumber);
         
         if (existingBag) {
           // Update existing bag

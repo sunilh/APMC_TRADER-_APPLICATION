@@ -39,6 +39,8 @@ interface LotWithDetails extends Lot {
 interface BagEntryData {
   bagNumber: number;
   weight?: number;
+  grade?: string;
+  notes?: string;
   buyerId?: number;
   buyerName?: string;
   status: "pending" | "saved";
@@ -149,7 +151,8 @@ export default function BagEntry() {
 
   const createBuyerMutation = useMutation({
     mutationFn: async (buyerData: { name: string; contactPerson?: string }) => {
-      return await apiRequest("POST", "/api/buyers", buyerData);
+      const response = await apiRequest("POST", "/api/buyers", buyerData);
+      return response as any;
     },
     onSuccess: (buyer: Buyer) => {
       queryClient.invalidateQueries({ queryKey: ["/api/buyers"] });
@@ -318,7 +321,7 @@ export default function BagEntry() {
       updateLotMutation.mutate({
         lotPrice,
         buyerId: selectedBuyer ? parseInt(selectedBuyer) : undefined,
-        grade: lotGrade || undefined,
+        // grade: lotGrade || undefined, // Remove grade from lot updates
       });
     }
   };
@@ -463,7 +466,7 @@ export default function BagEntry() {
     updateLotMutation.mutate({
       lotPrice: lotPrice || undefined,
       buyerId: selectedBuyer ? parseInt(selectedBuyer) : undefined,
-      grade: grade || undefined,
+      // grade: grade || undefined, // Remove grade from lot updates
     });
   };
 
@@ -473,7 +476,7 @@ export default function BagEntry() {
       updateLotMutation.mutate({
         buyerId: parseInt(buyerId),
         lotPrice: lotPrice || undefined,
-        grade: lotGrade || undefined,
+        // grade: lotGrade || undefined, // Remove grade from lot updates
       });
     }
   };

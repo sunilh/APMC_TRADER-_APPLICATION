@@ -140,12 +140,12 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
       buyer_name: row.buyer_name,
       invoice_number: row.invoice_number,
       invoice_date: row.invoice_date,
-      basic_amount: parseFloat(row.basic_amount || '0'),
-      total_amount: parseFloat(row.total_amount || '0'),
-      sgst: parseFloat(row.sgst || '0'),
-      cgst: parseFloat(row.cgst || '0'),
-      cess: parseFloat(row.cess || '0'),
-      total_taxes_collected: parseFloat(row.total_taxes_collected || '0')
+      basic_amount: parseFloat(String(row.basic_amount) || '0'),
+      total_amount: parseFloat(String(row.total_amount) || '0'),
+      sgst: parseFloat(String(row.sgst) || '0'),
+      cgst: parseFloat(String(row.cgst) || '0'),
+      cess: parseFloat(String(row.cess) || '0'),
+      total_taxes_collected: parseFloat(String(row.total_taxes_collected) || '0')
     }));
 
     const farmerBills = farmerBillsData.rows.map(row => ({
@@ -153,15 +153,15 @@ export async function getTradingDetails(tenantId: number, startDate?: string, en
       farmer_name: row.farmer_name,
       patti_number: row.patti_number,
       bill_date: row.bill_date,
-      gross_amount: parseFloat(row.gross_amount || '0'),
-      hamali: parseFloat(row.hamali || '0'),
-      vehicle_rent: parseFloat(row.vehicle_rent || '0'),
-      empty_bag_charges: parseFloat(row.empty_bag_charges || '0'),
-      advance: parseFloat(row.advance || '0'),
-      rok: parseFloat(row.rok || '0'),
-      other_deductions: parseFloat(row.other_deductions || '0'),
-      net_payable: parseFloat(row.net_payable || '0'),
-      total_deductions: parseFloat(row.total_deductions || '0')
+      gross_amount: parseFloat(String(row.gross_amount) || '0'),
+      hamali: parseFloat(String(row.hamali) || '0'),
+      vehicle_rent: parseFloat(String(row.vehicle_rent) || '0'),
+      empty_bag_charges: parseFloat(String(row.empty_bag_charges) || '0'),
+      advance: parseFloat(String(row.advance) || '0'),
+      rok: parseFloat(String(row.rok) || '0'),
+      other_deductions: parseFloat(String(row.other_deductions) || '0'),
+      net_payable: parseFloat(String(row.net_payable) || '0'),
+      total_deductions: parseFloat(String(row.total_deductions) || '0')
     }));
 
     // Calculate summary totals

@@ -20,8 +20,8 @@ interface VoiceRecognitionResult {
 
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
   }
 }
 
@@ -38,7 +38,7 @@ export function useVoiceRecognition(options: VoiceRecognitionOptions = {}): Voic
   const [confidence, setConfidence] = useState(0);
   const [error, setError] = useState<Error | null>(null);
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const isSupported = useRef(false);
 
   // Check if browser supports speech recognition
@@ -73,7 +73,7 @@ export function useVoiceRecognition(options: VoiceRecognitionOptions = {}): Voic
       setIsListening(false);
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let finalTranscript = '';
       let finalConfidence = 0;
 
@@ -93,7 +93,7 @@ export function useVoiceRecognition(options: VoiceRecognitionOptions = {}): Voic
       setConfidence(finalConfidence);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       setError(new Error(event.error));
       setIsListening(false);
     };

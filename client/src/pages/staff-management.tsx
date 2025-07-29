@@ -306,9 +306,9 @@ export default function StaffManagement() {
                       <FormControl>
                         <UnifiedInput
                           {...field}
-                          type="email"
+                          type="text"
                           placeholder="Enter email"
-                          voiceType="email"
+                          voiceType="text"
                         />
                       </FormControl>
                       <FormMessage />

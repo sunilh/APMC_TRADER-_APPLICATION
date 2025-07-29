@@ -70,7 +70,7 @@ const upload = multer({
     if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only image files and PDFs are allowed'), false);
+      cb(null, false);
     }
   }
 });
@@ -110,8 +110,8 @@ async function createAuditLog(
 ) {
   if (req.user) {
     await storage.createAuditLog({
-      userId: req.user.id,
-      tenantId: req.user.tenantId,
+      userId: req.user!.id,
+      tenantId: req.user!.tenantId,
       action,
       entityType,
       entityId,
@@ -132,11 +132,11 @@ export function registerRoutes(app: Express): Server {
   // Tenant info
   app.get("/api/tenant", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      if (!req.user || !req.user.tenantId) {
+      if (!req.user || !req.user!.tenantId) {
         return res.status(400).json({ message: "Invalid user or tenant context" });
       }
       
-      const tenant = await storage.getTenant(req.user.tenantId);
+      const tenant = await storage.getTenant(req.user!.tenantId);
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
@@ -152,9 +152,9 @@ export function registerRoutes(app: Express): Server {
     "/api/dashboard/stats",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
-        const stats = await storage.getDashboardStats(req.user.tenantId);
+        const stats = await storage.getDashboardStats(req.user!.tenantId);
         res.json(stats);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch dashboard stats" });
@@ -167,9 +167,9 @@ export function registerRoutes(app: Express): Server {
     "/api/dashboard/lot-completion",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
-        const completionStats = await storage.getLotCompletionStats(req.user.tenantId);
+        const completionStats = await storage.getLotCompletionStats(req.user!.tenantId);
         res.json(completionStats);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch lot completion stats" });
@@ -184,7 +184,7 @@ export function registerRoutes(app: Express): Server {
     try {
       res.json({ 
         status: "ok", 
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
         fiscalYear: getCurrentFiscalYear(),
         message: "Accounting system is operational"
       });
@@ -206,7 +206,7 @@ export function registerRoutes(app: Express): Server {
         startDate, 
         endDate, 
         fiscalYear, 
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
         queryParams: req.query 
       });
       
@@ -214,7 +214,7 @@ export function registerRoutes(app: Express): Server {
       if (startDate && endDate) {
         console.log('📅 Using DATE RANGE mode:', { startDate, endDate });
         const finalAccounts = await getSimpleFinalAccountsDateRange(
-          req.user.tenantId, 
+          req.user!.tenantId, 
           new Date(startDate as string), 
           new Date(endDate as string)
         );
@@ -232,7 +232,7 @@ export function registerRoutes(app: Express): Server {
         res.json(finalAccounts);
       } else {
         console.log('🗓️ Using FISCAL YEAR mode:', { fiscalYear });
-        const finalAccounts = await getSimpleFinalAccounts(req.user.tenantId, fiscalYear);
+        const finalAccounts = await getSimpleFinalAccounts(req.user!.tenantId, fiscalYear);
         console.log('📊 Fiscal year result:', { 
           netProfit: finalAccounts.netProfit, 
           totalIncome: finalAccounts.totalIncome,
@@ -250,7 +250,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/profit-loss/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const fiscalYear = req.params.fiscalYear;
-      const profitLoss = await generateProfitLossReport(req.user.tenantId, fiscalYear);
+      const profitLoss = await generateProfitLossReport(req.user!.tenantId, fiscalYear);
       res.json(profitLoss);
     } catch (error) {
       console.error("Error generating P&L report:", error);
@@ -262,7 +262,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/balance-sheet/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const fiscalYear = req.params.fiscalYear;
-      const balanceSheet = await generateBalanceSheet(req.user.tenantId, fiscalYear);
+      const balanceSheet = await generateBalanceSheet(req.user!.tenantId, fiscalYear);
       res.json(balanceSheet);
     } catch (error) {
       console.error("Error generating balance sheet:", error);
@@ -274,7 +274,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/cash-flow/:fiscalYear?", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const fiscalYear = req.params.fiscalYear;
-      const cashFlow = await generateCashFlowReport(req.user.tenantId, fiscalYear);
+      const cashFlow = await generateCashFlowReport(req.user!.tenantId, fiscalYear);
       res.json(cashFlow);
     } catch (error) {
       console.error("Error generating cash flow report:", error);
@@ -291,11 +291,11 @@ export function registerRoutes(app: Express): Server {
         startDate, 
         endDate, 
         fiscalYear, 
-        tenantId: req.user.tenantId 
+        tenantId: req.user!.tenantId 
       });
       
       const tradingDetails = await getTradingDetails(
-        req.user.tenantId, 
+        req.user!.tenantId, 
         startDate as string, 
         endDate as string, 
         fiscalYear as string
@@ -322,7 +322,7 @@ export function registerRoutes(app: Express): Server {
       const endDate = req.query.endDate;
       console.log('🔍 Farmer profitability API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
       
-      const profitability = await analyzeProfitabilityByFarmer(req.user.tenantId, fiscalYear, startDate, endDate);
+      const profitability = await analyzeProfitabilityByFarmer(req.user!.tenantId, fiscalYear, startDate, endDate);
       res.json(profitability);
     } catch (error) {
       console.error("Error analyzing farmer profitability:", error);
@@ -338,7 +338,7 @@ export function registerRoutes(app: Express): Server {
       const endDate = req.query.endDate;
       console.log('🔍 Buyer profitability API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
       
-      const profitability = await analyzeProfitabilityByBuyer(req.user.tenantId, fiscalYear, startDate, endDate);
+      const profitability = await analyzeProfitabilityByBuyer(req.user!.tenantId, fiscalYear, startDate, endDate);
       res.json(profitability);
     } catch (error) {
       console.error("Error analyzing buyer profitability:", error);
@@ -354,7 +354,7 @@ export function registerRoutes(app: Express): Server {
       const endDate = req.query.endDate;
       console.log('🔍 GST liability API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
       
-      const gstLiability = await calculateGSTLiability(req.user.tenantId, fiscalYear, startDate, endDate);
+      const gstLiability = await calculateGSTLiability(req.user!.tenantId, fiscalYear, startDate, endDate);
       res.json(gstLiability);
     } catch (error) {
       console.error("Error calculating GST liability:", error);
@@ -379,7 +379,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/ledger', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const result = await getLedgerEntries(req.user.tenantId, startDate, endDate);
+      const result = await getLedgerEntries(req.user!.tenantId, startDate, endDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting ledger entries:', error);
@@ -391,7 +391,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/balance-sheet', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { asOfDate } = req.query;
-      const result = await getBalanceSheet(req.user.tenantId, asOfDate);
+      const result = await getBalanceSheet(req.user!.tenantId, asOfDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting balance sheet:', error);
@@ -403,7 +403,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/expenses/summary', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const result = await getExpensesSummary(req.user.tenantId, startDate, endDate);
+      const result = await getExpensesSummary(req.user!.tenantId, startDate, endDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting expenses summary:', error);
@@ -414,7 +414,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/expenses/detailed', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const result = await getDetailedExpenses(req.user.tenantId, startDate, endDate);
+      const result = await getDetailedExpenses(req.user!.tenantId, startDate, endDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting detailed expenses:', error);
@@ -427,14 +427,14 @@ export function registerRoutes(app: Express): Server {
     try {
       const expenseData = {
         ...req.body,
-        tenantId: req.user.tenantId
+        tenantId: req.user!.tenantId
       };
 
       const [expense] = await db.insert(expenses).values(expenseData).returning();
       
       // Also create accounting ledger entry
       await db.insert(accountingLedger).values({
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
         accountHead: req.body.category,
         description: `${req.body.category}: ${req.body.description}`,
         debitAmount: req.body.amount,
@@ -456,7 +456,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/profit-loss-comprehensive', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const result = await getComprehensiveProfitLoss(req.user.tenantId, startDate, endDate);
+      const result = await getComprehensiveProfitLoss(req.user!.tenantId, startDate, endDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting comprehensive P&L:', error);
@@ -468,7 +468,7 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/accounting/cash-flow', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { startDate, endDate } = req.query;
-      const result = await getCashFlowStatement(req.user.tenantId, startDate, endDate);
+      const result = await getCashFlowStatement(req.user!.tenantId, startDate, endDate);
       res.json(result);
     } catch (error) {
       console.error('Error getting cash flow statement:', error);
@@ -485,8 +485,8 @@ export function registerRoutes(app: Express): Server {
         parseFloat(amount),
         paymentMethod,
         referenceNumber,
-        req.user.tenantId,
-        req.user.id
+        req.user!.tenantId,
+        req.user!.id
       );
       res.json({ message: "Payment received recorded successfully" });
     } catch (error) {
@@ -504,8 +504,8 @@ export function registerRoutes(app: Express): Server {
         parseFloat(amount),
         paymentMethod,
         referenceNumber,
-        req.user.tenantId,
-        req.user.id
+        req.user!.tenantId,
+        req.user!.id
       );
       res.json({ message: "Payment made recorded successfully" });
     } catch (error) {
@@ -519,7 +519,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const categories = await db.execute(sql`
         SELECT * FROM expense_categories 
-        WHERE tenant_id = ${req.user.tenantId} 
+        WHERE tenant_id = ${req.user!.tenantId} 
         ORDER BY name
       `);
       res.json(categories.rows);
@@ -537,13 +537,13 @@ export function registerRoutes(app: Express): Server {
         .insert(expenses)
         .values({
           categoryId: parseInt(categoryId),
-          tenantId: req.user.tenantId,
+          tenantId: req.user!.tenantId,
           amount: parseFloat(amount).toString(),
           description,
           expenseDate: new Date(expenseDate),
           paymentMethod,
           receiptNumber,
-          createdBy: req.user.id,
+          createdBy: req.user!.id,
         })
         .returning();
       res.json({ message: "Expense recorded successfully", expenseId: expense.id });
@@ -557,7 +557,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { categoryId } = req.query;
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       let query = db
         .select()
@@ -593,7 +593,7 @@ export function registerRoutes(app: Express): Server {
       let query = db
         .select()
         .from(accountingLedger)
-        .where(eq(accountingLedger.tenantId, req.user.tenantId))
+        .where(eq(accountingLedger.tenantId, req.user!.tenantId))
         .orderBy(desc(accountingLedger.transactionDate))
         .limit(limit);
 
@@ -604,14 +604,14 @@ export function registerRoutes(app: Express): Server {
         end.setHours(23, 59, 59, 999); // Include full end date
         
         query = query.where(and(
-          eq(accountingLedger.tenantId, req.user.tenantId),
+          eq(accountingLedger.tenantId, req.user!.tenantId),
           gte(accountingLedger.transactionDate, start),
           lte(accountingLedger.transactionDate, end)
         ));
         console.log('📅 Using DATE RANGE mode for ledger entries:', { startDate, endDate });
       } else if (fiscalYear) {
         query = query.where(and(
-          eq(accountingLedger.tenantId, req.user.tenantId),
+          eq(accountingLedger.tenantId, req.user!.tenantId),
           eq(accountingLedger.fiscalYear, fiscalYear)
         ));
         console.log('📅 Using FISCAL YEAR mode for ledger entries:', { fiscalYear });
@@ -635,7 +635,7 @@ export function registerRoutes(app: Express): Server {
       
       console.log('🔍 Bank transactions API called with:', { fiscalYear, startDate, endDate, queryParams: req.query });
       
-      let whereClause = `WHERE tenant_id = ${req.user.tenantId}`;
+      let whereClause = `WHERE tenant_id = ${req.user!.tenantId}`;
       
       // Add date filtering
       if (startDate && endDate) {
@@ -669,7 +669,7 @@ export function registerRoutes(app: Express): Server {
     "/api/billing/farmer/:farmerId/:date",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const farmerId = parseInt(req.params.farmerId);
         const date = new Date(req.params.date);
@@ -681,7 +681,7 @@ export function registerRoutes(app: Express): Server {
         const bill = await generateFarmerDayBill(
           farmerId,
           date,
-          req.user.tenantId,
+          req.user!.tenantId,
         );
 
         if (!bill) {
@@ -703,7 +703,7 @@ export function registerRoutes(app: Express): Server {
     "/api/billing/daily/:date",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const date = new Date(req.params.date);
 
@@ -711,7 +711,7 @@ export function registerRoutes(app: Express): Server {
           return res.status(400).json({ message: "Invalid date" });
         }
 
-        const bills = await getFarmerDayBills(date, req.user.tenantId);
+        const bills = await getFarmerDayBills(date, req.user!.tenantId);
         res.json(bills);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch daily bills" });
@@ -723,7 +723,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmer/:farmerId/completed-lots", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { date } = req.query;
 
       // Use provided date or default to today
@@ -796,7 +796,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Find the farmer bill record
       const [bill] = await db
@@ -891,7 +891,7 @@ export function registerRoutes(app: Express): Server {
         farmerMobile: farmer?.mobile || 'N/A',
         farmerPlace: farmer?.place || 'N/A',
         bankName: farmer?.bankName || 'N/A',
-        accountNumber: farmer?.accountNumber || 'N/A',
+        accountNumber: farmer?.bankAccountNumber || 'N/A',
         tenantName: tenant?.name || 'AGRICULTURAL TRADING COMPANY',
         lots: lotsData
       });
@@ -905,7 +905,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmer-bill/:farmerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { date } = req.query;
 
       // Use provided date or default to today for bill checking
@@ -939,7 +939,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { pattiNumber, billData, lotIds, billDate } = req.body;
 
       // Use provided bill date or default to today
@@ -1013,7 +1013,7 @@ export function registerRoutes(app: Express): Server {
         totalBags: billData.totalBags,
         totalWeight: billData.totalWeight.toString(),
         lotIds: JSON.stringify(lotIds),
-        createdBy: req.user.id,
+        createdBy: req.user!.id,
       }).returning();
 
       // Record accounting transactions for farmer bill
@@ -1021,10 +1021,10 @@ export function registerRoutes(app: Express): Server {
         await recordFarmerBillTransaction(
           savedBill[0].id,
           farmerId,
-          parseFloat(totalAmount.toString()),
+          parseFloat(billData.totalAmount.toString()),
           parseFloat(billData.rok.toString()),
           tenantId,
-          req.user.id
+          req.user!.id
         );
       } catch (accountingError) {
         console.error("Error recording accounting transaction:", accountingError);
@@ -1046,7 +1046,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmer-bill/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Get the saved bill with creator information
       const savedBillResult = await db.select({
@@ -1059,7 +1059,7 @@ export function registerRoutes(app: Express): Server {
         vehicleRent: farmerBills.vehicleRent,
         emptyBagCharges: farmerBills.emptyBagCharges,
         advance: farmerBills.advance,
-        commission: farmerBills.commission,
+        rok: farmerBills.rok,
         otherCharges: farmerBills.otherCharges,
         totalDeductions: farmerBills.totalDeductions,
         netPayable: farmerBills.netPayable,
@@ -1069,7 +1069,7 @@ export function registerRoutes(app: Express): Server {
         createdAt: farmerBills.createdAt,
         createdBy: farmerBills.createdBy,
         // Join with user to get creator details
-        creatorName: users.fullName,
+        creatorName: users.username,
         creatorUsername: users.username
       })
         .from(farmerBills)
@@ -1084,8 +1084,8 @@ export function registerRoutes(app: Express): Server {
       const savedBill = savedBillResult[0];
 
       // Get associated lots and farmer data for the saved bill
-      const lotIds = JSON.parse(savedBill.lotIds || '[]');
-      let associatedLots = [];
+      const lotIds: number[] = JSON.parse(savedBill.lotIds || '[]');
+      let associatedLots: any[] = [];
       
       if (lotIds.length > 0) {
         const lotsData = await db.select({
@@ -1149,7 +1149,7 @@ export function registerRoutes(app: Express): Server {
   app.patch("/api/farmer-bill/:billId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const billId = parseInt(req.params.billId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { deductions } = req.body;
 
       // Validate deductions data
@@ -1221,7 +1221,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/tax-invoice/:buyerId/check", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { date } = req.query; // Get selected date from query parameter
 
       let query = db.select()
@@ -1264,7 +1264,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Get selected date from request body (optional, defaults to today)
       const selectedDate = req.body.selectedDate ? new Date(req.body.selectedDate) : new Date();
@@ -1348,7 +1348,7 @@ export function registerRoutes(app: Express): Server {
         totalWeight: taxInvoice.items.reduce((sum, item) => sum + item.weightKg, 0).toString(),
         lotIds: JSON.stringify(taxInvoice.items.map(item => item.lotNo)),
         invoiceData: JSON.stringify(taxInvoice),
-        createdBy: req.user.id,
+        createdBy: req.user!.id,
       }).returning();
 
       // Record accounting transactions for tax invoice
@@ -1361,7 +1361,7 @@ export function registerRoutes(app: Express): Server {
           taxInvoice.calculations.weighingCharges + taxInvoice.calculations.commission,
           taxInvoice.calculations.totalAmount,
           tenantId,
-          req.user.id
+          req.user!.id
         );
       } catch (accountingError) {
         console.error("Error recording accounting transaction:", accountingError);
@@ -1416,7 +1416,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/tax-invoice/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { date } = req.query; // Get selected date from query parameter
 
       let query = db.select()
@@ -1460,7 +1460,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/tax-invoice-data/:invoiceId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const invoiceId = parseInt(req.params.invoiceId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Find the tax invoice record
       const [invoice] = await db
@@ -1489,7 +1489,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/tax-invoices/:buyerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { startDate, endDate } = req.query;
 
       let query = db.select()
@@ -1523,7 +1523,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/accounting/farmer-balance/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Calculate total amount earned by farmer from all farmer bills
       const farmerBillsResult = await db.select({
@@ -1566,7 +1566,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/farmer-bills/:farmerId", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmerId = parseInt(req.params.farmerId);
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { startDate, endDate } = req.query;
 
       let query = db.select()
@@ -1601,7 +1601,7 @@ export function registerRoutes(app: Express): Server {
     "/api/billing/buyer/:buyerId/:date",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const buyerId = parseInt(req.params.buyerId);
         const date = new Date(req.params.date);
@@ -1613,7 +1613,7 @@ export function registerRoutes(app: Express): Server {
         const bill = await generateBuyerDayBill(
           buyerId,
           date,
-          req.user.tenantId,
+          req.user!.tenantId,
         );
 
         if (!bill) {
@@ -1635,7 +1635,7 @@ export function registerRoutes(app: Express): Server {
     "/api/billing/buyers/daily/:date",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const date = new Date(req.params.date);
 
@@ -1643,7 +1643,7 @@ export function registerRoutes(app: Express): Server {
           return res.status(400).json({ message: "Invalid date" });
         }
 
-        const bills = await getBuyerDayBills(date, req.user.tenantId);
+        const bills = await getBuyerDayBills(date, req.user!.tenantId);
         res.json(bills);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch buyer daily bills" });
@@ -1652,11 +1652,11 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Farmer routes
-  app.get("/api/farmers", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/farmers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { search } = req.query;
       const farmers = await storage.getFarmersByTenant(
-        req.user.tenantId,
+        req.user!.tenantId,
         search as string,
       );
       res.json(farmers);
@@ -1665,11 +1665,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/farmers/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const farmer = await storage.getFarmer(
         parseInt(req.params.id),
-        req.user.tenantId,
+        req.user!.tenantId,
       );
       if (!farmer) {
         return res.status(404).json({ message: "Farmer not found" });
@@ -1680,11 +1680,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/farmers", requireAuth, requireTenant, async (req, res) => {
+  app.post("/api/farmers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const validatedData = insertFarmerSchema.parse({
         ...req.body,
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
       });
 
       const farmer = await storage.createFarmer(validatedData);
@@ -1701,10 +1701,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/farmers/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/farmers/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const oldFarmer = await storage.getFarmer(id, req.user.tenantId);
+      const oldFarmer = await storage.getFarmer(id, req.user!.tenantId);
 
       if (!oldFarmer) {
         return res.status(404).json({ message: "Farmer not found" });
@@ -1714,7 +1714,7 @@ export function registerRoutes(app: Express): Server {
       const farmer = await storage.updateFarmer(
         id,
         validatedData,
-        req.user.tenantId,
+        req.user!.tenantId,
       );
 
       await createAuditLog(
@@ -1741,16 +1741,16 @@ export function registerRoutes(app: Express): Server {
     "/api/farmers/:id",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const id = parseInt(req.params.id);
-        const farmer = await storage.getFarmer(id, req.user.tenantId);
+        const farmer = await storage.getFarmer(id, req.user!.tenantId);
 
         if (!farmer) {
           return res.status(404).json({ message: "Farmer not found" });
         }
 
-        await storage.deleteFarmer(id, req.user.tenantId);
+        await storage.deleteFarmer(id, req.user!.tenantId);
         await createAuditLog(req, "delete", "farmer", id, farmer, null);
 
         res.status(204).send();
@@ -1761,11 +1761,11 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Lot routes
-  app.get("/api/lots", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/lots", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { search, date } = req.query;
       const lots = await storage.getLotsByTenant(
-        req.user.tenantId,
+        req.user!.tenantId,
         search as string,
         date as string,
       );
@@ -1775,11 +1775,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/lots/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const lot = await storage.getLot(
         parseInt(req.params.id),
-        req.user.tenantId,
+        req.user!.tenantId,
       );
       if (!lot) {
         return res.status(404).json({ message: "Lot not found" });
@@ -1790,7 +1790,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/lots", requireAuth, requireTenant, async (req, res) => {
+  app.post("/api/lots", requireAuth, requireTenant, async (req: any, res) => {
     try {
       console.log("Lot creation request body:", req.body); // Debug log
       
@@ -1805,7 +1805,7 @@ export function registerRoutes(app: Express): Server {
       const todaysLots = await db.select()
         .from(lots)
         .where(and(
-          eq(lots.tenantId, req.user.tenantId),
+          eq(lots.tenantId, req.user!.tenantId),
           gte(lots.createdAt, startOfDay),
           lte(lots.createdAt, endOfDay)
         ));
@@ -1817,7 +1817,7 @@ export function registerRoutes(app: Express): Server {
       const validatedData = insertLotSchema.parse({
         ...req.body,
         lotNumber,
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
       });
 
       console.log("Validated lot data:", validatedData); // Debug log
@@ -1838,10 +1838,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/lots/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/lots/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const oldLot = await storage.getLot(id, req.user.tenantId);
+      const oldLot = await storage.getLot(id, req.user!.tenantId);
 
       if (!oldLot) {
         return res.status(404).json({ message: "Lot not found" });
@@ -1849,7 +1849,7 @@ export function registerRoutes(app: Express): Server {
 
       const { buyerAllocations, ...lotData } = req.body;
       const validatedData = insertLotSchema.partial().parse(lotData);
-      const lot = await storage.updateLot(id, validatedData, req.user.tenantId);
+      const lot = await storage.updateLot(id, validatedData, req.user!.tenantId);
 
       // Handle buyer allocations for multi-buyer lots
       if (buyerAllocations && Array.isArray(buyerAllocations) && buyerAllocations.length > 0) {
@@ -1857,7 +1857,7 @@ export function registerRoutes(app: Express): Server {
           // Clear existing lot-buyer relationships
           await db.delete(lotBuyers).where(and(
             eq(lotBuyers.lotId, id),
-            eq(lotBuyers.tenantId, req.user.tenantId)
+            eq(lotBuyers.tenantId, req.user!.tenantId)
           ));
 
           // Insert new buyer allocations
@@ -1865,7 +1865,7 @@ export function registerRoutes(app: Express): Server {
             await db.insert(lotBuyers).values({
               lotId: id,
               buyerId: allocation.buyerId,
-              tenantId: req.user.tenantId,
+              tenantId: req.user!.tenantId,
               bagAllocation: {
                 startBag: allocation.startBag,
                 endBag: allocation.endBag,
@@ -1901,14 +1901,14 @@ export function registerRoutes(app: Express): Server {
     "/api/bags",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         // Get all bags for the tenant by fetching all lots first
-        const lots = await storage.getAllLotsByTenant(req.user.tenantId);
+        const lots = await storage.getAllLotsByTenant(req.user!.tenantId);
         const allBags = [];
         
         for (const lot of lots) {
-          const bags = await storage.getBagsByLot(lot.id, req.user.tenantId);
+          const bags = await storage.getBagsByLot(lot.id, req.user!.tenantId);
           allBags.push(...bags);
         }
         
@@ -1924,11 +1924,11 @@ export function registerRoutes(app: Express): Server {
     "/api/lots/:lotId/bags",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const bags = await storage.getBagsByLot(
           parseInt(req.params.lotId),
-          req.user.tenantId,
+          req.user!.tenantId,
         );
         res.json(bags);
       } catch (error) {
@@ -1941,12 +1941,12 @@ export function registerRoutes(app: Express): Server {
     "/api/lots/:lotId/bags",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         // Check for duplicate bag numbers first
         const existingBag = await storage.getBagsByLot(
           parseInt(req.params.lotId),
-          req.user.tenantId,
+          req.user!.tenantId,
         );
         const bagNumber = req.body.bagNumber;
 
@@ -1959,7 +1959,7 @@ export function registerRoutes(app: Express): Server {
         const validatedData = insertBagSchema.parse({
           ...req.body,
           lotId: parseInt(req.params.lotId),
-          tenantId: req.user.tenantId,
+          tenantId: req.user!.tenantId,
         });
 
         const bag = await storage.createBag(validatedData);
@@ -1978,12 +1978,12 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  app.put("/api/bags/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/bags/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertBagSchema.partial().parse(req.body);
 
-      const bag = await storage.updateBag(id, validatedData, req.user.tenantId);
+      const bag = await storage.updateBag(id, validatedData, req.user!.tenantId);
       await createAuditLog(req, "update", "bag", bag.id, null, bag);
 
       res.json(bag);
@@ -1998,10 +1998,10 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Buyer routes
-  app.get("/api/buyers", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/buyers", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      console.log(`Fetching buyers for tenant: ${req.user.tenantId}`);
-      const buyers = await storage.getBuyersByTenant(req.user.tenantId);
+      console.log(`Fetching buyers for tenant: ${req.user!.tenantId}`);
+      const buyers = await storage.getBuyersByTenant(req.user!.tenantId);
       console.log(`Found ${buyers.length} buyers:`, buyers.map(b => ({ id: b.id, name: b.name })));
       res.json(buyers);
     } catch (error) {
@@ -2010,14 +2010,14 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/buyers", requireAuth, requireTenant, async (req, res) => {
+  app.post("/api/buyers", requireAuth, requireTenant, async (req: any, res) => {
     try {
       console.log("Creating buyer - request body:", req.body);
-      console.log("User tenant ID:", req.user.tenantId);
+      console.log("User tenant ID:", req.user!.tenantId);
 
       const validatedData = insertBuyerSchema.parse({
         ...req.body,
-        tenantId: req.user.tenantId,
+        tenantId: req.user!.tenantId,
       });
 
       console.log("Validated buyer data:", validatedData);
@@ -2041,7 +2041,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/buyers/:id", requireAuth, requireTenant, async (req, res) => {
+  app.put("/api/buyers/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.id);
       const validatedData = insertBuyerSchema.partial().parse(req.body);
@@ -2049,7 +2049,7 @@ export function registerRoutes(app: Express): Server {
       const buyer = await storage.updateBuyer(
         buyerId,
         validatedData,
-        req.user.tenantId,
+        req.user!.tenantId,
       );
       await createAuditLog(req, "update", "buyer", buyerId, null, buyer);
 
@@ -2068,10 +2068,10 @@ export function registerRoutes(app: Express): Server {
     "/api/buyers/:id",
     requireAuth,
     requireTenant,
-    async (req, res) => {
+    async (req: any, res) => {
       try {
         const buyerId = parseInt(req.params.id);
-        await storage.deleteBuyer(buyerId, req.user.tenantId);
+        await storage.deleteBuyer(buyerId, req.user!.tenantId);
         await createAuditLog(req, "delete", "buyer", buyerId, null, null);
 
         res.status(204).send();
@@ -2082,14 +2082,14 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Buyer summary route with purchase statistics
-  app.get("/api/buyers/summary", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/buyers/summary", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const search = req.query.search as string || '';
-      const buyers = await storage.getBuyersByTenant(req.user.tenantId, search);
+      const buyers = await storage.getBuyersByTenant(req.user!.tenantId, search);
       
       // Get purchase statistics for each buyer
       const buyerSummaries = await Promise.all(buyers.map(async (buyer) => {
-        const stats = await storage.getBuyerPurchaseStats(buyer.id, req.user.tenantId);
+        const stats = await storage.getBuyerPurchaseStats(buyer.id, req.user!.tenantId);
         return {
           ...buyer,
           ...stats
@@ -2114,9 +2114,9 @@ export function registerRoutes(app: Express): Server {
       }
       
       console.log(`User:`, req.user);
-      console.log(`Fetching purchase history for buyer ${buyerId}, tenant ${req.user.tenantId}`);
+      console.log(`Fetching purchase history for buyer ${buyerId}, tenant ${req.user!.tenantId}`);
       
-      const purchases = await storage.getBuyerPurchaseHistory(buyerId, req.user.tenantId);
+      const purchases = await storage.getBuyerPurchaseHistory(buyerId, req.user!.tenantId);
       console.log(`Found ${purchases.length} purchases for buyer ${buyerId}`);
       
       // Debug: Log the first purchase to see actual amount calculation
@@ -2136,12 +2136,12 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update lot payment status
-  app.patch("/api/lots/:id/payment", requireAuth, requireTenant, async (req, res) => {
+  app.patch("/api/lots/:id/payment", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const lotId = parseInt(req.params.id);
       const { paymentStatus, amountPaid, paymentDate } = req.body;
       
-      await storage.updateLotPayment(lotId, req.user.tenantId, {
+      await storage.updateLotPayment(lotId, req.user!.tenantId, {
         paymentStatus,
         amountPaid: amountPaid ? parseFloat(amountPaid) : null,
         paymentDate: paymentDate || null
@@ -2155,7 +2155,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Tenant management (super admin only)
-  app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
+  app.post("/api/tenants", requireAuth, requireSuperAdmin, async (req: any, res) => {
     try {
       const { adminUser, ...tenantData } = req.body;
 
@@ -2196,7 +2196,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/tenants", requireAuth, requireSuperAdmin, async (req, res) => {
+  app.get("/api/tenants", requireAuth, requireSuperAdmin, async (req: any, res) => {
     try {
       const tenants = await storage.getAllTenants();
       res.json(tenants);
@@ -2206,11 +2206,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Audit logs
-  app.get("/api/audit-logs", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/audit-logs", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const { limit } = req.query;
       const logs = await storage.getAuditLogs(
-        req.user.tenantId,
+        req.user!.tenantId,
         limit ? parseInt(limit as string) : undefined,
       );
       res.json(logs);
@@ -2288,7 +2288,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       // Log tenant creation
-      await createAuditLog(req.user.id, "tenant_created", `Created tenant: ${tenant.name}`, null);
+      await createAuditLog(req.user!.id, "tenant_created", `Created tenant: ${tenant.name}`, null);
 
       res.status(201).json({
         message: "Tenant and admin user created successfully",
@@ -2308,7 +2308,7 @@ export function registerRoutes(app: Express): Server {
     requireTenant,
     async (req: any, res) => {
       try {
-        const staff = await storage.getUsersByTenant(req.user.tenantId);
+        const staff = await storage.getUsersByTenant(req.user!.tenantId);
         res.json(staff);
       } catch (error) {
         console.error("Error fetching staff:", error);
@@ -2326,7 +2326,7 @@ export function registerRoutes(app: Express): Server {
         const userData = req.body;
         
         // Check if username already exists in this tenant
-        const existingUser = await storage.getUserByUsername(userData.username, req.user.tenantId);
+        const existingUser = await storage.getUserByUsername(userData.username, req.user!.tenantId);
         if (existingUser) {
           return res.status(400).json({ message: "Username already exists in this APMC center" });
         }
@@ -2341,11 +2341,11 @@ export function registerRoutes(app: Express): Server {
           name: userData.name,
           email: userData.email,
           role: userData.role,
-          tenantId: req.user.tenantId,
+          tenantId: req.user!.tenantId,
           isActive: userData.isActive ?? true,
         });
 
-        await createAuditLog(req.user.id, "CREATE", "USER", `Created staff: ${user.name}`, req.user.tenantId);
+        await createAuditLog(req.user!.id, "CREATE", "USER", `Created staff: ${user.name}`, req.user!.tenantId);
         
         res.json(user);
       } catch (error) {
@@ -2366,7 +2366,7 @@ export function registerRoutes(app: Express): Server {
         
         // Ensure the staff member belongs to the same tenant
         const existingUser = await storage.getUser(staffId);
-        if (!existingUser || existingUser.tenantId !== req.user.tenantId) {
+        if (!existingUser || existingUser.tenantId !== req.user!.tenantId) {
           return res.status(404).json({ message: "Staff member not found" });
         }
 
@@ -2383,7 +2383,7 @@ export function registerRoutes(app: Express): Server {
 
         const user = await storage.updateUser(staffId, updates);
         
-        await createAuditLog(req.user.id, "UPDATE", "USER", `Updated staff: ${user.name}`, req.user.tenantId);
+        await createAuditLog(req.user!.id, "UPDATE", "USER", `Updated staff: ${user.name}`, req.user!.tenantId);
         
         res.json(user);
       } catch (error) {
@@ -2403,18 +2403,18 @@ export function registerRoutes(app: Express): Server {
         
         // Ensure the staff member belongs to the same tenant
         const existingUser = await storage.getUser(staffId);
-        if (!existingUser || existingUser.tenantId !== req.user.tenantId) {
+        if (!existingUser || existingUser.tenantId !== req.user!.tenantId) {
           return res.status(404).json({ message: "Staff member not found" });
         }
 
         // Don't allow deleting yourself
-        if (staffId === req.user.id) {
+        if (staffId === req.user!.id) {
           return res.status(400).json({ message: "Cannot delete your own account" });
         }
 
         await storage.updateUser(staffId, { isActive: false });
         
-        await createAuditLog(req.user.id, "DELETE", "USER", `Deleted staff: ${existingUser.name}`, req.user.tenantId);
+        await createAuditLog(req.user!.id, "DELETE", "USER", `Deleted staff: ${existingUser.name}`, req.user!.tenantId);
         
         res.json({ message: "Staff member deleted successfully" });
       } catch (error) {
@@ -2432,7 +2432,7 @@ export function registerRoutes(app: Express): Server {
     async (req: any, res) => {
       try {
         const date = new Date(); // Use today's date
-        const bills = await getBuyerDayBills(date, req.user.tenantId);
+        const bills = await getBuyerDayBills(date, req.user!.tenantId);
         res.json(bills);
       } catch (error) {
         console.error("Error fetching buyer daily bills:", error);
@@ -2448,7 +2448,7 @@ export function registerRoutes(app: Express): Server {
         const lotId = parseInt(req.params.lotId);
         const { draftData } = req.body;
         
-        await storage.saveBagEntryDraft(lotId, req.user.id, req.user.tenantId, draftData);
+        await storage.saveBagEntryDraft(lotId, req.user!.id, req.user!.tenantId, draftData);
         res.json({ message: "Draft saved successfully" });
       } catch (error) {
         console.error("Error saving draft:", error);
@@ -2462,7 +2462,7 @@ export function registerRoutes(app: Express): Server {
       try {
         const lotId = parseInt(req.params.lotId);
         
-        const draft = await storage.getBagEntryDraft(lotId, req.user.id, req.user.tenantId);
+        const draft = await storage.getBagEntryDraft(lotId, req.user!.id, req.user!.tenantId);
         res.json({ draftData: draft });
       } catch (error) {
         console.error("Error fetching draft:", error);
@@ -2476,7 +2476,7 @@ export function registerRoutes(app: Express): Server {
       try {
         const lotId = parseInt(req.params.lotId);
         
-        await storage.deleteBagEntryDraft(lotId, req.user.id, req.user.tenantId);
+        await storage.deleteBagEntryDraft(lotId, req.user!.id, req.user!.tenantId);
         res.json({ message: "Draft deleted successfully" });
       } catch (error) {
         console.error("Error deleting draft:", error);
@@ -2488,7 +2488,7 @@ export function registerRoutes(app: Express): Server {
   // Settings API endpoints
   app.get('/api/settings', requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenant = await storage.getTenant(req.user.tenantId);
+      const tenant = await storage.getTenant(req.user!.tenantId);
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
@@ -2524,7 +2524,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const { gstSettings, maxUsers, subscriptionPlan, ...otherSettings } = req.body;
       
-      const tenant = await storage.getTenant(req.user.tenantId);
+      const tenant = await storage.getTenant(req.user!.tenantId);
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
@@ -2560,9 +2560,9 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update tenant
-      await storage.updateTenant(req.user.tenantId, tenantUpdateData);
+      await storage.updateTenant(req.user!.tenantId, tenantUpdateData);
       
-      await createAuditLog(req.user.id, "UPDATE", "SETTINGS", "Updated tenant settings", req.user.tenantId);
+      await createAuditLog(req.user!.id, "UPDATE", "SETTINGS", "Updated tenant settings", req.user!.tenantId);
 
       res.json({ message: "Settings updated successfully" });
     } catch (error) {
@@ -2572,7 +2572,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Payment status update for buyer purchases  
-  app.patch('/api/lots/:lotId/payment', requireAuth, requireTenant, async (req, res) => {
+  app.patch('/api/lots/:lotId/payment', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const lotId = parseInt(req.params.lotId);
       const tenantId = req.user?.tenantId!;
@@ -2602,7 +2602,7 @@ export function registerRoutes(app: Express): Server {
   // REMOVED DUPLICATE - keeping the endpoint above
 
   // Mark tax invoice as generated and calculate amount due
-  app.patch('/api/tax-invoice/:buyerId/mark-generated', requireAuth, requireTenant, async (req, res) => {
+  app.patch('/api/tax-invoice/:buyerId/mark-generated', requireAuth, requireTenant, async (req: any, res) => {
     try {
       const buyerId = parseInt(req.params.buyerId);
       const tenantId = req.user?.tenantId!;
@@ -2636,7 +2636,7 @@ export function registerRoutes(app: Express): Server {
   // Tax Reports endpoints
   app.get("/api/reports/tax", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { 
         reportType = 'daily', 
         startDate, 
@@ -2674,7 +2674,7 @@ export function registerRoutes(app: Express): Server {
   // CESS Reports endpoint
   app.get("/api/reports/cess", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { 
         reportType = 'daily', 
         startDate, 
@@ -2712,7 +2712,7 @@ export function registerRoutes(app: Express): Server {
   // GST Reports endpoint
   app.get("/api/reports/gst", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { 
         reportType = 'daily', 
         startDate, 
@@ -2752,7 +2752,7 @@ export function registerRoutes(app: Express): Server {
   // =================================
 
   // Get current fiscal year
-  app.get("/api/accounting/fiscal-year", requireAuth, requireTenant, async (req, res) => {
+  app.get("/api/accounting/fiscal-year", requireAuth, requireTenant, async (req: any, res) => {
     try {
       const currentFiscalYear = getCurrentFiscalYear();
       res.json({ fiscalYear: currentFiscalYear });
@@ -2765,7 +2765,7 @@ export function registerRoutes(app: Express): Server {
   // Generate Profit & Loss Report
   app.get("/api/accounting/profit-loss", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear } = req.query;
       
       const report = await generateProfitLossReport(tenantId, fiscalYear);
@@ -2779,7 +2779,7 @@ export function registerRoutes(app: Express): Server {
   // Generate Balance Sheet
   app.get("/api/accounting/balance-sheet", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear } = req.query;
       
       const report = await generateBalanceSheet(tenantId, fiscalYear);
@@ -2793,7 +2793,7 @@ export function registerRoutes(app: Express): Server {
   // Generate Cash Flow Report
   app.get("/api/accounting/cash-flow", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear } = req.query;
       
       const report = await generateCashFlowReport(tenantId, fiscalYear);
@@ -2809,7 +2809,7 @@ export function registerRoutes(app: Express): Server {
   // Profitability Analysis by Farmer
   app.get("/api/accounting/profitability/farmers", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear, startDate, endDate } = req.query;
       
       console.log('🔍 Farmer Profitability API called with:', { fiscalYear, startDate, endDate, tenantId });
@@ -2825,7 +2825,7 @@ export function registerRoutes(app: Express): Server {
   // Profitability Analysis by Buyer
   app.get("/api/accounting/profitability/buyers", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear, startDate, endDate } = req.query;
       
       console.log('🔍 Buyer Profitability API called with:', { fiscalYear, startDate, endDate, tenantId });
@@ -2841,7 +2841,7 @@ export function registerRoutes(app: Express): Server {
   // GST Liability Calculation
   app.get("/api/accounting/gst-liability", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { fiscalYear, startDate, endDate } = req.query;
       
       console.log('🔍 GST Liability API called with:', { fiscalYear, startDate, endDate, tenantId });
@@ -2857,8 +2857,8 @@ export function registerRoutes(app: Express): Server {
   // Record Payment Received from Buyer
   app.post("/api/accounting/payment-received", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
-      const userId = req.user.id;
+      const tenantId = req.user!.tenantId;
+      const userId = req.user!.id;
       const { buyerId, amount, paymentMethod, referenceNumber } = req.body;
       
       await recordPaymentReceived(
@@ -2881,8 +2881,8 @@ export function registerRoutes(app: Express): Server {
   // Record Payment Made to Farmer
   app.post("/api/accounting/payment-made", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
-      const userId = req.user.id;
+      const tenantId = req.user!.tenantId;
+      const userId = req.user!.id;
       const { farmerId, amount, paymentMethod, referenceNumber } = req.body;
       
       await recordPaymentMade(
@@ -2909,7 +2909,7 @@ export function registerRoutes(app: Express): Server {
   // Add expense category
   app.post("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { name, description } = req.body;
       
       const category = await db.insert(expenseCategories).values({
@@ -2929,7 +2929,7 @@ export function registerRoutes(app: Express): Server {
   // Get expense categories
   app.get("/api/accounting/expense-categories", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       
       const categories = await db
         .select()
@@ -2947,8 +2947,8 @@ export function registerRoutes(app: Express): Server {
   // Add expense
   app.post("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
-      const userId = req.user.id;
+      const tenantId = req.user!.tenantId;
+      const userId = req.user!.id;
       const { categoryId, amount, description, expenseDate, paymentMethod, receiptNumber } = req.body;
       
       const expense = await db.insert(expenses).values({
@@ -2990,7 +2990,7 @@ export function registerRoutes(app: Express): Server {
   // Get expenses
   app.get("/api/accounting/expenses", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { limit = 50, categoryId } = req.query;
       
       let query = db
@@ -3033,7 +3033,7 @@ export function registerRoutes(app: Express): Server {
   // Missing Bags Detection endpoint - with date filtering
   app.get('/api/missing-bags', requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { date } = req.query;
       
       // Get target date range (default to today if no date provided)
@@ -3134,7 +3134,7 @@ export function registerRoutes(app: Express): Server {
   // Missing Bags Detection endpoint - Today's lots only (backward compatibility)
   app.get('/api/missing-bags/today', requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       
       // Get today's date range
       const today = new Date();
@@ -3238,7 +3238,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "No image file provided" });
       }
 
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
 
       // Save uploaded file
       const imagePath = await OCRService.saveUploadedFile(req.file, tenantId);
@@ -3257,7 +3257,7 @@ export function registerRoutes(app: Express): Server {
   // Create purchase invoice with items and stock update
   app.post("/api/purchase-invoices", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { items, ...invoiceData } = req.body;
 
       // Check for duplicate invoice (same seller, date, and invoice number)
@@ -3309,7 +3309,7 @@ export function registerRoutes(app: Express): Server {
         totalValue: item.amount,
         buyerId: parseInt(invoiceData.buyerId),
         tenantId,
-        createdBy: req.user.id
+        createdBy: req.user!.id
       }));
 
       // await storage.createStockMovements(stockMovements); // Disabled for now
@@ -3325,7 +3325,7 @@ export function registerRoutes(app: Express): Server {
   // Get purchase invoices with date range filtering
   app.get("/api/purchase-invoices", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { buyerId, startDate, endDate } = req.query;
 
       if (buyerId) {
@@ -3346,7 +3346,7 @@ export function registerRoutes(app: Express): Server {
   // Get stock inventory with filtering
   app.get("/api/stock-inventory", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { buyerId, includeMovements } = req.query;
 
       if (buyerId) {
@@ -3367,7 +3367,7 @@ export function registerRoutes(app: Express): Server {
   // Update minimum stock level for alert system
   app.put("/api/stock-inventory/:stockId/min-stock", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const stockId = parseInt(req.params.stockId);
       const { minimumStockLevel } = req.body;
 
@@ -3400,7 +3400,7 @@ export function registerRoutes(app: Express): Server {
   // Get stock movements with date range
   app.get("/api/stock-movements", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { buyerId, startDate, endDate, itemName } = req.query;
 
       const movements = await storage.getStockMovementsWithDateRange(tenantId, {
@@ -3419,7 +3419,7 @@ export function registerRoutes(app: Express): Server {
   // Get all suppliers for tenant
   app.get("/api/suppliers", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       
       const suppliers = await storage.getAllSuppliers(tenantId);
       res.json(suppliers);
@@ -3432,7 +3432,7 @@ export function registerRoutes(app: Express): Server {
   // Create supplier
   app.post("/api/suppliers", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const supplierData = { ...req.body, tenantId };
 
       const supplier = await storage.createSupplier(supplierData);
@@ -3453,7 +3453,7 @@ export function registerRoutes(app: Express): Server {
   // Get all dalals with their TODAY'S lots for bidding only
   app.get("/api/bid-dalals", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       
       // Get today's date range (start and end of today)
       const today = new Date();
@@ -3517,7 +3517,7 @@ export function registerRoutes(app: Express): Server {
   // Get bid prices for specific buyer
   app.get("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { buyerId } = req.query;
       
       let query = db
@@ -3609,7 +3609,7 @@ export function registerRoutes(app: Express): Server {
   // Create new bid price entry
   app.post("/api/bid-prices", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
       
       // Validate required fields
@@ -3711,7 +3711,7 @@ export function registerRoutes(app: Express): Server {
       try {
         await createAuditLog(
           tenantId,
-          req.user.id,
+          req.user!.id,
           "bid_price",
           "create",
           newBid.id,
@@ -3736,7 +3736,7 @@ export function registerRoutes(app: Express): Server {
   // Get dalal suggestions (from suppliers table)
   app.get("/api/dalal-suggestions", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const { search } = req.query;
       
       let query = db
@@ -3766,7 +3766,7 @@ export function registerRoutes(app: Express): Server {
   // Update bid price
   app.put("/api/bid-prices/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const bidId = parseInt(req.params.id);
       const { dalalName, lotNumber, bidPrice, chiliPhotos, notes } = req.body;
       
@@ -3793,7 +3793,7 @@ export function registerRoutes(app: Express): Server {
       
       await createAuditLog(
         tenantId,
-        req.user.id,
+        req.user!.id,
         "bid_price",
         "update",
         bidId,
@@ -3810,7 +3810,7 @@ export function registerRoutes(app: Express): Server {
   // Delete bid price
   app.delete("/api/bid-prices/:id", requireAuth, requireTenant, async (req: any, res) => {
     try {
-      const tenantId = req.user.tenantId;
+      const tenantId = req.user!.tenantId;
       const bidId = parseInt(req.params.id);
       
       const [deletedBid] = await db
@@ -3829,7 +3829,7 @@ export function registerRoutes(app: Express): Server {
       
       await createAuditLog(
         tenantId,
-        req.user.id,
+        req.user!.id,
         "bid_price",
         "delete",
         bidId,

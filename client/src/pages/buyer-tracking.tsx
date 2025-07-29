@@ -60,20 +60,19 @@ export default function BuyerTracking() {
 
   const { data: buyerSummaries = [], isLoading, error } = useQuery<BuyerSummary[]>({
     queryKey: ['/api/buyers/summary', search],
-    queryFn: () => apiRequest(`/api/buyers/summary?search=${encodeURIComponent(search)}`),
     retry: 3,
     retryDelay: 1000,
+    enabled: !!search
   });
 
   const { data: purchases = [] } = useQuery<BuyerPurchase[]>({
     queryKey: ['/api/buyers', selectedBuyer?.buyerId, 'purchases'],
-    queryFn: () => apiRequest(`/api/buyers/${selectedBuyer?.buyerId}/purchases`),
     enabled: !!selectedBuyer,
   });
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ lotId, data }: { lotId: number; data: any }) =>
-      apiRequest(`/api/lots/${lotId}/payment`, { method: 'PATCH', body: data }),
+      apiRequest('PATCH', `/api/lots/${lotId}/payment`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/buyers', selectedBuyer?.buyerId, 'purchases'] });
       queryClient.invalidateQueries({ queryKey: ['/api/buyers/summary'] });
@@ -181,7 +180,7 @@ export default function BuyerTracking() {
                 Please check your connection and try again
               </div>
             </div>
-          ) : buyerSummaries.length === 0 ? (
+          ) : (Array.isArray(buyerSummaries) && buyerSummaries.length === 0) ? (
             <div className="text-center py-8 text-muted-foreground">
               No buyers found
             </div>
@@ -201,7 +200,7 @@ export default function BuyerTracking() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {buyerSummaries.map((buyer) => (
+                {(buyerSummaries as any[]).map((buyer: any) => (
                   <TableRow key={buyer.buyerId}>
                     <TableCell>
                       <div>
@@ -336,7 +335,7 @@ export default function BuyerTracking() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {purchases.map((purchase) => (
+                  {(purchases as any[]).map((purchase: any) => (
                     <TableRow key={purchase.lotId}>
                       <TableCell>
                         <div>

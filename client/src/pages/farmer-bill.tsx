@@ -196,7 +196,7 @@ export default function FarmerBill() {
 
   // Update hamali and rok calculation when settings or lots change
   useEffect(() => {
-    if (settings?.gstSettings && farmerLots.length > 0) {
+    if ((settings as any)?.gstSettings && farmerLots.length > 0) {
       const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + (lot.actualBagCount || lot.numberOfBags || 0), 0);
       const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
         const weight = lot.totalWeight || 0;
@@ -205,10 +205,10 @@ export default function FarmerBill() {
         return sum + (quintals * price);
       }, 0);
       
-      const hamaliRate = settings.gstSettings.unloadHamali || 0;
+      const hamaliRate = (settings as any)?.gstSettings?.unloadHamali || 0;
       const calculatedHamali = hamaliRate * totalBags;
       
-      const rokPercentage = settings.gstSettings.rokPercentage || 3;
+      const rokPercentage = (settings as any)?.gstSettings?.rokPercentage || 3;
       const calculatedRok = (totalAmount * rokPercentage) / 100;
       
       setBillData(prev => ({
@@ -288,15 +288,23 @@ export default function FarmerBill() {
               </tr>
             </thead>
             <tbody>
-              ${billDetails.lots ? billDetails.lots.map(lot => `
+              ${billDetails.lots ? billDetails.lots.map((lot: any) => {
+                // Calculate total weight from bags if not available at lot level
+                const totalWeight = lot.totalWeight || (lot.bags ? lot.bags.reduce((sum: any, bag: any) => sum + (parseFloat(bag.weight) || 0), 0) : 0);
+                const lotPrice = parseFloat(lot.lotPrice) || 0;
+                const quintals = totalWeight / 100;
+                const amount = quintals * lotPrice;
+                
+                return `
                 <tr>
                   <td>${lot.lotNumber}</td>
-                  <td>${lot.numberOfBags || 0}</td>
-                  <td>${(lot.totalWeight || 0).toFixed(2)}</td>
-                  <td>₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  <td>₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>${lot.numberOfBags || (lot.bags ? lot.bags.length : 0)}</td>
+                  <td>${totalWeight.toFixed(2)}</td>
+                  <td>₹${lotPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 </tr>
-              `).join('') : ''}
+                `;
+              }).join('') : ''}
               <tr class="total-row">
                 <td><strong>Total / ಒಟ್ಟು</strong></td>
                 <td><strong>${bill.totalBags}</strong></td>
@@ -416,15 +424,23 @@ export default function FarmerBill() {
               </tr>
             </thead>
             <tbody>
-              ${billDetails.lots ? billDetails.lots.map(lot => `
+              ${billDetails.lots ? billDetails.lots.map((lot: any) => {
+                // Calculate total weight from bags if not available at lot level
+                const totalWeight = lot.totalWeight || (lot.bags ? lot.bags.reduce((sum: any, bag: any) => sum + (parseFloat(bag.weight) || 0), 0) : 0);
+                const lotPrice = parseFloat(lot.lotPrice) || 0;
+                const quintals = totalWeight / 100;
+                const amount = quintals * lotPrice;
+                
+                return `
                 <tr>
                   <td>${lot.lotNumber}</td>
-                  <td>${lot.numberOfBags || 0}</td>
-                  <td>${(lot.totalWeight || 0).toFixed(2)}</td>
-                  <td>₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                  <td>₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>${lot.numberOfBags || (lot.bags ? lot.bags.length : 0)}</td>
+                  <td>${totalWeight.toFixed(2)}</td>
+                  <td>₹${lotPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                  <td>₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                 </tr>
-              `).join('') : ''}
+                `;
+              }).join('') : ''}
               <tr class="total-row">
                 <td><strong>Total / ಒಟ್ಟು</strong></td>
                 <td><strong>${bill.totalBags}</strong></td>
@@ -472,13 +488,13 @@ export default function FarmerBill() {
             </div>
           </div>
 
-          ${billDetails.lots ? billDetails.lots.map(lot => `
+          ${billDetails.lots ? billDetails.lots.map((lot: any) => `
             <div class="lot-section">
               <h3>Lot ${lot.lotNumber} - ${lot.variety || 'N/A'} (${lot.grade || 'N/A'})</h3>
               <p><strong>Total Bags:</strong> ${lot.numberOfBags || 0} | <strong>Total Weight:</strong> ${(lot.totalWeight || 0).toFixed(2)} kg</p>
               
               <div class="bag-grid">
-                ${lot.bags && lot.bags.length > 0 ? lot.bags.map(bag => `
+                ${lot.bags && lot.bags.length > 0 ? lot.bags.map((bag: any) => `
                   <div class="bag-card">
                     <div class="bag-number">B${bag.bagNumber}</div>
                     <div class="bag-weight">${bag.weight || 0}kg</div>
@@ -492,8 +508,8 @@ export default function FarmerBill() {
               </div>
               
               <div class="lot-summary">
-                <strong>Rate:</strong> ₹${(lot.lotPrice || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}/quintal | 
-                <strong>Amount:</strong> ₹${(((lot.totalWeight || 0) / 100) * (lot.lotPrice || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                <strong>Rate:</strong> ₹${(parseFloat(lot.lotPrice) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}/quintal | 
+                <strong>Amount:</strong> ₹${(((lot.totalWeight || (lot.bags ? lot.bags.reduce((sum: any, bag: any) => sum + (parseFloat(bag.weight) || 0), 0) : 0)) / 100) * (parseFloat(lot.lotPrice) || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2})}
               </div>
             </div>
           `).join('') : ''}
@@ -1053,9 +1069,9 @@ export default function FarmerBill() {
                                     <div>
                                       <Label htmlFor="hamali">
                                         Hamali (₹) - Auto-calculated from settings
-                                        {settings?.gstSettings?.unloadHamali && (
+                                        {(settings as any)?.gstSettings?.unloadHamali && (
                                           <span className="text-xs text-gray-500 ml-1">
-                                            (₹{settings.gstSettings.unloadHamali}/bag)
+                                            (₹{(settings as any).gstSettings.unloadHamali}/bag)
                                           </span>
                                         )}
                                       </Label>
@@ -1145,9 +1161,9 @@ export default function FarmerBill() {
                                     <div>
                                       <Label htmlFor="rok">
                                         Rok (₹) - Auto-calculated from settings
-                                        {settings?.gstSettings?.rokPercentage && (
+                                        {(settings as any)?.gstSettings?.rokPercentage && (
                                           <span className="text-xs text-gray-500 ml-1">
-                                            ({settings.gstSettings.rokPercentage}% of total)
+                                            ({(settings as any).gstSettings.rokPercentage}% of total)
                                           </span>
                                         )}
                                       </Label>
@@ -1203,9 +1219,9 @@ export default function FarmerBill() {
                                           const quintals = weight / 100;
                                           return sum + (quintals * price);
                                         }, 0);
-                                        const hamaliFromSettings = settings?.gstSettings?.unloadHamali || 0;
+                                        const hamaliFromSettings = (settings as any)?.gstSettings?.unloadHamali || 0;
                                         const calculatedHamali = hamaliFromSettings * totalBags;
-                                        const rokPercentage = settings?.gstSettings?.rokPercentage || 3;
+                                        const rokPercentage = (settings as any)?.gstSettings?.rokPercentage || 3;
                                         const calculatedRok = (totalAmount * rokPercentage) / 100;
                                         const totalDeductions = calculatedHamali + billData.vehicleRent + billData.emptyBagCharges + billData.advance + billData.other + calculatedRok;
                                         const netPayable = totalAmount - totalDeductions;
@@ -1265,8 +1281,8 @@ export default function FarmerBill() {
                                         pattiNumber: finalPattiNumber,
                                         billData: {
                                           ...billData,
-                                          hamali: (settings?.gstSettings?.unloadHamali || 0) * totalBags,
-                                          rok: (totalAmount * (settings?.gstSettings?.rokPercentage || 3)) / 100,
+                                          hamali: ((settings as any)?.gstSettings?.unloadHamali || 0) * totalBags,
+                                          rok: (totalAmount * ((settings as any)?.gstSettings?.rokPercentage || 3)) / 100,
                                           totalAmount,
                                           totalBags,
                                           totalWeight,

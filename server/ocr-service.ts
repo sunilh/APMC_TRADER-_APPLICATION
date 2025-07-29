@@ -624,7 +624,8 @@ export class OCRService {
       const dirs = [this.UPLOAD_DIR, this.PROCESSED_DIR];
       
       for (const dir of dirs) {
-        const files = await fs.readdir(dir);
+        try {
+          const files = await fs.readdir(dir);
         const now = Date.now();
         
         for (const file of files) {
@@ -637,6 +638,10 @@ export class OCRService {
             await fs.unlink(filePath);
             console.log(`Cleaned up old file: ${file}`);
           }
+          }
+        } catch (dirError) {
+          // Directory doesn't exist, skip
+          continue;
         }
       }
     } catch (error) {

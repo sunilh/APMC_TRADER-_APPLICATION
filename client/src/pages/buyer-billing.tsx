@@ -194,9 +194,9 @@ export default function BuyerBilling() {
                     <td class="text-right">${lot.totalWeightQuintals.toFixed(2)}</td>
                     <td class="text-right">${formatCurrency(lot.pricePerQuintal, language)}</td>
                     <td class="text-right">${formatCurrency(lot.basicAmount, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.packing, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.weighingCharges, language)}</td>
-                    <td class="text-right">+${formatCurrency(lot.charges.commission, language)}</td>
+                    <td class="text-right">+${formatCurrency((lot.charges as any).packaging || 0, language)}</td>
+                    <td class="text-right">+${formatCurrency((lot.charges as any).weighingFee || 0, language)}</td>
+                    <td class="text-right">+${formatCurrency((lot.charges as any).apmcCommission || 0, language)}</td>
                     <td class="text-right">+${formatCurrency(lot.charges.sgst, language)}</td>
                     <td class="text-right">+${formatCurrency(lot.charges.cgst, language)}</td>
                     <td class="text-right">+${formatCurrency(lot.charges.cess, language)}</td>
@@ -222,9 +222,9 @@ export default function BuyerBilling() {
             <p><strong>Total Lots:</strong> ${bill.summary.totalLots}</p>
             <p><strong>Total Bags:</strong> ${bill.summary.totalBags}</p>
             <p><strong>Total Weight:</strong> ${bill.summary.totalWeightQuintals.toFixed(2)} Quintals</p>
-            <p><strong>Gross Amount:</strong> ${formatCurrency(bill.summary.grossAmount, language)}</p>
-            <p><strong>Total Deductions:</strong> ${formatCurrency(bill.summary.totalDeductions, language)}</p>
-            <p style="font-size: 18px; margin-top: 15px;"><strong>NET PAYABLE: ${formatCurrency(bill.summary.netPayable, language)}</strong></p>
+            <p><strong>Gross Amount:</strong> ${formatCurrency((bill.summary as any).basicAmount || 0, language)}</p>
+            <p><strong>Total Deductions:</strong> ${formatCurrency((bill.summary as any).totalCharges || 0, language)}</p>
+            <p style="font-size: 18px; margin-top: 15px;"><strong>NET PAYABLE: ${formatCurrency(bill.summary.totalPayable, language)}</strong></p>
           </div>
         </body>
       </html>
@@ -323,9 +323,9 @@ export default function BuyerBilling() {
             <p><strong>Total Lots:</strong> ${bill.summary.totalLots}</p>
             <p><strong>Total Bags:</strong> ${bill.summary.totalBags}</p>
             <p><strong>Total Weight:</strong> ${bill.summary.totalWeightQuintals.toFixed(2)} Quintals</p>
-            <p><strong>Gross Amount:</strong> ${formatCurrency(bill.summary.grossAmount, language)}</p>
-            <p><strong>Total Deductions:</strong> ${formatCurrency(bill.summary.totalDeductions, language)}</p>
-            <p style="font-size: 18px; margin-top: 15px;"><strong>NET PAYABLE: ${formatCurrency(bill.summary.netPayable, language)}</strong></p>
+            <p><strong>Gross Amount:</strong> ${formatCurrency((bill.summary as any).basicAmount || 0, language)}</p>
+            <p><strong>Total Deductions:</strong> ${formatCurrency((bill.summary as any).totalCharges || 0, language)}</p>
+            <p style="font-size: 18px; margin-top: 15px;"><strong>NET PAYABLE: ${formatCurrency(bill.summary.totalPayable, language)}</strong></p>
           </div>
         </body>
       </html>
@@ -620,7 +620,7 @@ export default function BuyerBilling() {
                 </div>
                 <div>
                   <span className="font-medium">{t("billing.grossAmount")}:</span>
-                  <span className="ml-1">{formatCurrency(buyerBill.summary.grossAmount, language)}</span>
+                  <span className="ml-1">{formatCurrency((buyerBill.summary as any).basicAmount || 0, language)}</span>
                 </div>
               </div>
               
@@ -630,19 +630,19 @@ export default function BuyerBilling() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex justify-between">
                     <span>SGST (9%):</span>
-                    <span>{formatCurrency(buyerBill.summary.taxDetails.sgst, language)}</span>
+                    <span>{formatCurrency((buyerBill.summary as any).taxDetails?.sgst || 0, language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>CGST (9%):</span>
-                    <span>{formatCurrency(buyerBill.summary.taxDetails.cgst, language)}</span>
+                    <span>{formatCurrency((buyerBill.summary as any).taxDetails?.cgst || 0, language)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>CESS (1%):</span>
-                    <span>{formatCurrency(buyerBill.summary.taxDetails.cess, language)}</span>
+                    <span>{formatCurrency((buyerBill.summary as any).taxDetails?.cess || 0, language)}</span>
                   </div>
                   <div className="flex justify-between font-medium">
                     <span>Total Tax:</span>
-                    <span>{formatCurrency(buyerBill.summary.taxDetails.totalTax, language)}</span>
+                    <span>{formatCurrency((buyerBill.summary as any).taxDetails?.totalTax || 0, language)}</span>
                   </div>
                 </div>
               </div>
@@ -651,7 +651,7 @@ export default function BuyerBilling() {
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>Net Payable:</span>
                   <span className="text-blue-600 dark:text-blue-400">
-                    {formatCurrency(buyerBill.summary.netPayable, language)}
+                    {formatCurrency(buyerBill.summary.totalPayable, language)}
                   </span>
                 </div>
               </div>
@@ -678,7 +678,7 @@ export default function BuyerBilling() {
                         {bill.summary.totalWeightQuintals.toFixed(2)} Qt
                       </p>
                       <p className="text-lg font-bold text-green-600">
-                        {t("billing.netPayable")}: {formatCurrency(bill.summary.netPayable, language)}
+                        {t("billing.netPayable")}: {formatCurrency(bill.summary.totalPayable, language)}
                       </p>
                     </div>
                     <div className="flex space-x-2">

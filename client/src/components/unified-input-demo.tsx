@@ -91,7 +91,7 @@ export function UnifiedInputDemo() {
                   {...register("email")}
                   placeholder="Type or speak email..."
                   type="email"
-                  voiceType="email"
+                  voiceType="text"
                 />
                 <p className="text-xs text-gray-500">Voice converts "name at domain dot com" → "name@domain.com"</p>
               </div>

@@ -543,7 +543,7 @@ export async function generateTaxInvoice(
     const processedLotNumbers = new Set();
     existingInvoices.forEach(invoice => {
       if (invoice.lotIds) {
-        const lotIds = JSON.parse(invoice.lotIds);
+        const lotIds = JSON.parse(String(invoice.lotIds) || '[]');
         lotIds.forEach((lotNumber: string) => processedLotNumbers.add(lotNumber));
       }
     });
@@ -604,7 +604,7 @@ export async function generateTaxInvoice(
     console.log(`Bag-assigned lots found: ${bagAssignedLots.length}`);
     console.log(`Total completed lots for buyer ${buyerId}: ${completedLots.length}`);
     completedLots.forEach(lot => {
-      console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id}) - BagAllocation:`, lot.bagAllocation ? 'Yes' : 'No');
+      console.log(`- Lot ${lot.lotNumber} (ID: ${lot.id}) - BagAllocation:`, (lot as any).bagAllocation ? 'Yes' : 'No');
     });
     if (completedLots.length === 0) {
       return null;
@@ -619,7 +619,7 @@ export async function generateTaxInvoice(
       let weightKg, bagCount;
 
       // Check if this is a bag-level assignment (multi-buyer scenario)
-      if (lot.bagAllocation) {
+      if ((lot as any).bagAllocation) {
         // Get only this buyer's bags from this lot
         const bagData = await db
           .select({
@@ -896,13 +896,13 @@ export async function getBuyerDayBills(date: Date, tenantId: number): Promise<Bu
           buyerId: buyer.id,
           buyerName: buyer.name,
           buyerContact: buyer.mobile || '',
-          buyerAddress: buyer.address || '',
+          buyerAddress: String(buyer.address) || '',
           date: date.toISOString().split('T')[0],
           traderInfo,
           lots: [{
             lotNumber: lot.lotNumber,
             farmerName: farmer.name,
-            variety: lot.varietyGrade,
+            variety: lot.varietyGrade || 'Unknown',
             grade: lot.grade || 'A',
             numberOfBags,
             totalWeight: weightKg,

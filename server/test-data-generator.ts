@@ -463,7 +463,7 @@ export class TestDataGenerator {
         const movementType = movementTypes[Math.floor(Math.random() * movementTypes.length)];
         
         const [movement] = await db.insert(stockMovements).values({
-          stockInventoryId: inventory.id,
+          inventoryId: inventory.id,
           movementType,
           quantity: Math.floor(Math.random() * 20) + 5, // 5-25 range
           unitPrice: Math.floor(Math.random() * 2000) + 8000,
@@ -491,7 +491,7 @@ export class TestDataGenerator {
         const invoiceNumber = `INV${tenant.apmcCode}${String(i + 1).padStart(4, '0')}`;
         
         const [invoice] = await db.insert(purchaseInvoices).values({
-          invoiceNumber,
+          invoiceId: invoiceNumber,
           supplierId: supplier.id,
           invoiceDate: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000), // Random date within last 20 days
           totalAmount: Math.floor(Math.random() * 50000) + 10000, // 10k-60k range

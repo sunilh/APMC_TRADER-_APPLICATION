@@ -35,7 +35,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
       varietyGrade: z.string().optional(),
     })),
     defaultValues: {
-      farmerId: undefined as any,
+      farmerId: 0,
       numberOfBags: 1,
       vehicleRent: "0",
       advance: "0",
@@ -313,7 +313,7 @@ export function LotForm({ onSuccess }: LotFormProps) {
         <div className="space-y-2">
           <Label htmlFor="varietyGrade">{t('lot.varietyGrade')}</Label>
           <Select
-            value={form.watch("varietyGrade")}
+            value={form.watch("varietyGrade") || ""}
             onValueChange={(value) => form.setValue("varietyGrade", value)}
           >
             <SelectTrigger>

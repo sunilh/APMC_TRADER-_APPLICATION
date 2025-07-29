@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Download } from "lucide-react";
-import { VoiceInput } from "@/components/VoiceInput";
+// Temporarily disabled voice input
+// import { VoiceInput } from "@/components/VoiceInput";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 interface FarmerBillData {
   hamali: number;
@@ -41,7 +42,7 @@ export default function FarmerBillNew() {
   });
 
   // Get completed lots only
-  const completedLots = lots?.filter((lot: any) => lot.status === 'completed') || [];
+  const completedLots = Array.isArray(lots) ? lots.filter((lot: any) => lot.status === 'completed') : [];
   
   // Get unique farmers with completed lots
   const uniqueFarmers = Array.from(
@@ -52,11 +53,11 @@ export default function FarmerBillNew() {
   const farmerLots = selectedFarmerId ? 
     completedLots.filter((lot: any) => lot.farmerId.toString() === selectedFarmerId) : [];
 
-  const selectedFarmer = farmerLots.length > 0 ? farmerLots[0].farmer : null;
+  const selectedFarmer = farmerLots.length > 0 ? farmerLots[0]?.farmer || null : null;
 
   // Calculate totals
   const totalAmount = farmerLots.reduce((sum: number, lot: any) => {
-    return sum + ((lot.totalWeight / 100) * lot.pricePerQuintal);
+    return sum + ((lot.totalWeight / 100) * (lot.pricePerQuintal || 0));
   }, 0);
   
   const totalBags = farmerLots.reduce((sum: number, lot: any) => sum + lot.numberOfBags, 0);
@@ -72,8 +73,8 @@ export default function FarmerBillNew() {
     setBillData(prev => ({ ...prev, rok: totalAmount * 0.03 }));
   }, [totalAmount]);
 
-  const handleInputChange = (field: keyof FarmerBillData, value: string | number) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  const handleInputChange = (field: keyof FarmerBillData, value: any) => {
+    const numValue = parseFloat(value?.toString() || '0') || 0;
     setBillData(prev => ({ ...prev, [field]: numValue }));
   };
 
@@ -93,7 +94,7 @@ export default function FarmerBillNew() {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Farmer Bill - ${selectedFarmer.name}</title>
+          <title>Farmer Bill - ${selectedFarmer?.name || 'Unknown'}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; font-size: 14px; line-height: 1.4; }
             .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -110,14 +111,14 @@ export default function FarmerBillNew() {
         </head>
         <body>
           <div class="header">
-            <h1>${tenant?.name || 'APMC TRADER'}</h1>
+            <h1>${(tenant as any)?.name || 'APMC TRADER'}</h1>
             <p><strong>FARMER PAYMENT BILL / ರೈತ ಪಾವತಿ ಬಿಲ್</strong></p>
             <p>Date: ${new Date().toLocaleDateString('en-IN')} | Patti No: ${pattiNumber}</p>
           </div>
           
           <div class="farmer-info">
             <h3>Farmer Details / ರೈತ ವಿವರಗಳು</h3>
-            <p><strong>Name / ಹೆಸರು:</strong> ${selectedFarmer.name}</p>
+            <p><strong>Name / ಹೆಸರು:</strong> ${selectedFarmer?.name || 'Unknown'}</p>
             <p><strong>Mobile / ಮೊಬೈಲ್:</strong> ${selectedFarmer.mobile}</p>
             <p><strong>Place / ಸ್ಥಳ:</strong> ${selectedFarmer.place}</p>
             <p><strong>Bank / ಬ್ಯಾಂಕ್:</strong> ${selectedFarmer.bankName} - ${selectedFarmer.bankAccountNumber}</p>
@@ -185,7 +186,7 @@ export default function FarmerBillNew() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `farmer-bill-${selectedFarmer.name}-${new Date().toISOString().split('T')[0]}.html`;
+    link.download = `farmer-bill-${selectedFarmer?.name || 'unknown'}-${new Date().toISOString().split('T')[0]}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -255,13 +256,12 @@ export default function FarmerBillNew() {
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
-                <VoiceInput
-                  onResult={setPattiNumber}
+                <input
                   placeholder="Enter patti number / ಪಟ್ಟಿ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ"
                   type="text"
                   value={pattiNumber}
-                  onChange={(e) => setPattiNumber(e.target.value)}
-                  className="flex-1"
+                  onChange={(e: any) => setPattiNumber(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                 />
                 <Button 
                   type="button" 
@@ -329,42 +329,42 @@ export default function FarmerBillNew() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Hamali / ಹಮಾಲಿ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('hamali', value)}
+                  <input
                     placeholder="0"
-                    type="currency"
+                    type="number"
                     value={billData.hamali.toString()}
-                    onChange={(e) => handleInputChange('hamali', e.target.value)}
+                    onChange={(e: any) => handleInputChange('hamali', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Vehicle Rent / ವಾಹನ ಬಾಡಿಗೆ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('vehicleRent', value)}
+                  <input
                     placeholder="0"
-                    type="currency"
+                    type="number"
                     value={billData.vehicleRent.toString()}
-                    onChange={(e) => handleInputChange('vehicleRent', e.target.value)}
+                    onChange={(e: any) => handleInputChange('vehicleRent', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Empty Bag Charges / ಖಾಲಿ ಚೀಲಗಳು</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('emptyBagCharges', value)}
+                  <input
                     placeholder="0"
-                    type="currency"
+                    type="number"
                     value={billData.emptyBagCharges.toString()}
-                    onChange={(e) => handleInputChange('emptyBagCharges', e.target.value)}
+                    onChange={(e: any) => handleInputChange('emptyBagCharges', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Advance / ಮೊದಲು ನೀಡಿದ ಮೊತ್ತ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('advance', value)}
+                  <input
                     placeholder="0"
-                    type="currency"
+                    type="number"
                     value={billData.advance.toString()}
-                    onChange={(e) => handleInputChange('advance', e.target.value)}
+                    onChange={(e: any) => handleInputChange('advance', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
                 <div className="space-y-2">
@@ -375,12 +375,12 @@ export default function FarmerBillNew() {
                 </div>
                 <div className="space-y-2">
                   <Label>Other / ಇತರೆ</Label>
-                  <VoiceInput
-                    onResult={(value) => handleInputChange('other', value)}
+                  <input
                     placeholder="0"
-                    type="currency"
+                    type="number"
                     value={billData.other.toString()}
-                    onChange={(e) => handleInputChange('other', e.target.value)}
+                    onChange={(e: any) => handleInputChange('other', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
               </div>

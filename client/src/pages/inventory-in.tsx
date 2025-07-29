@@ -175,7 +175,7 @@ export default function InventoryIn() {
 
   // Create dalal mutation
   const createDalalMutation = useMutation({
-    mutationFn: async (dalalData: any) => {
+    mutationFn: async (dalalData: any): Promise<any> => {
       // Remove empty fields that could cause database errors
       const cleanData = {
         name: dalalData.name,

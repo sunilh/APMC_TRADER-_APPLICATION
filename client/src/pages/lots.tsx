@@ -43,6 +43,7 @@ interface Lot {
   advance: string;
   varietyGrade: string;
   unloadHamali: string;
+  createdAt?: string;
   lotPrice?: string;
   status: string;
   farmer: {

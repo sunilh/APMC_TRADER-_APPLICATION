@@ -205,7 +205,7 @@ export default function AuthPage() {
                         {...registerForm.register("email")}
                         type="email"
                         placeholder="your.email@example.com"
-                        voiceType="email"
+                        voiceType="text"
                       />
                       {registerForm.formState.errors.email && (
                         <p className="text-sm text-destructive">

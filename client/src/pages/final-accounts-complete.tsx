@@ -271,7 +271,7 @@ export default function FinalAccountsComplete() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(profitLoss?.totalRevenue || 0)}
+                  {formatCurrency((profitLoss as any)?.totalRevenue || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Trading + Other Income
@@ -286,7 +286,7 @@ export default function FinalAccountsComplete() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(profitLoss?.totalExpenses || 0)}
+                  {formatCurrency((profitLoss as any)?.totalExpenses || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Trading + Operating
@@ -301,10 +301,10 @@ export default function FinalAccountsComplete() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(profitLoss?.netProfit || 0)}
+                  {formatCurrency((profitLoss as any)?.netProfit || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {((profitLoss?.profitMargin || 0) * 100).toFixed(1)}% margin
+                  {(((profitLoss as any)?.profitMargin || 0) * 100).toFixed(1)}% margin
                 </p>
               </CardContent>
             </Card>
@@ -316,7 +316,7 @@ export default function FinalAccountsComplete() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(balanceSheet?.equity?.netWorth || 0)}
+                  {formatCurrency((balanceSheet as any)?.equity?.netWorth || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Assets - Liabilities
@@ -344,15 +344,15 @@ export default function FinalAccountsComplete() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Trading Revenue</span>
-                          <span>{formatCurrency(profitLoss?.tradingRevenue || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.tradingRevenue || 0)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Other Income</span>
-                          <span>{formatCurrency(profitLoss?.otherIncome || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.otherIncome || 0)}</span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
                           <span>Total Revenue</span>
-                          <span>{formatCurrency(profitLoss?.totalRevenue || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.totalRevenue || 0)}</span>
                         </div>
                       </div>
                     </div>
@@ -362,15 +362,15 @@ export default function FinalAccountsComplete() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Trading Expenses</span>
-                          <span>{formatCurrency(profitLoss?.tradingExpenses || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.tradingExpenses || 0)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Operating Expenses</span>
-                          <span>{formatCurrency(profitLoss?.operatingExpenses || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.operatingExpenses || 0)}</span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
                           <span>Total Expenses</span>
-                          <span>{formatCurrency(profitLoss?.totalExpenses || 0)}</span>
+                          <span>{formatCurrency((profitLoss as any)?.totalExpenses || 0)}</span>
                         </div>
                       </div>
                     </div>
@@ -379,8 +379,8 @@ export default function FinalAccountsComplete() {
                   <div className="border-t pt-4">
                     <div className="flex justify-between text-lg font-bold">
                       <span>NET PROFIT</span>
-                      <span className={profitLoss?.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {formatCurrency(profitLoss?.netProfit || 0)}
+                      <span className={(profitLoss as any)?.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {formatCurrency((profitLoss as any)?.netProfit || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm text-muted-foreground">
@@ -411,19 +411,19 @@ export default function FinalAccountsComplete() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Cash</span>
-                        <span>{formatCurrency(balanceSheet?.assets?.cash || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.assets?.cash || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Bank Balance</span>
-                        <span>{formatCurrency(balanceSheet?.assets?.bankBalance || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.assets?.bankBalance || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Accounts Receivable</span>
-                        <span>{formatCurrency(balanceSheet?.assets?.accountsReceivable || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.assets?.accountsReceivable || 0)}</span>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">
                         <span>Total Assets</span>
-                        <span>{formatCurrency(balanceSheet?.assets?.totalAssets || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.assets?.totalAssets || 0)}</span>
                       </div>
                     </div>
                   </div>
@@ -433,15 +433,15 @@ export default function FinalAccountsComplete() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Accounts Payable</span>
-                        <span>{formatCurrency(balanceSheet?.liabilities?.accountsPayable || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.liabilities?.accountsPayable || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Tax Liabilities</span>
-                        <span>{formatCurrency(balanceSheet?.liabilities?.taxLiabilities || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.liabilities?.taxLiabilities || 0)}</span>
                       </div>
                       <div className="flex justify-between font-semibold border-t pt-2">
                         <span>Total Liabilities</span>
-                        <span>{formatCurrency(balanceSheet?.liabilities?.totalLiabilities || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.liabilities?.totalLiabilities || 0)}</span>
                       </div>
                     </div>
                     
@@ -449,7 +449,7 @@ export default function FinalAccountsComplete() {
                       <h3 className="font-semibold text-green-600 mb-3">EQUITY</h3>
                       <div className="flex justify-between font-semibold">
                         <span>Net Worth</span>
-                        <span>{formatCurrency(balanceSheet?.equity?.netWorth || 0)}</span>
+                        <span>{formatCurrency((balanceSheet as any)?.equity?.netWorth || 0)}</span>
                       </div>
                     </div>
                   </div>

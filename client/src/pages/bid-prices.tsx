@@ -128,16 +128,16 @@ export default function BidPrices() {
   // Fetch all dalals with their lots
   const { data: dalalLots = [], isLoading: loadingDalals } = useQuery({
     queryKey: ["/api/bid-dalals"],
-  });
+  }) as { data: any[], isLoading: boolean };
 
   // Fetch all suppliers for dalal suggestions
   const { data: allSuppliers = [] } = useQuery({
     queryKey: ["/api/suppliers"],
-  });
+  }) as { data: any[] };
 
   // Filter suppliers based on search term with enhanced matching
   const dalalSuggestions = searchDalal.length > 0 
-    ? allSuppliers.filter((supplier: any) => {
+    ? (allSuppliers as any[]).filter((supplier: any) => {
         const searchTerm = searchDalal.toLowerCase();
         return (
           (supplier.name && supplier.name.toLowerCase().includes(searchTerm)) ||
@@ -334,7 +334,7 @@ export default function BidPrices() {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
-      const img = new Image();
+      const img = document.createElement('img');
       
       img.onload = () => {
         // Calculate new dimensions to keep under 1MB
@@ -516,7 +516,7 @@ export default function BidPrices() {
   };
 
   // Touch events for mobile
-  const getTouchDistance = (touches: TouchList) => {
+  const getTouchDistance = (touches: any) => {
     if (touches.length < 2) return 0;
     const touch1 = touches[0];
     const touch2 = touches[1];
@@ -529,7 +529,7 @@ export default function BidPrices() {
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       // Pinch to zoom start
-      const distance = getTouchDistance(e.touches);
+      const distance = getTouchDistance(e.touches as any);
       setLastTouchDistance(distance);
     } else if (e.touches.length === 1 && photoViewer.zoom > 1) {
       // Single touch pan start
@@ -544,7 +544,7 @@ export default function BidPrices() {
     
     if (e.touches.length === 2) {
       // Pinch to zoom
-      const distance = getTouchDistance(e.touches);
+      const distance = getTouchDistance(e.touches as any);
       if (lastTouchDistance > 0) {
         const scale = distance / lastTouchDistance;
         const newZoom = Math.max(0.5, Math.min(5, photoViewer.zoom * scale));
@@ -595,8 +595,8 @@ export default function BidPrices() {
 
   // Filter dalals based on search
   const filteredDalals = selectedDalal 
-    ? dalalLots.filter((dalal: DalalLotSummary) => dalal.dalalName === selectedDalal)
-    : dalalLots;
+    ? (dalalLots as any[]).filter((dalal: any) => dalal.dalalName === selectedDalal)
+    : (dalalLots as any[]);
 
   if (loadingDalals) {
     return (
@@ -816,8 +816,8 @@ export default function BidPrices() {
                     {bidForm.chiliPhotos.length > 0 && (
                       <div className="grid grid-cols-2 gap-3">
                         {bidForm.chiliPhotos.map((photo, index) => {
-                          const photoUrl = typeof photo === 'string' ? photo : photo.url;
-                          const metadata = typeof photo === 'object' ? photo.metadata : null;
+                          const photoUrl = typeof photo === 'string' ? photo : (photo as any)?.url;
+                          const metadata = typeof photo === 'object' ? (photo as any)?.metadata : null;
                           
                           return (
                             <div key={index} className="relative border rounded-lg overflow-hidden">
@@ -1171,7 +1171,7 @@ export default function BidPrices() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-600">Total Dalals</p>
-                  <p className="text-lg sm:text-2xl font-bold text-blue-600">{dalalLots.length}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-blue-600">{(dalalLots as any[]).length}</p>
                 </div>
                 <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mt-1 sm:mt-0" />
               </div>
@@ -1184,7 +1184,7 @@ export default function BidPrices() {
                 <div>
                   <p className="text-xs sm:text-sm text-gray-600">Total Lots</p>
                   <p className="text-lg sm:text-2xl font-bold text-green-600">
-                    {dalalLots.reduce((total: number, dalal: DalalLotSummary) => total + dalal.totalLots, 0)}
+                    {(dalalLots as any[]).reduce((total: number, dalal: any) => total + (dalal.totalLots || 0), 0)}
                   </p>
                 </div>
                 <Package className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mt-1 sm:mt-0" />
@@ -1230,7 +1230,7 @@ export default function BidPrices() {
                   onChange={(e) => setSelectedDalal(e.target.value)}
                 >
                   <option value="">All Dalals</option>
-                  {dalalLots.map((dalal: DalalLotSummary) => (
+                  {(dalalLots as any[]).map((dalal: any) => (
                     <option key={String(dalal.dalalName)} value={String(dalal.dalalName)}>
                       {String(dalal.dalalName)} ({dalal.totalLots} lots)
                     </option>
@@ -1241,11 +1241,11 @@ export default function BidPrices() {
               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>{dalalLots.length} dalals</span>
+                  <span>{(dalalLots as any[]).length} dalals</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Package className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>{dalalLots.reduce((total: number, dalal: DalalLotSummary) => total + dalal.totalLots, 0)} total lots</span>
+                  <span>{(dalalLots as any[]).reduce((total: number, dalal: any) => total + (dalal.totalLots || 0), 0)} total lots</span>
                 </div>
               </div>
             </div>
@@ -1455,7 +1455,10 @@ export default function BidPrices() {
                                       open: true,
                                       photos: lot.chiliPhotos,
                                       currentIndex: 0,
-                                      lotInfo: { dalalName: String(dalal.dalalName), lotNumber: String(lot.lotNumber) }
+                                      lotInfo: { dalalName: String(dalal.dalalName), lotNumber: String(lot.lotNumber) },
+                                      zoom: 1,
+                                      panX: 0,
+                                      panY: 0
                                     })}
                                   >
                                     <Image className="h-4 w-4 mr-1" />

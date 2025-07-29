@@ -34,8 +34,8 @@ export async function getLedgerEntries(tenantId: number, startDate?: string, end
       date: row.transaction_date,
       account: row.account_head,
       description: row.description,
-      debit: parseFloat(row.debit_amount || '0'),
-      credit: parseFloat(row.credit_amount || '0'),
+      debit: parseFloat(String(row.debit_amount) || '0'),
+      credit: parseFloat(String(row.credit_amount) || '0'),
       reference_type: row.reference_type,
       reference_id: row.reference_id,
       created_at: row.created_at
@@ -141,16 +141,17 @@ export async function getExpensesSummary(tenantId: number, startDate?: string, e
     const expenses = result.rows.map(row => ({
       category: row.category,
       subcategory: row.subcategory,
-      total_amount: parseFloat(row.total_amount || '0'),
-      transaction_count: parseInt(row.transaction_count || '0')
+      total_amount: parseFloat(String(row.total_amount) || '0'),
+      transaction_count: parseInt(String(row.transaction_count) || '0')
     }));
 
     // Calculate category totals
     const categoryTotals = expenses.reduce((acc, expense) => {
-      if (!acc[expense.category]) {
-        acc[expense.category] = 0;
+      const category = String(expense.category);
+      if (!acc[category]) {
+        acc[category] = 0;
       }
-      acc[expense.category] += expense.total_amount;
+      acc[category] += expense.total_amount;
       return acc;
     }, {} as Record<string, number>);
 
@@ -199,7 +200,7 @@ export async function getDetailedExpenses(tenantId: number, startDate?: string, 
       category: row.category,
       subcategory: row.subcategory,
       description: row.description,
-      amount: parseFloat(row.amount || '0'),
+      amount: parseFloat(String(row.amount) || '0'),
       payment_method: row.payment_method,
       receipt_number: row.receipt_number,
       vendor_name: row.vendor_name,

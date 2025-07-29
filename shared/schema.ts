@@ -26,6 +26,7 @@ export const tenants = pgTable("tenants", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   settings: jsonb("settings").default({}), // GST rates, unload hamali, etc.
+
 });
 
 // Users table with tenant association
@@ -246,7 +247,6 @@ export const buyerRelations = relations(buyers, ({ one, many }) => ({
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
   createdAt: true,
-  schemaName: true,
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -352,6 +352,8 @@ export const expenses = pgTable("expenses", {
 
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = typeof expenses.$inferInsert;
+
+
 
 // Farmer Bill tracking table
 export const farmerBills = pgTable("farmer_bills", {

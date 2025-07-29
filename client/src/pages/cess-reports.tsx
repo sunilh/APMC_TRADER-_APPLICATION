@@ -52,11 +52,11 @@ export default function CessReports() {
         ...(reportType === 'custom' && { customStartDate, customEndDate })
       });
       
-      const response = await fetch(`/api/reports/cess?${params}`);
+      const response = await fetch(`/api/reports/cess?${params}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch CESS report');
-      return response.json();
+      return response.json() as unknown as DetailedCessReport;
     },
-    enabled: reportType !== 'custom' || (customStartDate && customEndDate)
+    enabled: reportType !== 'custom' || !!(customStartDate && customEndDate)
   });
 
   const formatCurrency = (amount: number) => {
@@ -82,7 +82,7 @@ export default function CessReports() {
       // Header
       ['Date', 'Lot Number', 'Weight (kg)', 'Weight (quintals)', 'Basic Amount', 'CESS Amount', 'Total Amount'],
       // Transactions
-      ...cessReport.transactions.map(t => [
+      ...((cessReport as any)?.transactions || []).map((t: any) => [
         t.date,
         t.lotNumber,
         t.weight.toFixed(2),
@@ -201,9 +201,9 @@ export default function CessReports() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{cessReport.summary.totalTransactions}</div>
+                <div className="text-2xl font-bold">{(cessReport as any)?.summary?.totalTransactions || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Period: {cessReport.summary.period}
+                  Period: {(cessReport as any)?.summary?.period || 'N/A'}
                 </p>
               </CardContent>
             </Card>
@@ -213,9 +213,9 @@ export default function CessReports() {
                 <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{cessReport.summary.totalWeightQuintals.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{((cessReport as any)?.summary?.totalWeightQuintals || 0).toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
-                  {formatWeight(cessReport.summary.totalWeight)}
+                  {formatWeight((cessReport as any)?.summary?.totalWeight || 0)}
                 </p>
               </CardContent>
             </Card>
@@ -226,7 +226,7 @@ export default function CessReports() {
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(cessReport.summary.basicAmount)}</div>
+                <div className="text-2xl font-bold">{formatCurrency((cessReport as any)?.summary?.basicAmount || 0)}</div>
                 <p className="text-xs text-muted-foreground">
                   Total agricultural produce value
                 </p>
@@ -239,7 +239,7 @@ export default function CessReports() {
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{formatCurrency(cessReport.summary.cessAmount)}</div>
+                <div className="text-2xl font-bold text-red-600">{formatCurrency((cessReport as any)?.summary?.cessAmount || 0)}</div>
                 <p className="text-xs text-muted-foreground">
                   @ 0.6% on basic amount
                 </p>
@@ -266,16 +266,16 @@ export default function CessReports() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Basic Amount:</span>
-                          <span className="font-semibold">{formatCurrency(cessReport.summary.basicAmount)}</span>
+                          <span className="font-semibold">{formatCurrency((cessReport as any)?.summary?.basicAmount || 0)}</span>
                         </div>
                         <div className="flex justify-between text-red-600">
                           <span>CESS @ 0.6%:</span>
-                          <span className="font-semibold">{formatCurrency(cessReport.summary.cessAmount)}</span>
+                          <span className="font-semibold">{formatCurrency((cessReport as any)?.summary?.cessAmount || 0)}</span>
                         </div>
                         <div className="border-t pt-2">
                           <div className="flex justify-between text-lg font-bold">
                             <span>Total Amount:</span>
-                            <span>{formatCurrency(cessReport.summary.totalAmount)}</span>
+                            <span>{formatCurrency((cessReport as any)?.summary?.totalAmount || 0)}</span>
                           </div>
                         </div>
                       </div>
@@ -288,7 +288,7 @@ export default function CessReports() {
                     <div className="min-w-full">
                       {/* Mobile Card View */}
                       <div className="grid gap-3 md:hidden">
-                        {cessReport.transactions.map((transaction, index) => (
+                        {((cessReport as any)?.transactions || []).map((transaction: any, index: number) => (
                           <Card key={index} className="p-3">
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
@@ -337,7 +337,7 @@ export default function CessReports() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {cessReport.transactions.map((transaction, index) => (
+                        {((cessReport as any)?.transactions || []).map((transaction: any, index: number) => (
                           <TableRow key={index}>
                             <TableCell>{transaction.date}</TableCell>
                             <TableCell className="font-medium">{transaction.lotNumber}</TableCell>

@@ -89,7 +89,7 @@ export default function Dashboard() {
             <div className="mb-6 sm:mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold">Super Admin Dashboard</h1>
               <p className="text-sm sm:text-base text-muted-foreground mt-2">
-                Welcome, {user.fullName || user.username}! Manage tenant organizations here.
+                Welcome, {user.name}! Manage tenant organizations here.
               </p>
             </div>
             

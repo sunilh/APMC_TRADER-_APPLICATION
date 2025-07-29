@@ -86,7 +86,7 @@ export default function GstReports() {
       // Header
       ['Date', 'Lot Number', 'Weight (kg)', 'Weight (quintals)', 'Basic Amount', 'SGST', 'CGST', 'Total GST', 'Total Amount'],
       // Transactions
-      ...gstReport.transactions.map(t => [
+      ...(gstReport?.transactions || []).map((t: any) => [
         t.date,
         t.lotNumber,
         t.weight.toFixed(2),
@@ -207,9 +207,9 @@ export default function GstReports() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{gstReport.summary.totalTransactions}</div>
+                <div className="text-2xl font-bold">{(gstReport as any)?.summary?.totalTransactions || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Period: {gstReport.summary.period}
+                  Period: {(gstReport as any)?.summary?.period || 'N/A'}
                 </p>
               </CardContent>
             </Card>
@@ -219,9 +219,9 @@ export default function GstReports() {
                 <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{gstReport.summary.totalWeightQuintals.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{((gstReport as any)?.summary?.totalWeightQuintals || 0).toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
-                  {formatWeight(gstReport.summary.totalWeight)}
+                  {formatWeight((gstReport as any)?.summary?.totalWeight || 0)}
                 </p>
               </CardContent>
             </Card>
@@ -232,7 +232,7 @@ export default function GstReports() {
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(gstReport.summary.basicAmount)}</div>
+                <div className="text-2xl font-bold">{formatCurrency((gstReport as any)?.summary?.basicAmount || 0)}</div>
                 <p className="text-xs text-muted-foreground">
                   Total agricultural produce value
                 </p>
@@ -245,7 +245,7 @@ export default function GstReports() {
                 <IndianRupee className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{formatCurrency(gstReport.summary.totalGstAmount)}</div>
+                <div className="text-2xl font-bold text-blue-600">{formatCurrency((gstReport as any)?.summary?.totalGstAmount || 0)}</div>
                 <p className="text-xs text-muted-foreground">
                   SGST (2.5%) + CGST (2.5%)
                 </p>
@@ -272,21 +272,21 @@ export default function GstReports() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Basic Amount:</span>
-                          <span className="font-semibold">{formatCurrency(gstReport.summary.basicAmount)}</span>
+                          <span className="font-semibold">{formatCurrency((gstReport as any)?.summary?.basicAmount || 0)}</span>
                         </div>
 
                         <div className="border-t pt-2">
                           <div className="flex justify-between text-blue-600">
                             <span>SGST @ 2.5%:</span>
-                            <span className="font-semibold">{formatCurrency(gstReport.summary.sgstAmount)}</span>
+                            <span className="font-semibold">{formatCurrency((gstReport as any)?.summary?.sgstAmount || 0)}</span>
                           </div>
                           <div className="flex justify-between text-blue-600">
                             <span>CGST @ 2.5%:</span>
-                            <span className="font-semibold">{formatCurrency(gstReport.summary.cgstAmount)}</span>
+                            <span className="font-semibold">{formatCurrency((gstReport as any)?.summary?.cgstAmount || 0)}</span>
                           </div>
                           <div className="flex justify-between text-lg font-bold text-blue-600">
                             <span>Total GST:</span>
-                            <span>{formatCurrency(gstReport.summary.totalGstAmount)}</span>
+                            <span>{formatCurrency((gstReport as any)?.summary?.totalGstAmount || 0)}</span>
                           </div>
                         </div>
                         <div className="border-t pt-2">
