@@ -61,6 +61,58 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// Simple setup page for production initialization
+app.get('/setup', (req: Request, res: Response) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>APMC Setup</title>
+      <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+      </style>
+    </head>
+    <body>
+      <h1>APMC Trading System Setup</h1>
+      <p>Click the button below to initialize your database and create the admin user.</p>
+      <button class="button" onclick="runSetup()">Initialize Database</button>
+      <div id="result"></div>
+      
+      <script>
+        async function runSetup() {
+          const resultDiv = document.getElementById('result');
+          resultDiv.innerHTML = 'Setting up database...';
+          
+          try {
+            const response = await fetch('/api/setup', { method: 'POST' });
+            const data = await response.json();
+            
+            if (response.ok) {
+              resultDiv.className = 'result success';
+              resultDiv.innerHTML = 
+                '<h3>Setup Completed Successfully!</h3>' +
+                '<p><strong>Username:</strong> admin</p>' +
+                '<p><strong>Password:</strong> admin123</p>' +
+                '<p><a href="/">Go to Application</a></p>';
+            } else {
+              resultDiv.className = 'result error';
+              resultDiv.innerHTML = '<h3>Setup Failed</h3><p>' + data.message + '</p>';
+            }
+          } catch (error) {
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = '<h3>Setup Failed</h3><p>' + error.message + '</p>';
+          }
+        }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
