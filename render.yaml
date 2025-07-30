@@ -3,7 +3,7 @@ services:
     name: traderapp
     env: node
     plan: free
-    buildCommand: npm install --legacy-peer-deps && (cd client && npx vite build --config ../vite.config.production.js --outDir ../dist/public || cd .. && node simple-build.js) && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+    buildCommand: npm install --legacy-peer-deps && node esbuild-frontend.js && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
     startCommand: npm start
     healthCheckPath: /
     envVars:
