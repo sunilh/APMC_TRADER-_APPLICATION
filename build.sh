@@ -1,21 +1,12 @@
 #!/bin/bash
 
-# Build script for deployment
-echo "Building APMC Agricultural Trading Application..."
+# Install all dependencies including dev dependencies
+npm install --include=dev
 
-# Install dependencies
-echo "Installing dependencies..."
-npm install
+# Build frontend with npx to ensure vite is available
+npx vite build
 
-# Build frontend
-echo "Building frontend..."
-npm run build
-
-# Database setup
-echo "Setting up database..."
-if [ "$NODE_ENV" = "production" ]; then
-    echo "Running database migrations..."
-    npm run db:push
-fi
+# Build backend with npx to ensure esbuild is available  
+npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 echo "Build completed successfully!"
