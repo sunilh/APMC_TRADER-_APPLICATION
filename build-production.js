@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-import { build } from 'vite';
-import { createRequire } from 'module';
+import { execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,32 +12,40 @@ async function buildProject() {
   try {
     console.log('Starting production build...');
     
-    await build({
-      configFile: false, // Don't load any config file
-      root: path.resolve(__dirname, 'client'),
-      plugins: [
-        (await import('@vitejs/plugin-react')).default()
-      ],
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, 'client/src'),
-          '@shared': path.resolve(__dirname, 'shared'),
-          '@assets': path.resolve(__dirname, 'attached_assets'),
-        },
-      },
-      build: {
-        outDir: path.resolve(__dirname, 'dist/public'),
-        emptyOutDir: true,
-      },
-      css: {
-        postcss: {
-          plugins: {
-            tailwindcss: {},
-            autoprefixer: {},
-          },
-        },
-      },
+    // Create a minimal vite config that won't fail
+    const minimalConfig = `
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(process.cwd(), "client/src"),
+      "@shared": path.resolve(process.cwd(), "shared"),
+      "@assets": path.resolve(process.cwd(), "attached_assets"),
+    },
+  },
+  root: path.resolve(process.cwd(), "client"),
+  build: {
+    outDir: path.resolve(process.cwd(), "dist/public"),
+    emptyOutDir: true,
+  },
+});
+`;
+    
+    // Write the minimal config
+    fs.writeFileSync('vite.config.minimal.js', minimalConfig);
+    
+    // Run vite build with the minimal config
+    execSync('npx vite build --config vite.config.minimal.js', { 
+      stdio: 'inherit',
+      cwd: process.cwd()
     });
+    
+    // Clean up the temporary config
+    fs.unlinkSync('vite.config.minimal.js');
     
     console.log('✅ Frontend build completed successfully!');
   } catch (error) {
