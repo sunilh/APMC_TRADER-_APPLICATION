@@ -425,13 +425,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)));
   }
 
-  async updateBuyer(id: number, buyer: Partial<InsertBuyer>, tenantId: number): Promise<Buyer> {
-    const [updatedBuyer] = await db.update(buyers)
-      .set(buyer)
-      .where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)))
-      .returning();
-    return updatedBuyer;
-  }
+
 
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     const [newLog] = await db.insert(auditLogs).values(log).returning();

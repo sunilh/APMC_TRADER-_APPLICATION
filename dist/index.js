@@ -961,10 +961,6 @@ var DatabaseStorage = class {
   async deleteBuyer(id, tenantId) {
     await db.delete(buyers).where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId)));
   }
-  async updateBuyer(id, buyer, tenantId) {
-    const [updatedBuyer] = await db.update(buyers).set(buyer).where(and(eq(buyers.id, id), eq(buyers.tenantId, tenantId))).returning();
-    return updatedBuyer;
-  }
   async createAuditLog(log2) {
     const [newLog] = await db.insert(auditLogs).values(log2).returning();
     return newLog;
@@ -1518,38 +1514,59 @@ async function comparePasswords(supplied, stored) {
   return await bcrypt.compare(supplied, stored);
 }
 function setupAuth(app2) {
+  const isProduction = process.env.NODE_ENV === "production";
   const sessionSettings = {
     secret: process.env.SESSION_SECRET || "development-secret-key-12345",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: isProduction,
+      // Use secure cookies in production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1e3,
-      sameSite: "lax"
+      sameSite: isProduction ? "none" : "lax"
+      // Adjust for production CORS
     },
     store: storage.sessionStore
     // Use PostgreSQL store for persistence
   };
+  console.log("Session configuration:", {
+    secure: sessionSettings.cookie?.secure,
+    sameSite: sessionSettings.cookie?.sameSite,
+    hasStore: !!sessionSettings.store,
+    nodeEnv: process.env.NODE_ENV
+  });
   app2.set("trust proxy", 1);
   app2.use(session2(sessionSettings));
   app2.use(passport.initialize());
   app2.use(passport.session());
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const users2 = await storage.getUsersByUsername(username);
-      if (!users2 || users2.length === 0) {
-        return done(null, false);
-      }
-      for (const user of users2) {
-        if (await comparePasswords(password, user.password)) {
-          if (!user.isActive) {
-            return done(null, false, { message: "Your account has been deactivated. Please contact your admin to reactivate your account." });
-          }
-          return done(null, user);
+      try {
+        console.log("Authentication attempt for username:", username);
+        const users2 = await storage.getUsersByUsername(username);
+        console.log(`Found ${users2?.length || 0} users with username ${username}`);
+        if (!users2 || users2.length === 0) {
+          console.log("No users found with username:", username);
+          return done(null, false, { message: "Invalid credentials" });
         }
+        for (const user of users2) {
+          console.log(`Checking password for user ID ${user.id} in tenant ${user.tenantId}`);
+          if (await comparePasswords(password, user.password)) {
+            if (!user.isActive) {
+              console.log("User account is inactive:", user.id);
+              return done(null, false, { message: "Your account has been deactivated. Please contact your admin to reactivate your account." });
+            }
+            console.log("Authentication successful for user:", user.id);
+            return done(null, user);
+          }
+        }
+        console.log("Password mismatch for all users with username:", username);
+        return done(null, false, { message: "Invalid credentials" });
+      } catch (error) {
+        console.error("Authentication error:", error);
+        return done(error);
       }
-      return done(null, false);
     })
   );
   passport.serializeUser((user, done) => done(null, user.id));
@@ -1598,6 +1615,88 @@ function setupAuth(app2) {
   app2.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+  app2.get("/api/debug/health", async (req, res) => {
+    try {
+      const dbCheck = await storage.getAllTenants();
+      const users2 = dbCheck.length > 0 ? await storage.getUsersByTenant(1) : [];
+      res.json({
+        status: "ok",
+        database: "connected",
+        tenantCount: dbCheck.length,
+        userCount: users2.length,
+        environment: process.env.NODE_ENV,
+        sessionSecret: !!process.env.SESSION_SECRET,
+        databaseUrl: !!process.env.DATABASE_URL
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        database: "disconnected",
+        error: error.message,
+        environment: process.env.NODE_ENV
+      });
+    }
+  });
+  app2.post("/api/setup", async (req, res) => {
+    try {
+      console.log("Running production setup...");
+      const tenants3 = await storage.getAllTenants();
+      if (tenants3.length > 0) {
+        const users2 = await storage.getUsersByTenant(1);
+        if (users2.length > 0) {
+          return res.json({
+            status: "already_setup",
+            message: "System is already configured",
+            tenantCount: tenants3.length,
+            userCount: users2.length
+          });
+        }
+      }
+      let defaultTenant;
+      if (tenants3.length === 0) {
+        console.log("Creating default tenant...");
+        defaultTenant = await storage.createTenant({
+          name: "Default APMC",
+          apmcCode: "DEFAULT001",
+          address: "Default Address",
+          contactNumber: "1234567890",
+          registrationNumber: "REG001",
+          gstNumber: "DEFAULT001"
+        });
+        console.log("Default tenant created:", defaultTenant.id);
+      } else {
+        defaultTenant = tenants3[0];
+      }
+      console.log("Creating default admin user...");
+      const hashedPassword = await hashPassword("admin123");
+      const adminUser = await storage.createUser({
+        username: "admin",
+        password: hashedPassword,
+        tenantId: defaultTenant.id,
+        role: "super_admin",
+        isActive: true,
+        email: "admin@example.com"
+      });
+      console.log("Setup completed successfully!");
+      res.json({
+        status: "setup_completed",
+        message: "System configured successfully",
+        credentials: {
+          username: "admin",
+          password: "admin123"
+        },
+        tenantId: defaultTenant.id,
+        userId: adminUser.id
+      });
+    } catch (error) {
+      console.error("Setup error:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Setup failed",
+        error: error.message
+      });
+    }
   });
 }
 
