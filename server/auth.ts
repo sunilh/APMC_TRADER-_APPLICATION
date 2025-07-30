@@ -144,10 +144,13 @@ export function setupAuth(app: Express) {
   app.get("/api/debug/health", async (req, res) => {
     try {
       const dbCheck = await storage.getAllTenants();
+      const users = dbCheck.length > 0 ? await storage.getUsersByTenant(1) : [];
+      
       res.json({
         status: "ok",
         database: "connected",
         tenantCount: dbCheck.length,
+        userCount: users.length,
         environment: process.env.NODE_ENV,
         sessionSecret: !!process.env.SESSION_SECRET,
         databaseUrl: !!process.env.DATABASE_URL
@@ -158,6 +161,78 @@ export function setupAuth(app: Express) {
         database: "disconnected",
         error: (error as Error).message,
         environment: process.env.NODE_ENV
+      });
+    }
+  });
+
+  // Auto-setup endpoint for production - creates default tenant and admin user
+  app.post("/api/setup", async (req, res) => {
+    try {
+      console.log("Running production setup...");
+      
+      // Check if setup is needed
+      const tenants = await storage.getAllTenants();
+      if (tenants.length > 0) {
+        const users = await storage.getUsersByTenant(1);
+        if (users.length > 0) {
+          return res.json({
+            status: "already_setup",
+            message: "System is already configured",
+            tenantCount: tenants.length,
+            userCount: users.length
+          });
+        }
+      }
+
+      // Create default tenant if needed
+      let defaultTenant;
+      if (tenants.length === 0) {
+        console.log("Creating default tenant...");
+        defaultTenant = await storage.createTenant({
+          name: "Default APMC",
+          apmcCode: "DEFAULT001",
+          address: "Default Address",
+          contactNumber: "1234567890",
+          registrationNumber: "REG001",
+          gstNumber: "DEFAULT001"
+        });
+        console.log("Default tenant created:", defaultTenant.id);
+      } else {
+        defaultTenant = tenants[0];
+      }
+
+      // Create default admin user
+      console.log("Creating default admin user...");
+      const hashedPassword = await hashPassword('admin123');
+      
+      const adminUser = await storage.createUser({
+        username: 'admin',
+        password: hashedPassword,
+        tenantId: defaultTenant.id,
+        role: 'super_admin',
+        isActive: true,
+        email: 'admin@example.com'
+      });
+
+      console.log("Setup completed successfully!");
+      
+      res.json({
+        status: "setup_completed",
+        message: "System configured successfully",
+        credentials: {
+          username: "admin",
+          password: "admin123"
+        },
+        tenantId: defaultTenant.id,
+        userId: adminUser.id
+      });
+      
+    } catch (error) {
+      console.error("Setup error:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Setup failed",
+        error: (error as Error).message
       });
     }
   });
