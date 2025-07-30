@@ -1,12 +1,22 @@
 #!/bin/bash
+set -e
+
+echo "Starting build process..."
 
 # Install all dependencies including dev dependencies
-npm install --include=dev
+echo "Installing dependencies..."
+npm ci --include=dev
 
-# Build frontend with npx to ensure vite is available
+# Ensure build tools are available
+echo "Installing build tools..."
+npm install vite@latest esbuild@latest --no-save
+
+# Build frontend
+echo "Building frontend..."
 npx vite build
 
-# Build backend with npx to ensure esbuild is available  
+# Build backend  
+echo "Building backend..."
 npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
-echo "Build completed successfully!"
+echo "✅ Build completed successfully!"
