@@ -21,18 +21,26 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  const isProduction = process.env.NODE_ENV === 'production';
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "development-secret-key-12345",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false,
+      secure: isProduction, // Use secure cookies in production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: 'lax'
+      sameSite: isProduction ? 'none' : 'lax' // Adjust for production CORS
     },
     store: storage.sessionStore, // Use PostgreSQL store for persistence
   };
+
+  console.log("Session configuration:", {
+    secure: sessionSettings.cookie?.secure,
+    sameSite: sessionSettings.cookie?.sameSite,
+    hasStore: !!sessionSettings.store,
+    nodeEnv: process.env.NODE_ENV
+  });
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
@@ -41,26 +49,40 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      // Get all users with this username across all tenants
-      const users = await storage.getUsersByUsername(username);
-      
-      if (!users || users.length === 0) {
-        return done(null, false);
-      }
-      
-      // Try to authenticate against each user until password matches
-      for (const user of users) {
-        if (await comparePasswords(password, user.password)) {
-          // Check if user account is active
-          if (!user.isActive) {
-            return done(null, false, { message: "Your account has been deactivated. Please contact your admin to reactivate your account." });
-          }
-          return done(null, user);
+      try {
+        console.log("Authentication attempt for username:", username);
+        
+        // Get all users with this username across all tenants
+        const users = await storage.getUsersByUsername(username);
+        console.log(`Found ${users?.length || 0} users with username ${username}`);
+        
+        if (!users || users.length === 0) {
+          console.log("No users found with username:", username);
+          return done(null, false, { message: "Invalid credentials" });
         }
+        
+        // Try to authenticate against each user until password matches
+        for (const user of users) {
+          console.log(`Checking password for user ID ${user.id} in tenant ${user.tenantId}`);
+          
+          if (await comparePasswords(password, user.password)) {
+            // Check if user account is active
+            if (!user.isActive) {
+              console.log("User account is inactive:", user.id);
+              return done(null, false, { message: "Your account has been deactivated. Please contact your admin to reactivate your account." });
+            }
+            console.log("Authentication successful for user:", user.id);
+            return done(null, user);
+          }
+        }
+        
+        // No matching password found
+        console.log("Password mismatch for all users with username:", username);
+        return done(null, false, { message: "Invalid credentials" });
+      } catch (error) {
+        console.error("Authentication error:", error);
+        return done(error);
       }
-      
-      // No matching password found
-      return done(null, false);
     }),
   );
 
@@ -116,5 +138,27 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Debug endpoint for production troubleshooting
+  app.get("/api/debug/health", async (req, res) => {
+    try {
+      const dbCheck = await storage.getAllTenants();
+      res.json({
+        status: "ok",
+        database: "connected",
+        tenantCount: dbCheck.length,
+        environment: process.env.NODE_ENV,
+        sessionSecret: !!process.env.SESSION_SECRET,
+        databaseUrl: !!process.env.DATABASE_URL
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        database: "disconnected",
+        error: (error as Error).message,
+        environment: process.env.NODE_ENV
+      });
+    }
   });
 }
