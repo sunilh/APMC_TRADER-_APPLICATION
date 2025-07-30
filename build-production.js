@@ -1,30 +1,50 @@
 #!/usr/bin/env node
 
-// Production build script that bypasses TypeScript errors
-const { execSync } = require('child_process');
-const fs = require('fs');
+import { build } from 'vite';
+import { createRequire } from 'module';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-console.log('🏗️  Starting production build...');
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-try {
-  // Build frontend
-  console.log('📦 Building frontend with Vite...');
-  execSync('npx vite build', { stdio: 'inherit' });
-  
-  // Build backend
-  console.log('🔧 Building backend with ESBuild...');
-  execSync('npx esbuild server/index.ts --bundle --platform=node --outfile=dist/index.js --external:pg-native --format=esm', { stdio: 'inherit' });
-  
-  // Verify build outputs
-  if (fs.existsSync('dist/public') && fs.existsSync('dist/index.js')) {
-    console.log('✅ Build completed successfully!');
-    console.log('📁 Frontend: dist/public');
-    console.log('📁 Backend: dist/index.js');
-  } else {
-    throw new Error('Build outputs missing');
+async function buildProject() {
+  try {
+    console.log('Starting production build...');
+    
+    await build({
+      configFile: false, // Don't load any config file
+      root: path.resolve(__dirname, 'client'),
+      plugins: [
+        (await import('@vitejs/plugin-react')).default()
+      ],
+      resolve: {
+        alias: {
+          '@': path.resolve(__dirname, 'client/src'),
+          '@shared': path.resolve(__dirname, 'shared'),
+          '@assets': path.resolve(__dirname, 'attached_assets'),
+        },
+      },
+      build: {
+        outDir: path.resolve(__dirname, 'dist/public'),
+        emptyOutDir: true,
+      },
+      css: {
+        postcss: {
+          plugins: {
+            tailwindcss: {},
+            autoprefixer: {},
+          },
+        },
+      },
+    });
+    
+    console.log('✅ Frontend build completed successfully!');
+  } catch (error) {
+    console.error('❌ Build failed:', error);
+    process.exit(1);
   }
-  
-} catch (error) {
-  console.error('❌ Build failed:', error.message);
-  process.exit(1);
 }
+
+buildProject();
