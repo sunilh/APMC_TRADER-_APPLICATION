@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: npm install --legacy-peer-deps && rm -rf dist && mkdir -p server/public && npx esbuild client/src/main.tsx --bundle --outdir=server/public --platform=browser --format=esm --loader:.tsx=tsx --loader:.ts=ts --loader:.css=css --minify --alias:@=./client/src --alias:@shared=./shared --alias:@assets=./attached_assets && cp client/index.html server/public/index.html && sed -i 's|/src/main.tsx|/main.js|g' server/public/index.html
-    startCommand: NODE_ENV=production npx tsx server/index.ts
+    startCommand: echo "Starting with tsx..." && NODE_ENV=production npx tsx server/index.ts
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
