@@ -145,6 +145,7 @@ async function startProductionServer() {
       
       const adminUser = await storage.createUser({
         username: 'admin',
+        name: 'Administrator',
         password: hashedPassword,
         tenantId: defaultTenant.id,
         role: 'super_admin',
@@ -230,6 +231,8 @@ async function startProductionServer() {
   try {
     console.log('🔧 Registering routes...');
     const server = await registerRoutes(app);
+    
+    console.log('✅ Routes registered successfully');
 
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -12,6 +12,11 @@ if (fs.existsSync('dist')) {
 fs.mkdirSync('dist', { recursive: true });
 fs.mkdirSync('server/public', { recursive: true });
 
+// Create uploads directories to prevent ENOENT errors
+fs.mkdirSync('uploads', { recursive: true });
+fs.mkdirSync('uploads/invoices', { recursive: true });
+fs.mkdirSync('uploads/farmers', { recursive: true });
+
 console.log('📦 Building frontend with Vite...');
 // Build frontend first
 try {
