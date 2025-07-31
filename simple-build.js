@@ -16,6 +16,7 @@ fs.mkdirSync('server/public', { recursive: true });
 fs.mkdirSync('uploads', { recursive: true });
 fs.mkdirSync('uploads/invoices', { recursive: true });
 fs.mkdirSync('uploads/farmers', { recursive: true });
+fs.mkdirSync('uploads/processed', { recursive: true });
 
 console.log('📦 Building frontend with Vite...');
 // Build frontend first
