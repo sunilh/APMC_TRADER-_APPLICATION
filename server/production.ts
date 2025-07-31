@@ -16,6 +16,119 @@ const serveStatic = (app: express.Express) => {
   // Serve static files from server/public
   app.use(express.static(path.join(process.cwd(), "server/public")));
 
+  // Dashboard route for authenticated users
+  app.get("/dashboard", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.redirect('/');
+    }
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>APMC Trader - Dashboard</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        </style>
+      </head>
+      <body class="bg-gray-50 min-h-screen">
+        <nav class="bg-white shadow-sm border-b">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+              <div class="flex items-center">
+                <h1 class="text-xl font-bold text-gray-900">🌾 APMC Trader</h1>
+              </div>
+              <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">Welcome, ${req.user?.username || 'User'}</span>
+                <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div class="bg-blue-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-blue-800">Farmers</h3>
+                <p class="text-2xl font-bold text-blue-600" id="farmerCount">-</p>
+              </div>
+              <div class="bg-green-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-green-800">Active Lots</h3>
+                <p class="text-2xl font-bold text-green-600" id="lotCount">-</p>
+              </div>
+              <div class="bg-purple-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-purple-800">Buyers</h3>
+                <p class="text-2xl font-bold text-purple-600" id="buyerCount">-</p>
+              </div>
+              <div class="bg-orange-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-orange-800">Today's Sales</h3>
+                <p class="text-2xl font-bold text-orange-600" id="salesCount">-</p>
+              </div>
+            </div>
+            
+            <div class="mt-8">
+              <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700">
+                  Add Farmer
+                </button>
+                <button class="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700">
+                  Create Lot
+                </button>
+                <button class="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700">
+                  Add Buyer
+                </button>
+                <button class="bg-orange-600 text-white p-4 rounded-lg hover:bg-orange-700">
+                  Generate Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        <script>
+          async function logout() {
+            try {
+              const response = await fetch('/api/logout', { method: 'POST' });
+              if (response.ok) {
+                window.location.href = '/';
+              }
+            } catch (error) {
+              console.error('Logout error:', error);
+              window.location.href = '/';
+            }
+          }
+          
+          // Load dashboard stats
+          async function loadStats() {
+            try {
+              const response = await fetch('/api/dashboard/stats');
+              if (response.ok) {
+                const stats = await response.json();
+                document.getElementById('farmerCount').textContent = stats.farmerCount || 0;
+                document.getElementById('lotCount').textContent = stats.activeLotCount || 0;
+                document.getElementById('buyerCount').textContent = stats.buyerCount || 0;
+                document.getElementById('salesCount').textContent = stats.todaySales || 0;
+              }
+            } catch (error) {
+              console.error('Error loading stats:', error);
+            }
+          }
+          
+          loadStats();
+        </script>
+      </body>
+      </html>
+    `);
+  });
+
   // Catch-all handler: serve React app HTML for client-side routing
   app.get("*", (req, res) => {
     // Skip API routes
@@ -102,7 +215,7 @@ const serveStatic = (app: express.Express) => {
               errorDiv.style.display = 'none';
               
               try {
-                const response = await fetch('/api/auth/login', {
+                const response = await fetch('/api/login', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ username, password })
@@ -111,7 +224,7 @@ const serveStatic = (app: express.Express) => {
                 const data = await response.json();
                 
                 if (response.ok) {
-                  window.location.href = '/';
+                  window.location.href = '/dashboard';
                 } else {
                   errorDiv.style.display = 'block';
                   errorDiv.querySelector('p').textContent = data.message || 'Login failed';
