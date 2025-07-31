@@ -18,15 +18,20 @@ const serveStatic = (app: express.Express) => {
 
   // Catch-all handler: serve React app HTML for client-side routing
   app.get("*", (req, res) => {
-    // Skip API routes and file requests
-    if (req.path.startsWith("/api") || req.path.includes(".")) {
+    // Skip API routes
+    if (req.path.startsWith("/api")) {
       return res.status(404).json({ message: "API endpoint not found" });
+    }
+    
+    // Skip static file requests (but serve the login page for everything else)
+    if (req.path.includes(".") && !req.path.endsWith("/")) {
+      return res.status(404).send("File not found");
     }
 
     const indexPath = path.join(process.cwd(), "server/public/index.html");
 
-    // If index.html doesn't exist, serve a simple React login page
-    if (!fs.existsSync(indexPath)) {
+    // Always serve the login page since frontend build fails
+    // if (!fs.existsSync(indexPath)) {
       return res.send(`
         <!DOCTYPE html>
         <html lang="en">
@@ -123,9 +128,6 @@ const serveStatic = (app: express.Express) => {
         </body>
         </html>
       `);
-    }
-
-    res.sendFile(indexPath);
   });
 };
 

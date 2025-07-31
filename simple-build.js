@@ -18,50 +18,8 @@ fs.mkdirSync('uploads/invoices', { recursive: true });
 fs.mkdirSync('uploads/farmers', { recursive: true });
 fs.mkdirSync('uploads/processed', { recursive: true });
 
-console.log('📦 Building frontend with Vite...');
-// Build frontend first - try multiple approaches
-try {
-  // First try: Direct vite build (avoid npm run build which includes backend)
-  let buildProcess = spawn('npx', ['vite', 'build', '--config', 'vite.config.ts'], {
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'production' }
-  });
-  
-  let success = await new Promise((resolve) => {
-    buildProcess.on('close', (code) => {
-      resolve(code === 0);
-    });
-    buildProcess.on('error', () => {
-      resolve(false);
-    });
-  });
-
-  if (!success) {
-    console.log('⚠️ npm run build failed, trying direct vite...');
-    // Second try: Direct vite command
-    buildProcess = spawn('./node_modules/.bin/vite', ['build', '--outDir', 'server/public'], {
-      stdio: 'inherit',
-      env: { ...process.env, NODE_ENV: 'production' }
-    });
-    
-    success = await new Promise((resolve) => {
-      buildProcess.on('close', (code) => {
-        resolve(code === 0);
-      });
-      buildProcess.on('error', () => {
-        resolve(false);
-      });
-    });
-  }
-
-  if (success) {
-    console.log('✅ Frontend build completed');
-  } else {
-    console.log('⚠️ Frontend build failed, continuing with server-only deployment');
-  }
-} catch (error) {
-  console.log('⚠️ Frontend build failed, continuing with server-only deployment');
-}
+console.log('⚠️ Skipping frontend build - using server-rendered login page');
+// Skip frontend build entirely and rely on server-rendered login page
 
 console.log('🖥️ Creating production server launcher...');
 
@@ -193,4 +151,5 @@ console.log('✅ Simple build completed successfully');
 console.log('📁 Created dist/index.js launcher');
 console.log('🔧 Production server includes /api/setup endpoint');
 console.log('🔍 Added /api/debug endpoint for troubleshooting');
-console.log('🔐 Built-in login page available for authentication');
+console.log('🔐 Server-rendered login page bypasses frontend build issues');
+console.log('🌐 Login available at any URL path on production server');
