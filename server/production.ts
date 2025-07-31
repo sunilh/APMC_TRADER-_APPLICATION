@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import path from "path";
+import fs from "fs";
 
 // Simple logging function for production
 const log = (message: string) => {
@@ -13,17 +14,17 @@ const log = (message: string) => {
 // Simple static file serving for production
 const serveStatic = (app: express.Express) => {
   // Serve static files from server/public
-  app.use(express.static(path.join(process.cwd(), 'server/public')));
-  
+  app.use(express.static(path.join(process.cwd(), "server/public")));
+
   // Catch-all handler: serve React app HTML for client-side routing
-  app.get('*', (req, res) => {
+  app.get("*", (req, res) => {
     // Skip API routes and file requests
-    if (req.path.startsWith('/api') || req.path.includes('.')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
+    if (req.path.startsWith("/api") || req.path.includes(".")) {
+      return res.status(404).json({ message: "API endpoint not found" });
     }
-    
-    const indexPath = path.join(process.cwd(), 'server/public/index.html');
-    
+
+    const indexPath = path.join(process.cwd(), "server/public/index.html");
+
     // If index.html doesn't exist, serve a simple React login page
     if (!fs.existsSync(indexPath)) {
       return res.send(`
@@ -123,30 +124,36 @@ const serveStatic = (app: express.Express) => {
         </html>
       `);
     }
-    
+
     res.sendFile(indexPath);
   });
 };
 
 async function startProductionServer() {
-  console.log('🚀 Initializing APMC Trading System...');
-  
+  console.log("🚀 Initializing APMC Trading System...");
+
   const app = express();
-  
+
   // Basic middleware
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb', parameterLimit: 50000 }));
-  
+  app.use(express.json({ limit: "50mb" }));
+  app.use(
+    express.urlencoded({
+      extended: true,
+      limit: "50mb",
+      parameterLimit: 50000,
+    }),
+  );
+
   // Increase server timeout for large uploads
   app.use((req, res, next) => {
     req.setTimeout(300000); // 5 minutes
     res.setTimeout(300000); // 5 minutes
     next();
   });
-  
+
   // Serve uploaded files statically
-  app.use('/uploads', express.static('uploads'));
-  
+  app.use("/uploads", express.static("uploads"));
+
   // Request logging middleware
   app.use((req, res, next) => {
     const start = Date.now();
@@ -179,39 +186,39 @@ async function startProductionServer() {
   });
 
   // Health check endpoint
-  app.get('/health', (req: Request, res: Response) => {
-    res.status(200).json({ 
-      status: 'healthy', 
+  app.get("/health", (req: Request, res: Response) => {
+    res.status(200).json({
+      status: "healthy",
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0'
+      version: process.env.npm_package_version || "1.0.0",
     });
   });
 
   // Debug endpoint to check database connectivity
-  app.get('/api/debug', async (req: Request, res: Response) => {
+  app.get("/api/debug", async (req: Request, res: Response) => {
     try {
       const tenants = await storage.getAllTenants();
       res.json({
-        status: 'connected',
+        status: "connected",
         tenantCount: tenants.length,
         databaseUrl: !!process.env.DATABASE_URL,
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
       });
     } catch (error) {
       res.status(500).json({
-        status: 'error',
+        status: "error",
         message: (error as Error).message,
         databaseUrl: !!process.env.DATABASE_URL,
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
       });
     }
   });
 
   // Setup API endpoint for database initialization
-  app.post('/api/setup', async (req: Request, res: Response) => {
+  app.post("/api/setup", async (req: Request, res: Response) => {
     try {
       console.log("Running production setup...");
-      
+
       // Check if setup is needed
       const tenants = await storage.getAllTenants();
       if (tenants.length > 0) {
@@ -221,7 +228,7 @@ async function startProductionServer() {
             status: "already_setup",
             message: "System is already configured",
             tenantCount: tenants.length,
-            userCount: users.length
+            userCount: users.length,
           });
         }
       }
@@ -233,10 +240,10 @@ async function startProductionServer() {
         defaultTenant = await storage.createTenant({
           name: "Default APMC",
           apmcCode: "DEFAULT001",
-          address: "Default Address",
-          contactNumber: "1234567890",
-          registrationNumber: "REG001",
-          gstNumber: "DEFAULT001"
+          place: "Default Location",
+          mobileNumber: "1234567890",
+          panNumber: "DEFPAN123A",
+          subscriptionPlan: "basic"
         });
         console.log("Default tenant created:", defaultTenant.id);
       } else {
@@ -245,43 +252,42 @@ async function startProductionServer() {
 
       // Create default admin user
       console.log("Creating default admin user...");
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+
       const adminUser = await storage.createUser({
-        username: 'admin',
-        name: 'Administrator',
+        username: "admin",
+        name: "Administrator",
         password: hashedPassword,
         tenantId: defaultTenant.id,
-        role: 'super_admin',
+        role: "super_admin",
         isActive: true,
-        email: 'admin@example.com'
+        email: "admin@example.com",
       });
 
       console.log("Setup completed successfully!");
-      
+
       res.json({
         status: "setup_completed",
         message: "System configured successfully",
         credentials: {
           username: "admin",
-          password: "admin123"
+          password: "admin123",
         },
         tenantId: defaultTenant.id,
-        userId: adminUser.id
+        userId: adminUser.id,
       });
-      
     } catch (error) {
       console.error("Setup error:", error);
       res.status(500).json({
         status: "error",
         message: "Setup failed",
-        error: (error as Error).message
+        error: (error as Error).message,
       });
     }
   });
 
   // Simple setup page for production initialization
-  app.get('/setup', (req: Request, res: Response) => {
+  app.get("/setup", (req: Request, res: Response) => {
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -333,45 +339,47 @@ async function startProductionServer() {
   });
 
   try {
-    console.log('🔧 Registering routes...');
+    console.log("🔧 Registering routes...");
     const server = await registerRoutes(app);
-    
-    console.log('✅ Routes registered successfully');
+
+    console.log("✅ Routes registered successfully");
 
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
-      console.error('Server error:', err);
+      console.error("Server error:", err);
       res.status(status).json({ message });
     });
 
     // Serve static files in production
-    console.log('📁 Setting up static file serving...');
+    console.log("📁 Setting up static file serving...");
     serveStatic(app);
 
     // Start server
     const port = process.env.PORT || 5000;
     console.log(`🌐 Starting server on port ${port}...`);
-    
-    server.listen({
-      port: Number(port),
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      console.log(`✅ APMC Trading System running on port ${port}`);
-      console.log(`🔗 Health check: http://localhost:${port}/health`);
-      console.log(`🔧 Setup page: http://localhost:${port}/setup`);
-    });
 
+    server.listen(
+      {
+        port: Number(port),
+        host: "0.0.0.0",
+        reusePort: true,
+      },
+      () => {
+        console.log(`✅ APMC Trading System running on port ${port}`);
+        console.log(`🔗 Health check: http://localhost:${port}/health`);
+        console.log(`🔧 Setup page: http://localhost:${port}/setup`);
+      },
+    );
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 }
 
 // Start the server
-startProductionServer().catch(error => {
-  console.error('❌ Server startup failed:', error);
+startProductionServer().catch((error) => {
+  console.error("❌ Server startup failed:", error);
   process.exit(1);
 });

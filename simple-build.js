@@ -19,28 +19,46 @@ fs.mkdirSync('uploads/farmers', { recursive: true });
 fs.mkdirSync('uploads/processed', { recursive: true });
 
 console.log('📦 Building frontend with Vite...');
-// Build frontend first
+// Build frontend first - try multiple approaches
 try {
-  const buildProcess = spawn('npx', ['vite', 'build', '--outDir', 'server/public'], {
+  // First try: Direct vite build (avoid npm run build which includes backend)
+  let buildProcess = spawn('npx', ['vite', 'build', '--config', 'vite.config.ts'], {
     stdio: 'inherit',
     env: { ...process.env, NODE_ENV: 'production' }
   });
   
-  await new Promise((resolve, reject) => {
+  let success = await new Promise((resolve) => {
     buildProcess.on('close', (code) => {
-      if (code === 0) {
-        console.log('✅ Frontend build completed');
-        resolve();
-      } else {
-        console.log('⚠️ Frontend build failed, continuing with server-only deployment');
-        resolve(); // Continue even if frontend build fails
-      }
+      resolve(code === 0);
     });
-    buildProcess.on('error', (error) => {
-      console.log('⚠️ Frontend build error:', error.message);
-      resolve(); // Continue even if frontend build fails
+    buildProcess.on('error', () => {
+      resolve(false);
     });
   });
+
+  if (!success) {
+    console.log('⚠️ npm run build failed, trying direct vite...');
+    // Second try: Direct vite command
+    buildProcess = spawn('./node_modules/.bin/vite', ['build', '--outDir', 'server/public'], {
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'production' }
+    });
+    
+    success = await new Promise((resolve) => {
+      buildProcess.on('close', (code) => {
+        resolve(code === 0);
+      });
+      buildProcess.on('error', () => {
+        resolve(false);
+      });
+    });
+  }
+
+  if (success) {
+    console.log('✅ Frontend build completed');
+  } else {
+    console.log('⚠️ Frontend build failed, continuing with server-only deployment');
+  }
 } catch (error) {
   console.log('⚠️ Frontend build failed, continuing with server-only deployment');
 }
