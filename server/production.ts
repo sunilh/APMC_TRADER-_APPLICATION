@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { storage } from "./storage";
+import bcrypt from "bcrypt";
 import path from "path";
 
 // Simple logging function for production
@@ -79,6 +81,78 @@ async function startProductionServer() {
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || '1.0.0'
     });
+  });
+
+  // Setup API endpoint for database initialization
+  app.post('/api/setup', async (req: Request, res: Response) => {
+    try {
+      console.log("Running production setup...");
+      
+      // Check if setup is needed
+      const tenants = await storage.getAllTenants();
+      if (tenants.length > 0) {
+        const users = await storage.getUsersByTenant(1);
+        if (users.length > 0) {
+          return res.json({
+            status: "already_setup",
+            message: "System is already configured",
+            tenantCount: tenants.length,
+            userCount: users.length
+          });
+        }
+      }
+
+      // Create default tenant if needed
+      let defaultTenant;
+      if (tenants.length === 0) {
+        console.log("Creating default tenant...");
+        defaultTenant = await storage.createTenant({
+          name: "Default APMC",
+          apmcCode: "DEFAULT001",
+          address: "Default Address",
+          contactNumber: "1234567890",
+          registrationNumber: "REG001",
+          gstNumber: "DEFAULT001"
+        });
+        console.log("Default tenant created:", defaultTenant.id);
+      } else {
+        defaultTenant = tenants[0];
+      }
+
+      // Create default admin user
+      console.log("Creating default admin user...");
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      
+      const adminUser = await storage.createUser({
+        username: 'admin',
+        password: hashedPassword,
+        tenantId: defaultTenant.id,
+        role: 'super_admin',
+        isActive: true,
+        email: 'admin@example.com'
+      });
+
+      console.log("Setup completed successfully!");
+      
+      res.json({
+        status: "setup_completed",
+        message: "System configured successfully",
+        credentials: {
+          username: "admin",
+          password: "admin123"
+        },
+        tenantId: defaultTenant.id,
+        userId: adminUser.id
+      });
+      
+    } catch (error) {
+      console.error("Setup error:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Setup failed",
+        error: (error as Error).message
+      });
+    }
   });
 
   // Simple setup page for production initialization
