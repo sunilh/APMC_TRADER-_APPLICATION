@@ -1,14 +1,43 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
+import { spawn } from 'child_process';
 
 console.log('🏗️ Simple build for Render deployment...');
 
-// Create dist directory
+// Create directories
 if (fs.existsSync('dist')) {
   fs.rmSync('dist', { recursive: true, force: true });
 }
 fs.mkdirSync('dist', { recursive: true });
+fs.mkdirSync('server/public', { recursive: true });
+
+console.log('📦 Building frontend with Vite...');
+// Build frontend first
+try {
+  const buildProcess = spawn('npx', ['vite', 'build', '--outDir', 'server/public'], {
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
+  
+  await new Promise((resolve, reject) => {
+    buildProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Frontend build completed');
+        resolve();
+      } else {
+        console.log('⚠️ Frontend build failed, continuing with server-only deployment');
+        resolve(); // Continue even if frontend build fails
+      }
+    });
+    buildProcess.on('error', (error) => {
+      console.log('⚠️ Frontend build error:', error.message);
+      resolve(); // Continue even if frontend build fails
+    });
+  });
+} catch (error) {
+  console.log('⚠️ Frontend build failed, continuing with server-only deployment');
+}
 
 console.log('🖥️ Creating production server launcher...');
 // Create a simple launcher that uses tsx to run TypeScript directly

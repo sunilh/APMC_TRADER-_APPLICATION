@@ -1,6 +1,26 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic, log } from "./vite";
+import path from "path";
+
+// Simple logging function for production
+const log = (message: string) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`);
+};
+
+// Simple static file serving for production
+const serveStatic = (app: express.Express) => {
+  // Serve static files from server/public
+  app.use(express.static(path.join(process.cwd(), 'server/public')));
+  
+  // Catch-all handler: serve index.html for client-side routing
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(process.cwd(), 'server/public/index.html'));
+  });
+};
 
 async function startProductionServer() {
   console.log('🚀 Initializing APMC Trading System...');
