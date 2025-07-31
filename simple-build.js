@@ -1,60 +1,41 @@
 #!/usr/bin/env node
 
-import { execSync } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 
-// Ultra-simple build without any complex config
-const buildScript = `
-import { build } from 'vite';
+console.log('🏗️ Simple build for Render deployment...');
 
-build({
-  configFile: false,
-  root: './client',
-  plugins: [
-    {
-      name: 'react',
-      config() {
-        return {
-          esbuild: {
-            loader: 'tsx',
-            include: /\\.[jt]sx?$/,
-          },
-        };
-      },
-    },
-  ],
-  resolve: {
-    alias: {
-      '@': './client/src',
-      '@shared': './shared',
-      '@assets': './attached_assets',
-    },
-  },
-  build: {
-    outDir: './dist/public',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: './client/index.html',
-    },
-  },
-}).then(() => {
-  console.log('Build complete');
-}).catch(err => {
-  console.error('Build failed:', err);
+// Create dist directory
+if (fs.existsSync('dist')) {
+  fs.rmSync('dist', { recursive: true, force: true });
+}
+fs.mkdirSync('dist', { recursive: true });
+
+console.log('🖥️ Creating production server launcher...');
+// Create a simple launcher that uses tsx to run TypeScript directly
+const serverLauncher = `#!/usr/bin/env node
+
+import { spawn } from 'child_process';
+
+console.log('🚀 Starting APMC Trading System...');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT || 5000);
+
+const child = spawn('npx', ['tsx', 'server/index.ts'], {
+  stdio: 'inherit',
+  env: { ...process.env, NODE_ENV: 'production' }
+});
+
+child.on('error', (error) => {
+  console.error('Failed to start server:', error);
   process.exit(1);
+});
+
+child.on('exit', (code) => {
+  process.exit(code);
 });
 `;
 
-console.log('Creating simple build script...');
-fs.writeFileSync('temp-build.mjs', buildScript);
+fs.writeFileSync('dist/index.js', serverLauncher);
 
-try {
-  execSync('node temp-build.mjs', { stdio: 'inherit' });
-  fs.unlinkSync('temp-build.mjs');
-  console.log('✅ Build completed successfully');
-} catch (error) {
-  fs.unlinkSync('temp-build.mjs');
-  console.error('❌ Build failed:', error.message);
-  process.exit(1);
-}
+console.log('✅ Simple build completed successfully');
+console.log('📁 Created dist/index.js launcher');

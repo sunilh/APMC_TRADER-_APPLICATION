@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-import { build } from 'esbuild';
 import fs from 'fs';
-import path from 'path';
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(spawn);
 
 async function buildForRender() {
   try {
@@ -15,35 +17,25 @@ async function buildForRender() {
     fs.mkdirSync('dist', { recursive: true });
     fs.mkdirSync('server/public', { recursive: true });
     
-    console.log('📦 Building frontend...');
-    // Build frontend
-    await build({
-      entryPoints: ['client/src/main.tsx'],
-      bundle: true,
-      outdir: 'server/public',
-      platform: 'browser',
-      format: 'esm',
-      loader: {
-        '.tsx': 'tsx',
-        '.ts': 'ts',
-        '.css': 'css'
-      },
-      minify: true,
-      alias: {
-        '@': './client/src',
-        '@shared': './shared',
-        '@assets': './attached_assets'
-      }
+    console.log('📦 Building frontend with Vite...');
+    // Use vite build instead of esbuild
+    const buildProcess = spawn('npx', ['vite', 'build'], {
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'production' }
     });
     
-    // Copy and update HTML
-    const htmlContent = fs.readFileSync('client/index.html', 'utf-8');
-    const updatedHtml = htmlContent.replace('/src/main.tsx', '/main.js');
-    fs.writeFileSync('server/public/index.html', updatedHtml);
+    await new Promise((resolve, reject) => {
+      buildProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Vite build failed with code ${code}`));
+        }
+      });
+    });
     
-    console.log('🖥️ Creating production server...');
-    // Since Render ignores our startCommand and uses npm start,
-    // create a simple launcher that uses tsx instead of bundling
+    console.log('🖥️ Creating production server launcher...');
+    // Create a simple launcher that uses tsx
     const serverLauncher = `#!/usr/bin/env node
 import { spawn } from 'child_process';
 
