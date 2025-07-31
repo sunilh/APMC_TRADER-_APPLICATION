@@ -83,6 +83,26 @@ async function startProductionServer() {
     });
   });
 
+  // Debug endpoint to check database connectivity
+  app.get('/api/debug', async (req: Request, res: Response) => {
+    try {
+      const tenants = await storage.getAllTenants();
+      res.json({
+        status: 'connected',
+        tenantCount: tenants.length,
+        databaseUrl: !!process.env.DATABASE_URL,
+        environment: process.env.NODE_ENV
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: (error as Error).message,
+        databaseUrl: !!process.env.DATABASE_URL,
+        environment: process.env.NODE_ENV
+      });
+    }
+  });
+
   // Setup API endpoint for database initialization
   app.post('/api/setup', async (req: Request, res: Response) => {
     try {

@@ -167,3 +167,5 @@ fs.writeFileSync('dist/index.js', serverLauncher);
 
 console.log('✅ Simple build completed successfully');
 console.log('📁 Created dist/index.js launcher');
+console.log('🔧 Production server includes /api/setup endpoint');
+console.log('🔍 Added /api/debug endpoint for troubleshooting');
