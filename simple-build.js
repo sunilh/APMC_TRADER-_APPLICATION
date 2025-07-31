@@ -175,3 +175,4 @@ console.log('✅ Simple build completed successfully');
 console.log('📁 Created dist/index.js launcher');
 console.log('🔧 Production server includes /api/setup endpoint');
 console.log('🔍 Added /api/debug endpoint for troubleshooting');
+console.log('🔐 Built-in login page available for authentication');

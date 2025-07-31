@@ -15,12 +15,116 @@ const serveStatic = (app: express.Express) => {
   // Serve static files from server/public
   app.use(express.static(path.join(process.cwd(), 'server/public')));
   
-  // Catch-all handler: serve index.html for client-side routing
+  // Catch-all handler: serve React app HTML for client-side routing
   app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
+    // Skip API routes and file requests
+    if (req.path.startsWith('/api') || req.path.includes('.')) {
       return res.status(404).json({ message: 'API endpoint not found' });
     }
-    res.sendFile(path.join(process.cwd(), 'server/public/index.html'));
+    
+    const indexPath = path.join(process.cwd(), 'server/public/index.html');
+    
+    // If index.html doesn't exist, serve a simple React login page
+    if (!fs.existsSync(indexPath)) {
+      return res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>APMC Trading System - Login</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+          </style>
+        </head>
+        <body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
+          <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-md">
+              <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">🌾 APMC Trader</h1>
+                <p class="text-gray-600">Agricultural Market Management</p>
+              </div>
+              
+              <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-6 text-center">Sign In</h2>
+                
+                <form id="loginForm" class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="username" name="username" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter your username">
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter your password">
+                  </div>
+                  
+                  <button type="submit" id="loginBtn"
+                          class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    Sign In
+                  </button>
+                </form>
+                
+                <div id="error-message" style="display: none;" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p class="text-sm text-red-800"></p>
+                </div>
+              </div>
+              
+              <div class="text-center mt-6 text-sm text-gray-600">
+                <p>Default credentials: <strong>admin</strong> / <strong>admin123</strong></p>
+                <p class="mt-2"><a href="/setup" class="text-blue-600 hover:underline">Need to setup database?</a></p>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+              e.preventDefault();
+              
+              const username = document.getElementById('username').value;
+              const password = document.getElementById('password').value;
+              const loginBtn = document.getElementById('loginBtn');
+              const errorDiv = document.getElementById('error-message');
+              
+              loginBtn.textContent = 'Signing In...';
+              loginBtn.disabled = true;
+              errorDiv.style.display = 'none';
+              
+              try {
+                const response = await fetch('/api/auth/login', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                  window.location.href = '/';
+                } else {
+                  errorDiv.style.display = 'block';
+                  errorDiv.querySelector('p').textContent = data.message || 'Login failed';
+                }
+              } catch (error) {
+                errorDiv.style.display = 'block';
+                errorDiv.querySelector('p').textContent = 'Network error. Please try again.';
+              } finally {
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+              }
+            });
+          </script>
+        </body>
+        </html>
+      `);
+    }
+    
+    res.sendFile(indexPath);
   });
 };
 
