@@ -135,7 +135,7 @@ async function startServer() {
       res.status(status).json({ message });
     });
 
-    const port = process.env.PORT || 10000;
+    const port = parseInt(process.env.PORT || '10000', 10);
     
     server.listen(port, '0.0.0.0', () => {
       console.log(`🚀 APMC Trading System Backend running on port ${port}`);
