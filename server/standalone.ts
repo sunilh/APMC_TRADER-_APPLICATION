@@ -54,13 +54,13 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Setup page for database initialization
+// Simple status page
 app.get('/setup', (req: Request, res: Response) => {
   res.send(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>APMC Setup</title>
+      <title>APMC Backend Status</title>
       <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
         .button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
@@ -70,15 +70,15 @@ app.get('/setup', (req: Request, res: Response) => {
       </style>
     </head>
     <body>
-      <h1>APMC Trading System Setup</h1>
-      <p>Click the button below to initialize your database and create the admin user.</p>
-      <button class="button" onclick="runSetup()">Initialize Database</button>
+      <h1>APMC Trading System Backend</h1>
+      <p>Backend API is running and ready for frontend connections.</p>
+      <button class="button" onclick="testConnection()">Test Database Connection</button>
       <div id="result"></div>
       
       <script>
-        async function runSetup() {
+        async function testConnection() {
           const resultDiv = document.getElementById('result');
-          resultDiv.innerHTML = 'Setting up database...';
+          resultDiv.innerHTML = 'Testing database connection...';
           
           try {
             const response = await fetch('/api/setup', { method: 'POST' });
@@ -86,18 +86,14 @@ app.get('/setup', (req: Request, res: Response) => {
             
             if (response.ok) {
               resultDiv.className = 'result success';
-              resultDiv.innerHTML = 
-                '<h3>Setup Completed Successfully!</h3>' +
-                '<p><strong>Username:</strong> admin</p>' +
-                '<p><strong>Password:</strong> admin123</p>' +
-                '<p>Your backend API is ready!</p>';
+              resultDiv.innerHTML = '<h3>Database Connection Successful!</h3><p>Backend is ready for frontend connections.</p>';
             } else {
               resultDiv.className = 'result error';
-              resultDiv.innerHTML = '<h3>Setup Failed</h3><p>' + data.message + '</p>';
+              resultDiv.innerHTML = '<h3>Database Connection Failed</h3><p>' + data.message + '</p>';
             }
           } catch (error) {
             resultDiv.className = 'result error';
-            resultDiv.innerHTML = '<h3>Setup Failed</h3><p>' + error.message + '</p>';
+            resultDiv.innerHTML = '<h3>Connection Test Failed</h3><p>' + error.message + '</p>';
           }
         }
       </script>
@@ -120,51 +116,24 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// Basic API setup endpoint
+// Database connection test endpoint
 app.post('/api/setup', async (req: Request, res: Response) => {
   try {
-    console.log('Setting up database...');
+    console.log('Testing database connection...');
     
-    // Create basic tables (simplified for standalone deployment)
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(50) DEFAULT 'admin',
-        tenant_id INTEGER,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
+    // Simple connection test
+    await db.execute('SELECT 1');
 
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS tenants (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        location VARCHAR(255),
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
-    // Create admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    await db.execute(`
-      INSERT INTO users (username, password_hash, role) 
-      VALUES ('admin', '${hashedPassword}', 'admin') 
-      ON CONFLICT (username) DO NOTHING
-    `);
-
-    console.log('Database setup completed successfully');
+    console.log('Database connection successful');
     res.json({ 
-      message: 'Database setup completed successfully',
-      username: 'admin',
-      password: 'admin123'
+      message: 'Database connection successful',
+      status: 'ready'
     });
 
   } catch (error) {
-    console.error('Setup failed:', error);
+    console.error('Database connection failed:', error);
     res.status(500).json({ 
-      message: 'Setup failed', 
+      message: 'Database connection failed', 
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

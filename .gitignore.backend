@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production build
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs
+logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Uploads
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Development only files (exclude from backend deployment)
+client/
+attached_assets/
+typescript-fix-summary.md
+eng.traineddata
+.replit
+components.json
+postcss.config.js
+tailwind.config.ts
+vite.config.ts
+vite.config.production.js
