@@ -1,22 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-
-// API base URL configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-
-function getApiUrl(path: string): string {
-  // If path already includes full URL, use as-is
-  if (path.startsWith('http')) {
-    return path;
-  }
-  
-  // If path starts with /api, add base URL if configured
-  if (path.startsWith('/api')) {
-    return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
-  }
-  
-  // Otherwise, construct full URL
-  return API_BASE_URL ? `${API_BASE_URL}/api${path}` : `/api${path}`;
-}
+import { getApiUrl, API_CONFIG } from "./api-config";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -31,13 +14,18 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const fullUrl = getApiUrl(url);
-  const res = await fetch(fullUrl, {
+  
+  const requestConfig: RequestInit = {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...API_CONFIG.REQUEST_CONFIG.headers,
+      ...(data ? { "Content-Type": "application/json" } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include", // This ensures cookies are sent with requests
-  });
+    credentials: API_CONFIG.REQUEST_CONFIG.credentials,
+  };
 
+  const res = await fetch(fullUrl, requestConfig);
   await throwIfResNotOk(res);
   return res;
 }

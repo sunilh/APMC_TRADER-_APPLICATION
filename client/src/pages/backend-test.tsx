@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { ApiEndpoints, ENV_INFO } from "@/lib/api-config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +20,14 @@ interface DbTestResponse {
 export default function BackendTest() {
   // Test basic API connection
   const { data: apiTest, isLoading: apiLoading, error: apiError, refetch: refetchApi } = useQuery<ApiTestResponse>({
-    queryKey: ['/api/test'],
+    queryKey: [ApiEndpoints.system.test()],
     retry: 1,
   });
 
   // Test database connection
   const dbTestMutation = useMutation<DbTestResponse>({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/test-db');
+      const response = await apiRequest('POST', ApiEndpoints.system.testDb());
       return response.json();
     },
   });
@@ -171,10 +172,11 @@ export default function BackendTest() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2 text-sm">
-            <div><strong>API URL:</strong> {import.meta.env.VITE_API_URL || 'Using relative URLs'}</div>
-            <div><strong>Mode:</strong> {import.meta.env.MODE}</div>
-            <div><strong>Dev:</strong> {import.meta.env.DEV ? 'Yes' : 'No'}</div>
-            <div><strong>Prod:</strong> {import.meta.env.PROD ? 'Yes' : 'No'}</div>
+            <div><strong>API URL:</strong> {ENV_INFO.apiUrl}</div>
+            <div><strong>Mode:</strong> {ENV_INFO.mode}</div>
+            <div><strong>Development:</strong> {ENV_INFO.isDevelopment ? 'Yes' : 'No'}</div>
+            <div><strong>Production:</strong> {ENV_INFO.isProduction ? 'Yes' : 'No'}</div>
+            <div><strong>Base URL:</strong> {import.meta.env.VITE_API_URL || 'Not configured'}</div>
           </div>
         </CardContent>
       </Card>

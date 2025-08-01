@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { DashboardService } from "@/lib/api-services";
+import { ApiEndpoints } from "@/lib/api-config";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,7 +126,8 @@ export default function Dashboard() {
 
   // Regular tenant user dashboard with stats
   const { data: stats = { totalFarmers: 0, activeLots: 0, totalBagsToday: 0, revenueToday: 0 }, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: [ApiEndpoints.dashboard.stats()],
+    queryFn: DashboardService.getStats,
     enabled: user?.role !== 'super_admin', // Only fetch for tenant users
   });
 
