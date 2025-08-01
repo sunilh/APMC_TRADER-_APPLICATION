@@ -1,18 +1,16 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import bcrypt from "bcrypt";
-
-// Configure Neon
-neonConfig.webSocketConstructor = ws;
+import pkg from 'pg';
+const { Pool } = pkg;
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+  throw new Error("DATABASE_URL must be set");
 }
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle({ client: pool });
+// PostgreSQL connection for Render database
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 const app = express();
 
@@ -121,8 +119,10 @@ app.post('/api/setup', async (req: Request, res: Response) => {
   try {
     console.log('Testing database connection...');
     
-    // Simple connection test
-    await db.execute('SELECT 1');
+    // Simple connection test for Render PostgreSQL
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
 
     console.log('Database connection successful');
     res.json({ 
