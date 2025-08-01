@@ -10,6 +10,9 @@ export default defineConfig({
       "@assets": "../attached_assets",
     },
   },
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify('https://traderapp-8lkr.onrender.com'),
+  },
   build: {
     outDir: "../dist/public",
     emptyOutDir: true,

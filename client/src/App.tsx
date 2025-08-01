@@ -26,6 +26,7 @@ import InvoiceReports from "@/pages/invoice-reports";
 import StockReports from "@/pages/stock-reports";
 import TestReports from "@/pages/test-reports";
 import MissingBags from "@/pages/missing-bags";
+import BackendTest from "@/pages/backend-test";
 
 import Settings from "@/pages/settings";
 import TenantOnboarding from "@/pages/tenant-onboarding";
@@ -54,6 +55,7 @@ function Router() {
       <ProtectedRoute path="/invoice-reports" component={InvoiceReports} />
       <ProtectedRoute path="/stock-reports" component={StockReports} />
       <ProtectedRoute path="/test-reports" component={TestReports} />
+      <ProtectedRoute path="/backend-test" component={BackendTest} />
       <ProtectedRoute path="/tenant-onboarding" component={TenantOnboarding} />
       <Route component={NotFound} />
     </Switch>
