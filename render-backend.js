@@ -20,8 +20,8 @@ fs.mkdirSync('uploads/processed', { recursive: true });
 console.log('⚡ Building backend with esbuild...');
 
 try {
-  execSync('npx esbuild server/standalone.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server.js', { stdio: 'inherit' });
-  console.log('✅ Backend build completed');
+  execSync('npx esbuild server/render-standalone.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/server.js', { stdio: 'inherit' });
+  console.log('✅ Backend build completed for Render PostgreSQL');
 } catch (error) {
   console.error('❌ Backend build failed:', error.message);
   process.exit(1);
