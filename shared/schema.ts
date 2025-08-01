@@ -770,3 +770,7 @@ export const insertBidPriceSchema = createInsertSchema(bidPrices).omit({
 
 export type BidPrice = typeof bidPrices.$inferSelect;
 export type InsertBidPrice = z.infer<typeof insertBidPriceSchema>;
+
+// Export types for users
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;

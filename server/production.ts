@@ -16,6 +16,8 @@ const serveStatic = (app: express.Express) => {
   // Serve static files from server/public
   app.use(express.static(path.join(process.cwd(), "server/public")));
 
+
+
   // Dashboard route for authenticated users
   app.get("/dashboard", (req, res) => {
     if (!req.isAuthenticated()) {
@@ -42,7 +44,7 @@ const serveStatic = (app: express.Express) => {
                 <h1 class="text-xl font-bold text-gray-900">🌾 APMC Trader</h1>
               </div>
               <div class="flex items-center space-x-4">
-                <span class="text-sm text-gray-600">Welcome, ${req.user?.username || 'User'}</span>
+                <span class="text-sm text-gray-600">Welcome, ${req.user?.firstName || req.user?.username || 'User'}</span>
                 <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
                   Logout
                 </button>
@@ -161,31 +163,46 @@ const serveStatic = (app: express.Express) => {
           <div class="flex items-center justify-center min-h-screen p-4">
             <div class="w-full max-w-md">
               <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">🌾 APMC Trader</h1>
-                <p class="text-gray-600">Agricultural Market Management</p>
+                <div class="flex items-center justify-center mb-4">
+                  <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-white">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor"/>
+                      <path d="m2 17 10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 class="text-3xl font-bold text-gray-900">APMC Trader</h1>
+                    <p class="text-gray-600">Agricultural Market Management</p>
+                  </div>
+                </div>
               </div>
               
-              <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-semibold mb-6 text-center">Sign In</h2>
+              <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                <div class="text-center mb-6">
+                  <h2 class="text-2xl font-semibold text-gray-900">Welcome back</h2>
+                  <p class="text-gray-600 mt-2">Sign in to your APMC account</p>
+                </div>
                 
-                <form id="loginForm" class="space-y-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input type="text" id="username" name="username" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Enter your username">
-                  </div>
-                  
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="password" name="password" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Enter your password">
+                <form id="loginForm" class="space-y-6">
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-900 mb-2">Username</label>
+                      <input type="text" id="username" name="username" required
+                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                             placeholder="Enter your username">
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-900 mb-2">Password</label>
+                      <input type="password" id="password" name="password" required
+                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                             placeholder="Enter your password">
+                    </div>
                   </div>
                   
                   <button type="submit" id="loginBtn"
-                          class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                    Sign In
+                          class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors font-medium">
+                    Sign in
                   </button>
                 </form>
                 
@@ -194,9 +211,9 @@ const serveStatic = (app: express.Express) => {
                 </div>
               </div>
               
-              <div class="text-center mt-6 text-sm text-gray-600">
-                <p>Default credentials: <strong>admin</strong> / <strong>admin123</strong></p>
-                <p class="mt-2"><a href="/setup" class="text-blue-600 hover:underline">Need to setup database?</a></p>
+              <div class="text-center mt-6 text-sm text-gray-500">
+                <p>Default credentials: <span class="font-semibold text-gray-700">admin</span> / <span class="font-semibold text-gray-700">admin123</span></p>
+                <p class="mt-2"><a href="/api/setup" class="text-blue-600 hover:text-blue-700 hover:underline">Need to setup database?</a></p>
               </div>
             </div>
           </div>
