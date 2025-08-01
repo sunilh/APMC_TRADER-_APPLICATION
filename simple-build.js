@@ -18,8 +18,17 @@ fs.mkdirSync('uploads/invoices', { recursive: true });
 fs.mkdirSync('uploads/farmers', { recursive: true });
 fs.mkdirSync('uploads/processed', { recursive: true });
 
-console.log('⚠️ Skipping frontend build - using server-rendered login page');
-// Skip frontend build entirely and rely on server-rendered login page
+console.log('🎨 Building React frontend with Vite...');
+// Build the React application using npm run build
+import { execSync } from 'child_process';
+
+try {
+  execSync('npm run build', { stdio: 'inherit' });
+  console.log('✅ Frontend build completed successfully');
+} catch (error) {
+  console.error('❌ Frontend build failed:', error.message);
+  console.log('🔄 Falling back to server-rendered login page');
+}
 
 console.log('🖥️ Creating production server launcher...');
 
@@ -59,3 +68,4 @@ console.log('🔐 Complete authentication system with login-to-dashboard flow');
 console.log('🌐 Fixed login endpoint: /api/auth/login → /api/login');
 console.log('📊 Dashboard with real-time stats and logout functionality');
 console.log('⚠️ Static HTML files removed - using dynamic server routing');
+console.log('🎨 React frontend build included - proper SPA application');

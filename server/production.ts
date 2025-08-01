@@ -13,8 +13,8 @@ const log = (message: string) => {
 
 // Simple static file serving for production
 const serveStatic = (app: express.Express) => {
-  // Serve static files from server/public
-  app.use(express.static(path.join(process.cwd(), "server/public")));
+  // Serve static files from dist/public (built React app)
+  app.use(express.static(path.join(process.cwd(), "dist/public")));
 
 
 
@@ -143,11 +143,17 @@ const serveStatic = (app: express.Express) => {
       return res.status(404).send("File not found");
     }
 
-    const indexPath = path.join(process.cwd(), "server/public/index.html");
+    const indexPath = path.join(process.cwd(), "dist/public/index.html");
 
-    // Always serve the login page since frontend build fails
-    // if (!fs.existsSync(indexPath)) {
-      return res.send(`
+    // Serve the actual React app if it exists
+    if (fs.existsSync(indexPath)) {
+      console.log('✅ Serving React app from:', indexPath);
+      return res.sendFile(indexPath);
+    }
+
+    // Fallback to server-rendered login page if React build not available
+    console.log('⚠️ React app not found, serving fallback login page');
+    return res.send(`
         <!DOCTYPE html>
         <html lang="en">
         <head>
