@@ -325,21 +325,6 @@ module.exports = {
     fixedHtml = fixedHtml.replace(/<!-- This is a replit script.*?<\/script>/gs, '');
     fixedHtml = fixedHtml.replace(/<script type="text\/javascript" src="https:\/\/replit\.com\/public\/js\/replit-dev-banner\.js"><\/script>/g, '');
     
-    // Ensure CSS is properly linked (double-check for production)
-    const assetsDir = path.join(clientDistDir, 'assets');
-    if (fs.existsSync(assetsDir)) {
-      const cssFiles = fs.readdirSync(assetsDir).filter(f => f.endsWith('.css'));
-      if (cssFiles.length > 0 && !fixedHtml.includes('stylesheet')) {
-        console.log('⚠️ CSS files exist but not linked - manually adding CSS link');
-        const cssFile = cssFiles[0];
-        fixedHtml = fixedHtml.replace(
-          '</head>',
-          `    <link rel="stylesheet" crossorigin href="./assets/${cssFile}">
-  </head>`
-        );
-      }
-    }
-    
     if (fixedHtml !== indexContent) {
       console.log('🔧 Fixed HTML template and asset paths for production');
       fs.writeFileSync(indexPath, fixedHtml);
@@ -349,21 +334,40 @@ module.exports = {
     console.log('📄 HTML preview (first 800 chars):');
     console.log(fixedHtml.substring(0, 800));
     
+    // Check assets and ensure CSS is properly linked
     const assetsDir = path.join(clientDistDir, 'assets');
+    
+    // Ensure CSS is properly linked (double-check for production)
     if (fs.existsSync(assetsDir)) {
       const assetFiles = fs.readdirSync(assetsDir);
       const cssFiles = assetFiles.filter(f => f.endsWith('.css'));
-      const jsFiles = assetFiles.filter(f => f.endsWith('.js'));
       
-      console.log(`✓ ${assetFiles.length} asset files built`);
-      console.log(`✓ ${cssFiles.length} CSS files: ${cssFiles.join(', ')}`);
-      console.log(`✓ ${jsFiles.length} JS files: ${jsFiles.slice(0, 3).join(', ')}${jsFiles.length > 3 ? '...' : ''}`);
+      // If CSS files exist but aren't linked, add them
+      if (cssFiles.length > 0 && !fixedHtml.includes('stylesheet')) {
+        console.log('⚠️ CSS files exist but not linked - manually adding CSS link');
+        const cssFile = cssFiles[0];
+        fixedHtml = fixedHtml.replace(
+          '</head>',
+          `    <link rel="stylesheet" crossorigin href="./assets/${cssFile}">
+  </head>`
+        );
+        fs.writeFileSync(indexPath, fixedHtml);
+      }
+    }
+    if (fs.existsSync(assetsDir)) {
+      const assetFilesForStats = fs.readdirSync(assetsDir);
+      const cssFilesForStats = assetFilesForStats.filter(f => f.endsWith('.css'));
+      const jsFilesForStats = assetFilesForStats.filter(f => f.endsWith('.js'));
       
-      if (cssFiles.length === 0) {
+      console.log(`✓ ${assetFilesForStats.length} asset files built`);
+      console.log(`✓ ${cssFilesForStats.length} CSS files: ${cssFilesForStats.join(', ')}`);
+      console.log(`✓ ${jsFilesForStats.length} JS files: ${jsFilesForStats.slice(0, 3).join(', ')}${jsFilesForStats.length > 3 ? '...' : ''}`);
+      
+      if (cssFilesForStats.length === 0) {
         console.log('⚠️ WARNING: No CSS files found! This will cause styling issues.');
       } else {
         // Check if CSS files have content
-        cssFiles.forEach(cssFile => {
+        cssFilesForStats.forEach(cssFile => {
           const cssPath = path.join(assetsDir, cssFile);
           const cssStats = fs.statSync(cssPath);
           console.log(`📄 ${cssFile}: ${cssStats.size} bytes`);
