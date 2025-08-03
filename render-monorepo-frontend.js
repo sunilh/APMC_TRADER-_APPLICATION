@@ -92,11 +92,44 @@ try {
   
   console.log('⚡ Building frontend with Vite from root...');
   
-  // Build frontend using production config to avoid Replit-specific plugins
-  execSync('npx vite build --config vite.config.production.ts', { 
+  // Try using the original vite config, but first ensure dependencies are available
+  const viteConfigExists = fs.existsSync(path.join(rootDir, 'vite.config.ts'));
+  const prodConfigExists = fs.existsSync(path.join(rootDir, 'vite.config.production.ts'));
+  
+  let buildCommand;
+  
+  if (prodConfigExists) {
+    console.log('📁 Using production config...');
+    buildCommand = 'npx vite build --config vite.config.production.ts';
+  } else if (viteConfigExists) {
+    console.log('📁 Using original config...');
+    buildCommand = 'npx vite build';
+  } else {
+    // Create a simple config inline as fallback
+    console.log('📁 Creating minimal config...');
+    const tempConfigPath = path.join(rootDir, 'vite.minimal.config.js');
+    const minimalConfig = `
+export default {
+  root: './client',
+  build: {
+    outDir: '../dist/public'
+  }
+};
+`;
+    fs.writeFileSync(tempConfigPath, minimalConfig);
+    buildCommand = 'npx vite build --config vite.minimal.config.js';
+  }
+  
+  console.log('🔧 Running build command:', buildCommand);
+  
+  execSync(buildCommand, { 
     stdio: 'inherit',
     cwd: rootDir,
-    env: { ...process.env, NODE_ENV: 'production' }
+    env: { 
+      ...process.env, 
+      NODE_ENV: 'production',
+      REPL_ID: undefined // Remove Replit-specific env vars
+    }
   });
   
   // Check where Vite created the files - try both dist/public and dist/
