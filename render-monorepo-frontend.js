@@ -211,6 +211,7 @@ module.exports = {
       env: { 
         ...process.env, 
         NODE_ENV: 'production',
+        VITE_API_URL: 'https://traderapp-8lkr.onrender.com', // Production backend URL
         REPL_ID: undefined // Remove Replit-specific env vars
       }
     });
