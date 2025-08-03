@@ -90,9 +90,9 @@ try {
     });
   }
   
-  console.log('⚡ Building frontend with Vite (bypassing config files)...');
+  console.log('⚡ Building frontend with Vite (direct approach)...');
   
-  // Build directly from client directory without config files to avoid module resolution issues
+  // Build from client directory using correct Vite CLI approach
   const clientDir = path.join(rootDir, 'client');
   const outputDir = path.join(rootDir, 'dist', 'public');
   
@@ -107,20 +107,38 @@ try {
   // Ensure output directory exists
   fs.mkdirSync(outputDir, { recursive: true });
   
-  // Build using CLI options directly (no config file)
-  const buildCommand = `npx vite build --root "${clientDir}" --outDir "${outputDir}" --emptyOutDir`;
+  // Create a simple vite config in client directory
+  const clientViteConfig = path.join(clientDir, 'vite.config.js');
+  const simpleConfig = `
+export default {
+  build: {
+    outDir: '../dist/public',
+    emptyOutDir: true
+  }
+};
+`;
   
-  console.log('🔧 Running build command:', buildCommand);
+  console.log('📝 Creating simple Vite config in client directory...');
+  fs.writeFileSync(clientViteConfig, simpleConfig);
   
-  execSync(buildCommand, { 
-    stdio: 'inherit',
-    cwd: rootDir,
-    env: { 
-      ...process.env, 
-      NODE_ENV: 'production',
-      REPL_ID: undefined // Remove Replit-specific env vars
+  try {
+    // Build from client directory where the config and source files are
+    console.log('🔧 Running vite build from client directory...');
+    execSync('npx vite build', { 
+      stdio: 'inherit',
+      cwd: clientDir, // Change working directory to client
+      env: { 
+        ...process.env, 
+        NODE_ENV: 'production',
+        REPL_ID: undefined // Remove Replit-specific env vars
+      }
+    });
+  } finally {
+    // Clean up temp config
+    if (fs.existsSync(clientViteConfig)) {
+      fs.unlinkSync(clientViteConfig);
     }
-  });
+  }
   
   // Check where Vite created the files - try both dist/public and dist/
   const publicDir = path.join(rootDir, 'dist', 'public');
