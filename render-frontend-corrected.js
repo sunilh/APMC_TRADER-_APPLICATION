@@ -6,16 +6,28 @@ import path from 'path';
 
 console.log('🎯 Building frontend for Render with proper path resolution...');
 
-// Detect if we're in client/ or root directory and navigate to root
+// Render appears to set working directory incorrectly, let's fix this
 const currentDir = process.cwd();
-const isInClient = currentDir.includes('/client');
-const rootDir = isInClient ? currentDir.replace(/\/client.*$/, '') : currentDir;
-
 console.log('🔍 Current directory:', currentDir);
-console.log('🔍 Root directory:', rootDir);
 
-// Change to root directory to ensure we can find package.json
+// Find the actual root directory containing package.json
+let rootDir = currentDir;
+
+// If we're in a subdirectory, navigate up to find package.json
+while (!fs.existsSync(path.join(rootDir, 'package.json')) && rootDir !== '/') {
+  rootDir = path.dirname(rootDir);
+}
+
+if (!fs.existsSync(path.join(rootDir, 'package.json'))) {
+  console.error('❌ Could not find package.json in any parent directory');
+  process.exit(1);
+}
+
+console.log('🔍 Root directory with package.json:', rootDir);
+
+// Change to root directory
 process.chdir(rootDir);
+console.log('✓ Changed to root directory');
 
 // Clean existing build directories
 const distDir = path.join(rootDir, 'dist');
@@ -43,11 +55,11 @@ try {
   const publicDir = path.join(rootDir, 'dist', 'public');
   
   if (fs.existsSync(publicDir)) {
-    // Create client/dist and move files there for Render
+    // Create client/dist and copy files there for Render
     fs.mkdirSync(clientDistDir, { recursive: true });
     
     const files = fs.readdirSync(publicDir);
-    console.log(`📁 Moving ${files.length} files to client/dist...`);
+    console.log(`📁 Copying ${files.length} files to client/dist...`);
     
     files.forEach(file => {
       const sourcePath = path.join(publicDir, file);
@@ -69,7 +81,7 @@ try {
   const indexPath = path.join(clientDistDir, 'index.html');
   if (fs.existsSync(indexPath)) {
     const indexContent = fs.readFileSync(indexPath, 'utf8');
-    if (indexContent.includes('<!doctype html')) {
+    if (indexContent.includes('<!doctype html') || indexContent.includes('<!DOCTYPE html')) {
       console.log('✓ Valid index.html created');
     }
     
