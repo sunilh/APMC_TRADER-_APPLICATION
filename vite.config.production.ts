@@ -15,7 +15,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(process.cwd(), "dist/public"),
     emptyOutDir: true,
+    cssCodeSplit: false,
   },
+  base: './',
   define: {
     'process.env.NODE_ENV': '"production"',
   },
