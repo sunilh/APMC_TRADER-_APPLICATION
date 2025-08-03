@@ -148,7 +148,7 @@ export default defineConfig({
   const postCSSConfig = `
 module.exports = {
   plugins: {
-    tailwindcss: {},
+    '@tailwindcss/postcss': {},
     autoprefixer: {},
   },
 };
@@ -170,7 +170,7 @@ module.exports = {
   }
   
   try {
-    execSync('npm install autoprefixer postcss tailwindcss @vitejs/plugin-react', { 
+    execSync('npm install autoprefixer postcss @tailwindcss/postcss @vitejs/plugin-react', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
