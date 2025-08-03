@@ -140,7 +140,12 @@ export default defineConfig({
     emptyOutDir: true
   },
   css: {
-    postcss: false
+    postcss: {
+      plugins: {
+        tailwindcss: {},
+        autoprefixer: {},
+      },
+    },
   },
   define: {
     'process.env.NODE_ENV': '"production"',
@@ -160,8 +165,8 @@ module.exports = {
   console.log('📝 Creating simple Vite config in client directory...');
   fs.writeFileSync(clientViteConfig, simpleConfig);
   
-  // Install only React dependencies in client directory
-  console.log('📦 Installing React dependencies in client directory...');
+  // Install Tailwind and React dependencies in client directory
+  console.log('📦 Installing Tailwind and React dependencies in client directory...');
   const clientPackageJson = path.join(clientDir, 'package.json');
   if (!fs.existsSync(clientPackageJson)) {
     const minimalPackage = {
@@ -173,15 +178,27 @@ module.exports = {
   }
   
   try {
-    execSync('npm install @vitejs/plugin-react', { 
+    execSync('npm install @vitejs/plugin-react tailwindcss autoprefixer', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
   } catch (installError) {
-    console.log('⚠️ React plugin installation in client failed...');
+    console.log('⚠️ Tailwind installation in client failed...');
   }
   
-  console.log('🚫 Skipping PostCSS setup to avoid conflicts...');
+  // Copy Tailwind config from root to client directory
+  const rootTailwindConfig = path.join(rootDir, 'tailwind.config.ts');
+  const clientTailwindConfig = path.join(clientDir, 'tailwind.config.ts');
+  if (fs.existsSync(rootTailwindConfig)) {
+    console.log('📝 Copying Tailwind config to client directory...');
+    let tailwindContent = fs.readFileSync(rootTailwindConfig, 'utf8');
+    // Fix content paths for client directory context
+    tailwindContent = tailwindContent.replace(
+      '"./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"',
+      '"./index.html", "./src/**/*.{js,jsx,ts,tsx}"'
+    );
+    fs.writeFileSync(clientTailwindConfig, tailwindContent);
+  }
   
   try {
     // Build from client directory where the config and source files are
@@ -199,6 +216,10 @@ module.exports = {
     // Clean up temp configs and client dependencies
     if (fs.existsSync(clientViteConfig)) {
       fs.unlinkSync(clientViteConfig);
+    }
+    const clientTailwindConfig = path.join(clientDir, 'tailwind.config.ts');
+    if (fs.existsSync(clientTailwindConfig)) {
+      fs.unlinkSync(clientTailwindConfig);
     }
     const clientPackageJson = path.join(clientDir, 'package.json');
     if (fs.existsSync(clientPackageJson)) {
