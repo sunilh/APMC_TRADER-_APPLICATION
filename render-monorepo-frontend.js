@@ -139,6 +139,9 @@ export default defineConfig({
     outDir: '../dist/public',
     emptyOutDir: true
   },
+  css: {
+    postcss: false
+  },
   define: {
     'process.env.NODE_ENV': '"production"',
   },
@@ -157,8 +160,8 @@ module.exports = {
   console.log('📝 Creating simple Vite config in client directory...');
   fs.writeFileSync(clientViteConfig, simpleConfig);
   
-  // Install PostCSS dependencies in client directory to avoid path issues
-  console.log('📦 Installing PostCSS dependencies in client directory...');
+  // Install only React dependencies in client directory
+  console.log('📦 Installing React dependencies in client directory...');
   const clientPackageJson = path.join(clientDir, 'package.json');
   if (!fs.existsSync(clientPackageJson)) {
     const minimalPackage = {
@@ -170,23 +173,15 @@ module.exports = {
   }
   
   try {
-    execSync('npm install autoprefixer postcss @tailwindcss/postcss @vitejs/plugin-react', { 
+    execSync('npm install @vitejs/plugin-react', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
   } catch (installError) {
-    console.log('⚠️ PostCSS installation in client failed, using simple CSS build...');
+    console.log('⚠️ React plugin installation in client failed...');
   }
   
-  // Copy PostCSS config from root to client directory
-  const rootPostCSSConfig = path.join(rootDir, 'postcss.config.js');
-  if (fs.existsSync(rootPostCSSConfig)) {
-    console.log('📝 Copying PostCSS config to client directory...');
-    fs.copyFileSync(rootPostCSSConfig, clientPostCSSConfig);
-  } else {
-    console.log('📝 Creating PostCSS config in client directory...');
-    fs.writeFileSync(clientPostCSSConfig, postCSSConfig);
-  }
+  console.log('🚫 Skipping PostCSS setup to avoid conflicts...');
   
   try {
     // Build from client directory where the config and source files are
@@ -204,9 +199,6 @@ module.exports = {
     // Clean up temp configs and client dependencies
     if (fs.existsSync(clientViteConfig)) {
       fs.unlinkSync(clientViteConfig);
-    }
-    if (fs.existsSync(clientPostCSSConfig)) {
-      fs.unlinkSync(clientPostCSSConfig);
     }
     const clientPackageJson = path.join(clientDir, 'package.json');
     if (fs.existsSync(clientPackageJson)) {
