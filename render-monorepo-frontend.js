@@ -4,16 +4,13 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 
-console.log('🎯 Building frontend for Render with proper path resolution...');
+console.log('🎯 Building frontend for Render from monorepo...');
 
-// Render appears to set working directory incorrectly, let's fix this
+// Handle Render's directory structure - find root with package.json
 const currentDir = process.cwd();
 console.log('🔍 Current directory:', currentDir);
 
-// Find the actual root directory containing package.json
 let rootDir = currentDir;
-
-// If we're in a subdirectory, navigate up to find package.json
 while (!fs.existsSync(path.join(rootDir, 'package.json')) && rootDir !== '/') {
   rootDir = path.dirname(rootDir);
 }
@@ -24,8 +21,6 @@ if (!fs.existsSync(path.join(rootDir, 'package.json'))) {
 }
 
 console.log('🔍 Root directory with package.json:', rootDir);
-
-// Change to root directory
 process.chdir(rootDir);
 console.log('✓ Changed to root directory');
 
