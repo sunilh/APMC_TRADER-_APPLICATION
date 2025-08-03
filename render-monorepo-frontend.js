@@ -90,6 +90,16 @@ try {
     });
   }
   
+  console.log('🔍 Ensuring PostCSS dependencies are installed...');
+  try {
+    execSync('npm install autoprefixer postcss tailwindcss', { 
+      cwd: rootDir, 
+      stdio: 'inherit'
+    });
+  } catch (postcssError) {
+    console.log('⚠️ PostCSS installation failed, continuing...');
+  }
+  
   console.log('⚡ Building frontend with Vite (direct approach)...');
   
   // Build from client directory using correct Vite CLI approach
