@@ -109,6 +109,7 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Support both /api/login and /api/auth/login for compatibility
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
@@ -128,6 +129,26 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
+  // Also support /api/auth/login for frontend compatibility
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.status(401).json({ 
+          message: info?.message || "Invalid username or password" 
+        });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        res.status(200).json({ user });
+      });
+    })(req, res, next);
+  });
+
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
@@ -135,7 +156,19 @@ export function setupAuth(app: Express) {
     });
   });
 
+  app.post("/api/auth/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
   app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(req.user);
+  });
+
+  app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
