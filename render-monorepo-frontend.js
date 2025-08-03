@@ -122,12 +122,27 @@ try {
   const clientPostCSSConfig = path.join(clientDir, 'postcss.config.js');
   
   const simpleConfig = `
-export default {
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(process.cwd(), "src"),
+      "@shared": path.resolve(process.cwd(), "../shared"),
+      "@assets": path.resolve(process.cwd(), "../attached_assets"),
+    },
+  },
   build: {
     outDir: '../dist/public',
     emptyOutDir: true
-  }
-};
+  },
+  define: {
+    'process.env.NODE_ENV': '"production"',
+  },
+});
 `;
 
   const postCSSConfig = `
@@ -155,7 +170,7 @@ module.exports = {
   }
   
   try {
-    execSync('npm install autoprefixer postcss tailwindcss', { 
+    execSync('npm install autoprefixer postcss tailwindcss @vitejs/plugin-react', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
