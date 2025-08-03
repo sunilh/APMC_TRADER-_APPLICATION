@@ -125,7 +125,7 @@ try {
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import tailwindcss from "tailwindcss";
+import tailwindcssPlugin from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
 
 export default defineConfig({
@@ -144,7 +144,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        tailwindcss,
+        tailwindcssPlugin,
         autoprefixer,
       ],
     },
@@ -180,7 +180,7 @@ module.exports = {
   }
   
   try {
-    execSync('npm install @vitejs/plugin-react tailwindcss autoprefixer', { 
+    execSync('npm install @vitejs/plugin-react @tailwindcss/postcss autoprefixer', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
