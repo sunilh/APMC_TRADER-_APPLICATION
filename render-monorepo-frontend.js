@@ -90,35 +90,25 @@ try {
     });
   }
   
-  console.log('⚡ Building frontend with Vite from root...');
+  console.log('⚡ Building frontend with Vite (bypassing config files)...');
   
-  // Try using the original vite config, but first ensure dependencies are available
-  const viteConfigExists = fs.existsSync(path.join(rootDir, 'vite.config.ts'));
-  const prodConfigExists = fs.existsSync(path.join(rootDir, 'vite.config.production.ts'));
+  // Build directly from client directory without config files to avoid module resolution issues
+  const clientDir = path.join(rootDir, 'client');
+  const outputDir = path.join(rootDir, 'dist', 'public');
   
-  let buildCommand;
+  console.log('📁 Client directory:', clientDir);
+  console.log('📁 Output directory:', outputDir);
   
-  if (prodConfigExists) {
-    console.log('📁 Using production config...');
-    buildCommand = 'npx vite build --config vite.config.production.ts';
-  } else if (viteConfigExists) {
-    console.log('📁 Using original config...');
-    buildCommand = 'npx vite build';
-  } else {
-    // Create a simple config inline as fallback
-    console.log('📁 Creating minimal config...');
-    const tempConfigPath = path.join(rootDir, 'vite.minimal.config.js');
-    const minimalConfig = `
-export default {
-  root: './client',
-  build: {
-    outDir: '../dist/public'
+  // Ensure client directory exists
+  if (!fs.existsSync(clientDir)) {
+    throw new Error('Client directory not found at: ' + clientDir);
   }
-};
-`;
-    fs.writeFileSync(tempConfigPath, minimalConfig);
-    buildCommand = 'npx vite build --config vite.minimal.config.js';
-  }
+  
+  // Ensure output directory exists
+  fs.mkdirSync(outputDir, { recursive: true });
+  
+  // Build using CLI options directly (no config file)
+  const buildCommand = `npx vite build --root "${clientDir}" --outDir "${outputDir}" --emptyOutDir`;
   
   console.log('🔧 Running build command:', buildCommand);
   
