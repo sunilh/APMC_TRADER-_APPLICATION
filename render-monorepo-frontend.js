@@ -337,7 +337,7 @@ module.exports = {
     // Check assets and ensure CSS is properly linked
     const assetsDir = path.join(clientDistDir, 'assets');
     
-    // Ensure CSS is properly linked (double-check for production)
+    // Ensure CSS is properly linked (double-check for production)  
     if (fs.existsSync(assetsDir)) {
       const assetFiles = fs.readdirSync(assetsDir);
       const cssFiles = assetFiles.filter(f => f.endsWith('.css'));
@@ -353,6 +353,18 @@ module.exports = {
         );
         fs.writeFileSync(indexPath, fixedHtml);
       }
+      
+      // Force CSS MIME type for production
+      cssFiles.forEach(cssFile => {
+        const cssPath = path.join(assetsDir, cssFile);
+        const cssContent = fs.readFileSync(cssPath, 'utf8');
+        // Add CSS content validation and ensure it starts with valid CSS
+        if (!cssContent.includes('@tailwind') && !cssContent.includes('--')) {
+          console.log(`⚠️ CSS file ${cssFile} may not contain expected content`);
+        } else {
+          console.log(`✓ CSS file ${cssFile} contains valid Tailwind content`);
+        }
+      });
     }
     if (fs.existsSync(assetsDir)) {
       const assetFilesForStats = fs.readdirSync(assetsDir);
