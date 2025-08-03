@@ -139,8 +139,18 @@ export default defineConfig({
   },
   build: {
     outDir: '../dist/public',
-    emptyOutDir: true
+    emptyOutDir: true,
+    cssCodeSplit: false,
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+      }
+    }
   },
+  base: '',
   css: {
     postcss: {
       plugins: [
@@ -148,6 +158,7 @@ export default defineConfig({
         autoprefixer,
       ],
     },
+    transformer: 'postcss',
   },
   define: {
     'process.env.NODE_ENV': '"production"',
@@ -180,7 +191,7 @@ module.exports = {
   }
   
   try {
-    execSync('npm install @vitejs/plugin-react @tailwindcss/postcss autoprefixer', { 
+    execSync('npm install @vitejs/plugin-react @tailwindcss/postcss autoprefixer tailwindcss postcss', { 
       cwd: clientDir, 
       stdio: 'inherit'
     });
@@ -268,7 +279,7 @@ module.exports = {
   
   console.log('📦 Files copied to client/dist');
   
-  // Verify build success
+  // Verify build success and CSS loading
   const indexPath = path.join(clientDistDir, 'index.html');
   if (fs.existsSync(indexPath)) {
     const indexContent = fs.readFileSync(indexPath, 'utf8');
@@ -276,10 +287,52 @@ module.exports = {
       console.log('✓ Valid index.html created');
     }
     
+    // Check for CSS files in the HTML
+    if (indexContent.includes('.css')) {
+      console.log('✓ CSS files properly linked in HTML');
+    } else {
+      console.log('⚠️ Warning: No CSS files found in HTML - checking assets...');
+    }
+    
+    // Fix absolute paths to relative paths in HTML for production
+    let fixedHtml = indexContent;
+    fixedHtml = fixedHtml.replace(/href="\/assets\//g, 'href="./assets/');
+    fixedHtml = fixedHtml.replace(/src="\/assets\//g, 'src="./assets/');
+    
+    if (fixedHtml !== indexContent) {
+      console.log('🔧 Fixed absolute asset paths to relative paths');
+      fs.writeFileSync(indexPath, fixedHtml);
+    }
+    
+    // Log a preview of the HTML for debugging
+    console.log('📄 HTML preview (first 800 chars):');
+    console.log(fixedHtml.substring(0, 800));
+    
     const assetsDir = path.join(clientDistDir, 'assets');
     if (fs.existsSync(assetsDir)) {
       const assetFiles = fs.readdirSync(assetsDir);
+      const cssFiles = assetFiles.filter(f => f.endsWith('.css'));
+      const jsFiles = assetFiles.filter(f => f.endsWith('.js'));
+      
       console.log(`✓ ${assetFiles.length} asset files built`);
+      console.log(`✓ ${cssFiles.length} CSS files: ${cssFiles.join(', ')}`);
+      console.log(`✓ ${jsFiles.length} JS files: ${jsFiles.slice(0, 3).join(', ')}${jsFiles.length > 3 ? '...' : ''}`);
+      
+      if (cssFiles.length === 0) {
+        console.log('⚠️ WARNING: No CSS files found! This will cause styling issues.');
+      } else {
+        // Check if CSS files have content
+        cssFiles.forEach(cssFile => {
+          const cssPath = path.join(assetsDir, cssFile);
+          const cssStats = fs.statSync(cssPath);
+          console.log(`📄 ${cssFile}: ${cssStats.size} bytes`);
+          if (cssStats.size < 1000) {
+            console.log(`⚠️ WARNING: ${cssFile} seems too small - possible CSS compilation issue`);
+          }
+        });
+      }
+    } else {
+      console.log('⚠️ No assets directory found');
     }
     
     console.log('✅ Frontend build completed successfully');
