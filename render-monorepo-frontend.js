@@ -70,10 +70,30 @@ if (fs.existsSync(clientDistDir)) {
 }
 
 try {
+  console.log('📦 Ensuring all dependencies are installed...');
+  execSync('npm install', { 
+    cwd: rootDir, 
+    stdio: 'inherit'
+  });
+  
+  console.log('🔍 Checking for Vite installation...');
+  try {
+    execSync('npx vite --version', { 
+      cwd: rootDir, 
+      stdio: 'inherit'
+    });
+  } catch (viteError) {
+    console.log('⚠️ Vite not found, installing build dependencies...');
+    execSync('npm install vite @vitejs/plugin-react typescript @replit/vite-plugin-runtime-error-modal @replit/vite-plugin-cartographer', { 
+      cwd: rootDir, 
+      stdio: 'inherit'
+    });
+  }
+  
   console.log('⚡ Building frontend with Vite from root...');
   
-  // Build frontend using the root vite config (which has proper path aliases)
-  execSync('npx vite build', { 
+  // Build frontend using production config to avoid Replit-specific plugins
+  execSync('npx vite build --config vite.config.production.ts', { 
     stdio: 'inherit',
     cwd: rootDir,
     env: { ...process.env, NODE_ENV: 'production' }
