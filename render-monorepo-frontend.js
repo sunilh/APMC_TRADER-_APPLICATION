@@ -142,6 +142,27 @@ module.exports = {
   console.log('📝 Creating simple Vite config in client directory...');
   fs.writeFileSync(clientViteConfig, simpleConfig);
   
+  // Install PostCSS dependencies in client directory to avoid path issues
+  console.log('📦 Installing PostCSS dependencies in client directory...');
+  const clientPackageJson = path.join(clientDir, 'package.json');
+  if (!fs.existsSync(clientPackageJson)) {
+    const minimalPackage = {
+      "name": "client",
+      "version": "1.0.0",
+      "type": "module"
+    };
+    fs.writeFileSync(clientPackageJson, JSON.stringify(minimalPackage, null, 2));
+  }
+  
+  try {
+    execSync('npm install autoprefixer postcss tailwindcss', { 
+      cwd: clientDir, 
+      stdio: 'inherit'
+    });
+  } catch (installError) {
+    console.log('⚠️ PostCSS installation in client failed, using simple CSS build...');
+  }
+  
   // Copy PostCSS config from root to client directory
   const rootPostCSSConfig = path.join(rootDir, 'postcss.config.js');
   if (fs.existsSync(rootPostCSSConfig)) {
@@ -165,12 +186,20 @@ module.exports = {
       }
     });
   } finally {
-    // Clean up temp configs
+    // Clean up temp configs and client dependencies
     if (fs.existsSync(clientViteConfig)) {
       fs.unlinkSync(clientViteConfig);
     }
     if (fs.existsSync(clientPostCSSConfig)) {
       fs.unlinkSync(clientPostCSSConfig);
+    }
+    const clientPackageJson = path.join(clientDir, 'package.json');
+    if (fs.existsSync(clientPackageJson)) {
+      fs.unlinkSync(clientPackageJson);
+    }
+    const clientNodeModules = path.join(clientDir, 'node_modules');
+    if (fs.existsSync(clientNodeModules)) {
+      fs.rmSync(clientNodeModules, { recursive: true, force: true });
     }
   }
   
