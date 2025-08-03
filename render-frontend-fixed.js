@@ -51,31 +51,39 @@ try {
     env: { ...process.env, NODE_ENV: 'production' }
   });
   
-  // Check where Vite created the files
+  // Check where Vite created the files - try both dist/public and dist/
   const publicDir = path.join(rootDir, 'dist', 'public');
+  const directDistDir = path.join(rootDir, 'dist');
   
-  if (fs.existsSync(publicDir)) {
-    // Create client/dist and move files there for Render
-    fs.mkdirSync(clientDistDir, { recursive: true });
-    
-    const files = fs.readdirSync(publicDir);
-    console.log(`📁 Moving ${files.length} files to client/dist...`);
-    
-    files.forEach(file => {
-      const sourcePath = path.join(publicDir, file);
-      const destPath = path.join(clientDistDir, file);
-      
-      if (fs.statSync(sourcePath).isDirectory()) {
-        fs.cpSync(sourcePath, destPath, { recursive: true });
-      } else {
-        fs.copyFileSync(sourcePath, destPath);
-      }
-    });
-    
-    console.log('📦 Files copied to client/dist');
+  let sourceDir;
+  if (fs.existsSync(publicDir) && fs.existsSync(path.join(publicDir, 'index.html'))) {
+    sourceDir = publicDir;
+    console.log('📁 Found build files in dist/public/');
+  } else if (fs.existsSync(directDistDir) && fs.existsSync(path.join(directDistDir, 'index.html'))) {
+    sourceDir = directDistDir;
+    console.log('📁 Found build files in dist/');
   } else {
-    throw new Error('Vite build output not found in dist/public');
+    throw new Error('Vite build output not found in dist/public or dist/');
   }
+  
+  // Create client/dist and copy files there for Render
+  fs.mkdirSync(clientDistDir, { recursive: true });
+  
+  const files = fs.readdirSync(sourceDir);
+  console.log(`📁 Copying ${files.length} files to client/dist...`);
+  
+  files.forEach(file => {
+    const sourcePath = path.join(sourceDir, file);
+    const destPath = path.join(clientDistDir, file);
+    
+    if (fs.statSync(sourcePath).isDirectory()) {
+      fs.cpSync(sourcePath, destPath, { recursive: true });
+    } else {
+      fs.copyFileSync(sourcePath, destPath);
+    }
+  });
+  
+  console.log('📦 Files copied to client/dist');
   
   // Verify build success
   const indexPath = path.join(clientDistDir, 'index.html');
