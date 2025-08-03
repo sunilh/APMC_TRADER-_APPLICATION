@@ -10,13 +10,46 @@ console.log('🎯 Building backend for Render from monorepo...');
 const currentDir = process.cwd();
 console.log('🔍 Current directory:', currentDir);
 
+// Render may start from different working directories, search thoroughly
 let rootDir = currentDir;
-while (!fs.existsSync(path.join(rootDir, 'package.json')) && rootDir !== '/') {
-  rootDir = path.dirname(rootDir);
+const searchPaths = [
+  currentDir,
+  path.dirname(currentDir),
+  path.join(currentDir, 'src'),
+  '/opt/render/project/src'
+];
+
+console.log('🔍 Searching for package.json in:', searchPaths);
+
+let foundPackageJson = false;
+for (const searchPath of searchPaths) {
+  const packagePath = path.join(searchPath, 'package.json');
+  console.log(`  Checking: ${packagePath}`);
+  if (fs.existsSync(packagePath)) {
+    rootDir = searchPath;
+    foundPackageJson = true;
+    console.log(`✓ Found package.json at: ${packagePath}`);
+    break;
+  }
 }
 
-if (!fs.existsSync(path.join(rootDir, 'package.json'))) {
-  console.error('❌ Could not find package.json in any parent directory');
+if (!foundPackageJson) {
+  // Last resort: search from filesystem root
+  try {
+    const { execSync } = await import('child_process');
+    const findResult = execSync('find /opt/render -name "package.json" 2>/dev/null || true', { encoding: 'utf8' });
+    console.log('🔍 Find results:', findResult);
+  } catch (e) {
+    console.log('Find command failed, continuing with current directory');
+  }
+  
+  console.error('❌ Could not find package.json in any expected location');
+  console.error('Available files in current directory:');
+  try {
+    console.error(fs.readdirSync(currentDir));
+  } catch (e) {
+    console.error('Cannot read current directory');
+  }
   process.exit(1);
 }
 
