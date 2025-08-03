@@ -213,6 +213,14 @@ module.exports = {
     fs.writeFileSync(clientTailwindConfig, tailwindContent);
   }
   
+  // Ensure proper HTML template is used during build
+  const sourceHtmlPath = path.join(clientDir, 'index.html');
+  if (fs.existsSync(sourceHtmlPath)) {
+    const htmlContent = fs.readFileSync(sourceHtmlPath, 'utf8');
+    console.log('📝 Using enhanced HTML template for build');
+    console.log('📄 Source HTML preview:', htmlContent.substring(0, 300) + '...');
+  }
+  
   try {
     // Build from client directory where the config and source files are
     console.log('🔧 Running vite build from client directory...');
@@ -299,8 +307,41 @@ module.exports = {
     fixedHtml = fixedHtml.replace(/href="\/assets\//g, 'href="./assets/');
     fixedHtml = fixedHtml.replace(/src="\/assets\//g, 'src="./assets/');
     
+    // Ensure proper HTML structure with title and meta tags
+    if (!fixedHtml.includes('<title>APMC Trader')) {
+      console.log('⚠️ Missing enhanced HTML template - adding title and meta tags');
+      fixedHtml = fixedHtml.replace(
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />',
+        `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>APMC Trader - Agricultural Market Management</title>
+    <meta name="description" content="Comprehensive agricultural trading application for APMC operations with farmer registration, lot tracking, and financial management." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">`
+      );
+    }
+    
+    // Remove the replit development banner from production
+    fixedHtml = fixedHtml.replace(/<!-- This is a replit script.*?<\/script>/gs, '');
+    fixedHtml = fixedHtml.replace(/<script type="text\/javascript" src="https:\/\/replit\.com\/public\/js\/replit-dev-banner\.js"><\/script>/g, '');
+    
+    // Ensure CSS is properly linked (double-check for production)
+    const assetsDir = path.join(clientDistDir, 'assets');
+    if (fs.existsSync(assetsDir)) {
+      const cssFiles = fs.readdirSync(assetsDir).filter(f => f.endsWith('.css'));
+      if (cssFiles.length > 0 && !fixedHtml.includes('stylesheet')) {
+        console.log('⚠️ CSS files exist but not linked - manually adding CSS link');
+        const cssFile = cssFiles[0];
+        fixedHtml = fixedHtml.replace(
+          '</head>',
+          `    <link rel="stylesheet" crossorigin href="./assets/${cssFile}">
+  </head>`
+        );
+      }
+    }
+    
     if (fixedHtml !== indexContent) {
-      console.log('🔧 Fixed absolute asset paths to relative paths');
+      console.log('🔧 Fixed HTML template and asset paths for production');
       fs.writeFileSync(indexPath, fixedHtml);
     }
     
