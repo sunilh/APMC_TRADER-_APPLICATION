@@ -1,0 +1,773 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APMC Trader Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'inter': ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    primary: '#2563eb',
+                    secondary: '#059669',
+                    accent: '#dc2626',
+                    success: '#10b981',
+                    warning: '#f59e0b',
+                    error: '#ef4444',
+                }
+            }
+        }
+    };
+    </script>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- @COMPONENT: Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-seedling text-2xl text-secondary mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">APMC Trader</span>
+                    </div>
+                    <div class="hidden md:ml-8 md:flex md:space-x-8">
+                        <a href="#" class="text-primary border-b-2 border-primary px-1 pt-1 pb-4 text-sm font-medium">Dashboard</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 px-1 pt-1 pb-4 text-sm font-medium">Farmers</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 px-1 pt-1 pb-4 text-sm font-medium">Lots</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 px-1 pt-1 pb-4 text-sm font-medium">Reports</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 px-1 pt-1 pb-4 text-sm font-medium">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2">
+                        <i class="fas fa-globe text-gray-400"></i>
+                        <select class="text-sm bg-transparent border-none focus:ring-0">
+                            <option>English</option>
+                            <option>हिंदी</option>
+                            <option>ಕನ್ನಡ</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-700" data-bind="tenant.name">Bijapur APMC</span>
+                        <div class="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">BA</span>
+                        </div>
+                    </div>
+                    <button class="md:hidden">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: Navigation -->
+
+    <!-- @COMPONENT: MainContent -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Dashboard Overview -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users text-2xl text-primary"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Total Farmers</p>
+                            <p class="text-2xl font-semibold text-gray-900" data-bind="stats.totalFarmers">1,247</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-box text-2xl text-secondary"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Active Lots</p>
+                            <p class="text-2xl font-semibold text-gray-900" data-bind="stats.activeLots">89</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-weight text-2xl text-warning"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Total Bags Today</p>
+                            <p class="text-2xl font-semibold text-gray-900" data-bind="stats.totalBags">2,456</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-rupee-sign text-2xl text-success"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Revenue Today</p>
+                            <p class="text-2xl font-semibold text-gray-900" data-bind="stats.revenue">₹4,25,670</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button class="bg-primary text-white rounded-lg p-4 text-left hover:bg-blue-700 transition-colors" data-event="click:showNewLotModal">
+                    <i class="fas fa-plus mb-2 text-lg"></i>
+                    <h3 class="font-semibold">Create New Lot</h3>
+                    <p class="text-sm opacity-90">Start a new lot entry</p>
+                </button>
+                <button class="bg-secondary text-white rounded-lg p-4 text-left hover:bg-green-700 transition-colors" data-event="click:showFarmerModal">
+                    <i class="fas fa-user-plus mb-2 text-lg"></i>
+                    <h3 class="font-semibold">Add Farmer</h3>
+                    <p class="text-sm opacity-90">Register new farmer</p>
+                </button>
+                <button class="bg-warning text-white rounded-lg p-4 text-left hover:bg-yellow-600 transition-colors" data-event="click:showReports">
+                    <i class="fas fa-chart-bar mb-2 text-lg"></i>
+                    <h3 class="font-semibold">View Reports</h3>
+                    <p class="text-sm opacity-90">Generate APMC reports</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Lots Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Lots</h2>
+                    <div class="mt-4 sm:mt-0 flex space-x-3">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search lots..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>New Lot
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lot No.</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Place</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. of Bags</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Rent</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Advance</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variety/Grade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unload Hamali</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- @MAP: lots.map(lot => ( -->
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" data-bind="lot.number">LOT0001</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.farmerName">Raju Patil</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.mobile">9876543210</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.place">Bijapur</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.bags">10</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.vehicleRent">₹1,500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.advance">₹500</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.variety">Arabica A</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-bind="lot.unloadHamali">₹200</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <button class="text-primary hover:text-blue-700" data-event="click:createBagDetails" data-implementation="Navigate to bag entry screen">
+                                    <i class="fas fa-edit mr-1"></i>Create Bag Details
+                                </button>
+                                <button class="text-secondary hover:text-green-700" data-event="click:printLot" data-implementation="Generate APMC PDF">
+                                    <i class="fas fa-print mr-1"></i>Print
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">LOT0002</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Meena Devi</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9123456780</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Vijayapura</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹2,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹800</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Robusta B</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹300</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <button class="text-primary hover:text-blue-700">
+                                    <i class="fas fa-edit mr-1"></i>Create Bag Details
+                                </button>
+                                <button class="text-secondary hover:text-green-700">
+                                    <i class="fas fa-print mr-1"></i>Print
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- @END_MAP )) -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing <span class="font-medium">1</span> to <span class="font-medium">10</span> of <span class="font-medium" data-bind="pagination.total">97</span> results
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Previous</button>
+                        <button class="px-3 py-1 text-sm bg-primary text-white rounded">1</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: MainContent -->
+
+    <!-- @COMPONENT: NewLotModal -->
+    <!-- @STATE: showNewLotModal:boolean = false -->
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="newLotModal" data-implementation="Toggle visibility based on showNewLotModal state">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Create New Lot</h3>
+                <button class="text-gray-400 hover:text-gray-600" data-event="click:closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="space-y-6" data-implementation="Form submission should create new lot entry">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Farmer Name *</label>
+                        <div class="relative">
+                            <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter farmer name">
+                            <button type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary" data-implementation="Voice input for farmer name">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
+                        <div class="relative">
+                            <input type="tel" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="10-digit mobile number">
+                            <button type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-600" data-implementation="Voice input for mobile number">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Maximum 10 digits</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Place *</label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter place">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Number of Bags *</label>
+                        <input type="number" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter number of bags">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vehicle Rent *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                            <input type="number" required step="0.01" class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Advance Amount</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                            <input type="number" step="0.01" class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Variety/Grade *</label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">Select variety</option>
+                            <option value="arabica-a">Arabica A</option>
+                            <option value="arabica-b">Arabica B</option>
+                            <option value="robusta-a">Robusta A</option>
+                            <option value="robusta-b">Robusta B</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter bank name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bank Account Number</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter account number">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">IFSC Code</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter IFSC code">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200" data-event="click:closeModal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-blue-700">
+                        Create Lot
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: NewLotModal -->
+
+    <!-- @COMPONENT: BagEntryScreen -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden" id="bagEntryScreen" data-implementation="Show when user clicks Create Bag Details">
+        <div class="mb-6">
+            <button class="text-primary hover:text-blue-700 mb-4" data-event="click:goBack">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Lots
+            </button>
+            <h1 class="text-2xl font-bold text-gray-900">Bag Entry - LOT0001</h1>
+        </div>
+
+        <!-- Lot Information Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Lot Number</label>
+                    <p class="text-lg font-semibold text-gray-900" data-bind="selectedLot.number">LOT0001</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Farmer Name</label>
+                    <p class="text-lg font-semibold text-gray-900" data-bind="selectedLot.farmerName">Raju Patil</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Mobile</label>
+                    <p class="text-lg font-semibold text-gray-900" data-bind="selectedLot.mobile">9876543210</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Place</label>
+                    <p class="text-lg font-semibold text-gray-900" data-bind="selectedLot.place">Bijapur</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bag Entry Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lot Price *</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                        <input type="number" required step="0.01" class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.00" data-bind="bagEntry.lotPrice">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Buyer *</label>
+                    <div class="flex space-x-2">
+                        <select required class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="bagEntry.buyer">
+                            <option value="">Select buyer</option>
+                            <option value="buyer1">ABC Trading Co.</option>
+                            <option value="buyer2">XYZ Exports</option>
+                            <option value="buyer3">PQR Industries</option>
+                        </select>
+                        <button type="button" class="px-3 py-2 text-sm text-primary border border-primary rounded-md hover:bg-blue-50" data-implementation="Show inline buyer creation form">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Total Bags *</label>
+                    <input type="number" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="bagEntry.totalBags" value="10">
+                </div>
+            </div>
+
+            <!-- Bag Grid -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Bag Details</h3>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-sm text-gray-600">
+                            Auto-save: <span class="text-success"><i class="fas fa-check-circle mr-1"></i>Enabled</span>
+                        </div>
+                        <button class="px-4 py-2 text-sm font-medium text-white bg-secondary border border-transparent rounded-md hover:bg-green-700" data-implementation="Manual save all entries">
+                            <i class="fas fa-save mr-2"></i>Save All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bag #</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight (kg)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- @MAP: Array(totalBags).fill().map((_, index) => ( -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="relative">
+                                            <input type="number" step="0.1" min="0" class="w-24 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.0" data-implementation="Auto-save on change, voice input supported">
+                                            <button type="button" class="absolute -right-8 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-600" data-implementation="Voice input for weight">
+                                                <i class="fas fa-microphone text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <select class="w-20 px-2 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" data-implementation="Auto-save on change">
+                                            <option value="">-</option>
+                                            <option value="A">A</option>
+                                            <option value="B">B</option>
+                                            <option value="C">C</option>
+                                        </select>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="text" class="w-32 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Optional notes" data-implementation="Auto-save on change">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <i class="fas fa-clock mr-1"></i>Pending
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="relative">
+                                            <input type="number" step="0.1" min="0" class="w-24 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.0" value="51.5">
+                                            <button type="button" class="absolute -right-8 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-600">
+                                                <i class="fas fa-microphone text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <select class="w-20 px-2 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" value="B">
+                                            <option value="">-</option>
+                                            <option value="A">A</option>
+                                            <option value="B" selected>B</option>
+                                            <option value="C">C</option>
+                                        </select>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <input type="text" class="w-32 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Optional notes">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success text-white">
+                                            <i class="fas fa-check mr-1"></i>Saved
+                                        </span>
+                                    </td>
+                                </tr>
+                                <!-- Repeat for remaining bags... -->
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Summary Footer -->
+                <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-700">Total Bags:</span>
+                            <span class="ml-2 text-gray-900" data-bind="summary.totalBags">10</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-700">Total Weight:</span>
+                            <span class="ml-2 text-gray-900" data-bind="summary.totalWeight">516.2 kg</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-700">Average Weight:</span>
+                            <span class="ml-2 text-gray-900" data-bind="summary.avgWeight">51.6 kg</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-700">Completion:</span>
+                            <span class="ml-2 text-gray-900" data-bind="summary.completion">20%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                <textarea class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" rows="3" placeholder="Enter any additional notes about this lot..." data-implementation="Auto-save on change"></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-between">
+                <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200" data-event="click:goBack">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Lots
+                </button>
+                <div class="space-x-3">
+                    <button class="px-4 py-2 text-sm font-medium text-white bg-secondary border border-transparent rounded-md hover:bg-green-700" data-implementation="Generate and download APMC PDF">
+                        <i class="fas fa-print mr-2"></i>Print APMC Format
+                    </button>
+                    <button class="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-blue-700" data-implementation="Complete lot entry and return to dashboard">
+                        <i class="fas fa-check mr-2"></i>Complete Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: BagEntryScreen -->
+
+    <!-- @COMPONENT: APMCPrintFormat -->
+    <div class="max-w-4xl mx-auto bg-white p-8 hidden" id="apmcPrintFormat" data-implementation="Show in modal or new window for printing">
+        <div class="border-2 border-gray-800 p-6">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold mb-2">AGRICULTURAL PRODUCE MARKET COMMITTEE</h1>
+                <h2 class="text-lg font-semibold" data-bind="tenant.name">BIJAPUR APMC</h2>
+            </div>
+            
+            <!-- Details Section -->
+            <div class="grid grid-cols-2 gap-8 mb-6">
+                <div>
+                    <p><strong>Place:</strong> <span class="border-b border-gray-400 inline-block w-32" data-bind="apmc.place">Bijapur</span></p>
+                </div>
+                <div>
+                    <p><strong>Date:</strong> <span class="border-b border-gray-400 inline-block w-32" data-bind="apmc.date">25/12/2023</span></p>
+                </div>
+                <div>
+                    <p><strong>Trader Name:</strong> <span class="border-b border-gray-400 inline-block w-40" data-bind="apmc.traderName">ABC Trading Co.</span></p>
+                </div>
+                <div>
+                    <p><strong>Trader Code:</strong> <span class="border-b border-gray-400 inline-block w-32" data-bind="apmc.traderCode">TRD001</span></p>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="w-full border-collapse border-2 border-gray-800 mb-6">
+                <thead>
+                    <tr>
+                        <th class="border border-gray-800 p-2 text-left">Lot No.</th>
+                        <th class="border border-gray-800 p-2 text-left">Farmer Name</th>
+                        <th class="border border-gray-800 p-2 text-left">Place</th>
+                        <th class="border border-gray-800 p-2 text-left">No. of Bags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-800 p-2" data-bind="printLot.number">LOT0001</td>
+                        <td class="border border-gray-800 p-2" data-bind="printLot.farmerName">Raju Patil</td>
+                        <td class="border border-gray-800 p-2" data-bind="printLot.place">Bijapur</td>
+                        <td class="border border-gray-800 p-2" data-bind="printLot.bags">10</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-800 p-2">LOT0002</td>
+                        <td class="border border-gray-800 p-2">Meena Devi</td>
+                        <td class="border border-gray-800 p-2">Vijayapura</td>
+                        <td class="border border-gray-800 p-2">15</td>
+                    </tr>
+                    <!-- Add more rows as needed -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="border border-gray-800 p-2 text-right font-bold">Total No. of Bags:</td>
+                        <td class="border border-gray-800 p-2 font-bold" data-bind="printSummary.totalBags">25</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Signatures -->
+            <div class="grid grid-cols-3 gap-8 mt-12">
+                <div class="text-center">
+                    <div class="border-b border-gray-400 h-16 mb-2"></div>
+                    <p class="text-sm">Farmer Signature</p>
+                </div>
+                <div class="text-center">
+                    <div class="border-b border-gray-400 h-16 mb-2"></div>
+                    <p class="text-sm">Trader Signature</p>
+                </div>
+                <div class="text-center">
+                    <div class="border-b border-gray-400 h-16 mb-2"></div>
+                    <p class="text-sm">APMC Official</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: APMCPrintFormat -->
+
+    <!-- @COMPONENT: TenantOnboardingModal -->
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="tenantOnboardingModal" data-implementation="Show for super admin tenant creation">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">New Tenant Onboarding</h3>
+                <button class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="space-y-6" data-implementation="Create new tenant with schema and admin user">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">APMC Name *</label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., Bijapur APMC">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">APMC Code *</label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="e.g., BIJAPUR001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
+                        <input type="tel" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="10-digit mobile number">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Subscription Plan *</label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">Select plan</option>
+                            <option value="basic">Basic (1-2 Users)</option>
+                            <option value="gold">Gold (Up to 10 Users)</option>
+                            <option value="diamond">Diamond (10+ Users)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo Upload</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div class="space-y-1 text-center">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i>
+                                <div class="flex text-sm text-gray-600">
+                                    <label class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-700">
+                                        <span>Upload a file</span>
+                                        <input type="file" class="sr-only" accept=".jpg,.jpeg,.png,.svg" data-implementation="Handle logo upload for tenant">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, SVG up to 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <h4 class="text-lg font-medium text-gray-900 mb-4">Admin User Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Admin Username *</label>
+                            <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="admin username">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Admin Password *</label>
+                            <input type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="secure password">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Admin Name *</label>
+                            <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="full name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Admin Email *</label>
+                            <input type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="admin@example.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-blue-700">
+                        Create Tenant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: TenantOnboardingModal -->
+
+    <script>
+    (function() {
+        // TODO: Implement business logic, API calls, and state management
+        
+        // Voice input simulation for demo
+        document.querySelectorAll('[data-implementation*="Voice input"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.previousElementSibling || this.parentElement.querySelector('input');
+                if (input) {
+                    // Simulate voice input recognition
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-microphone text-xs"></i>';
+                        // In real implementation, would use Web Speech API
+                        if (input.type === 'tel') {
+                            input.value = '9876543210';
+                        } else if (input.type === 'number') {
+                            input.value = (Math.random() * 100 + 10).toFixed(1);
+                        }
+                    }, 2000);
+                }
+            });
+        });
+
+        // Auto-save simulation for bag entries
+        document.querySelectorAll('[data-implementation*="Auto-save"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const statusCell = this.closest('tr')?.querySelector('td:last-child span');
+                if (statusCell) {
+                    statusCell.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning text-white';
+                    statusCell.innerHTML = '<i class="fas fa-clock mr-1"></i>Saving...';
+                    
+                    setTimeout(() => {
+                        statusCell.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success text-white';
+                        statusCell.innerHTML = '<i class="fas fa-check mr-1"></i>Saved';
+                    }, 1000);
+                }
+            });
+        });
+
+        // Modal controls
+        function showModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('hidden');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId)?.classList.add('hidden');
+        }
+
+        // Navigation between screens
+        function showBagEntry() {
+            document.querySelector('#bagEntryScreen')?.classList.remove('hidden');
+            document.querySelector('.max-w-7xl')?.classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.querySelector('#bagEntryScreen')?.classList.add('hidden');
+            document.querySelector('.max-w-7xl')?.classList.remove('hidden');
+        }
+
+        // Event delegation for dynamic buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-event*="showNewLotModal"]')) {
+                showModal('newLotModal');
+            }
+            if (e.target.closest('[data-event*="closeModal"]')) {
+                hideModal('newLotModal');
+                hideModal('tenantOnboardingModal');
+            }
+            if (e.target.closest('[data-event*="createBagDetails"]')) {
+                showBagEntry();
+            }
+            if (e.target.closest('[data-event*="goBack"]')) {
+                showDashboard();
+            }
+        });
+
+        // Form validation and submission handlers would go here
+        // Audit logging would be implemented here
+        // Multi-language switching logic would go here
+        // Print functionality would go here
+    })();
+    </script>
+</body>
+</html>
