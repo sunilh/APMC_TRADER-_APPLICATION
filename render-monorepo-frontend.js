@@ -119,6 +119,8 @@ try {
   
   // Create a simple vite config in client directory
   const clientViteConfig = path.join(clientDir, 'vite.config.js');
+  const clientPostCSSConfig = path.join(clientDir, 'postcss.config.js');
+  
   const simpleConfig = `
 export default {
   build: {
@@ -127,9 +129,28 @@ export default {
   }
 };
 `;
+
+  const postCSSConfig = `
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`;
   
   console.log('📝 Creating simple Vite config in client directory...');
   fs.writeFileSync(clientViteConfig, simpleConfig);
+  
+  // Copy PostCSS config from root to client directory
+  const rootPostCSSConfig = path.join(rootDir, 'postcss.config.js');
+  if (fs.existsSync(rootPostCSSConfig)) {
+    console.log('📝 Copying PostCSS config to client directory...');
+    fs.copyFileSync(rootPostCSSConfig, clientPostCSSConfig);
+  } else {
+    console.log('📝 Creating PostCSS config in client directory...');
+    fs.writeFileSync(clientPostCSSConfig, postCSSConfig);
+  }
   
   try {
     // Build from client directory where the config and source files are
@@ -144,9 +165,12 @@ export default {
       }
     });
   } finally {
-    // Clean up temp config
+    // Clean up temp configs
     if (fs.existsSync(clientViteConfig)) {
       fs.unlinkSync(clientViteConfig);
+    }
+    if (fs.existsSync(clientPostCSSConfig)) {
+      fs.unlinkSync(clientPostCSSConfig);
     }
   }
   
